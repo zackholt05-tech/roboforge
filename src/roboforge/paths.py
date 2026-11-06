@@ -37,3 +37,17 @@ def configs_dir() -> Path:
 def feasibility_reports_dir() -> Path:
     """Return the directory for Session 0 feasibility evidence."""
     return REPO_ROOT / "reports" / "feasibility"
+
+
+def repo_relative(path: Path | str) -> str:
+    """Return ``path`` as a POSIX string relative to the repo root, or absolute if outside it.
+
+    Evidence reports record file locations with this function. Paths inside the repository
+    stay portable (``reports/feasibility/frames/x.png``). An output directory outside it, such
+    as ``/out`` mounted into a container, is recorded as an absolute path instead of failing.
+    """
+    resolved = Path(path).resolve()
+    try:
+        return resolved.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return resolved.as_posix()

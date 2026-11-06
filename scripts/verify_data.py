@@ -35,7 +35,7 @@ import numpy as np  # noqa: E402
 from roboforge.data.fetch import load_manifest, verify_file  # noqa: E402
 from roboforge.data.inspect import demo_keys, env_args, summarize_hdf5  # noqa: E402
 from roboforge.logging_utils import get_logger  # noqa: E402
-from roboforge.paths import data_root, feasibility_reports_dir  # noqa: E402
+from roboforge.paths import data_root, feasibility_reports_dir, repo_relative  # noqa: E402
 from roboforge.provenance import environment_snapshot  # noqa: E402
 from roboforge.sim.factory import load_sim_config, make_env  # noqa: E402
 from roboforge.sim.renderer import camera_names, render_rgb  # noqa: E402
@@ -103,7 +103,7 @@ def render_demo_frames(env_args_: dict[str, Any], grp: h5py.Group, demo: str, ta
                 render_ms.append(1000 * (time.perf_counter() - t0))
                 path = out_dir / f"{task}_{demo}_t{t:03d}_{cam}.png"
                 iio.imwrite(path, frame)
-                saved.append({"path": str(path.relative_to(out_dir.parents[2])), "t": t,
+                saved.append({"path": repo_relative(path), "t": t,
                               "camera": cam, "mean_pixel": float(frame.mean()),
                               "std_pixel": float(frame.std())})
         env.step(actions[t])

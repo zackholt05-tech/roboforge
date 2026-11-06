@@ -33,7 +33,7 @@ BACKEND = configure_mujoco_gl()
 
 import numpy as np  # noqa: E402
 
-from roboforge.paths import feasibility_reports_dir  # noqa: E402
+from roboforge.paths import feasibility_reports_dir, repo_relative  # noqa: E402
 from roboforge.provenance import environment_snapshot  # noqa: E402
 from roboforge.sim.factory import load_sim_config, make_env, task_kwargs  # noqa: E402
 from roboforge.sim.renderer import render_rgb  # noqa: E402
@@ -176,7 +176,7 @@ def run(task: str, seed: int, n_steps: int, out_dir: Path) -> dict[str, Any]:
                      "std": float(frame.std())}
     frame_path = out_dir / "frames" / f"smoke_{task}_seed{seed}_agentview.png"
     iio.imwrite(frame_path, frame)
-    rep["render"]["path"] = str(frame_path.relative_to(out_dir.parents[1]))
+    rep["render"]["path"] = repo_relative(frame_path)
     checks["render_nontrivial"] = rep["render"]["std"] > 5.0
 
     # 8. two fresh processes, same serialized state + actions

@@ -44,14 +44,24 @@ def sha256_file(path: Path, chunk_size: int = 1 << 20) -> str:
     return digest.hexdigest()
 
 
+EVIDENCE_DIRS: tuple[str, ...] = ("reports", "logs")
+
+
 def git_revision(repo: Path = REPO_ROOT) -> dict[str, Any]:
-    """Return ``{"sha": ..., "dirty": ...}`` for the repo, or nulls if git is unavailable."""
+    """Return ``{"sha": ..., "dirty": ...}`` for the repo, or nulls if git is unavailable.
+
+    ``dirty`` reflects uncommitted changes to code/configs/docs only: generated evidence
+    under :data:`EVIDENCE_DIRS` is excluded so that writing one report does not mark the
+    next report as produced from a modified tree.
+    """
     try:
         sha = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=True
         ).stdout.strip()
+        excludes = [f":(exclude){d}" for d in EVIDENCE_DIRS]
         status = subprocess.run(
-            ["git", "status", "--porcelain"], cwd=repo, capture_output=True, text=True, check=True
+            ["git", "status", "--porcelain", "--", ".", *excludes],
+            cwd=repo, capture_output=True, text=True, check=True,
         ).stdout
         return {"sha": sha, "dirty": bool(status.strip())}
     except (subprocess.CalledProcessError, FileNotFoundError):

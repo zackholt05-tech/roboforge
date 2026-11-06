@@ -8,7 +8,9 @@
 # READ-ONLY; only reports/session<N>, logs/session<N> and runs are writable, where N is
 # ROBOFORGE_EVIDENCE_SESSION (default 2), e.g.
 #   ROBOFORGE_EVIDENCE_SESSION=3 make in-sim CMD="python scripts/smoke_sim.py --task lift ..."
-# Earlier sessions' evidence stays read-only or unmounted. The script refuses to
+# Earlier sessions' evidence stays read-only or unmounted. N is also passed into the container
+# as ROBOFORGE_EVIDENCE_SESSION, from which the evidence scripts derive their default output
+# directories (DECISIONS D-039). The script refuses to
 # run if the local image ID differs from the pinned one. The host git revision and dirty flag
 # are passed in, because the container has no .git directory. Commands run with the image's
 # own locked venv (/app/.venv, no `uv sync` at run time, so the platform never changes) and the
@@ -48,5 +50,6 @@ exec docker run --rm \
   -v "$PWD/reports/feasibility:/app/reports/feasibility:ro" \
   -e ROBOFORGE_CONTAINER_IMAGE="$IMAGE" -e ROBOFORGE_CONTAINER_IMAGE_ID="$ACTUAL" \
   -e ROBOFORGE_GIT_SHA="$(git rev-parse HEAD)" -e ROBOFORGE_GIT_DIRTY="$DIRTY" \
+  -e ROBOFORGE_EVIDENCE_SESSION="$S" \
   -e PYTHONPATH=/app/src -e PATH=/app/.venv/bin:/usr/local/bin:/usr/bin:/bin \
   "$IMAGE" "$@"

@@ -72,7 +72,7 @@ def write_json(path: Path, obj: Any) -> None:
                                allow_nan=False) + "\n")
 
 
-EVIDENCE_DIRS: tuple[str, ...] = ("reports", "logs")
+EVIDENCE_DIRS: tuple[str, ...] = ("reports", "logs", "runs")
 
 
 def git_revision(repo: Path = REPO_ROOT) -> dict[str, Any]:
@@ -80,8 +80,14 @@ def git_revision(repo: Path = REPO_ROOT) -> dict[str, Any]:
 
     ``dirty`` reflects uncommitted changes to code/configs/docs only: generated evidence
     under :data:`EVIDENCE_DIRS` is excluded so that writing one report does not mark the
-    next report as produced from a modified tree.
+    next report as produced from a modified tree. Inside the evaluation container, which has
+    no ``.git``, the wrapper script passes the host revision in ``ROBOFORGE_GIT_SHA`` and
+    ``ROBOFORGE_GIT_DIRTY``.
     """
+    host_sha = os.environ.get("ROBOFORGE_GIT_SHA")
+    if host_sha:  # inside the evaluation container: the bind-mounted host tree's revision
+        return {"sha": host_sha, "dirty": os.environ.get("ROBOFORGE_GIT_DIRTY") == "1",
+                "source": "host working tree (infra/containers/run_sim_cpu.sh)"}
     try:
         sha = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=True
@@ -105,6 +111,42 @@ def package_versions(packages: tuple[str, ...] = TRACKED_PACKAGES) -> dict[str, 
         except importlib.metadata.PackageNotFoundError:
             versions[name] = None
     return versions
+
+
+def _cpu_model() -> str | None:
+    """Best-effort CPU model string (``sysctl`` on macOS, ``/proc/cpuinfo`` on Linux)."""
+    try:
+        if sys.platform == "darwin":
+            return subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"],
+                                  capture_output=True, text=True, check=True).stdout.strip()
+        info = Path("/proc/cpuinfo").read_text()
+        for key in ("model name", "CPU part"):
+            for line in info.splitlines():
+                if line.lower().startswith(key.lower()):
+                    return f"{key}: {line.split(':', 1)[1].strip()}"
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return None
+
+
+def evaluation_platform() -> dict[str, Any]:
+    """Identity of the platform a rollout ran on (DECISIONS D-017).
+
+    Physics is not bit-identical across platforms (KI-013), so every rollout records this and
+    results from different ``platform_id`` values are never pooled. Inside the canonical
+    container the wrapper ``infra/containers/run_sim_cpu.sh`` exports the image reference and
+    ID, which a process cannot otherwise discover about itself.
+    """
+    image_id = os.environ.get("ROBOFORGE_CONTAINER_IMAGE_ID")
+    pid = f"{platform.system().lower()}-{platform.machine()}"
+    return {"platform_id": pid + (f"-container-{image_id.split(':')[-1][:12]}" if image_id
+                                  else "-native"),
+            "system": platform.system(), "machine": platform.machine(),
+            "platform": platform.platform(), "python": sys.version.split()[0],
+            "cpu": _cpu_model(),
+            "container_image": os.environ.get("ROBOFORGE_CONTAINER_IMAGE"),
+            "container_image_id": image_id,
+            "packages": package_versions(("mujoco", "robosuite", "numpy", "torch"))}
 
 
 def environment_snapshot() -> dict[str, Any]:

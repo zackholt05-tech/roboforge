@@ -1,0 +1,25 @@
+# Evaluation initial-state suites and episode rules (RESEARCH_PROTOCOL §5; DECISIONS D-025, D-026).
+# Read by roboforge.sim.eval_states and roboforge.sim.env_adapter. Changing anything here changes
+# the suite hashes and must be recorded in docs/DECISIONS.md before any reported rollout.
+schema: roboforge.eval_suites/1
+tasks: [lift, can]
+suites:
+  validation:
+    partition: eval_validation
+    seed_base: 100000        # state i uses global seed seed_base + i
+    n_states: 50
+    reserved_seeds: [100000, 200000]   # ad-hoc resets may not use seeds in this block
+  final_test:
+    partition: eval_final_test
+    seed_base: 900000
+    n_states: 50
+    reserved_seeds: [900000, 1000000]
+    # Loading these states (or resetting to a seed in the reserved block) is refused until this
+    # file exists, is committed unmodified, and names the suite's content_sha256.
+    locked_until: docs/FINAL_TEST_FREEZE.md
+episode:
+  # D-026: the scored episode ends at the first control step whose post-step state satisfies the
+  # task's success predicate (evaluated on current kinematics), or is truncated at the horizon.
+  termination: first_success
+  horizon_source: task manifest task_spec.eval_horizon_steps (400 for Lift and Can)
+  hold_steps_default: 0      # optional post-success persistence diagnostic; not part of the primary metric

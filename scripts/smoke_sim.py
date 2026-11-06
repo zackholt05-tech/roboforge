@@ -12,7 +12,10 @@ Checks (MASTER_SPEC §2.3 items 3, 5, 7; Session 0 objective C):
 6. horizon/termination semantics with ``ignore_done=False``;
 7. offscreen RGB render from a named camera, saved as PNG;
 8. two fresh Python processes restoring one serialized state and applying the same
-   actions produce matching trajectories (max abs state difference reported).
+   actions produce matching trajectories (max abs state difference reported);
+9. the Session 2 ``RoboForgeEnv`` adapter: exact reset from the first validation start,
+   a valid dynamic-dimension action, rejection of wrong-dimension and NaN actions, no success
+   at the start, a shadow render, and the reserved test-seed lock.
 
 Writes ``reports/feasibility/smoke_sim_<task>.json``. Exit code 1 on any failed check.
 """
@@ -198,9 +201,49 @@ def run(task: str, seed: int, n_steps: int, out_dir: Path) -> dict[str, Any]:
     rep["cross_process"] = {"n_steps": 20, "max_abs_state_diff": max_diff}
     checks["cross_process_deterministic"] = rep["cross_process"]["max_abs_state_diff"] < 1e-9
 
+    # 9. RoboForgeEnv adapter (Session 2): exact reset from the first validation start, a
+    # valid action whose dimension comes from the committed ActionSpec, wrong-dimension and
+    # NaN rejection, success on current kinematics, shadow render, reserved test-seed lock.
+    rep["adapter"], adapter_checks = adapter_smoke(task)
+    checks.update(adapter_checks)
+
     rep["checks"] = checks
     rep["all_passed"] = all(checks.values())
     return rep
+
+
+def adapter_smoke(task: str) -> tuple[dict[str, Any], dict[str, bool]]:
+    """Smoke checks of :class:`roboforge.sim.env_adapter.RoboForgeEnv`."""
+    from roboforge.sim.env_adapter import InvalidActionError, RoboForgeEnv
+    from roboforge.sim.eval_states import FinalTestLockedError, load_suite
+
+    env = RoboForgeEnv(task)
+    init = load_suite(task, "validation")[0]
+    obs, meta = env.reset(init)
+    checks = {"adapter_reset_exact": bool(np.array_equal(env.current_state(), init.state))}
+    rejected = []
+    for bad in (np.zeros(env.action_dim - 1), np.full(env.action_dim, np.nan)):
+        try:
+            env.step(bad)
+        except InvalidActionError:
+            rejected.append(True)
+    obs1, reward, term, trunc, info = env.step(np.zeros(env.action_dim))
+    checks["adapter_valid_dynamic_dim_action"] = (obs1.step_index == 1
+                                                  and obs1.vector.shape == obs.vector.shape)
+    checks["adapter_rejects_invalid_actions"] = rejected == [True, True]
+    checks["adapter_no_success_at_start"] = not meta.initial_success and not info["success"]
+    frame = env.render("agentview", 64, 64)
+    checks["adapter_render"] = frame.shape == (64, 64, 3) and float(frame.std()) > 5.0
+    try:
+        env.reset(900000)
+        locked = False
+    except FinalTestLockedError:
+        locked = True
+    checks["adapter_reserved_test_seed_locked"] = locked
+    env.close()
+    return {"state_id": init.state_id, "action_dim": env.action_dim,
+            "obs_dim": int(obs.vector.shape[0]), "partition": meta.initial_state["partition"],
+            "horizon": env.horizon, "termination": env.termination}, checks
 
 
 def main(argv: list[str] | None = None) -> int:

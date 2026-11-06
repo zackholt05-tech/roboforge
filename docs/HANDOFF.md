@@ -268,7 +268,9 @@ MASTER_SPEC.md, docs/STATUS.md, docs/HANDOFF.md, docs/DECISIONS.md, docs/KNOWN_I
 docs/EXPERIMENT_LEDGER.md, docs/RESEARCH_PROTOCOL.md, docs/SIMULATOR_CONTRACT.md,
 docs/DATA_DICTIONARY.md, docs/DATA_PROVENANCE.md and docs/COMPUTE_PLAN.md, and inspect the
 actual repository/test state. Do not blindly trust prior handoff claims: first run
-`make setup`, `make download`, `make check-data`, `make check-eval-states`, confirm
+`make setup`, `make download`, `make check-data` (in-memory rebuild; writes nothing),
+`make build-data` (writes the gitignored processed files that training reads; refuses if
+the committed artifacts differ), `make check-eval-states`, confirm
 `git status --short data/` is empty, then run `make lint`, `make test`,
 `make smoke-sim SMOKE_OUT=logs/session3/prereq` and, on the canonical container,
 `ROBOFORGE_EVIDENCE_SESSION=3 make in-sim CMD="python scripts/smoke_sim.py --task lift --out-dir logs/session3/prereq/container"`
@@ -309,11 +311,16 @@ enters checkpoint selection runs on the canonical platform via infra/containers/
 ROBOFORGE_EVIDENCE_SESSION=3 (D-017; never uv sync/uv run inside the image, KI-020); native macOS rollouts are labeled
 development-only and never pooled with canonical results. Never call mj_forward on live
 evaluation data (KI-019); never use robosuite transform helpers for precision-critical inputs
-or metrics (KI-018). Every run writes an immutable runs/<run_id>/manifest.json with git SHA +
-dirty flag, environment snapshot, platform, dataset/split/normalization/spec hashes, full
+or metrics (KI-018). Checkpoints and anything else a canonical container rollout must read go
+under runs/<run_id>/ (the container sees only runs/, read-only src/configs/data and the
+selected session's reports/logs directories). Every run writes an immutable
+runs/<run_id>/manifest.json with git SHA + dirty flag, environment snapshot, platform, dataset/split/normalization/spec hashes, full
 config, seeds, parameter count, checkpoint hashes and wall/CPU time. Train on local CPU only;
 no paid or remote compute and no remote publication without explicit owner approval; do not
-change committed data artifacts or eval suites without a recorded decision.
+change committed data artifacts or eval suites without a recorded decision; do not add
+dependencies or change uv.lock without a recorded decision (the pinned image's venv is
+frozen, so a change forces an image rebuild, which is a new canonical platform under D-017
+and invalidates every earlier canonical rollout).
 
 Use the current verified simulator/data contracts. Run relevant tests and record commands,
 real results and provenance. Never leak final-test states into model selection; never invent

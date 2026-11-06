@@ -19,8 +19,15 @@ Looks for clipping, sign and coordinate problems from three directions:
    - normalized MSE and RMSE in action units;
    - gripper sign agreement with the demonstration;
    - the fraction of decoded actions that fall outside [−1, 1] and would be clipped.
-3. **Closed loop**: per-dimension clip fractions and gripper statistics from the run's
-   canonical validation summaries, when they exist.
+3. **Closed loop**, from the run's canonical validation summaries and their episode records,
+   when they exist:
+   - per-dimension clip fractions and gripper statistics;
+   - a per-episode outcome breakdown into post-hoc Session 3 diagnostic categories (not the
+     preregistered failure taxonomy, which Session 7 defines before the test):
+     `success`, `gripper_never_closed`, `missed_grasp_then_drift` (the object never rose and
+     the end effector ends more than 0.2 m away), `missed_grasp_stayed_near` and
+     `object_rose_without_success`;
+   - motion-dimension clipping (dims 0–5) in successful vs failed episodes.
 
 The report goes to ``reports/session3/diagnostics/actions.json``.
 """
@@ -41,6 +48,7 @@ import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
 from roboforge.eval.learned import LearnedPolicy  # noqa: E402
+from roboforge.eval.rollout import RolloutRecord  # noqa: E402
 from roboforge.paths import REPO_ROOT, repo_relative  # noqa: E402
 from roboforge.provenance import evaluation_platform, git_revision  # noqa: E402
 from roboforge.sim.env_adapter import RoboForgeEnv  # noqa: E402
@@ -124,13 +132,66 @@ def teacher_forced(policy: LearnedPolicy, tm: dict[str, Any]) -> dict[str, Any]:
             "demo_min_per_dim": dy.min(0).tolist(), "demo_max_per_dim": dy.max(0).tolist()}
 
 
+TASK_OBJECT_BODY = {"lift": "cube_main", "can": "Can_main"}
+# Post-hoc Session 3 diagnostic categories (not the preregistered Session 7 taxonomy).
+FAR_M = 0.2  # end effector farther than this from the task object at the end of the episode
+RISE_M = 0.01  # the task object rose by at least this much at some frame
+
+
+def episode_failure_features(rec: RolloutRecord, eef: slice) -> dict[str, Any]:
+    """Outcome features of one recorded episode for the clipping/drift diagnosis."""
+    a = rec.arrays
+    body = rec.meta["bodies"]["names"].index(TASK_OBJECT_BODY[rec.meta["task"]])
+    obj = a["body_pos"][:, body]
+    dist = np.linalg.norm(a["obs"][:, eef] - obj, axis=1)
+    grip = a["executed_action"][:, -1] > 0
+    motion_clip = a["clip_mask"][:, :-1].any(axis=1)
+    rise = float((obj[:, 2] - obj[0, 2]).max())
+    if rec.outcome["success"]:
+        cat = "success"
+    elif not grip.any():
+        cat = "gripper_never_closed"
+    elif rise < RISE_M:
+        cat = "missed_grasp_then_drift" if dist[-1] > FAR_M else "missed_grasp_stayed_near"
+    else:
+        cat = "object_rose_without_success"
+    return {"state_id": rec.meta["episode"]["initial_state"]["state_id"],
+            "category": cat, "steps": rec.outcome["steps"],
+            "object_rise_max_m": rise, "eef_object_dist_min_m": float(dist.min()),
+            "eef_object_dist_final_m": float(dist[-1]),
+            "eef_z_max_m": float(a["obs"][:, eef][:, 2].max()),
+            "gripper_close_commands": int(grip.sum()),
+            "motion_clip_fraction": float(motion_clip.mean()) if len(motion_clip) else 0.0,
+            "first_motion_clip_step": (int(np.argmax(motion_clip)) if motion_clip.any()
+                                       else None)}
+
+
+def failure_breakdown(records_dir: Path, eef: slice) -> dict[str, Any]:
+    """Category counts and clipping in successful vs failed episodes of one evaluation."""
+    feats = [episode_failure_features(RolloutRecord.load(d), eef)
+             for d in sorted((records_dir / "episodes").iterdir())]
+    cats = sorted({f["category"] for f in feats})
+    ok = [f["motion_clip_fraction"] for f in feats if f["category"] == "success"]
+    bad = [f["motion_clip_fraction"] for f in feats if f["category"] != "success"]
+    return {"counts": {c: sum(f["category"] == c for f in feats) for c in cats},
+            "motion_clip_fraction_mean": {"success": float(np.mean(ok)) if ok else None,
+                                          "failure": float(np.mean(bad)) if bad else None},
+            "failures": [f for f in feats if f["category"] != "success"]}
+
+
 def closed_loop(tm: dict[str, Any], reports: Path) -> list[dict[str, Any]]:
-    """Clip and gripper statistics from the run's canonical validation summaries."""
+    """Clip and gripper statistics plus the failure breakdown of every canonical
+    validation evaluation of the run."""
+    from roboforge.data.pipeline import load_specs
+
+    lo, hi = load_specs(tm["config"]["task"])[0].slices()["robot0_eef_pos"]
     out = []
     for f in sorted((reports / "validation").glob(f"{tm['run_id']}__val_step*.json")):
         s = json.loads(f.read_text())
         eps = [e for e in s["episodes"] if e["steps"] > 0]
-        out.append({"step": s["checkpoint"]["step"], "successes": s["successes"],
+        out.append({"failure_breakdown": failure_breakdown(REPO_ROOT / s["records_dir"],
+                                                           slice(lo, hi)),
+                    "step": s["checkpoint"]["step"], "successes": s["successes"],
                     "n": s["n_episodes"], "clip_fraction_per_dim": s["clip_fraction_per_dim"],
                     "decoded_min_per_dim": np.min([e["decoded_min"] for e in eps], 0).tolist(),
                     "decoded_max_per_dim": np.max([e["decoded_max"] for e in eps], 0).tolist(),
@@ -149,10 +210,12 @@ def main(argv: list[str] | None = None) -> int:
     for run in args.train_runs:
         tm = read_manifest(run)
         tasks.add(tm["config"]["task"])
-        last = tm["checkpoints"][-1]
-        policy = LearnedPolicy.from_checkpoint(REPO_ROOT / last["path"], last["sha256"])
+        tf = []
+        for c in tm["checkpoints"]:
+            policy = LearnedPolicy.from_checkpoint(REPO_ROOT / c["path"], c["sha256"])
+            tf.append({"step": c["step"], "sha256": c["sha256"], **teacher_forced(policy, tm)})
         runs.append({"train_run_id": tm["run_id"], "name": tm["config"]["name"],
-                     "checkpoint": last, "teacher_forced_valid_demos": teacher_forced(policy, tm),
+                     "teacher_forced_valid_demos": tf,
                      "closed_loop_validation": closed_loop(tm, args.reports_dir)})
     axes = {t: controller_axes(t) for t in sorted(tasks)}
     report = {"schema": "roboforge.action_diagnostics/1", "platform": evaluation_platform(),
@@ -165,10 +228,15 @@ def main(argv: list[str] | None = None) -> int:
             f"{r['name']}{'+' if r['command'] > 0 else '-'}:{'ok' if r['ok'] else 'BAD'}"
             for r in a["rows"]))
     for r in runs:
-        tf = r["teacher_forced_valid_demos"]
-        print(f"{r['name']}: gripper sign agreement {tf['gripper_sign_agreement']:.3f}; RMSE "
-              f"{[round(x, 3) for x in tf['rmse_action_units_per_dim']]}; outside bounds "
-              f"{[round(x, 3) for x in tf['decoded_outside_bounds_per_dim']]}")
+        for c in r["closed_loop_validation"]:
+            fb = c["failure_breakdown"]
+            print(f"{r['name']} step {c['step']}: {c['successes']}/{c['n']} {fb['counts']}; "
+                  f"motion clip success/failure {fb['motion_clip_fraction_mean']}")
+        for tf in r["teacher_forced_valid_demos"]:
+            print(f"{r['name']} step {tf['step']} teacher-forced: gripper sign agreement "
+                  f"{tf['gripper_sign_agreement']:.3f}; RMSE "
+                  f"{[round(x, 3) for x in tf['rmse_action_units_per_dim']]}; outside bounds "
+                  f"{[round(x, 3) for x in tf['decoded_outside_bounds_per_dim']]}")
     print(f"-> {repo_relative(out)}")
     return 0
 

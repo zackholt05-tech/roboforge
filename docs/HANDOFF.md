@@ -4,7 +4,8 @@ project: roboforge-3d
 current_session: 1
 session_status: PASS
 next_session: 2
-last_verified_commit: c69551fc02f00841a05cbe2352539f1c6aca400c   # evidence regenerated from this clean tree
+last_verified_commit: 599e3267593698485ce734ae28cac62f2e539185   # lint, 124 tests, build-data, check-data
+evidence_commit: c69551fc02f00841a05cbe2352539f1c6aca400c   # full evidence run (smoke, verify-data, audit, Linux check)
 python: 3.11.15
 sim_engine_version: mujoco 3.2.7
 robosuite_revision: 51cc01785bab80ffeed20da15e67d7dd4140e76a   # v1.5.1
@@ -86,7 +87,7 @@ can start.
     task and the generated `docs/DATA_DICTIONARY.md`.
 - **Fetcher:** HTTP Range resume of `.part` files; a hash failure deletes the file and raises.
 - **Make targets:**
-  - new: `build-data`, `check-data`, `audit-data`;
+  - new: `build-data` (processed files only; write-protected), `check-data`, `audit-data`;
   - `verify-data` now also runs `check-data`;
   - `VERIFY_OUT` and `SMOKE_OUT` keep Session 0 evidence intact (D-023).
 
@@ -113,14 +114,16 @@ can start.
     SIMULATOR_CONTRACT.
 
 ## 4. Data contract (Session 1 STOP list)
-- **Observation (19-D float32, normalized, slices in spec order):**
+- **Observation (19-D float32, normalized, in spec order).** Dims 0–8 are the same for both
+  tasks: `robot0_eef_pos` 0–2, `robot0_eef_quat` 3–6 (xyzw), `robot0_gripper_qpos` 7–8.
 
-  | Task | 0–2 | 3–6 | 7–8 | 9–11 | 12–15 | 16–18 |
-  |---|---|---|---|---|---|---|
-  | Lift | `robot0_eef_pos` | `robot0_eef_quat` (xyzw) | `robot0_gripper_qpos` | `cube_pos` | `cube_quat` (xyzw) | `gripper_to_cube_pos` (world) |
-  | Can | `robot0_eef_pos` | `robot0_eef_quat` (xyzw) | `robot0_gripper_qpos` | `Can_to_robot0_eef_pos` (eef frame, corrected) | `Can_pos` (12–14) | `Can_quat` (15–18, xyzw) |
+  | Lift dims | Feature | Can dims | Feature |
+  |---|---|---|---|
+  | 9–11 | `cube_pos` | 9–11 | `Can_to_robot0_eef_pos` (eef frame, corrected, float64) |
+  | 12–15 | `cube_quat` (xyzw) | 12–14 | `Can_pos` |
+  | 16–18 | `gripper_to_cube_pos` (world) | 15–18 | `Can_quat` (xyzw) |
 
-  Can's blocks are 9–11, 12–14 and 15–18. Exact slices are in the task manifests.
+  Exact slices are in the task manifests.
 - **Action (7-D float32):** `dpos_x, dpos_y, dpos_z` (±0.05 m at ±1), `drot_x, drot_y,
   drot_z` (±0.5 rad axis-angle at ±1), `gripper` (−1 open, +1 close); bounds [−1, 1].
 - **Window tensors** (`collate`), with defaults T_o = 2 and T_p = 16 (per-run parameters):
@@ -156,6 +159,12 @@ can start.
 
 All JSON evidence is stamped `c69551f`, `dirty: false`. Prerequisite runs at `833277d`:
 setup OK, 4/4 hashes, 56/56 tests, smoke 21/21 (`logs/session1/prereq/`).
+
+The handoff review then made `build-data` refuse to overwrite committed artifacts and
+corrected two docstrings (`599e326`). This was re-verified at `599e326`
+(`logs/session1/post_599e326/`): lint clean, **124 passed** (the new write-protection
+test), `make build-data` wrote only the processed files, and `make check-data` PASS for both
+tasks. No data artifact changed.
 
 ## 6. Key findings
 - **KI-003 resolved.** The stored Can relative block equals robosuite's one-update-lag
@@ -203,8 +212,10 @@ MASTER_SPEC.md, docs/STATUS.md, docs/HANDOFF.md, docs/DECISIONS.md, docs/KNOWN_I
 docs/EXPERIMENT_LEDGER.md, docs/RESEARCH_PROTOCOL.md, docs/SIMULATOR_CONTRACT.md,
 docs/DATA_DICTIONARY.md, docs/DATA_PROVENANCE.md and reports/feasibility/STACK_REPORT.md,
 and inspect the actual repository/test state. Do not blindly trust prior handoff claims:
-first run `make setup`, `make download`, `make build-data`, `make check-data`, `make test`
-and `make smoke-sim SMOKE_OUT=logs/session2/prereq` and confirm they pass; run
+first run `make setup`, `make download`, `make check-data` (in-memory rebuild; writes
+nothing), `make build-data` (writes only the gitignored processed files, and refuses if the
+committed artifacts differ), then confirm `git status --short data/` is empty, then run
+`make test` and `make smoke-sim SMOKE_OUT=logs/session2/prereq` and confirm they pass; run
 git log --format=fuller -n 5 to confirm the verified commits and identity
 Zackary Holt <zackholt05@gmail.com>.
 

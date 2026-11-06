@@ -13,7 +13,9 @@ at `c69551f` (see `run_header.log` for the sequence and exit codes):
   image with read-only mounts (PASS);
 - `docker_linux_aarch64_check_data_cb9b6a3_FAIL.log`: the same check at `cb9b6a3`, where Can
   failed (KI-018);
-- `prereq/`: smoke-sim reports from the Session 1 prerequisite run at `833277d`.
+- `prereq/`: smoke-sim reports from the Session 1 prerequisite run at `833277d`;
+- `post_599e326/`: lint, `make test` (124 passed), `make build-data` and `make check-data`
+  re-run after the write-protection change. Only `docs/DECISIONS.md` was uncommitted then.
 
 The frames that `smoke_sim` and `verify_data` rendered (2 + 18 PNGs) were byte-identical to
 `reports/feasibility/frames/`, so they were deleted rather than committed twice (D-023). The

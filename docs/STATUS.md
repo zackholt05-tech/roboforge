@@ -4,9 +4,10 @@ CURRENT_SESSION: 1
 SESSION_STATUS: PASS            # canonical Lift/Can data pipeline; GO for Session 2
 NEXT_SESSION: 2
 BLOCKERS: none for Session 2    # open items carried forward: KI-001, KI-007, KI-013, KI-014, KI-016
-LAST_VERIFIED_COMMIT: c69551fc02f00841a05cbe2352539f1c6aca400c   # all Session 1 evidence regenerated from this clean tree
-# The commit after LAST_VERIFIED_COMMIT adds evidence (logs/session1, reports/data_audit*) and docs only.
-# Verify with: git diff c69551f HEAD -- src scripts configs tests data Makefile
+LAST_VERIFIED_COMMIT: 599e3267593698485ce734ae28cac62f2e539185   # lint, 124 tests, build-data, check-data re-run here
+EVIDENCE_COMMIT: c69551fc02f00841a05cbe2352539f1c6aca400c   # full evidence (smoke, verify-data, audit, Linux check)
+# Code changes c69551f -> 599e326: build-data write protection (--update-committed), docstrings,
+# one regression test. No data artifact changed. Verify: git diff c69551f 599e326 --stat
 RESOURCE_SPEND: {usd: 0.00, gpu_hours: 0, notes: "no remote compute used"}
 UPDATED: 2026-11-06
 ```
@@ -28,7 +29,7 @@ UPDATED: 2026-11-06
 | Transformed-data checksums; same source → identical splits/hashes | DONE on macOS arm64 and Linux aarch64 | `make check-data`; `logs/session1/docker_linux_aarch64_check_data.log` |
 | Dataset audit summaries + explorer figures | DONE | `reports/data_audit.json`, `reports/data_audit/*.png` |
 | `docs/DATA_DICTIONARY.md`, `docs/DATA_PROVENANCE.md` | DONE (dictionary generated) | `make audit-data` |
-| Tests: no future leakage, window boundaries, normalizer inversion, split determinism, one-batch forward pass on real data | DONE: 123 passed | `logs/session1/pytest.log` |
+| Tests: no future leakage, window boundaries, normalizer inversion, split determinism, one-batch forward pass on real data | DONE: 123 passed at `c69551f`, 124 at `599e326` | `logs/session1/pytest.log`, `logs/session1/post_599e326/` |
 | `make download`, `make verify-data` and inspection scripts pass on real Lift and Can | DONE | `logs/session1/verify_data.log` (12/12 integrity PASS, `check-data` PASS) |
 | Same observation spec for every model family | DONE (by construction: all data flows through `SequenceDataset`; T_o is per-run) | D-018, D-022 |
 | No training, no evaluator beyond data needs, no paid compute, no publication | DONE | — |

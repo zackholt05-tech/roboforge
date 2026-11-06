@@ -146,8 +146,10 @@ chooses the platform; a Linux image is preferred because it matches remote execu
 ### D-010 Observation features: one state → feature function (FIXED, Session 1; was DEFAULT)
 - **Decision:** every low-dim policy input is computed by `roboforge.data.features`. The
   input is the flattened MuJoCo state `[time, qpos, qvel]` and the compiled model;
-  `mj_kinematics` runs on a private scratch `MjData`, and robosuite's own formulas and
-  quaternion conventions are applied.
+  `mj_kinematics` runs on a private scratch `MjData`. Feature definitions and quaternion
+  conventions are robosuite's. `equal` features reproduce robosuite bitwise. The corrected
+  Can relative position is evaluated in float64 and agrees with robosuite's float32
+  formula to 1.4e-7 m (KI-018).
   - The processed-data builder uses it for dataset windows (`states[t]` of every demo).
   - Session 2's simulator adapter must use it after every `env.step`
     (`FeatureExtractor.from_sim`). Policies never consume robosuite's `env.step`
@@ -233,6 +235,9 @@ chooses the platform; a Linux image is preferred because it matches remote execu
     order. No timestamps.
   - Verification against the dataset runs in float64 *before* the cast. float32 is the
     precision the models consume.
+- **Write protection:** `make build-data` writes only the processed file, and only after
+  the rebuild equals the committed artifacts. Rewriting those needs
+  `scripts/build_data.py --update-committed` and a recorded decision.
 - **Committed artifacts** (no timestamps or absolute paths; self-hashed;
   byte-deterministic):
   - `data/manifests/tasks/<task>_ph.json`: the spec §4.4 task manifest: source, specs plus

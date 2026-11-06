@@ -34,7 +34,8 @@ make setup        # uv sync --frozen (Python 3.11 venv from uv.lock)
 make test         # unit + simulator tests; dataset tests skip if data absent
 make smoke-sim    # real Lift/Can reset/step/success/render, no dataset needed
 make download     # official Lift + Can PH datasets (~170 MB), SHA-256 verified
-make build-data   # processed Lift/Can features + committed split/normalization/task manifests
+make check-data   # rebuild the data pipeline in memory; must equal the committed manifests
+make build-data   # write the processed Lift/Can features (gitignored); refuses on any mismatch
 make verify-data  # HDF5 audit, obs/state alignment, replay of all demos, data determinism check
 make audit-data   # reports/data_audit.json, figures, docs/DATA_DICTIONARY.md
 ```

@@ -9,7 +9,8 @@ per second and samples per second. These are the host's numbers; training runs o
 **Inference latency** is measured on the platform running this script. Load the final
 checkpoint with the stated torch thread count, then:
 
-* collect the observations of a 400-step no-op episode from validation start 0;
+* collect the observations of a 400-step no-op episode from validation start 0
+  (``--max-decisions N`` keeps the first N);
 * time ``observe`` + ``act`` per decision (normalization, window build, forward), after a
   warm-up;
 * time the network forward alone.
@@ -114,6 +115,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--train-runs", type=Path, nargs="+", required=True)
     p.add_argument("--num-threads", type=int, default=1)
     p.add_argument("--repeats", type=int, default=3)
+    p.add_argument("--max-decisions", type=int, default=None,
+                   help="time only the first N frames' decisions per pass (default: all)")
     p.add_argument("--diffusion-samplers", nargs="*", default=[], metavar="NAME:STEPS",
                    help="extra reverse samplers to time on stochastic policies, e.g. ddpm:100")
     p.add_argument("--out-dir", type=Path, default=None)
@@ -128,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
         policy = LearnedPolicy.from_checkpoint(REPO_ROOT / last["path"], last["sha256"],
                                                num_threads=args.num_threads)
         task = tm["config"]["task"]
-        obs_cache.setdefault(task, observations(task))
+        obs_cache.setdefault(task, observations(task)[:args.max_decisions])
         state_id = load_suite(task, "validation")[0].state_id
         t = tm["timing"]
         steps, batch = tm["config"]["train"]["max_steps"], tm["config"]["train"]["batch_size"]

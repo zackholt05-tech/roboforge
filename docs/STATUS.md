@@ -1,43 +1,39 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 0
-SESSION_STATUS: PASS            # GO for Session 1; see reports/feasibility/STACK_REPORT.md §10
-NEXT_SESSION: 1
-BLOCKERS: none for Session 1    # non-blocking open items: KI-001 (x86_64/EGL), KI-003, KI-007, KI-008, KI-013
-LAST_VERIFIED_COMMIT: a9c67938b516915fc4a1244e5b188dd0ae358775   # macOS + Linux container evidence regenerated from this clean tree
-CODE_COMMIT: 590812e19fb38abe7633c3782cc0d0d6a2e26cc9   # adds scripts/compare_platform_evidence.py only; produced platform_comparison.json
-# evidence is committed in the commit after CODE_COMMIT; later Session 0 commits change docs only
-# verify with: git diff 590812e HEAD -- src scripts configs tests
+CURRENT_SESSION: 1
+SESSION_STATUS: PASS            # canonical Lift/Can data pipeline; GO for Session 2
+NEXT_SESSION: 2
+BLOCKERS: none for Session 2    # open items carried forward: KI-001, KI-007, KI-013, KI-014, KI-016
+LAST_VERIFIED_COMMIT: c69551fc02f00841a05cbe2352539f1c6aca400c   # all Session 1 evidence regenerated from this clean tree
+# The commit after LAST_VERIFIED_COMMIT adds evidence (logs/session1, reports/data_audit*) and docs only.
+# Verify with: git diff c69551f HEAD -- src scripts configs tests data Makefile
 RESOURCE_SPEND: {usd: 0.00, gpu_hours: 0, notes: "no remote compute used"}
-UPDATED: 2026-11-05
+UPDATED: 2026-11-06
 ```
 
 # RoboForge Status
 
-## Session 0 acceptance criteria (user brief §7 / MASTER_SPEC Session 0)
+## Session 1 acceptance criteria (MASTER_SPEC Session 1)
 | Criterion | Status | Evidence |
 |---|---|---|
-| Master spec reviewed in full | DONE | audit findings in DECISIONS.md / KNOWN_ISSUES.md |
-| Technical assumptions checked against authoritative sources | DONE | upstream source at pinned commits, PyPI/GitHub/HF APIs, Modal docs (D-001…D-005) |
-| Compatible dependency stack selected | DONE | `pyproject.toml`, `uv.lock`; STACK_REPORT §1 |
-| Datasets investigated, accessibility documented | DONE | DATA_PROVENANCE.md; Lift + Can downloaded, Square metadata |
-| Dataset structure inspected programmatically | DONE | `reports/feasibility/data_report_*.json` |
-| Simulation environment tested | DONE (macOS arm64; Linux aarch64 container) | `smoke_sim_*.json`, `linux_aarch64_osmesa/` |
-| Minimal rollout attempted | DONE | random closed-loop + 400 demo replays |
-| Rendering tested | DONE on macOS (CGL) and Linux aarch64 (OSMesa, Docker); x86_64 and EGL unverified | frames/, `linux_aarch64_osmesa/frames/`; KI-001 |
-| Repository structure established | DONE | README layout |
-| Automated tests + reproducible setup | DONE | `make setup/test/smoke-sim/download/verify-data` |
-| Research and evaluation conventions documented | DONE (DRAFT) | RESEARCH_PROTOCOL.md |
-| Modal training architecture proposed | DONE (proposal, nothing executed) | COMPUTE_PLAN.md |
-| Git configuration and authorship verified | DONE | DECISIONS D-012; commit metadata in HANDOFF.md |
-| Handoff prepared | DONE | HANDOFF.md |
+| Prerequisites re-verified (`make setup/download/test/smoke-sim`) | DONE | `logs/session1/prereq/`, EXPERIMENT_LEDGER E1-01 |
+| Fetcher: resumable downloads, integrity checks, no re-download of verified files | DONE | `src/roboforge/data/fetch.py`; `tests/unit/test_fetch_resume.py` (7 tests) |
+| Typed `TaskSpec` / `ActionSpec` / `ObservationSpec` read from the actual HDF5 | DONE | `src/roboforge/data/specs.py`; `data/manifests/tasks/*.json` |
+| KI-003 resolved: one state→feature function for dataset windows and closed-loop eval | DONE | D-010; `src/roboforge/data/features.py`; `tests/simulator/test_features_closed_loop.py` |
+| Features equal robosuite on Lift (all) and Can world-frame/robot blocks | DONE: max \|Δ\| 0.0 on all 400 demos | `reports/data_audit.json` → `feature_vs_dataset_max_abs` |
+| Erroneous or missing episodes flagged, never deleted | DONE (0 flagged) | `src/roboforge/data/sanity.py`; split manifests `flagged: {}` |
+| Deterministic episode-level split manifests (upstream masks, all IDs) | DONE | D-019; `data/splits/{lift,can}_ph.json` |
+| Window sampler with T_o/T_p and padding masks | DONE | D-022; `src/roboforge/data/sequence.py` |
+| Train-only reversible normalization, saved stats + hashes | DONE | D-020; `data/normalization/*.json` |
+| Transformed-data checksums; same source → identical splits/hashes | DONE on macOS arm64 and Linux aarch64 | `make check-data`; `logs/session1/docker_linux_aarch64_check_data.log` |
+| Dataset audit summaries + explorer figures | DONE | `reports/data_audit.json`, `reports/data_audit/*.png` |
+| `docs/DATA_DICTIONARY.md`, `docs/DATA_PROVENANCE.md` | DONE (dictionary generated) | `make audit-data` |
+| Tests: no future leakage, window boundaries, normalizer inversion, split determinism, one-batch forward pass on real data | DONE: 123 passed | `logs/session1/pytest.log` |
+| `make download`, `make verify-data` and inspection scripts pass on real Lift and Can | DONE | `logs/session1/verify_data.log` (12/12 integrity PASS, `check-data` PASS) |
+| Same observation spec for every model family | DONE (by construction: all data flows through `SequenceDataset`; T_o is per-run) | D-018, D-022 |
+| No training, no evaluator beyond data needs, no paid compute, no publication | DONE | — |
 
 ## Owner decisions pending
-1. Confirm after a Claude Code restart that the plugin hooks are off (KI-007).
-2. Optional: prune the Docker build cache (27.5 GB reclaimable) if disk space is needed
-   (KI-008).
-
-Decided or done with owner approval (2026-11-05):
-- License: Apache-2.0 (D-013; `LICENSE`, `NOTICE`).
-- Docker Desktop restarted (storage repaired, Linux check completed).
-- Scratch `venv330` deleted.
+1. Optional: prune the Docker build cache (27.5 GB reclaimable at Session 0) if disk space
+   is needed (KI-008; 33 GB free at Session 1 start).
+2. Nothing else is needed for Session 2.

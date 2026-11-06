@@ -35,8 +35,24 @@ live under `$ROBOFORGE_DATA_ROOT/raw/robomimic_v1.5/` (gitignored, never redistr
 - Observations recomputed from `states[t]` in the pinned simulator equal stored `obs[t]`
   exactly, except Can's lagged relative blocks (KI-003).
 - The raw files also contain teleoperation logs (`controller_info`, `user_info`,
-  `interventions`). These are unused.
+  `interventions`, `policy_acting`, `user_acting`). These are unused. They contain no
+  operator identity: a single channel `'0'` per demo, 0 intervention steps and 0
+  policy-acting steps (Session 1 audit).
 
-## Derived data
-None yet. Session 1 creates `data/processed/` and `data/splits/` with their own hashes and
-converter versions.
+## Derived data (Session 1)
+Built by `make build-data` (`scripts/build_data.py`, converter `lowdim_v1`) from the hash-verified
+`low_dim` files only. Each derived artifact records its source SHA-256 and its own content hash:
+
+| Artifact | Location | Committed | Lift SHA-256 | Can SHA-256 |
+|---|---|---|---|---|
+| Processed features (float32 obs/actions/rewards/dones) | `$ROBOFORGE_DATA_ROOT/processed/robomimic_v1.5_ph/<task>/lowdim_v1.hdf5` | no (gitignored) | `74e70119993830798c8b4ed87f202f64d8d2c9d573c0f376d54c4130e52d63c8` | `e6055a6f066f53b987ed27a7b5894f20ec7053fc9cdf3222b4ad79ed3834ea7b` |
+| Split manifest | `data/splits/<task>_ph.json` | yes | `73097265526c03dfb7535aa9bff50aadd285cbfb554e563636d66395909c331e` | `743779b0ad9cacd5bab85a74421f6fba4ace5e980f5979a4a3534c82f042b46f` |
+| Normalization stats | `data/normalization/<task>_ph_lowdim_v1.json` | yes | `253bfc7e63570bf3e8f8646a0094d1da4c5b729ba8f463b4955f01410b4812d6` | `e0437cd7b8e48403366d19f7b0e6116e2224723b8a5240b2d7ba008403b3228d` |
+| Task manifest (spec §4.4) | `data/manifests/tasks/<task>_ph.json` | yes | `2ac6070d18cc53f565ec11e67e01f6b5a91de7e268df6a491590b0e45f0528ac` | `d8f85ecea43c0e616162079757598af6b06c0edd8f03a3c563c08b06dea47162` |
+
+- Hashes are of canonical content (no timestamps or paths). `make check-data` rebuilds
+  everything and requires equality. Verified bit-identical on macOS arm64 and Linux aarch64
+  (KI-018); linux/x86_64 unverified.
+- Statistics and features computed from the data are derived works of MIT-licensed
+  datasets. The processed HDF5 files are not redistributed; they are rebuilt locally.
+- Column meanings: `docs/DATA_DICTIONARY.md`. Audit: `reports/data_audit.json`.

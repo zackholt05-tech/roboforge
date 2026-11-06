@@ -1,7 +1,7 @@
-# Research Protocol — DRAFT (Session 0)
+# Research Protocol — DRAFT (Sessions 0–1)
 
 > **Status: DRAFT. Not frozen.** This document fixes the conventions established in
-> Session 0. It marks every item as **ESTABLISHED** (backed by Session 0 evidence or a
+> Sessions 0 and 1. It marks every item as **ESTABLISHED** (backed by Session 0 evidence or a
 > spec requirement) or **TO FINALIZE (Session N)**. It must be completed and committed in
 > Session 3, before any reported runs. It becomes binding for the final test only through
 > `docs/FINAL_TEST_FREEZE.md` (Session 7). No results exist yet.
@@ -30,10 +30,10 @@ outcome.
 | Secondary task | robosuite `PickPlaceCan`, robomimic PH, 200 demos, 82–151 steps (mean 116.0), 23,207 samples | ESTABLISHED (data + sim verified) |
 | Robot / control | Panda, OSC_POSE delta controller, 20 Hz control (25 physics substeps of 2 ms) | ESTABLISHED (dataset `env_args`) |
 | Action | 7-D in [−1, 1]: Δposition (scaled to ±0.05 m), Δorientation axis-angle (±0.5 rad), gripper (−1 open / +1 close; data values exactly ±1) | ESTABLISHED (data + `env.action_spec`) |
-| Level 1 state observation (Lift) | `robot0_eef_pos`(3), `robot0_eef_quat`(4, xyzw), `robot0_gripper_qpos`(2), `object`(10 = cube pos, cube quat, gripper→cube) = 19-D | DEFAULT; TO FINALIZE (Session 1) |
-| Level 1 state observation (Can) | same robot keys + Can pose features computed from MuJoCo state (KI-003 / D-010) | TO FINALIZE (Session 1) |
+| Level 1 state observation (Lift) | `robot0_eef_pos`(3), `robot0_eef_quat`(4, xyzw), `robot0_gripper_qpos`(2), `cube_pos`(3), `cube_quat`(4), `gripper_to_cube_pos`(3) = 19-D; equal to robomimic's `object` key | ESTABLISHED (Session 1, D-018; spec hash in `data/manifests/tasks/lift_ph.json`) |
+| Level 1 state observation (Can) | same robot keys + `Can_to_robot0_eef_pos`(3, recomputed same-step) + `Can_pos`(3) + `Can_quat`(4) = 19-D. The lagged relative quaternion is dropped, so this is **not** robomimic's default 23-D Can input (KI-003, D-010) | ESTABLISHED (Session 1, D-010/D-018) |
 | Privilege | State observations include exact simulator object poses = **privileged**. Results must say so and never be compared causally with RGB-only results. | ESTABLISHED |
-| Operator metadata | None in the HDF5 files. robomimic describes PH as collected by a proficient operator; verify against the paper. Make no held-out-operator claims. | TO FINALIZE (Session 1) |
+| Operator metadata | None: the raw `user_info` holds one teleoperation channel `'0'` in every demo, with no identity, no interventions and no policy-acting steps (`reports/data_audit.json`). No held-out-operator claims. | ESTABLISHED (Session 1) |
 
 ## 4. Demonstration split (leakage prevention)
 - **ESTABLISHED:**
@@ -41,12 +41,15 @@ outcome.
   - Normalization is fit on the training episodes only.
   - Policy inputs come only from `obs`, never `next_obs`.
   - Observations at index > t never enter a decision at t (tested).
-- **DEFAULT, to finalize in Session 1:**
-  - Use robomimic's upstream `mask/train` (180) and `mask/valid` (20) episode lists. They
-    are disjoint, documented, identical in `low_dim` and `raw`, and comparable with prior
-    work.
-  - Alternative: a deterministic SHA-256 hash split with a seed locked in config.
-  - Record whichever is chosen, with all episode IDs, in `data/splits/`.
+- **ESTABLISHED (Session 1, D-019):** robomimic's upstream `mask/train` (180) and
+  `mask/valid` (20) episode lists, with all IDs in `data/splits/{lift,can}_ph.json`. The
+  two tasks use identical ID lists.
+- **ESTABLISHED (Session 1, D-020):** per-dimension min-max to [−1, 1] for observations
+  and actions, fit on per-step arrays of the training episodes only
+  (`data/normalization/`). Model actions are decoded by inverting it and clipping to
+  [−1, 1].
+- **ESTABLISHED (Session 1, D-022):** windows give one decision per step, with padding
+  masks. T_o = 2 and T_p = 16 are defaults, recorded per run.
 - Validation demos support offline loss curves only. **Model selection uses closed-loop
   validation rollouts** (§6).
 
@@ -115,6 +118,8 @@ outcome.
 - One operator-quality tier (PH) and 200 demos per task.
 - Narrow Lift initial distribution (KI-011).
 - Imperfect replay fidelity (KI-004).
-- Can relative-pose sensor artifact in upstream observations (KI-003).
+- Can relative-pose sensor artifact in upstream observations (KI-003). RoboForge
+  corrects it (D-010), so its 19-D Can input differs from robomimic's 23-D default and
+  is not directly comparable with published robomimic Can numbers.
 - v1.5 datasets ≠ CoRL 2021 benchmark (KI-012).
 - Limited tuning budget; compute and cost constraints.

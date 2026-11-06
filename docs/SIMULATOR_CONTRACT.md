@@ -45,6 +45,16 @@ Backend: `MUJOCO_GL=cgl` on macOS (verified), `osmesa` on Linux aarch64 (verifie
 `env.sim.reset()` → `set_state_from_flattened(state)` → `sim.forward()`. Read-back equals
 the target exactly. This mirrors robomimic `EnvRobosuite.reset_to` for robosuite ≥ 1.4.
 
+## Observation contract (Session 1, D-010)
+- Policy observations come from `roboforge.data.features.FeatureExtractor.from_sim`, a
+  pure function of the flattened state (scratch `MjData` + `mj_kinematics`). They never
+  come from `env.step`'s observations, which are one physics substep stale (KI-015) and,
+  for Can, one update lagged (KI-003).
+- `robot0_eef_pos` is the `gripper0_right_grip_site` position; `robot0_eef_quat` is the
+  `robot0_right_hand` body orientation (xyzw).
+- robosuite's default models add two non-colliding mocap markers that the dataset XMLs
+  lack (KI-014). A model recompiled from `get_xml()` differs at about 1e-7 (KI-016).
+
 ## Open items (Session 2)
 - `RoboForgeEnv` adapter per spec §4.1.
 - Serialized eval-state suites.

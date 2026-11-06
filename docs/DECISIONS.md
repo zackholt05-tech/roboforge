@@ -77,7 +77,7 @@ are generated from the HDF5 metadata, and a test asserts they still match it.
 - Object metrics are restricted to the task object, because PickPlace's three inactive
   objects sit at (10, 10, 10) and free-fall.
 
-### D-010 Observation features for Can (DEFAULT for Session 1)
+### D-010 Observation features for Can (DEFAULT for Session 1 — superseded: FIXED in Session 1, see below)
 robosuite's `Can_to_robot0_eef_pos/quat` blocks are lagged by one observation update and
 wrong at t=0 (KI-003). Default: RoboForge computes all low-dimensional policy inputs from
 the MuJoCo state with **one function used for both dataset windows and closed-loop
@@ -129,7 +129,8 @@ State-based Level 1 evaluation needs no rendering, and MuJoCo stepping is CPU-bo
 benchmarks show it is needed. See `docs/COMPUTE_PLAN.md`.
 
 ### D-016 Repository layout (FIXED)
-The spec's functional boundaries are kept. Packages (`models`, `train`, `eval`, `viz`,
+Session 1 extends it with `configs/data/`, `data/splits/`, `data/normalization/` and
+`data/manifests/tasks/` (D-021). The spec's functional boundaries are kept. Packages (`models`, `train`, `eval`, `viz`,
 `compute`) exist only as documented boundaries until their session. CLIs live in `scripts/`,
 and Make targets exist only where a working command exists (spec §6.5).
 
@@ -139,3 +140,135 @@ Default: all rollouts that enter one comparison (every algorithm, seed and initi
 run on the same platform and container image. The platform is recorded in each run
 manifest, and results from different platforms are never pooled in one table. Session 2
 chooses the platform; a Linux image is preferred because it matches remote execution.
+
+## Session 1 (2026-11-06)
+
+### D-010 Observation features: one state → feature function (FIXED, Session 1; was DEFAULT)
+- **Decision:** every low-dim policy input is computed by `roboforge.data.features`. The
+  input is the flattened MuJoCo state `[time, qpos, qvel]` and the compiled model;
+  `mj_kinematics` runs on a private scratch `MjData`, and robosuite's own formulas and
+  quaternion conventions are applied.
+  - The processed-data builder uses it for dataset windows (`states[t]` of every demo).
+  - Session 2's simulator adapter must use it after every `env.step`
+    (`FeatureExtractor.from_sim`). Policies never consume robosuite's `env.step`
+    observations (KI-015).
+- **Can:** the relative position `Can_to_robot0_eef_pos` is recomputed from same-step poses.
+  The relative quaternion `Can_to_robot0_eef_quat` is **dropped**, because:
+  1. it is a deterministic function of `robot0_eef_quat` and `Can_quat`, which are both kept;
+  2. robosuite's `mat2quat` forces w ≥ 0, so the block jumps sign 598 times in the stored
+     data, and 446 times even when recomputed from same-step poses
+     (`reports/data_audit.json` → `quaternions`);
+  3. a continuous re-encoding would be a new representation that neither robosuite nor
+     robomimic uses.
+- **Evidence (all 400 demos, `make check-data` / `reports/data_audit.json`):**
+  - Every Lift feature, and Can's robot and world-frame blocks, equal the stored robomimic
+    obs exactly (max |Δ| 0.0).
+  - The corrected Can block is evaluated in float64 from MuJoCo's rotation matrix
+    (`xmat`). It equals an independent float64 evaluation on the stored same-step poses to
+    7.2e-16. It matches robosuite's own formula, which uses a float32 rotation matrix
+    (KI-018), to 1.4e-7 m, and robosuite's observation with current kinematics and a fresh
+    cache to 1.1e-7 m (closed loop, 5 demos).
+  - The stored block equals robosuite's one-update-lag formula to 2.2e-16 on macOS
+    (1.4e-7 on Linux, again the float32 path) and is wrong by up to 0.861 m at t = 0 and
+    0.091 m at t > 0.
+  - After `env.step`, live features equal those of the same state restored in a fresh
+    simulator, bitwise. Computing them leaves the rollout bitwise unchanged
+    (`tests/simulator/test_features_closed_loop.py`).
+- **Consequence:** the Can input is 19-D, not robomimic's default 23-D (`object` 14-D). Can
+  numbers are therefore not directly comparable with robomimic Can results that used the
+  `object` key, which also inherited the lag.
+
+### D-018 Canonical Level 1 observation spec (FIXED for the Level 1 core comparison)
+- **Features** (`configs/data/{lift,can}.yaml`): robomimic's standard low-dim key set
+  (`robot0_eef_pos` 3, `robot0_eef_quat` 4, `robot0_gripper_qpos` 2, then the `object`
+  blocks), with KI-003 handled (D-010). No joint positions or velocities.
+  - Lift (19-D): `cube_pos` 3, `cube_quat` 4, `gripper_to_cube_pos` 3.
+  - Can (19-D): `Can_to_robot0_eef_pos` 3, `Can_pos` 3, `Can_quat` 4.
+- **Why:** this is the input set robomimic and Diffusion Policy use for these tasks, so
+  results stay interpretable against reference implementations. It is minimal, and every
+  block except the corrected one is robosuite-identical.
+- **Quaternions** stay raw `xyzw`, as in robosuite. They are continuous within episodes
+  (0 sign flips) but ambiguous across episodes (KI-017).
+- **Privilege:** object features are exact simulator state, so the spec is **privileged**.
+- **Scope:** the observation spec is the per-step contract only. History length T_o is a
+  per-run parameter (D-022), so one-frame BC, BC-RNN and diffusion share one spec hash.
+- **Change control:** a different feature set needs a new `converter_version` and gives a
+  new spec hash. Any representation ablation is a separately labeled experiment.
+- **Hashes:** Lift `dfbd868e…a7721`, Can `71e89629…5b71c` (full values in
+  `data/manifests/tasks/*.json`).
+
+### D-019 Episode split: robomimic upstream masks (FIXED)
+- **Split:** `mask/train` (180) and `mask/valid` (20), stored with every ID sorted
+  numerically in `data/splits/{lift,can}_ph.json` with a self-hash.
+- **The two tasks have identical ID lists.** Valid = `demo_0, 5, 14, 21, 27, 32, 36, 44, 56,
+  93, 103, 105, 111, 125, 131, 155, 168, 176, 180, 191`; train = the other 180.
+- **Why:** this is Session 0's documented default. The masks are disjoint, identical in
+  `low_dim` and `raw`, and used by prior work. No hash split was needed.
+- **No operator partition is possible:** the raw `user_info` holds one teleoperation
+  channel `'0'` in every demo and no identity.
+- **Use:** validation demos give offline losses only. There is no demonstration test split;
+  final tests use held-out simulator initial states (RESEARCH_PROTOCOL §5).
+- Flagged episodes would be listed, never removed. None were flagged.
+- **Hashes:** Lift `73097265…9c331e`, Can `743779b0…b042b46f`.
+
+### D-020 Normalization: train-only per-dimension min-max to [−1, 1] (DEFAULT for Sessions 3–4; identical for all families)
+- **Method:** Diffusion Policy's `limits` semantics (re-implemented) for observations and
+  actions. `range_eps = 1e-4`; dimensions below it get scale 1 (none occur). Statistics come
+  from per-step arrays of the 180 training episodes, never from windows.
+- **Decoding** model actions: unnormalize, then clip to the action bounds [−1, 1], and
+  record clip events (`ActionCodec`).
+- **Effects:**
+  - The binary gripper maps to itself.
+  - Rotation deltas are stretched (Lift scales up to 7.4×).
+  - Validation observations reach up to 1.18 in normalized units (Lift eef y). They are not
+    clipped.
+- **Alternatives:** z-score is implemented and tested for a possible ablation. Changing the
+  mode must be decided and recorded before training.
+- **Hashes:** Lift `253bfc7e…4812d6`, Can `e0437cd7…b3228d`.
+
+### D-021 Processed dataset and committed data artifacts (FIXED)
+- **Processed files:** `$ROBOFORGE_DATA_ROOT/processed/robomimic_v1.5_ph/<task>/lowdim_v1.hdf5`
+  (gitignored) hold float32 `obs`, `actions`, `rewards` and uint8 `dones` per demo.
+  - Content hash: SHA-256 over (demo, array name, dtype, shape, bytes) in numeric demo
+    order. No timestamps.
+  - Verification against the dataset runs in float64 *before* the cast. float32 is the
+    precision the models consume.
+- **Committed artifacts** (no timestamps or absolute paths; self-hashed;
+  byte-deterministic):
+  - `data/manifests/tasks/<task>_ph.json`: the spec §4.4 task manifest: source, specs plus
+    hashes, every episode ID, length and split, and hash references to the split,
+    normalization and processed content;
+  - `data/splits/<task>_ph.json`;
+  - `data/normalization/<task>_ph_lowdim_v1.json`.
+- **Determinism checks:**
+  - `make check-data` rebuilds in memory and fails on any difference. It passed twice on
+    macOS, and a rebuild was byte-identical.
+  - `SequenceDataset.from_committed` refuses a processed file whose hash differs.
+- **Layout (extends D-016):** `configs/data/`, `data/splits/`, `data/normalization/`,
+  `data/manifests/tasks/`.
+- **Cross-platform:** `make check-data` passes for both tasks on macOS arm64 and in the
+  Linux aarch64 image (`roboforge-sim-cpu:session0`, OSMesa). The processed content,
+  split, normalization and task manifests are bit-identical
+  (`logs/session1/docker_linux_aarch64_check_data.log`). This needed the float64 Can
+  feature (KI-018); linux/x86_64 is unverified (KI-001).
+
+### D-022 Window semantics (FIXED) and default horizons (DEFAULT)
+- **Windows:** one per decision step `t` of every split episode.
+  - `obs_history[k] = obs[clip(t−T_o+1+k)]`: before the start, the first observation is
+    repeated with `obs_valid = False`.
+  - `future_action[k] = actions[t+k]`: after the end, the last action is repeated with
+    `valid_mask = False`, and losses must mask these steps.
+  - Observations at indices > t are never read (tested on synthetic and real data).
+- **Default horizons:** T_o = 2, T_p = 16, the MASTER_SPEC §4.3 defaults. They are per-run
+  parameters (`SequenceDataset.from_committed(obs_horizon=…, pred_horizon=…)`), recorded in
+  each run manifest. T_a is a control-loop setting (Session 2/4).
+- **Measured padding:** with T_p = 16, 31 % of Lift training windows and 13 % of Can
+  windows contain padded actions, because Lift demos are short (36–64 steps).
+- The Session 0 raw-obs loader (`LowDimWindowDataset`) was removed. For Can it would have
+  fed the lagged block to a policy.
+
+### D-023 Session 1 evidence location (FIXED)
+Session 1 command outputs go under `logs/session1/` (Make variables `VERIFY_OUT` and
+`SMOKE_OUT`), so Session 0's evidence in `reports/feasibility/` keeps the commit it was
+generated from. Re-rendered `verify_data` frames that are byte-identical to Session 0's
+are not committed again; the comparison is recorded in the ledger.

@@ -7,17 +7,22 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 |---|---|---|---|
 | KI-001 | LOW | PARTIAL | Linux aarch64 OSMesa verified; x86_64 install and EGL unverified |
 | KI-002 | HIGH | MITIGATED | robosuite seeding does not control reset randomness |
-| KI-003 | HIGH | OPEN (Session 1) | Can relative-pose observations are lagged / wrong at t=0 |
+| KI-003 | HIGH | RESOLVED (Session 1) | Can relative-pose observations are lagged / wrong at t=0 |
 | KI-004 | MEDIUM | ACCEPTED | Open-loop demo replay is not exact |
 | KI-005 | HIGH | MITIGATED | Latest mujoco breaks robosuite v1.5.1 |
 | KI-006 | LOW | MITIGATED | egl_probe does not build on macOS |
-| KI-007 | MEDIUM | PENDING RESTART | Local Claude Code plugin hooks blocked legitimate commands |
+| KI-007 | MEDIUM | PARTIAL | Local Claude Code plugin hooks blocked legitimate commands |
 | KI-008 | MEDIUM | OPEN | Local disk nearly full (Docker storage repaired) |
 | KI-009 | LOW | OPEN | Evidence files contain absolute local paths |
 | KI-010 | LOW | OPEN | Docker sim image is 8.7 GB |
 | KI-011 | MEDIUM | OPEN | Lift's initial-state distribution is narrow |
 | KI-012 | LOW | ACCEPTED | Repackaged v1.5 datasets ≠ CoRL 2021 numbers |
 | KI-013 | MEDIUM | OPEN (Session 2) | Physics is not bit-identical across platforms |
+| KI-014 | MEDIUM | OPEN (Session 2) | robosuite default models carry 2 mocap markers absent from dataset models |
+| KI-015 | HIGH | MITIGATED | robosuite `env.step` observations are one physics substep stale |
+| KI-016 | MEDIUM | OPEN (Session 2) | `get_xml()` round trip changes the model at ~1e-7 |
+| KI-017 | LOW | ACCEPTED | Quaternion inputs are ambiguous in sign across episodes |
+| KI-018 | MEDIUM | RESOLVED (aarch64) | robosuite `quat2mat` is float32 and platform-dependent |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 and EGL not
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -70,8 +75,16 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 - **Impact:** policies using robomimic's default Can `object` key see a lagged, partially
   corrupted feature in both training and evaluation. Any comparison with published robomimic
   Can numbers inherits this.
-- **Action (Session 1):** implement D-010 (one state→feature function for train and eval),
-  or drop dims 0–6; apply identically to all models.
+- **Resolution (Session 1, D-010):**
+  - `roboforge.data.features` computes every policy input from the MuJoCo state, for
+    dataset windows and for closed-loop evaluation alike.
+  - `Can_to_robot0_eef_pos` is recomputed from same-step poses, in float64 (KI-018).
+  - `Can_to_robot0_eef_quat` is dropped.
+  - Across all 200 Can demos, the stored block equals robosuite's one-update-lag formula to
+    2.2e-16 and differs from the corrected feature by up to 0.861 m at t = 0 and 0.091 m at
+    t > 0 (`reports/data_audit.json` → `ki003_correction`).
+  - The Session 0 raw-obs loader, which would have fed the lagged block to a policy, was
+    removed.
 
 ### KI-004 — Open-loop demo replay is not exact
 State restore is exact (0.0). Replaying recorded actions from `states[0]` diverges because
@@ -104,6 +117,10 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
   `~/.claude/settings.json`. The owner disabled `cto-toolkit@synced`.
 - **Verify after restart:** creating a file with a training step is no longer blocked
   (required in Session 3).
+- **Session 1 probe:** after the restart, writing a file containing `loss.backward()` and
+  `optimizer.step()` was not blocked. The file was in the session scratchpad, outside the
+  repository; Session 3 must re-check inside the repository. The SessionStart hook still
+  injects ml-pipeline guard instructions. Nothing from them was added to the repository.
 
 ### KI-008 — Local disk nearly full; Docker storage corrupted
 - The disk had 55 GB free at session start; it filled during the Docker image export.
@@ -113,6 +130,7 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
   restart; it is healthy since.
 - `docker system df` afterwards: images 46 GB (the RoboForge image is 25.6 GB unpacked),
   build cache 27.5 GB reclaimable. Pruning is an owner decision.
+- Session 1 start: 33 GB free. The processed Session 1 data add < 10 MB.
 - RGB extraction (Session 8) needs ~0.5–1.5 GB per task at 84×84. Checkpoints and rollouts
   need more. Monitor `df -h` before heavy steps.
 
@@ -155,3 +173,71 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Action (Session 2, D-017):** run every rollout in one comparison on one pinned platform
   and image, record it in each run manifest, and never mix platforms within a results
   table.
+
+### KI-014 — robosuite's default models carry two mocap markers the dataset models lack
+- In robosuite 1.5.1, `robosuite.make` builds models with two extra mocap bodies,
+  `left_eef_target` and `right_eef_target`. Each has a box and a sphere geom with
+  `contype = conaffinity = 0`, and the model has no equality constraints.
+- The dataset `model_file` XMLs do not contain them:
+  - Can: default model nbody 34, ngeom 126, nmocap 2;
+  - dataset model nbody 32, ngeom 122, nmocap 0;
+  - nq, nv, nu and the timestep are equal.
+- Expected physics effect: none (no contacts, no welds). They may be visible in renders.
+- The feature function rejects any feature whose body chain contains a mocap body; no
+  current feature does (`features.py`).
+- **Action (Session 2):** decide whether evaluation initial states are compiled from the
+  default robosuite model or from a dataset-style XML. Verify that dynamics match the
+  dataset model on short rollouts, and check renders for the markers.
+
+### KI-015 — robosuite `env.step` observations are one physics substep stale
+- robosuite's `step` runs `sim.forward()`, the controller and `mj_step`, then reads
+  observables. MuJoCo computes kinematics *before* integrating, so the returned
+  observations describe the state 2 ms before the returned `sim` state.
+- The robomimic v1.5 dataset observations were regenerated from saved states and are not
+  stale.
+- **Measured** (`reports/data_audit.json`, 5 replayed training demos per task), max
+  |`env.step` obs − canonical feature|:
+  - Lift: `robot0_eef_pos` 5.0e-4 m, `cube_quat` 3.1e-3;
+  - Can: `robot0_eef_pos` 5.8e-4 m, `Can_quat` 7.3e-3, `Can_to_robot0_eef_pos` 0.855 m
+    (the KI-003 artifact after a restore).
+- With current kinematics and a fresh cache, robosuite equals the canonical features exactly,
+  except the corrected Can relative position, which agrees to 1.1e-7 m (robosuite's float32
+  rotation, KI-018).
+- **Mitigation:** policies consume only `FeatureExtractor.from_sim` (D-010), which is a pure
+  function of the state. The Session 2 adapter must not pass `env.step` observations to
+  policies.
+
+### KI-016 — `MjModel.get_xml()` round trip changes the model at ~1e-7
+- Re-serializing a compiled robosuite model with `sim.model.get_xml()` and recompiling it
+  gives a slightly different model.
+- Features of the same state differed by up to 1.1e-7 (eef quaternion) between the original
+  and the recompiled model (found while writing `test_features_closed_loop.py`).
+- **Action (Session 2):** serialized evaluation states must store the exact XML string that
+  was compiled. Every comparison must load that string; never a re-serialization.
+
+### KI-017 — Quaternion inputs are continuous within episodes but ambiguous across them
+- All quaternion inputs have 0 within-episode sign flips (`reports/data_audit.json`).
+- Across episodes, `q` and `−q` both occur:
+  - Lift `cube_quat` w spans −1 to 1, because yaw is random and the cube has 90° symmetry.
+  - `robot0_eef_quat` sits near w ≈ 0 (x ≈ 1), with w < 0 in about half the steps.
+- This is robosuite's standard representation, and every model family gets the same input
+  (D-018).
+- A continuous-rotation ablation would be a separately labeled experiment.
+
+### KI-018 — robosuite's `quat2mat` is float32 and platform-dependent
+- `robosuite.utils.transform_utils.quat2mat` casts quaternions to float32
+  (`astype(np.float32)`) and is numba-compiled.
+- **Found:** at `cb9b6a3` the corrected Can relative position used robosuite's formula. In
+  the Linux aarch64 image the Can processed content hash and normalization hash then
+  differed from macOS, while Lift (which has no rotation-dependent feature) matched
+  bit-for-bit. The stored-vs-lag residual was 1.4e-7 on Linux against 2.2e-16 on macOS
+  (`logs/session1/docker_linux_aarch64_check_data_cb9b6a3_FAIL.log`).
+- **Resolution (`c69551f`):** `pos_in_eef_frame` is evaluated in float64 from MuJoCo's
+  `xmat`. It matches robosuite's float32 formula to 1.4e-7 m by design. `make check-data`
+  now passes for both tasks on macOS arm64 and Linux aarch64
+  (`logs/session1/docker_linux_aarch64_check_data.log`).
+- **Still open:** linux/x86_64 (Modal) is unverified (KI-001). Until it is checked, copy the
+  hash-verified processed file to remote storage instead of rebuilding it there;
+  `SequenceDataset.from_committed` refuses a mismatching file.
+- **Rule for later sessions:** never use robosuite's transform helpers to compute policy
+  inputs or evaluation metrics that need more than float32 precision.

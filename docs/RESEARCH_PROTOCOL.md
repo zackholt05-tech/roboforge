@@ -277,3 +277,4 @@ unbiased estimate.
 | Date | Section | Change | Reason | Runs affected |
 |---|---|---|---|---|
 | 2026-11-06 | all | v1 finalized from the Session 0–2 draft | Session 3 requirement: finalize before any reported run | none (no reported run existed) |
+| 2026-11-06 | §6.3 | The Session 3 BC-MLP-chunk Lift pilot also counts as **trial 1 of BC-MLP-chunk** on Lift | It was run and reported alongside the BC-MLP and BC-RNN pilots; every reported run must count against its family's tuning budget | accounting only: no rule or result changes |

@@ -532,3 +532,124 @@ code commit `283a811`.
   regenerated; summaries and hashes are committed in the reports.
 - The evidence was regenerated from the clean code commit `283a811`. Each JSON carries its
   git SHA, dirty flag and platform.
+
+## Session 3 (2026-11-06)
+Evidence: `reports/session3/` and `logs/session3/` (D-038). The protocol was committed first
+(`8b08b95`), then the code (`969e14f`). Every training run and validation evaluation ran from
+the clean `969e14f`. Diagnostics, cost and some equivalence reports ran from the clean
+`a37b92d`, which changes only the Makefile and `scripts/diagnose_actions.py`.
+
+### Research protocol v1 (FIXED for model development)
+`docs/RESEARCH_PROTOCOL.md` was finalized and committed at `8b08b95`, before any reported
+training or evaluation run. It fixes:
+- each hypothesis's comparison;
+- primary configurations and matched budgets;
+- the checkpoint-selection rule (§7);
+- the paired schedule and the bootstrap plan (§9).
+
+Diffusion items are TO FINALIZE (Session 4), by dated amendment only.
+
+### D-032 Rollout `observe` hook (FIXED)
+- `run_episode` calls `policy.observe(obs)`, if the policy defines it:
+  - with frame 0's observation after the reset;
+  - with every new frame's observation right after each executed action, including actions
+    inside a chunk.
+- An exception in the hook is a recorded error.
+- **Why:** a chunked policy with an observation history (T_o = 2, T_a = 8) must see the frames
+  it does not decide at. The Session 2 runner passed only the decision frame.
+- **Physics unaffected:**
+  - the hook only feeds the policy;
+  - sanity policies do not define it;
+  - re-running the Session 2 random and no-op episodes on the canonical container reproduces
+    their recorded `physics_sha256` (`scripts/check_checkpoint_equivalence.py`, check E).
+
+### D-033 BC families and primary configurations (DEFAULT, Session 3; tuning per RESEARCH_PROTOCOL §6.3)
+`src/roboforge/models/bc.py`, `configs/models/{bc_mlp,bc_rnn,bc_mlp_chunk}.yaml`.
+- **One interface:** `forward(obs_history [B,T_o,D], obs_valid [B,T_o]) → [B,T_p,A]`
+  normalized actions. The trainer and the rollout policy call the same function.
+- **BC-MLP:**
+  - MLP 2 × 1024, ReLU, linear output; T_o = 1, T_p = 1, T_a = 1;
+  - 1,077,255 parameters. This is robomimic's BC architecture.
+- **BC-RNN:**
+  - LSTM, 2 layers × 296, with a linear head on the newest step; context L = 10, T_p = 1;
+  - 1,080,703 parameters (+0.3 %);
+  - it re-runs from a zero state over the valid steps of the last L observations at every
+    decision, so training and inference are identical. Pre-start padding is skipped by
+    left-aligning the valid suffix and packing.
+  - **Deviation from robomimic:** robomimic carries the hidden state for up to 10 rollout
+    steps and then resets it. Exact train/inference consistency was preferred.
+  - LSTM rather than GRU matches robomimic's BC-RNN reference; GRU is implemented and
+    tested.
+- **BC-MLP-chunk** (H2-c control):
+  - BC-MLP's hidden layers with diffusion's horizons T_o = 2, T_p = 16, T_a = 8;
+  - 1,204,336 parameters (+11.8 %, from the larger input and output layers).
+- **Capacity tiers:** widths matched to 0.27 M / 1.08 M / 4.3 M are tabulated in
+  `reports/session3/param_counts.json` (all within ±0.4 %). They are ready for matching
+  diffusion's count in Session 4.
+- **Not run:** GMM-BC (optional, spec §5.4).
+
+### D-034 Training stack defaults (DEFAULT; identical for every BC family)
+`src/roboforge/train/{config,data,loop,run}.py`.
+- **Config:** strict schema `roboforge.train_config/1`, where unknown or missing keys raise.
+  `--set` overrides are recorded. `config_sha256` is part of the run ID
+  `<prefix>_<name>_<task>_seed<s>_<sha8>`.
+- **Data:** all windows of a split are materialized from `SequenceDataset.from_committed`.
+  The `valid` split gives offline losses only.
+- **Sampler:** one seeded permutation per epoch from `default_rng([seed, 1])`, served as
+  consecutive batches that may straddle two epochs.
+- **Optimization:**
+  - AdamW, lr 1e-4, betas (0.9, 0.999), weight decay 0, constant LR, batch 100;
+  - masked MSE; no gradient clipping (the global norm is logged); no EMA;
+  - 1 torch thread, CPU, float32.
+- **Failures:** a non-finite loss or gradient norm, or a parameter without a gradient, raises.
+- **Pilot budget:** 30,000 steps, checkpoints every 5,000 (RESEARCH_PROTOCOL §6.3).
+
+### D-035 Checkpoints, run manifests and evaluation/selection artifacts (FIXED)
+- **Checkpoints** (`runs/<run_id>/checkpoints/step_<N>.pt`, schema `roboforge.checkpoint/1`):
+  - only tensors and JSON-compatible values, loaded with `torch.load(weights_only=True)`
+    and a strict `load_state_dict`;
+  - model, optimizer, scheduler, sampler (with numpy generator state as JSON) and torch RNG
+    state;
+  - config and hash, dims, parameter count, the committed normalizers, every data/spec hash,
+    git, torch version, device and threads;
+  - written atomically and never overwritten.
+  - Resuming is bitwise identical to uninterrupted training (unit test).
+- **Training manifest** (`runs/<run_id>/manifest.json`, `roboforge.train_run/1`):
+  - written once with exclusive create, also on failure (`status: failed` + traceback);
+  - it includes a reload check: the final checkpoint, reloaded into a fresh network, must
+    reproduce parameters and outputs bitwise.
+- **Evaluation run** (`runs/<train_run_id>__val_step<N>__<platform_id>/`): every episode
+  record plus an immutable manifest. The checkpoint SHA-256 is verified against the training
+  manifest before loading and appears in every record's `policy.params`.
+- **Selection** (`reports/session<N>/selection/<train_run_id>.json`): the protocol §7 rule.
+  It refuses missing, partial, duplicate, foreign-hash or mixed-platform evaluations.
+
+### D-036 Learned-policy inference contract (FIXED)
+`src/roboforge/eval/learned.py`.
+- **Inputs:**
+  - Observations are cast to float32 before normalization, as the processed training data
+    were stored.
+  - Windows come from `window_indices`, the training index arithmetic. They are tested equal
+    to `SequenceDataset` windows at every step of a demo, for T_o = 1, 2 and 10.
+  - The env's t = 0 features equal the processed training observation bitwise.
+- **Outputs:** the first T_a actions of the chunk, decoded by the checkpoint's `ActionCodec`
+  (unnormalize, then clip to [−1, 1]).
+- **Contract check:** a policy refuses an episode or a committed contract (spec and
+  normalization hashes) that differs from its checkpoint's.
+- **Isolation:** the history is cleared at every reset, so no state carries between episodes
+  (tested).
+- **Determinism:** CPU, `no_grad`, 1 torch thread. The same checkpoint reproduces
+  `physics_sha256` across loads and processes on one platform.
+
+### D-037 Validation-only evaluation entry points (FIXED until the freeze)
+- `scripts/eval_policy.py` and `make eval` have no suite option; `make eval` refuses any
+  `EVAL_SET` other than `validation`.
+- Results from a non-canonical platform go to `reports/session3/dev/`, labeled DEVELOPMENT
+  ONLY, and are never eligible for selection.
+- Partial evaluations (`--n-states`) are never eligible either.
+
+### D-038 Session 3 evidence location (FIXED)
+- Command outputs go under `logs/session3/` and `reports/session3/`. Container runs use
+  `ROBOFORGE_EVIDENCE_SESSION=3`.
+- Training and evaluation records go under `runs/` (gitignored). Their manifests' summaries
+  and hashes are committed in the reports.

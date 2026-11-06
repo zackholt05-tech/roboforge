@@ -1,0 +1,13 @@
+setup rc=0 dur=0s cmd: make setup
+download rc=0 dur=0s cmd: make download
+check_data rc=0 dur=41s cmd: make check-data
+build_data rc=0 dur=42s cmd: make build-data
+check_eval_states rc=0 dur=59s cmd: make check-eval-states
+git_status_data rc=0 dur=0s cmd: bash -c git status --short data/; echo "lines=$(git status --short data/ | wc -l)"
+lint rc=0 dur=0s cmd: make lint
+test rc=0 dur=86s cmd: make test
+smoke_sim rc=0 dur=17s cmd: make smoke-sim SMOKE_OUT=logs/session3/prereq
+image_id rc=0 dur=0s cmd: bash -c docker image inspect -f '{{.Id}}' roboforge-sim-cpu:session0; grep -n image_id configs/eval/platform.yaml
+container_smoke_lift rc=0 dur=27s cmd: env ROBOFORGE_EVIDENCE_SESSION=3 make in-sim CMD=python scripts/smoke_sim.py --task lift --out-dir logs/session3/prereq/container
+container_smoke_can rc=0 dur=23s cmd: env ROBOFORGE_EVIDENCE_SESSION=3 make in-sim CMD=python scripts/smoke_sim.py --task can --out-dir logs/session3/prereq/container
+DONE

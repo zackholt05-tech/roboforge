@@ -1,334 +1,258 @@
-<!-- parsable handoff header (values below are real, filled at the end of Session 2) -->
+<!-- parsable handoff header (values below are real, filled at the end of Session 3) -->
 ```yaml
 project: roboforge-3d
-current_session: 2
+current_session: 3
 session_status: PASS
-next_session: 3
-last_verified_commit: b739e99be81803b5e596ed8e8357633780e6a4d3   # lint, 185 tests, container smoke (runner change only since 283a811)
-evidence_commit: 283a8115d63b8698503af607a67f6a06c3676745   # every Session 2 report regenerated from this clean commit
-python: 3.11.15                       # development (macOS arm64); canonical platform below uses 3.11.18
+next_session: 4
+last_verified_commit: a37b92d   # lint clean, 231 tests (code unchanged since then except docs)
+protocol_commit: 8b08b95        # docs/RESEARCH_PROTOCOL.md v1, before any reported run
+evidence_commits:
+  training_and_validation: 969e14fa320d4e0f7295b0d5634c3fe8a9139672   # all runs + 18 canonical evals, dirty=false
+  diagnostics_cost_equivalence: a37b92d   # Makefile + diagnose_actions.py changed only (git diff 969e14f a37b92d --stat)
+python: 3.11.15                       # development (macOS arm64); canonical platform uses 3.11.18
 sim_engine_version: mujoco 3.2.7
 robosuite_revision: 51cc01785bab80ffeed20da15e67d7dd4140e76a   # v1.5.1
-robomimic_revision: d309eaecc18acf4152a830a895a6984b8ac71b05   # v0.5.0+15
-evaluation_platform:                  # D-017 (FIXED)
-  platform_id: linux-aarch64-container-1f685638f28c
-  image: roboforge-sim-cpu:session0
-  image_id: sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c
-  runner: infra/containers/run_sim_cpu.sh
-  python: 3.11.18
-  mujoco_gl: osmesa
-physics:                              # both tasks (SIMULATOR_CONTRACT.md)
-  timestep_s: 0.002
-  substeps_per_control: 25
-  control_hz: 20
-  integrator: Euler
-  solver: Newton (iterations 100, tolerance 1e-8)
-  cone: elliptic
-  impratio: 20
-  horizon_steps: 400
-  termination: first_success          # D-026; success on current kinematics
-eval_suite_content_sha256:            # data/eval_states/<task>/<suite>.json (D-025)
-  lift_validation: 0b1368fae0d5e967955ad7b5c3a6191001bbad2758becad537412b45e71c8785
-  lift_final_test: e02498651b9d5bb88b6aec0870c5e3277cadaaeaf0e325abf86c79e89b1f22da   # LOCKED
-  can_validation: 857673382501c1b32880213cd8456a5197c33258ff2ab443e7a9b4700742fbfa
-  can_final_test: 5f407748f5f261ef8fdfe4bec0d53c74f8e5ae064e53ff831e17a649528f7ff0   # LOCKED
-eval_seeds: {validation: "100000 + i, i < 50", final_test: "900000 + i, i < 50 (locked)"}
-final_test_locked_until: docs/FINAL_TEST_FREEZE.md   # does not exist (Session 7)
-dataset_source: hf://robomimic/robomimic_datasets@74fa018461f479cd9fd15b924a16103012096203
-dataset_sha256:
-  lift_low_dim: 2067777cb8b532e9263dd09fd6448c41cc31224bb27be4a3b734010ae13eb540
-  lift_raw: 68f2a8cfe2502de1224f0708fb82e46da07abce108c63e721d72fc1618272f37
-  can_low_dim: 3f2eb92e0a5025d0095e866ac16cc8092d6a762abe27dec90dbaff9027282962
-  can_raw: 86961df85af1b9c6b9d4182a3755a8a4db6d0660cd550e45cca1f7accdb6d73d
-converter_version: lowdim_v1
-processed_content_sha256:             # unchanged since Session 1
-  lift: 74e70119993830798c8b4ed87f202f64d8d2c9d573c0f376d54c4130e52d63c8
-  can: e6055a6f066f53b987ed27a7b5894f20ec7053fc9cdf3222b4ad79ed3834ea7b
-split_sha256:
-  lift: 73097265526c03dfb7535aa9bff50aadd285cbfb554e563636d66395909c331e
-  can: 743779b0ad9cacd5bab85a74421f6fba4ace5e980f5979a4a3534c82f042b46f
-normalization_sha256:
-  lift: 253bfc7e63570bf3e8f8646a0094d1da4c5b729ba8f463b4955f01410b4812d6
-  can: e0437cd7b8e48403366d19f7b0e6116e2224723b8a5240b2d7ba008403b3228d
-observation_spec_sha256:
-  lift: dfbd868e0ec11da76f66a71a9c3468e58590728ca95e93bbfb0a50ce182a7721
-  can: 71e89629bc3447b02b4bb7ec2f470e4a72f4d44ec04a74f90b6da146f425b71c
-action_spec_sha256: bcae0b7110c56e1bfdf8e2754c03ff95c8c9e77a34c56ef9ebae11e60d7fa77f   # identical for both tasks
-task_manifest_sha256:
-  lift: 2ac6070d18cc53f565ec11e67e01f6b5a91de7e268df6a491590b0e45f0528ac
-  can: d8f85ecea43c0e616162079757598af6b06c0edd8f03a3c563c08b06dea47162
-obs_dim: 19              # both tasks; privileged (exact object state)
-action_dim: 7            # OSC_POSE delta (3 pos + 3 axis-angle) + gripper, bounds [-1, 1], 20 Hz
+robomimic_revision: d309eaecc18acf4152a830a895a6984b8ac71b05
+torch: 2.15.0 (macOS) / 2.15.0+cu132 (container, CPU path)
+evaluation_platform: {platform_id: linux-aarch64-container-1f685638f28c, image_id: "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c", runner: infra/containers/run_sim_cpu.sh}
+dataset_and_specs: unchanged since Session 2   # hashes in data/manifests/tasks/*.json; git diff 0322a15 -- data/ uv.lock empty
+baseline_configs:                     # configs/models/*.yaml (DEFAULT, D-033/D-034)
+  bc_mlp:       {horizons: "T_o=1 T_p=1 T_a=1", model: "MLP 2x1024 ReLU", params: 1077255}
+  bc_rnn:       {horizons: "L=10 T_p=1 T_a=1", model: "LSTM 2x296, sliding window", params: 1080703}
+  bc_mlp_chunk: {horizons: "T_o=2 T_p=16 T_a=8", model: "MLP 2x1024 ReLU", params: 1204336}
+  training: "AdamW 1e-4, batch 100, masked MSE, constant LR, no clip/EMA, 1 thread CPU; pilot 30k steps, ckpt every 5k"
+pilot_runs:                           # runs/<id>/ (gitignored); Lift, seed 0, tuning trial 1 each
+  s3_bc_mlp_lift_seed0_dbf312cd:       {selected_step: 5000,  validation: 47/50, checkpoint_sha256: 30289109273d433a364aa5a7e1a4fb41e90fc58d804fcc094936b4582b4559db}
+  s3_bc_rnn_lift_seed0_2e7cffe3:       {selected_step: 15000, validation: 50/50, checkpoint_sha256: 3dbb53ce2a711d89eeb0b5844ae69efb6a45f1da0de21a3fc2cce1472a3da756}
+  s3_bc_mlp_chunk_lift_seed0_bb8b4dd6: {selected_step: 10000, validation: 50/50, checkpoint_sha256: a763c83730aeb1dbc9d07fbcc76ede2c3b68e63487fc7e3175395f9774ab83a7}
+final_test_locked_until: docs/FINAL_TEST_FREEZE.md   # does not exist
 training_spend_usd: 0
-next_required_owner_approval: none for Session 3 (local CPU training only; any paid compute needs approval)
-license: Apache-2.0
+next_required_owner_approval: none for Session 4 (local CPU); paid compute needs approval (Session 5)
 ```
 
-# Session 2 Handoff
+# Session 3 Handoff
 
 Do not trust this file blindly: re-run the checks in "Exact starting instructions".
 
 ## 1. Session completed
-Session 2 (3D simulator adapter, faithful replay, closed-loop evaluator): **PASS**.
-Session 3 can start.
+Session 3 (research protocol and deterministic/recurrent baselines): **PASS**. Session 4
+can start.
 
 ## 2. Completed work
-- **`RoboForgeEnv`** (`src/roboforge/sim/env_adapter.py`, D-024).
-  - **Reset** only from an exact serialized snapshot. This clears all hidden state: solver
-    warm start, ctrl, mocap, gripper integrator, controller goals, step counter.
-  - **Actions:** `step` validates the shape `(7,)` and finiteness, or raises. It clips to
-    the `ActionSpec` bounds and reports a `clip_mask`.
-  - **Observations:** returned only via `FeatureExtractor.from_sim`.
-  - **Success and reward:** sparse reward; success on current kinematics (`mj_kinematics`
-    only; KI-019). The episode terminates at first success and truncates at 400 steps
-    (D-026).
-  - **Rendering:** shadow rendering from a scratch `MjData`. It equals robosuite's
-    renderer except `frontview`, which is ≤ 1 grey level off on ≤ 23 px (256², macOS).
-  - **Kinematics:** robot and object world transforms, cameras, and a body hierarchy for
-    FK.
-- **Snapshots and evaluation suites** (`snapshot.py`, `eval_states.py`, D-025).
-  - **Snapshots** store the saved XML of the live model, with portable asset paths, plus
-    the float64 state and hashes.
-  - **Suites:** validation (seeds 100000 + i) and final test (900000 + i), 50 starts per
-    task. They were generated on the canonical container.
-  - **Final-test lock:** loading the final test, or resetting to its seed block, raises
-    `FinalTestLockedError` until `docs/FINAL_TEST_FREEZE.md` exists, is committed and
-    names the hash. Research-integrity tests enforce this.
-  - **Partition index:** `data/eval_states/<task>/partitions.json` identifies
-    `demo_train` / `demo_valid` / `eval_validation` / `eval_final_test`.
-- **Policies and recorder** (`src/roboforge/eval/`, D-027, D-028).
-  - **Policies:** `RandomPolicy`, `NoOpPolicy` and `DemoReplayPolicy` (labeled
-    NON-AUTONOMOUS).
-  - **Recorder:** `run_episode` writes a frame-indexed record with states, observations,
-    kinematics, raw and executed actions, clip masks, success, decision/chunk indices,
-    latency and optional RGB, plus `physics_sha256`.
-  - **Audit:** `verify_record` re-simulates the episode and re-evaluates success.
-  - **Policy errors** become recorded failures.
-- **Demo replay** (`replay_compare.py`, `scripts/replay_demos.py`, D-029).
-  - 12 demos per task, chosen by the declared rule.
-  - Gates: bitwise equal to a bare robosuite loop, equal to Session 0 metrics, zero clips.
-  - Output: divergence summary, montage, mp4s.
-- **Model and contract checks** (`scripts/check_sim_contract.py`): KI-014 markers, purity,
-  episode isolation, and dataset/eval/saved-XML model diffs.
-- **Determinism** (`scripts/check_determinism.py`): 3 fresh processes per task, plus a
-  macOS-vs-container comparison.
-- **Sanity evaluation** (`scripts/sanity_eval.py`): random and no-op policies on the
-  validation suite of the canonical platform.
-- **three.js export** (`src/roboforge/viz/`, `scripts/export_clip.py`,
-  `tests/web_contract/`, D-030). One real Lift demo-0 clip, verified against MuJoCo FK,
-  pinhole projection and segmentation masks, and with the real three.js r187 in node.
-- **Canonical platform** (D-017): `infra/containers/run_sim_cpu.sh` and
-  `configs/eval/platform.yaml`. `provenance.evaluation_platform()` is stamped into every
-  record.
+- **Research protocol v1** (`docs/RESEARCH_PROTOCOL.md`, committed at `8b08b95` before any
+  reported run). It fixes:
+  - the hypothesis → comparison table: H2 is primary, and H2-c is the action-chunking control;
+  - observation privilege (identical 19-D privileged state for every family);
+  - the paired schedule, the success rule and the checkpoint-selection rule (§7: highest
+    validation success, then lower mean first-success step, then the earlier checkpoint);
+  - matched training and tuning budgets (§6.3: ≤ 4 configurations per family per task, with
+    Session 3 pilots as trial 1);
+  - the hierarchical paired bootstrap (§9: B = 10,000, seed 20261106).
+
+  One accounting amendment (§13) counts the BC-MLP-chunk pilot as its trial 1.
+- **Models** (`src/roboforge/models/bc.py`, D-033):
+  - one interface, `forward(obs_history, obs_valid) → normalized chunk`;
+  - BC-MLP;
+  - BC-RNN: an LSTM re-run from a zero state over the valid steps of the last L = 10
+    observations at every decision, which is a recorded deviation from robomimic;
+  - BC-MLP-chunk, the output-horizon control.
+- **Training stack** (`src/roboforge/train/`, D-034, D-035):
+  - strict hashed configs with `--set` overrides;
+  - in-memory windows from `SequenceDataset.from_committed`, plus a seeded epoch-stream
+    sampler;
+  - a trainer with gradient-norm logging, where non-finite values raise;
+  - `weights_only` checkpoints with every RNG, so resuming is bitwise;
+  - immutable run manifests (exclusive create, also on failure) with a strict reload check.
+- **Closed loop** (`src/roboforge/eval/`, D-032, D-036, D-037):
+  - `LearnedPolicy`, which uses the same window arithmetic as training, float32 casting, a
+    contract check, history cleared per episode and 1 torch thread;
+  - the rollout `observe` hook;
+  - validation-only evaluation (`scripts/eval_policy.py`, `make eval`), which verifies
+    checkpoint hashes against the manifest and labels native platforms DEVELOPMENT ONLY;
+  - the selection rule (`scripts/select_checkpoint.py`).
+- **Evidence tools:**
+  - `scripts/{overfit_check,train_smoke,param_counts,benchmark_policies,diagnose_actions,check_checkpoint_equivalence}.py`;
+  - Make targets `train-smoke`, `train`, `eval`, `select`, `param-counts`, `overfit-check`,
+    `benchmark-policies`, `diagnose-actions` and `check-ckpt-equivalence`;
+  - the training-run variable is `TRAIN_RUN`, because `RUN` is the uv prefix.
 
 ## 3. Files created or changed
 - **New:**
-  - `src/roboforge/sim/{env_adapter,snapshot,eval_states,kinematics,shadow_render,replay_compare,model_compare}.py`;
-  - `src/roboforge/eval/{policies,rollout}.py`, `src/roboforge/viz/{coords,clip_export}.py`;
-  - `scripts/{generate_eval_states,replay_demos,check_sim_contract,check_determinism,sanity_eval,export_clip}.py`;
-  - `configs/eval/{suites,platform}.yaml`, `infra/containers/run_sim_cpu.sh`;
-  - `data/eval_states/{lift,can}/` (suites + `partitions.json`, 128 KB);
-  - tests: `tests/unit/{test_coords,test_snapshot}.py`,
-    `tests/simulator/{test_env_adapter,test_rollout}.py`,
-    `tests/research_integrity/test_final_test_lock.py`, `tests/web_contract/` (node
-    package pinned to `three@0.187.0` with a lockfile);
-  - evidence: `reports/session2/`, `logs/session2/`.
+  - `src/roboforge/models/bc.py`, `src/roboforge/train/{config,data,loop,checkpoint,run}.py`,
+    `src/roboforge/eval/{learned,validation,selection}.py`;
+  - `configs/models/{bc_mlp,bc_rnn,bc_mlp_chunk}.yaml`;
+  - `scripts/{train,eval_policy,select_checkpoint,check_checkpoint_equivalence,param_counts,benchmark_policies,diagnose_actions,overfit_check,train_smoke}.py`;
+  - tests: `tests/unit/{test_bc_models,test_train_loop,test_selection}.py`,
+    `tests/integration/test_train_real_data.py`, `tests/simulator/test_learned_policy.py`;
+  - evidence: `reports/session3/`, `logs/session3/`.
 - **Changed:**
-  - `scripts/smoke_sim.py` (adapter checks);
-  - `src/roboforge/provenance.py` (`evaluation_platform`, container git env);
-  - `Makefile`, `pyproject.toml` (marker `web`), `.gitignore`, `README.md`;
-  - docs: DECISIONS, KNOWN_ISSUES, EXPERIMENT_LEDGER, RESEARCH_PROTOCOL,
-    SIMULATOR_CONTRACT, STATUS, HANDOFF.
-- **Unchanged:** `uv.lock` and every Session 1 data artifact (`git status --short data/`
-  stays empty after regeneration).
+  - `src/roboforge/eval/rollout.py` (the `observe` hook only) and `eval/policies.py` (docs);
+  - package docstrings, `Makefile`, `README.md`;
+  - docs: RESEARCH_PROTOCOL, DECISIONS, KNOWN_ISSUES, EXPERIMENT_LEDGER, STATUS, HANDOFF.
+- **Unchanged:** `uv.lock`, `pyproject.toml`, `data/`, `configs/{eval,data,simulator}`,
+  `infra/`, `src/roboforge/{sim,data}/` (`git diff 0322a15 -- …` is empty).
 
-## 4. Simulator contract (Session 2 STOP list)
-- **Physics and control:**
-  - MuJoCo 3.2.7, `timestep = 0.002` s, Euler integrator;
-  - Newton solver (100 iterations, tolerance 1e-8, 50 line-search iterations), elliptic
-    cone, `impratio = 20`;
-  - 25 substeps per 0.05 s control step (20 Hz), OSC_POSE delta controller.
-
-  Full table: `docs/SIMULATOR_CONTRACT.md`.
-- **Reset mechanism:** `InitialState` (portable saved XML + `[time, qpos, qvel]` float64 +
-  hashes + partition), then `snapshot.restore`:
-  1. `env.reset()`;
-  2. `reset_from_xml_string(edit_model_xml(xml))`;
-  3. `sim.reset()`;
-  4. `set_state_from_flattened`;
-  5. `sim.forward()`;
-  6. an exact read-back check.
-
-  Seeds only generate snapshots.
-- **File schemas:**
-  - eval suites `roboforge.eval_suite/1`: an open manifest + `.data.jsonl.xz`;
-  - rollout records `roboforge.rollout/1`: `record.json` + `arrays.npz`, with frame
-    k = state after k actions;
-  - web clip `roboforge.web_clip/1`.
-- **Transform schema:**
-  - **MuJoCo world** is z-up, in metres. Quaternions are wxyz in records; observation
-    quaternions stay xyzw (Session 1).
-  - **Bodies** are categorized as robot (the `robot0_base` subtree), free_object or
-    fixture. Mocap markers are excluded.
-  - **Cameras** are stored as `cam_xpos`, `cam_xmat` (−z view, +y up) and `cam_fovy`, with
-    `f = (H/2)/tan(fovy/2)`.
-  - **three.js:** `(x, y, z) → (x, z, −y)`, and `q_three = q_C ⊗ q_mj` with
-    `q_C = (cos(−π/4), sin(−π/4), 0, 0)`.
-
-## 5. Executed commands (evidence run from clean `283a811`, `logs/session2/`)
-| Command | Platform | Result |
+## 4. Executed commands and results
+| Command (commit) | Platform | Result |
 |---|---|---|
-| `make smoke-sim SMOKE_OUT=logs/session2/smoke_sim` | macOS | Lift 17/17, Can 16/16 PASS (6 new adapter checks each) |
-| `make lint` / `make test` | macOS | clean / **185 passed** (79 s) |
-| `make check-eval-states` | macOS | PASS: XML equal, states within 4.4e-16 of the container-generated suites |
-| `run_sim_cpu.sh python scripts/generate_eval_states.py --check` | container | PASS: bitwise (0.0) for all 4 suites |
-| `make eval-states` (regeneration), then `git status --porcelain data/` | container | byte-identical files; `data/` clean |
-| `make replay-demos` | macOS | 12 demos/task; all gates PASS; replay success 11/12 per task |
-| `make check-sim-contract` | macOS | checks A–G PASS for both tasks |
-| `check_determinism.py` (3 fresh processes/task) | macOS + container | 7/7 checks PASS on both; `--compare`: hashes differ, outcomes equal |
-| `make sanity-eval-canonical` | container | random and no-op 0/50 per task; 0 errors; audits pass |
-| `make export-clip` / `make web-contract` | macOS / node | 5/5 and 3/3 PASS |
+| prerequisites (`0322a15`): setup, download, check-data, build-data, check-eval-states, `git status --short data/`, lint, test, smoke-sim, container smoke Lift/Can, image ID | macOS + container | all PASS; 185 tests; smoke 33/33, 17/17, 16/16 (`logs/session3/prereq/`) |
+| KI-007 probe (Write/Edit in `src/roboforge/train/`) | macOS | not blocked; deleted |
+| `make lint`, `make test` (`969e14f`, again at `a37b92d`) | macOS | clean; **231 passed** |
+| `make train-smoke` (`969e14f`) | macOS | BC-MLP and BC-RNN PASS (dev-only rollouts) |
+| `make overfit-check` (`969e14f`) | macOS | MSE ×1.7e-6 to ×0.015 (`reports/session3/overfit_lift.json`) |
+| `make param-counts` (`969e14f`) | macOS | `reports/session3/param_counts.json` |
+| `scripts/train.py --config configs/models/<m>.yaml --task lift --seed 0 --prefix s3` × 3 (`969e14f`, concurrently) | macOS CPU | 3 runs complete, reload checks PASS (`logs/session3/train/`) |
+| `make eval RUN=runs/<id>` × 3 (`969e14f`; now `TRAIN_RUN=`) | container | 18 evaluations × 50 starts, 0 errors, 54/54 audits PASS (`reports/session3/validation/`) |
+| `scripts/select_checkpoint.py` / `make select TRAIN_RUN=…` | macOS | `reports/session3/selection/` |
+| `scripts/check_checkpoint_equivalence.py` (last and selected checkpoints) | container + macOS | all PASS, including the Session 2 sanity regression 4/4 (`reports/session3/checkpoint_equivalence/`) |
+| `make benchmark-policies RUNS=…` and the macOS equivalent (`a37b92d`) | container + macOS | `reports/session3/cost_latency/` |
+| `scripts/diagnose_actions.py --train-runs …` (`a37b92d`) | macOS | `reports/session3/diagnostics/actions.json` |
+| contamination check | macOS | 900/900 records `eval_validation`; locked suite named only in the 3 allowed files (`logs/session3/contamination_check.log`) |
 
-- **Diagnostics:**
-  - `logs/session2/diag/`: RNG cross-platform probes, `uv sync --dry-run` in the image,
-    shadow vs robosuite renders.
-  - `logs/session2/evidence_chain.log`: every step, its exit code and duration.
-- **Clean-tree audit:** all 18 git-stamped JSON reports carry `283a811`, `dirty: false`.
-  The node `three_check.json` has no stamp of its own; it checks the stamped clip.
-- **Runner change `b739e99`:**
-  - change: `run_sim_cpu.sh` gained `ROBOFORGE_EVIDENCE_SESSION`; the physics path is
-    unchanged (`git diff 283a811 b739e99 --stat`: 1 file);
-  - re-verified at `b739e99` (`logs/session2/post_b739e99/`): mount audit, lint clean,
-    185 passed, container smoke Lift 17/17 and Can 16/16.
+## 5. Key findings (development, validation-only, one seed)
+- **Lift is not saturated for one-step BC.**
+  - BC-MLP: 41–47/50 across checkpoints.
+  - BC-RNN: 48–50/50; 50/50 at 5k–15k.
+  - BC-MLP-chunk: 46–50/50.
 
-Prerequisites at `4db6526` (`logs/session2/prereq/`): setup OK, 4/4 hashes verified,
-`check-data` and `build-data` PASS, `git status --short data/` empty, 124 tests passed,
-smoke Lift 11/11 and Can 10/10.
+  These pilots do not test any hypothesis.
+- **Every failure is a grasp failure** (KI-021).
+  - In the typical BC-MLP failure, the gripper closes without the cube, and the arm then drifts
+    out of the workspace (z up to 2.19 m) on saturated actions and never recovers.
+  - Motion clipping covers 50–78 % of failed-episode steps, against ≤ 1.3 % in successes.
+- **No action convention problem:**
+  - the controller axes and signs are verified;
+  - the gripper sign agrees with the demos 92–96 % of the time (teacher-forced);
+  - gripper magnitude clipping is harmless, because robosuite uses the sign only (KI-022).
+- **Offline validation MSE rises from the first checkpoint** while closed-loop success
+  barely moves (KI-024). Offline loss must not select, which §7 already requires.
+- **Cost:**
+  - 30k steps take 146 s (BC-MLP), 983 s (BC-RNN) and 155 s (BC-MLP-chunk) on local CPU,
+    3 concurrent runs.
+  - Container inference is ~13× slower than native: 0.91 / 8.6 / 1.26 ms per decision
+    (KI-023).
+  - A 50-start Lift validation evaluation takes 1–4 min in the container.
 
-## 6. Key findings
-- **robosuite's generator XML is not the model that runs.**
-  - Lift samples the cube size at every reset, and PickPlace edits body poses at runtime.
-  - Snapshots therefore store `mj_saveLastXML`, which is also the robomimic convention.
-  - KI-016 resolved: the saved XML *is* the evaluation model.
-- **Success must use current kinematics, and it must not use `mj_forward`.**
-  - Calling `mj_forward` on live data changes later Can steps by up to 0.587 (KI-019).
-  - robosuite's own success is evaluated on stale kinematics. It is recorded, but never
-    scored.
-- **Cross-platform chaos (KI-013).** numpy's legacy `randn`/`sin` differ by 1 ulp between
-  macOS and the container.
-  - On macOS a start regenerated from its seed is off by 2.8e-17–4.4e-16.
-  - The same 400 random actions from that start then end up to 0.144 (Lift) and 1.49 (Can)
-    apart.
-  - Hence: one canonical platform (D-017), stored snapshots only, never re-seeding.
-- **KI-014 resolved: the markers are harmless.** They change 0.0 in dynamics and 0 pixels
-  in renders, so the default robosuite model is kept.
-- **Open-loop demo replay drifts (KI-004).**
-  - Task-object error p95: Lift 25.7 mm, Can 80.9 mm.
-  - The adapter adds nothing: it is bitwise equal to a bare robosuite loop.
-- **The random and no-op baselines never succeed** in 400 steps on 50 validation starts per
-  task. This is the H1 sanity floor.
-- **Canonical throughput** with full recording: Lift ~140 and Can ~60 control steps/s
-  (container, OSMesa, no rendering).
-  - A 50-episode × 400-step Can validation sweep takes ~5.5 min per policy.
-- **Running `uv` inside the image would mutate it (KI-020).** The runner uses the image
-  venv directly.
+## 6. Known action/controller quirks
+- The OSC_POSE delta is in the world frame. Rotation commands also translate the grip-site
+  position, because the site is offset from the hand body
+  (`reports/session3/diagnostics/actions.json` → `controller_axes`).
+- The gripper is binary by sign (`PandaGripper.format_action`), so its clip rate must be
+  reported separately from the motion dimensions.
+- The normalized rotation dimensions are stretched up to 7.4× (D-020). A decoded rotation
+  beyond ±1 is more than twice the demos' extreme values, and it occurs only after drift.
 
-## 7. Decisions
-- D-017 is now FIXED (canonical container platform).
-- New: D-024 (adapter), D-025 (snapshots, suites, lock), D-026 (first-success
-  termination), D-027 (sanity policies), D-028 (record schema), D-029 (replay sample),
-  D-030 (three.js conversion), D-031 (evidence location).
+## 7. Open tuning decisions (Session 6, within RESEARCH_PROTOCOL §6.3)
+- **The search space per family**, at most 3 more configurations each on Lift. It must be
+  written in the ledger before the first tuning run. Candidates:
+  - weight decay, dropout or observation noise against drift (KI-021);
+  - learning-rate schedule;
+  - MLP depth or width;
+  - LSTM vs GRU.
+- **The main budget** (100k steps, checkpoints every 10k) is to be confirmed in Session 5
+  from measured diffusion cost, and stays identical across families.
+- **Can pilots** have not been run (trial counts on Can are 0).
+- **GMM-BC** is optional and not implemented.
 
-## 8. Outstanding issues (none blocks Session 3)
-- **KI-007:** re-check inside the repository that a file with `loss.backward()` and
-  `optimizer.step()` is not blocked by the ml-pipeline hook. Session 3 needs training code.
-- **KI-001:** linux/x86_64 and EGL are unverified. The canonical platform is aarch64; any
-  remote rollout is a different platform (D-017).
-- **KI-020:** never `uv sync` or `uv run` inside the pinned image; use
-  `run_sim_cpu.sh`.
-- **KI-019:** never call `mj_forward` on live data during evaluation.
-- **KI-011:** Lift starts are narrow.
-  - Each Lift validation start's cube lies 0.5–4.1 mm (median 1.8 mm) in x/y from the
-    nearest demonstration start.
-  - For Can it is 1.7–21 mm (median 8.4 mm).
-  - Source: `reports/session2/eval_states_{lift,can}.json`.
-  - The validation suite is therefore in-distribution by construction.
-- **KI-008:** 63 GB free.
+## 8. Decisions
+- Research protocol v1.
+- D-032 (`observe` hook), D-033 (BC families), D-034 (training defaults), D-035
+  (checkpoints/manifests/artifacts), D-036 (inference contract), D-037 (validation-only
+  entry points), D-038 (evidence location).
 
-## 9. Budget
-Spent $0.00, with no remote compute. No approval is needed for Session 3, which uses local
-CPU only. Any paid compute needs owner approval first.
+## 9. Outstanding issues (none blocks Session 4)
+- KI-021, KI-024: compounding error and offline/closed-loop mismatch; tuning topics.
+- KI-023: measure diffusion latency in the container.
+- KI-011: Lift starts are narrow, so spatial claims need H4 sets.
+- KI-001: x86_64 and EGL are unverified.
+- KI-008: 55 GB free.
+- KI-020, KI-019, KI-018: the rules still apply.
 
-## 10. Exact starting instructions for Session 3
+## 10. Budget
+$0.00 spent; local CPU only. Session 4 needs no approval for local CPU. Any paid compute
+needs explicit owner approval and a cost bound first (Session 5).
+
+## 11. Exact starting instructions for Session 4
 Paste into a fresh Claude Code session:
 
 ```text
-Implement RoboForge 3D SESSION 3 ONLY from MASTER_SPEC.md. Begin by reading all of
+Implement RoboForge 3D SESSION 4 ONLY from MASTER_SPEC.md. Begin by reading all of
 MASTER_SPEC.md, docs/STATUS.md, docs/HANDOFF.md, docs/DECISIONS.md, docs/KNOWN_ISSUES.md,
-docs/EXPERIMENT_LEDGER.md, docs/RESEARCH_PROTOCOL.md, docs/SIMULATOR_CONTRACT.md,
-docs/DATA_DICTIONARY.md, docs/DATA_PROVENANCE.md and docs/COMPUTE_PLAN.md, and inspect the
-actual repository/test state. Do not blindly trust prior handoff claims: first run
-`make setup`, `make download`, `make check-data` (in-memory rebuild; writes nothing),
-`make build-data` (writes the gitignored processed files that training reads; refuses if
-the committed artifacts differ), `make check-eval-states`, confirm
+docs/EXPERIMENT_LEDGER.md, docs/RESEARCH_PROTOCOL.md (v1, binding), docs/SIMULATOR_CONTRACT.md,
+docs/DATA_DICTIONARY.md and docs/COMPUTE_PLAN.md, and inspect the actual repository/test
+state. Do not blindly trust prior handoff claims: first run `make setup`, `make download`,
+`make check-data`, `make build-data`, `make check-eval-states`, confirm
 `git status --short data/` is empty, then run `make lint`, `make test`,
-`make smoke-sim SMOKE_OUT=logs/session3/prereq` and, on the canonical container,
-`ROBOFORGE_EVIDENCE_SESSION=3 make in-sim CMD="python scripts/smoke_sim.py --task lift --out-dir logs/session3/prereq/container"`
-and the same with `--task can`, and confirm they pass; confirm `docker image inspect -f '{{.Id}}' roboforge-sim-cpu:session0`
-equals the image_id in configs/eval/platform.yaml; run git log --format=fuller -n 5 to
-confirm the verified commits and identity Zackary Holt <zackholt05@gmail.com>. Before
-writing any training code, re-check KI-007 inside the repository (a file containing
-loss.backward() and optimizer.step() must not be blocked); if a hook blocks it, STOP and
-report to the owner instead of working around it.
+`make smoke-sim SMOKE_OUT=logs/session4/prereq`, `make train-smoke SMOKE_DIR=logs/tmp/s4_smoke`
+and, on the canonical container,
+`ROBOFORGE_EVIDENCE_SESSION=4 make in-sim CMD="python scripts/smoke_sim.py --task lift --out-dir logs/session4/prereq/container"`
+and the same with `--task can`, and confirm they pass; confirm
+`docker image inspect -f '{{.Id}}' roboforge-sim-cpu:session0` equals the image_id in
+configs/eval/platform.yaml; check whether the Session 3 pilot runs exist under runs/
+(gitignored; their manifests, checkpoint hashes and selections are in reports/session3 and
+docs/HANDOFF.md; report if they are missing rather than assuming); run
+git log --format=fuller -n 5 to confirm the verified commits and identity
+Zackary Holt <zackholt05@gmail.com>.
 
-Session 3 goal (MASTER_SPEC Session 3): research protocol and deterministic/recurrent
-baselines. Finalize and commit docs/RESEARCH_PROTOCOL.md (hypotheses, tasks, observation
-privilege, data splits, paired evaluation schedule, success definition, checkpoint-selection
-rule, matched tuning budgets and planned uncertainty analysis) BEFORE any reported run.
-Implement a shared policy/trainer/checkpoint layer plus BC-MLP and BC-GRU or BC-LSTM
-(optional GMM only after the core checks); tiny-batch and tiny-episode overfit tests; full
-forward/backward/gradient-norm tests; a CPU train/eval smoke; checkpoint save/reload
-equivalence (identical outputs, identical closed-loop record physics_sha256 on the same
-platform). Run validation-only training runs of limited length, gather initial closed-loop
-Lift behavior and diagnose action clipping/sign/coordinate problems; compute true parameter
-counts and matched-capacity configurations; measure baseline training cost and inference
-latency. Acceptance: both learned baselines consume the actual demonstration data, decrease
-loss on a small controlled overfit test, load from saved checkpoints, and perform real Lift
-rollouts in the pinned simulator; validation results are logged without test contamination.
+Session 4 goal (MASTER_SPEC Session 4): a real conditional diffusion action policy with
+truthful denoising instrumentation, not a renamed deterministic head. BEFORE the first
+reported diffusion run, fill every RESEARCH_PROTOCOL item marked TO FINALIZE (Session 4) by a
+dated §13 amendment: architecture (observation encoder, 1D temporal U-Net widths/stages),
+exact parameter count and the §6.1 capacity rule (if > 2x the 1.08 M BC budget, add
+capacity-matched BC-MLP and BC-RNN using reports/session3/param_counts.json tiers),
+noise schedule, training and inference denoising steps, sampler (DDPM/DDIM), prediction
+target, EMA, horizons (default T_o=2, T_p=16, T_a=8) and the stochastic noise-seed rule
+(policy_seed, state_id, repeat) with the repeat count R. Implement and test: observation
+conditioning, the U-Net with timestep embedding, DDPM/DDIM training and sampling, masked
+normalized action-chunk loss, optional EMA, receding-horizon control and per-episode reset,
+integrated with the Session 3 stack (src/roboforge/train trainer/checkpoint/manifest,
+configs/models/<name>.yaml, LearnedPolicy extended for seeded stochastic sampling via the
+observe hook, ActionCodec decoding, validation-only scripts/eval_policy.py, selection rule).
+Compare scheduler equations, tensor shapes, seeded reproducibility and a fixed synthetic
+case against robomimic's reference (the pinned d309eae diffusion_policy and diffusers
+0.11.1 schedulers), and mark any adapted external component with its license. Show a
+tiny-batch overfit on real Lift windows with finite gradients; checkpoint reload
+equivalence including identical seeded samples and identical closed-loop physics_sha256 on
+one platform. Build export_denoising that saves actual intermediate action tensors A_{t_k}
+at selected scheduler timesteps with the conditioning observation, normalized and
+denormalized values, noise seed and scheduler coefficients, labeled as proposals. Run a
+small Lift validation pilot on the canonical container (same pilot budget as Session 3:
+30k steps, checkpoints every 5k, if local CPU cost allows; measure and record it, and if it
+does not fit, record the measured cost and propose a reduced, family-identical budget as a
+protocol amendment before running); measure diffusion inference latency per decision in
+the container (KI-023) and debug normalization/replanning before any mass training. The
+diffusion pilot counts as diffusion's tuning trial 1 (§6.3). Do not retune or rerun the
+BC pilots.
 
-Keep the Session 1 and Session 2 contracts (DECISIONS D-010, D-017..D-031): training data
-come only from roboforge.data.sequence.SequenceDataset.from_committed (hash-checked,
-train-only normalization; validation demos for offline loss only); policy observations come
-only from RoboForgeEnv (FeatureExtractor.from_sim after every step), and policy outputs are
-decoded with ActionCodec; learned policies implement roboforge.eval.policies.Policy
-(PolicyInfo with learned=True, action chunks allowed) and are run with
-roboforge.eval.rollout.run_episode, which records every episode and audits with
-verify_record; episodes reset only from stored snapshots and end at first success or 400
-steps (D-026); model and checkpoint selection use ONLY the eval_validation suite
-(load_suite(task, "validation")) — never load, name, summarize or reset to final-test states,
-and do not create docs/FINAL_TEST_FREEZE.md. Every closed-loop rollout that is reported or
-enters checkpoint selection runs on the canonical platform via infra/containers/run_sim_cpu.sh with
-ROBOFORGE_EVIDENCE_SESSION=3 (D-017; never uv sync/uv run inside the image, KI-020); native macOS rollouts are labeled
-development-only and never pooled with canonical results. Never call mj_forward on live
-evaluation data (KI-019); never use robosuite transform helpers for precision-critical inputs
-or metrics (KI-018). Checkpoints and anything else a canonical container rollout must read go
-under runs/<run_id>/ (the container sees only runs/, read-only src/configs/data and the
-selected session's reports/logs directories). Every run writes an immutable
-runs/<run_id>/manifest.json with git SHA + dirty flag, environment snapshot, platform, dataset/split/normalization/spec hashes, full
-config, seeds, parameter count, checkpoint hashes and wall/CPU time. Train on local CPU only;
-no paid or remote compute and no remote publication without explicit owner approval; do not
-change committed data artifacts or eval suites without a recorded decision; do not add
-dependencies or change uv.lock without a recorded decision (the pinned image's venv is
-frozen, so a change forces an image rebuild, which is a new canonical platform under D-017
-and invalidates every earlier canonical rollout).
+Keep the Session 1–3 contracts (DECISIONS D-010, D-017..D-038): training data only from
+SequenceDataset.from_committed; policy observations only from RoboForgeEnv; outputs decoded
+with ActionCodec; learned policies implement roboforge.eval.policies.Policy and run with
+run_episode + verify_record; resets only from stored snapshots; first success or 400 steps;
+model and checkpoint selection only on the eval_validation suite; never load, name,
+summarize or reset to the held-out test states and do not create docs/FINAL_TEST_FREEZE.md;
+every reported or selection rollout on the canonical container via
+infra/containers/run_sim_cpu.sh with ROBOFORGE_EVIDENCE_SESSION=4 (never uv sync/uv run
+inside the image, KI-020); native macOS rollouts are development-only; never call
+mj_forward on live evaluation data (KI-019); never use robosuite transform helpers for
+precision-critical values (KI-018); checkpoints and anything a container rollout reads
+live under runs/<run_id>/; every run writes an immutable manifest with git SHA + dirty flag
+(launch reported runs from a clean committed tree; do not edit tracked files while they
+start), environment, platform, data/spec hashes, full config, seeds, parameter count,
+checkpoint hashes and wall/CPU time; report motion-dimension clipping separately from the
+gripper (KI-022). Use the Make variable TRAIN_RUN (not RUN) for run directories. Train on
+local CPU only; no paid or remote compute (Modal is Session 5) and no remote publication
+without explicit owner approval; do not change committed data artifacts, eval suites,
+uv.lock or dependencies without a recorded decision (an image rebuild is a new canonical
+platform under D-017).
 
-Use the current verified simulator/data contracts. Run relevant tests and record commands,
-real results and provenance. Never leak final-test states into model selection; never invent
-results. Use Zackary Holt as the sole named RoboForge project author with the verified local
-Git identity; no AI co-author trailers, while preserving external scientific and license
-credit. At the SESSION 3 STOP boundary, update docs/STATUS.md, docs/HANDOFF.md,
-docs/DECISIONS.md, docs/KNOWN_ISSUES.md and docs/EXPERIMENT_LEDGER.md (baseline configs,
-run IDs, known action/controller quirks and open tuning decisions), commit verified code
-only, inspect commit metadata (git log --format=fuller -n 5), write the exact prompt for
-SESSION 4, and STOP. Do NOT proceed automatically.
+Use the current verified simulator/data/checkpoint/manifest contracts. Run relevant tests
+and record commands, real results and provenance. Never leak held-out test states into model
+selection; never invent results. Use Zackary Holt as the sole named RoboForge project
+author with the verified local Git identity; no AI co-author trailers, while preserving
+external scientific and license credit (Diffusion Policy, robomimic, diffusers). At the
+SESSION 4 STOP boundary, update docs/STATUS.md, docs/HANDOFF.md, docs/DECISIONS.md,
+docs/KNOWN_ISSUES.md and docs/EXPERIMENT_LEDGER.md (exact architecture, parameter count,
+scheduler, horizons, validated smoke-run artifacts), commit verified code only, inspect
+commit metadata (git log --format=fuller -n 5), write the exact prompt for SESSION 5, and
+STOP. Do NOT proceed automatically.
 ```

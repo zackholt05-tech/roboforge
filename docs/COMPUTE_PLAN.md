@@ -9,8 +9,8 @@ https://modal.com/pricing on **2026-11-05** and **must be rechecked before any l
 | Workload | Bound by | Session 0 measurement / estimate |
 |---|---|---|
 | MuJoCo stepping (closed-loop eval) | CPU, single-threaded per env | **Measured:** Lift ≈ 195 control steps/s/core, Can ≈ 163 (macOS arm64). Linux aarch64 Docker VM on the same laptop: Lift 161, Can 71 (replay median). Not representative of Modal x86_64. |
-| Policy inference in rollouts | CPU or GPU | **Unmeasured.** Diffusion with K denoising steps per replan × (400/T_a) replans per episode likely dominates eval time. Benchmark in Session 4 (DDPM-100 vs DDIM-10). |
-| Training state-based policies | GPU optional | **Unmeasured.** Lift has 9,666 samples with ~19-D obs and 7-D actions; small models may train acceptably on CPU/MPS. Benchmark locally first (Session 3–4). |
+| Policy inference in rollouts | CPU or GPU | **Measured for BC (Session 3, 1 thread, median per decision):** canonical container BC-MLP 0.91 ms, BC-MLP-chunk 1.26 ms, BC-RNN 8.6 ms; macOS 0.07 / 0.075 / 0.66 ms (KI-023). A 50-start Lift validation evaluation takes 1–4 min in the container. Diffusion with K denoising steps per replan × (400/T_a) replans is **unmeasured**; benchmark it in the container in Session 4 (DDPM-100 vs DDIM-10). |
+| Training state-based policies | GPU optional | **Measured for BC (Session 3, local M1 Pro CPU, 1 thread, 3 concurrent runs):** 30,000 steps × batch 100 take 146 s (BC-MLP, 205 steps/s), 983 s (BC-RNN, 30.5 steps/s) and 155 s (BC-MLP-chunk), including offline-loss evaluation and checkpoints. No GPU is needed for BC. Diffusion is unmeasured (Session 4). |
 | Rendering (RGB extraction, videos) | GPU (EGL) or CPU (OSMesa) | **Measured:** macOS CGL 7–25 ms per 256² frame; Linux OSMesa (CPU) 88–196 ms. At ~0.1–0.2 s/frame, 2 cameras over all demos is roughly 0.5–1 core-hour (Lift) and 1–2.5 core-hours (Can), an estimate. Not needed for state-based Level 1 eval. |
 | Storage | — | Raw datasets: 170 MB (Lift + Can). RGB 84×84 ×2 cameras: ~0.4 GB Lift, ~1 GB Can uncompressed (estimate). |
 

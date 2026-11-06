@@ -1,9 +1,13 @@
 # Experiment Ledger
 
 Chronological record of every executed experiment or engineering check. Results are
-recorded as observed, including failures. **No research experiments (model training or
-policy evaluation) have been run.** Sessions 1–2 ran engineering checks only. Session 2's
-random and no-op rollouts are sanity checks of the apparatus, not research results.
+recorded as observed, including failures.
+- Sessions 0–2 ran engineering checks only. Session 2's random and no-op rollouts are sanity
+  checks of the apparatus, not research results.
+- Session 3 ran the first **training runs** and **validation-only** closed-loop pilots. These
+  are development numbers: one training seed, on the in-distribution validation suite, and
+  selected on that same suite (RESEARCH_PROTOCOL §7). They are not held-out results. No
+  held-out test state has been loaded.
 
 | ID | Date | Session | Type | What | Outcome | Evidence | Cost |
 |---|---|---|---|---|---|---|---|
@@ -52,5 +56,27 @@ random and no-op rollouts are sanity checks of the apparatus, not research resul
 | E2-16 | 2026-11-06 | 2 | engineering | MuJoCo → three.js clip export (Lift `demo_0` replay), `make export-clip` + `make web-contract` at `283a811` | export: FK reproduces MuJoCo to 1.0e-15 m / 9.4e-16 rad; three.js-convention projection vs MuJoCo 1.1e-13 px; projected geom vertices inside segmentation masks 100 %; cube t = 0 bbox edge error 0.43 px; 3 timestamps × 2 cameras of overlays inspected. three.js r187 (node): conversion ≤ 1.0e-15, projection 3.4e-13 px, articulated FK ≤ 1.0e-15 | `reports/session2/web_diagnostic/`, `logs/session2/{export_clip,web_contract}.log` | $0 |
 | E2-17 | 2026-11-06 | 2 | engineering | Shadow renderer vs robosuite renderer, every camera × 3 validation starts × 2 tasks, 256² (macOS CGL, `283a811`) | identical except `frontview`: 1 grey level on 6 px (Lift) / 23 px (Can) | `logs/session2/diag/shadow_vs_robosuite_macos.json` | $0 |
 | E2-18 | 2026-11-06 | 2 | engineering | Runner change `b739e99` (`ROBOFORGE_EVIDENCE_SESSION`): mount audit, `make lint`, `make test`, container smoke Lift/Can via `make in-sim` | code/configs/docs/data/feasibility mounts read-only, only the selected session's report/log dirs + `runs/` writable, non-numeric session refused; lint clean; 185 passed; container smoke Lift 17/17, Can 16/16 (OSMesa, adapter render included) | `logs/session2/post_b739e99/` | $0 |
+
+| E3-01 | 2026-11-06 | 3 | engineering | Prerequisites at `0322a15`: `make setup`, `make download`, `make check-data`, `make build-data`, `make check-eval-states`, `git status --short data/`, `make lint`, `make test`, `make smoke-sim SMOKE_OUT=logs/session3/prereq`, container smoke Lift/Can (`ROBOFORGE_EVIDENCE_SESSION=3 make in-sim ...`), image ID vs `configs/eval/platform.yaml` | all PASS: 4/4 hashes verified; check-data and build-data PASS; eval states within 4.4e-16 (macOS vs container-generated); `data/` clean (0 lines); lint clean; 185 passed; smoke macOS 33/33, container Lift 17/17 and Can 16/16; image ID equal | `logs/session3/prereq/` | $0 |
+| E3-02 | 2026-11-06 | 3 | engineering | KI-007 re-check inside the repo, before any training code: Write + Edit of `src/roboforge/train/ki007_probe.py` with `loss.backward()` + `optimizer.step()` | not blocked; probe ran (1.0 → 0.8); deleted, never committed. KI-007 RESOLVED | `logs/session3/prereq/ki007_probe.log` | $0 |
+| E3-03 | 2026-11-06 | 3 | engineering | Dev timing (scratch, before the protocol): CPU optimizer steps/s, batch 100 | MLP 2 × 1024: 276 steps/s at 1 thread, 382 at 4; LSTM 2 × 296 (L = 10): 44 at 1 thread, 43 at 4. Used to size the pilot budget | this ledger | $0 |
+| E3-04 | 2026-11-06 | 3 | protocol | `docs/RESEARCH_PROTOCOL.md` v1 committed (`8b08b95`) before any reported run; code committed (`969e14f`) before the pilots | — | git history | $0 |
+| E3-05 | 2026-11-06 | 3 | engineering | Tests at `969e14f`: `make lint`, `make test` (46 new tests: models, trainer, sampler, config, checkpoints, resume, selection, real-data overfit, train/inference parity, isolation, reload equivalence), `make train-smoke` | lint clean; **231 passed**; smoke BC-MLP and BC-RNN PASS (dev-only 2-start rollouts, audits pass) | this ledger; `logs/session3/` | $0 |
+| E3-06 | 2026-11-06 | 3 | engineering | Deliberate overfit on real Lift data (`make overfit-check`, `969e14f`): 32 fixed windows × 300 steps, and every window of `demo_1` + `demo_2` (115) × 600 steps; primary architectures, lr 1e-3 | masked MSE before → after: BC-MLP 0.229 → 3.8e-7 and 0.223 → 0.0027 (×0.012); BC-RNN 0.224 → 4.7e-4 (×0.0021) and 0.220 → 8.2e-4 (×0.0037); BC-MLP-chunk 0.246 → 2.7e-6 and 0.223 → 0.0034 (×0.015). Bitwise identical to the dev run | `reports/session3/overfit_lift.json`, `logs/session3/overfit_check.log` | $0 |
+| E3-07 | 2026-11-06 | 3 | **pilot training** (tuning trial 1) | Lift seed 0, 30,000 steps, batch 100, checkpoints every 5,000, `make train`-equivalent `scripts/train.py --prefix s3` at `969e14f` (clean), local CPU, 3 runs concurrently (1 torch thread each). Runs: `s3_bc_mlp_lift_seed0_dbf312cd`, `s3_bc_rnn_lift_seed0_2e7cffe3`, `s3_bc_mlp_chunk_lift_seed0_bb8b4dd6` | all `complete`, reload checks PASS (bitwise). Wall / CPU s: BC-MLP 146 / 174 (205 steps/s), BC-RNN 983 / 1015 (30.5 steps/s), BC-MLP-chunk 155 / 183 (193 steps/s). Offline valid MSE at 5k → 30k: BC-MLP 0.042 → 0.080, BC-RNN 0.034 → 0.051, BC-MLP-chunk 0.048 → 0.071; training MSE falls (KI-024) | `runs/<id>/manifest.json` + `metrics.jsonl` (gitignored), `logs/session3/train/` | $0 |
+| E3-08 | 2026-11-06 | 3 | **pilot validation** | Every checkpoint × 50 Lift validation starts on the canonical container (`make eval RUN=runs/<id>` at `969e14f`; the variable was renamed `TRAIN_RUN` in `a37b92d`); 18 evaluations, 900 episodes, re-simulation audit of the first 3 per evaluation | successes at 5k/10k/15k/20k/25k/30k: **BC-MLP 47/41/45/41/42/42**, **BC-RNN 50/50/50/48/49/49**, **BC-MLP-chunk 49/50/49/48/48/46**. 0 errors; all 54 audits pass; every failure truncated at 400 steps | `reports/session3/validation/` (18 summaries), `runs/*__val_*` (gitignored), `logs/session3/eval/` | $0 |
+| E3-09 | 2026-11-06 | 3 | selection | RESEARCH_PROTOCOL §7 rule (`scripts/select_checkpoint.py`) | BC-MLP step 5000 (47/50; `30289109…`); BC-RNN step 15000 (50/50, 3-way tie on success broken by mean first-success step 43.2; `3dbb53ce…`); BC-MLP-chunk step 10000 (50/50; `a763c837…`). Development selections for the pilots only | `reports/session3/selection/` | $0 |
+| E3-10 | 2026-11-06 | 3 | engineering | Checkpoint reload equivalence, `scripts/check_checkpoint_equivalence.py`, last checkpoint of every run on the container and macOS, and the 3 selected checkpoints on the container | all PASS: two strict loads bitwise equal; closed-loop `physics_sha256` and raw actions identical across loads (3 starts) and in a fresh process; equal to the recorded validation evaluation on the container; Session 2 random/no-op episodes reproduce their recorded `physics_sha256` (4/4), so the observe hook (D-032) changed nothing for them | `reports/session3/checkpoint_equivalence/`, `logs/session3/equivalence/` | $0 |
+| E3-11 | 2026-11-06 | 3 | diagnostic | Action conventions and failures (`scripts/diagnose_actions.py` at `a37b92d`) | controller axes/signs PASS (each Δpos/Δrot dim moves mostly along its own world axis, positive; gripper +1 closes, −1 opens); teacher-forced gripper sign agreement 0.92–0.96; every closed-loop failure is a grasp failure; motion-dim clipping 50–78 % of steps in failed BC-MLP/-chunk episodes vs ≤ 1.3 % in successes (KI-021); gripper clipping harmless (KI-022) | `reports/session3/diagnostics/actions.json`, `logs/session3/diagnostics/` | $0 |
+| E3-12 | 2026-11-06 | 3 | cost | Training cost (manifests) + inference latency (`scripts/benchmark_policies.py` at `a37b92d`, 1 thread, median per decision) | container: BC-MLP 0.91 ms, BC-MLP-chunk 1.26 ms, BC-RNN 8.63 ms; macOS: 0.070 / 0.075 / 0.655 ms (KI-023) | `reports/session3/cost_latency/`, `logs/session3/cost_latency/` | $0 |
+| E3-13 | 2026-11-06 | 3 | integrity | Contamination check over all Session 3 records | 900 records, all partition `eval_validation`, 50 distinct `lift_validation_*` starts; only the 3 allowed files name the locked suite; `docs/FINAL_TEST_FREEZE.md` absent | `logs/session3/contamination_check.log` | $0 |
+
+**Tuning-budget accounting (RESEARCH_PROTOCOL §6.3).** Trials used on Lift:
+- BC-MLP: 1 of 4 (E3-07, `dbf312cd`);
+- BC-RNN: 1 of 4 (`2e7cffe3`);
+- BC-MLP-chunk: 1 of 4 (`bb8b4dd6`; amendment 2026-11-06).
+
+On Can: none. Each family's remaining search space must be written here before its next
+tuning run.
 
 Owner approvals for paid compute: **none requested, none granted.**

@@ -1,43 +1,50 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 2
-SESSION_STATUS: PASS            # simulator adapter, eval suites, recorder, three.js export; GO for Session 3
-NEXT_SESSION: 3
-BLOCKERS: none for Session 3    # open items carried forward: KI-001, KI-007, KI-008, KI-011, KI-019, KI-020
-LAST_VERIFIED_COMMIT: b739e99be81803b5e596ed8e8357633780e6a4d3   # lint, 185 tests, container smoke Lift 17/17 + Can 16/16
-# Code changes 283a811 -> b739e99: infra/containers/run_sim_cpu.sh only (ROBOFORGE_EVIDENCE_SESSION selects
-# the writable reports/logs session dirs; physics path unchanged). Verify: git diff 283a811 b739e99 --stat
-EVIDENCE_COMMIT: 283a8115d63b8698503af607a67f6a06c3676745   # every Session 2 report regenerated from this clean commit
+CURRENT_SESSION: 3
+SESSION_STATUS: PASS            # protocol v1 committed first; BC-MLP + BC-RNN trained, reloaded, rolled out on Lift
+NEXT_SESSION: 4
+BLOCKERS: none for Session 4    # open items carried forward: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024
+LAST_VERIFIED_COMMIT: a37b92d   # lint clean, 231 tests; code since 969e14f: Makefile + scripts/diagnose_actions.py only
+PROTOCOL_COMMIT: 8b08b95        # docs/RESEARCH_PROTOCOL.md v1, committed before any reported run
+EVIDENCE_COMMITS: {training_and_validation: 969e14f, diagnostics_cost_equivalence: a37b92d}   # all dirty=false
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: LOCKED              # docs/FINAL_TEST_FREEZE.md does not exist
-RESOURCE_SPEND: {usd: 0.00, gpu_hours: 0, notes: "no remote compute used"}
+FINAL_TEST: LOCKED              # docs/FINAL_TEST_FREEZE.md does not exist; no test state loaded
+RESOURCE_SPEND: {usd: 0.00, gpu_hours: 0, notes: "local CPU only; no remote compute"}
 UPDATED: 2026-11-06
 ```
 
 # RoboForge Status
 
-## Session 2 acceptance criteria (MASTER_SPEC Session 2)
+## Session 3 acceptance criteria (MASTER_SPEC Session 3)
 | Criterion | Status | Evidence |
 |---|---|---|
-| Prerequisites re-verified (setup, download, check-data, build-data, `data/` clean, test, smoke) | DONE at `4db6526` | `logs/session2/prereq/`, EXPERIMENT_LEDGER E2-01 |
-| Simulator wrapper: reset from exact snapshot, action stepping + clipping, reward, success, truncation, cameras, robot/object world transforms | DONE | D-024; `src/roboforge/sim/env_adapter.py`; `tests/simulator/test_env_adapter.py`; smoke adapter checks |
-| Demo replay on ≥ 10 sampled demos/task with divergence summary and video inspection; controller bounds | DONE: 12/task, all gates PASS, 0 clip events | D-029; `reports/session2/replay/` (E2-10) |
-| Seed reproducibility: two fresh processes, same controlled seed, matching trajectory within declared tolerance | DONE on the canonical container (tolerance 0.0): fresh processes restoring the stored snapshot give identical `physics_sha256`, and a fresh process regenerating the start from its seed reproduces the stored start and trajectory bitwise. On macOS only snapshot restores are bitwise; seed regeneration there diverges by up to 0.144 (Lift) / 1.49 (Can), which is why evaluation always restores snapshots (KI-013) | `reports/session2/determinism/` (E2-13, E2-14) |
-| Environment receives a valid dynamic-dimension action | DONE: action dim read from the committed `ActionSpec` (7) and checked against the env; wrong shapes/NaN/inf rejected, out-of-bounds clipped and reported | `tests/simulator/test_env_adapter.py`; smoke `adapter_valid_dynamic_dim_action` |
-| Eval initial-state generator, validation vs final test, episode limits, success definition | DONE: 50 + 50 starts/task, hashed; 400-step horizon; first-success rule | D-025, D-026; `data/eval_states/`; RESEARCH_PROTOCOL §5 |
-| Final-test states saved, hashed and blocked until `FINAL_TEST_FREEZE.md` | DONE: loading or resetting to the test seed block raises; enforced by tests | `tests/research_integrity/test_final_test_lock.py` |
-| Test metadata identifies train/validation/test partitions | DONE: partition label in every snapshot, record and report; `partitions.json` per task | D-025; `data/eval_states/*/partitions.json` |
-| Random/no-op policies + demo-replay instrumentation with non-autonomous labels | DONE | D-027; `src/roboforge/eval/policies.py` |
-| Random policy produces correctly recorded closed-loop outcomes | DONE on the canonical container: random and no-op 0/50 on both tasks, every episode truncated at 400, 0 errors, 0 clips; re-simulation audits pass | D-028; `reports/session2/sanity_eval/` (E2-15); `tests/simulator/test_rollout.py` |
-| Full rollout recorder with frame-indexed kinematics and frames | DONE | D-028; `src/roboforge/eval/rollout.py` |
-| One real clip exported; MuJoCo → three.js conversion verified with reference frames | DONE: Lift `demo_0` clip; FK 1e-15, projection 1e-13 px (3e-13 px in three.js r187), masks contain 100 % of projected vertices | D-030; `reports/session2/web_diagnostic/` (E2-16) |
-| KI-014 (markers) and KI-016 (XML) resolved; evaluation model chosen | DONE | KNOWN_ISSUES; `reports/session2/sim_contract_*.json` (E2-11) |
-| Evaluation platform (D-017) and termination rule decided | DONE: pinned Linux aarch64 container; first success | D-017, D-026 |
-| `make smoke-sim` and simulator tests pass | DONE: smoke Lift 17/17, Can 16/16; 185 tests passed | `logs/session2/{smoke_sim,test}.log` (E2-08) |
-| No training, no paid compute, no publication; committed data unchanged | DONE | `git status --short data/` empty after regeneration |
+| Prerequisites re-verified at `0322a15` | DONE: all PASS, `data/` clean, 185 tests, smoke macOS 33/33, container 17/17 + 16/16, image ID equal | `logs/session3/prereq/`, LEDGER E3-01 |
+| KI-007 re-checked inside the repo before training code | DONE: not blocked; RESOLVED | `logs/session3/prereq/ki007_probe.log`, E3-02 |
+| `docs/RESEARCH_PROTOCOL.md` committed before any reported run | DONE at `8b08b95`. It fixes hypotheses, tasks, observation privilege, splits, the paired schedule, success, the selection rule (§7), matched budgets (§6.3) and the bootstrap plan (§9) | E3-04 |
+| Shared policy/trainer/checkpoint layer | DONE: strict configs, seeded sampler, masked MSE, gradient-norm logging, `weights_only` checkpoints, immutable manifests, `LearnedPolicy`, validation eval, selection | D-032–D-037; `src/roboforge/{models,train,eval}/` |
+| BC-MLP and BC-GRU/LSTM | DONE: BC-MLP 2 × 1024 (1,077,255 params) and BC-RNN LSTM 2 × 296 (1,080,703, +0.3 %); plus the BC-MLP-chunk control (1,204,336). GMM not implemented (optional) | D-033; `reports/session3/param_counts.json` |
+| Tiny-batch and tiny-episode overfit tests | DONE: MSE ×1.7e-6 to ×0.015 on real Lift windows | `tests/integration/test_train_real_data.py`, `reports/session3/overfit_lift.json`, E3-06 |
+| Forward/backward/gradient-norm tests | DONE: every parameter gets a finite, non-zero gradient; RNN masking; shapes | `tests/unit/test_bc_models.py` |
+| CPU train/eval smoke | DONE: `make train-smoke` PASS | E3-05 |
+| Checkpoint save/reload equivalence (identical outputs, identical closed-loop `physics_sha256` on one platform) | DONE: reload check bitwise in every manifest; two loads, a fresh process and the recorded eval give identical `physics_sha256` on the container (selected and last checkpoints) and on macOS; bitwise resume | `reports/session3/checkpoint_equivalence/`, E3-10 |
+| Both baselines consume the actual demonstration data | DONE: `SequenceDataset.from_committed` only; manifests carry the committed hashes; windows tested equal to the dataset | `tests/integration/test_train_real_data.py`, run manifests |
+| Real Lift rollouts in the pinned simulator; validation-only, no test contamination | DONE: 18 canonical evaluations, 900 episodes, all `eval_validation`, 0 errors, audits pass | `reports/session3/validation/`, E3-08, E3-13 |
+| Initial closed-loop Lift behavior + clipping/sign/coordinate diagnosis | DONE: controller axes/signs correct; failures are grasp failures with out-of-workspace drift; clipping is a symptom (KI-021); gripper clipping harmless (KI-022) | `reports/session3/diagnostics/actions.json`, E3-11 |
+| True parameter counts + matched-capacity configurations | DONE: primary tier ±0.3 %; tiers at 0.27 M / 1.08 M / 4.3 M for MLP, LSTM, GRU, chunk | `reports/session3/param_counts.json` |
+| Baseline training cost and inference latency | DONE: train BC-MLP 146 s, BC-RNN 983 s, BC-MLP-chunk 155 s (30k steps, CPU); container latency 0.91 / 8.6 / 1.26 ms per decision | `reports/session3/cost_latency/`, E3-07, E3-12 |
+| No paid compute, no publication, committed data and eval suites unchanged, `uv.lock` unchanged | DONE | `git diff 0322a15 -- uv.lock data/` empty |
+
+## Pilot validation results (development numbers, one seed, Lift validation suite)
+| Family | Successes at 5k / 10k / 15k / 20k / 25k / 30k steps | Selected (§7) |
+|---|---|---|
+| BC-MLP | 47 / 41 / 45 / 41 / 42 / 42 of 50 | step 5000 (47/50) |
+| BC-RNN | 50 / 50 / 50 / 48 / 49 / 49 | step 15000 (50/50) |
+| BC-MLP-chunk | 49 / 50 / 49 / 48 / 48 / 46 | step 10000 (50/50) |
+
+These are not results. They come from one training seed on the in-distribution validation
+suite, and selection used that same suite.
 
 ## Owner decisions pending
-1. Optional: prune the Docker build cache if disk space is needed (KI-008; 63 GB free
-   at Session 2 end).
-2. Nothing else is needed for Session 3. Session 3 trains small models on local CPU only.
-   Any paid compute needs approval first.
+1. None needed for Session 4, which is local CPU only. Any paid compute needs approval first
+   (Session 5).
+2. Optional: prune the Docker build cache if disk space is needed (KI-008; 55 GB free).

@@ -11,7 +11,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-004 | MEDIUM | ACCEPTED | Open-loop demo replay is not exact |
 | KI-005 | HIGH | MITIGATED | Latest mujoco breaks robosuite v1.5.1 |
 | KI-006 | LOW | MITIGATED | egl_probe does not build on macOS |
-| KI-007 | MEDIUM | PARTIAL | Local Claude Code plugin hooks blocked legitimate commands |
+| KI-007 | MEDIUM | RESOLVED (Session 3) | Local Claude Code plugin hooks blocked legitimate commands |
 | KI-008 | MEDIUM | OPEN | Local disk nearly full (Docker storage repaired) |
 | KI-009 | LOW | OPEN | Evidence files contain absolute local paths |
 | KI-010 | LOW | OPEN | Docker sim image is 8.7 GB |
@@ -25,6 +25,10 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-018 | MEDIUM | RESOLVED (aarch64) | robosuite `quat2mat` is float32 and platform-dependent |
 | KI-019 | MEDIUM | MITIGATED (Session 2, D-024) | `mj_forward` on live data perturbs the rest of a rollout |
 | KI-020 | LOW | MITIGATED (Session 2, D-017) | `uv sync`/`uv run` inside the pinned image would modify its environment |
+| KI-021 | MEDIUM | OPEN | BC-MLP compounds a missed grasp into out-of-workspace drift with saturated actions |
+| KI-022 | LOW | ACCEPTED | Gripper commands are clipped on 28–63 % of steps, harmlessly |
+| KI-023 | LOW | OPEN | Policy inference is ~13× slower in the canonical container than natively |
+| KI-024 | MEDIUM | OPEN | Offline validation MSE rises during training and does not track closed-loop success |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 and EGL not
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -123,6 +127,16 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
   `optimizer.step()` was not blocked. The file was in the session scratchpad, outside the
   repository; Session 3 must re-check inside the repository. The SessionStart hook still
   injects ml-pipeline guard instructions. Nothing from them was added to the repository.
+- **Resolved (Session 3, before any training code):**
+  - Claude Code's Write and Edit tools created and modified
+    `src/roboforge/train/ki007_probe.py`, which contains `loss.backward()` and
+    `optimizer.step()`, inside the repository. Neither was blocked.
+  - The probe ran (one SGD step, 1.0 → 0.8) and was deleted. It was never committed
+    (`logs/session3/prereq/ki007_probe.log`).
+  - All Session 3 training code was then written the same way without any hook
+    intervention. `ML_PIPELINE_ENFORCE=0` stays set in `~/.claude/settings.json`.
+  - The SessionStart hook still injects ml-pipeline guard and canary instructions. They were
+    ignored and nothing from them entered the repository.
 
 ### KI-008 — Local disk nearly full; Docker storage corrupted
 - The disk had 55 GB free at session start; it filled during the Docker image export.
@@ -137,6 +151,11 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
   `runs/` sanity records take about 0.1 GB per full sanity evaluation.
 - RGB extraction (Session 8) needs ~0.5–1.5 GB per task at 84×84. Checkpoints and rollouts
   need more. Monitor `df -h` before heavy steps.
+- Session 3 end: 55 GB free.
+  - `runs/` holds 411 MB: 3 training runs × 6 checkpoints (≈ 13 MB each for the BC models,
+    including Adam state) plus 18 validation evaluations × 50 episode records.
+  - A Session 6 main suite (3 families × 3 seeds × 2 tasks × 10 checkpoints, with
+    evaluations) is expected to need a few GB. That is an estimate, not measured.
 
 ### KI-009 — Evidence files contain absolute local paths
 Some files contain `/Users/zackaryholt/...` paths: `reports/feasibility/*.json`
@@ -320,4 +339,75 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   the host.
 - **Session 5:** the remote image build should make `uv sync --frozen` a no-op, or record
   why it is not.
+
+### KI-021 — BC-MLP compounds a missed grasp into out-of-workspace drift with saturated actions
+- **Observed** (Session 3 Lift validation pilots, canonical container,
+  `reports/session3/diagnostics/actions.json`). Every failed episode of every Session 3
+  pilot is a grasp failure:
+  - **BC-MLP:** 3–9 of 50 per checkpoint. Most are `missed_grasp_then_drift`: the gripper
+    closes, the cube never rises, and the end effector ends more than 0.2 m from the cube.
+    Its z reaches up to 2.19 m, above a table at ≈ 0.8 m. A few are `gripper_never_closed`:
+    the arm hovers 2–5 cm from the cube until the horizon.
+  - **BC-MLP-chunk:** 0–4 of 50, all drift.
+  - **BC-RNN:** 0–2 of 50 (drift or `missed_grasp_stayed_near`).
+- **Clipping is a symptom, not a convention bug:**
+  - Motion dimensions (0–5) are clipped on 50–78 % of the steps of failed BC-MLP and
+    BC-MLP-chunk episodes, against ≤ 1.3 % in successful ones. BC-RNN clips ≤ 1 % even
+    when it fails.
+  - Once the arm leaves the demonstrated workspace, the MLP extrapolates and saturates, and
+    it never returns.
+  - Controller axes and signs are verified: each Δposition and Δrotation dimension moves or
+    rotates the end effector mostly about its own world axis with a positive sign, and
+    gripper +1 closes. The teacher-forced gripper sign agreement on the validation demos is
+    0.92–0.96.
+- **Categories:** post-hoc Session 3 diagnostic categories (`scripts/diagnose_actions.py`).
+  They are not the preregistered failure taxonomy, which Session 7 defines before the test.
+- **Implication:** this is classic compounding error in closed-loop BC, which offline loss
+  does not show (KI-024). Recovery and regularization options are tuning decisions for
+  Session 6, within the matched budget: early checkpoints, weight decay, dropout, observation
+  noise and action chunking. Lift success is therefore **not** saturated for one-step BC
+  (best 47/50).
+
+### KI-022 — Gripper commands are clipped on 28–63 % of steps, harmlessly
+- The demonstrations' gripper action is exactly ±1, which is also the training range, so
+  min-max normalization maps it to ±1.
+  - Regression outputs overshoot ±1 slightly.
+  - After decoding, 28–63 % of executed steps per checkpoint have the gripper entry clipped
+    (eval summaries, `clip_fraction_per_dim[6]`).
+- robosuite's `PandaGripper.format_action` uses only `np.sign(action)` (it integrates
+  `current_action += 0.2 · sign(a)`), so clipping the magnitude cannot change behavior.
+- **Reporting rule:** report clip and saturation rates for the motion dimensions (0–5)
+  separately from the gripper. A total clip rate would be dominated by this harmless gripper
+  clipping.
+
+### KI-023 — Policy inference is ~13× slower in the canonical container than natively
+- **Measured** with `scripts/benchmark_policies.py` (1 torch thread, median per decision of
+  `observe` + `act`):
+
+  | Model | macOS native | container |
+  |---|---|---|
+  | BC-MLP | 0.070 ms | 0.912 ms |
+  | BC-MLP-chunk | 0.075 ms | 1.259 ms |
+  | BC-RNN | 0.655 ms | 8.626 ms |
+
+  Sources: `reports/session3/cost_latency/{darwin-arm64-native,linux-aarch64-container-1f685638f28c}.json`.
+- **Cause (not isolated):** the Docker Desktop Linux VM plus the CPU path of the
+  linux-aarch64 torch wheel (a CUDA build, KI-010).
+- **Impact:**
+  - Latency comparisons must use one platform; the canonical container is the reported one.
+  - BC costs are small. Diffusion with K denoising steps per decision may dominate canonical
+    evaluation time, so Session 4 must measure it there.
+
+### KI-024 — Offline validation MSE rises during training and does not track closed-loop success
+- In all three Session 3 pilots the masked MSE on the 20 validation demos rises steadily from
+  the first checkpoint, while the training MSE falls (`runs/<id>/metrics.jsonl`, summarized
+  in EXPERIMENT_LEDGER E3-07):
+  - BC-MLP: 0.042 at 5k steps → 0.080 at 30k;
+  - BC-RNN: 0.034 → 0.051;
+  - BC-MLP-chunk: 0.048 → 0.071.
+
+  Closed-loop success moves much less, and not monotonically: BC-RNN scores 50/50 at
+  5k–15k with a rising validation MSE.
+- Offline loss therefore cannot select checkpoints. The protocol already forbids that
+  (RESEARCH_PROTOCOL §7.4), and this confirms the rule empirically.
 

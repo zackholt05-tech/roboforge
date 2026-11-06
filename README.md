@@ -8,8 +8,10 @@ cloning, recurrent behavior cloning and a conditional diffusion action policy on
 robomimic proficient-human demonstrations, and evaluated by closed-loop simulator rollouts
 from paired, held-out initial states.
 
-> **Status: Session 2 (simulator adapter and evaluation apparatus) complete — no models trained, no results yet.**
-> Key findings: Results pending. See [docs/STATUS.md](docs/STATUS.md),
+> **Status: Session 3 (research protocol and BC baselines) complete. Only short validation
+> pilots of BC-MLP and BC-RNN have been run; no held-out test exists yet.**
+> Key findings: Results pending. Validation pilots are development numbers, not results. See
+> [docs/STATUS.md](docs/STATUS.md), [docs/RESEARCH_PROTOCOL.md](docs/RESEARCH_PROTOCOL.md),
 > [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) and
 > [reports/feasibility/STACK_REPORT.md](reports/feasibility/STACK_REPORT.md).
 
@@ -37,6 +39,16 @@ from paired, held-out initial states.
     real three.js library.
   - Canonical evaluation runs in a pinned Linux container
     ([docs/SIMULATOR_CONTRACT.md](docs/SIMULATOR_CONTRACT.md), DECISIONS D-017, D-024–D-030).
+- Session 3: the research protocol and the baselines.
+  - [docs/RESEARCH_PROTOCOL.md](docs/RESEARCH_PROTOCOL.md) was committed before any reported
+    run. It fixes the hypotheses, matched budgets, the checkpoint-selection rule and the
+    bootstrap plan.
+  - A shared trainer with strict configs, `weights_only` checkpoints, bitwise resume and
+    immutable run manifests.
+  - BC-MLP and BC-RNN (LSTM), capacity-matched at about 1.08 M parameters, plus an
+    action-chunking control, BC-MLP-chunk.
+  - Validation-only closed-loop evaluation on the pinned container, with checkpoint
+    hashes carried into every record (DECISIONS D-032–D-038).
 - Known issues that shape later sessions are listed in [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 
 ## Quick start
@@ -55,6 +67,10 @@ make replay-demos        # 12 sampled demos/task through RoboForgeEnv: divergenc
 make check-determinism   # two fresh processes, same seed -> bitwise-identical rollouts
 make sanity-eval-canonical  # random + no-op policies on the validation suite, pinned container
 make export-clip && make web-contract  # one real clip, verified against three.js (node)
+make train-smoke         # CPU miniature: overfit checks + 200-step train + 2-start dev eval
+make train MODEL=bc_mlp TASK=lift SEED=0        # one local CPU training run -> runs/<run_id>/
+make eval TRAIN_RUN=runs/<run_id>               # validation rollouts of every checkpoint (container)
+make select TRAIN_RUN=runs/<run_id>             # RESEARCH_PROTOCOL §7 checkpoint selection
 ```
 
 Requirements: macOS arm64 or Linux x86_64/aarch64, [uv](https://docs.astral.sh/uv/).
@@ -67,6 +83,7 @@ verified on linux/aarch64; x86_64 and EGL are not yet (KNOWN_ISSUES KI-001).
 ```text
 configs/simulator/   task contracts generated from dataset metadata (tested for equality)
 configs/data/        canonical observation-feature selection, horizons, normalization per task
+configs/models/      BC run configs (architecture, horizons, optimizer, step budget)
 configs/eval/        evaluation suites (seeds, final-test lock, termination) + canonical platform
 data/manifests/      dataset source registry (pinned revision, SHA-256) + tasks/ task manifests
 data/splits/         episode-level train/valid split manifests (all IDs, hashed)
@@ -74,8 +91,9 @@ data/normalization/  train-only normalization statistics (hashed)
 data/eval_states/    validation + final-test initial-state suites (final test locked)
 src/roboforge/       data/ (fetch, specs, features, processed, split, normalization, sequence,
                      audit) · sim/ (env adapter, snapshots, eval suites, kinematics, render) ·
-                     eval/ (policies, rollout recorder) · viz/ (three.js coordinates, clip) ·
-                     models/ train/ compute/ (boundaries; implemented in later sessions)
+                     eval/ (policies, rollout recorder, learned policy, validation, selection)
+                     · models/ (BC-MLP, BC-RNN) · train/ (config, trainer, checkpoints, runs)
+                     · viz/ (three.js coordinates, clip) · compute/ (boundary; Session 5)
 scripts/             reproducible CLIs used by the Makefile
 tests/               unit/ · simulator/ · integration/ · research_integrity/ · web_contract/
                      (pytest markers: sim, data, render, slow, web)
@@ -83,7 +101,9 @@ infra/containers/    headless Linux simulation image + run_sim_cpu.sh (canonical
 reports/feasibility/ Session 0 evidence (JSON reports, rendered frames)
 reports/data_audit*  Session 1 dataset audit (JSON + figures)
 reports/session2/    Session 2 evidence (replay, contract, determinism, sanity eval, clip)
-docs/                status, handoff, decisions, known issues, protocol drafts
+reports/session3/    Session 3 evidence (validation pilots, selection, equivalence, diagnostics)
+runs/                training and evaluation runs (gitignored; manifests + checkpoints)
+docs/                status, handoff, decisions, known issues, research protocol
 ```
 
 ## Authorship and credit

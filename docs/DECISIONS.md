@@ -110,7 +110,8 @@ and apply it identically to all models.
   - `LICENSE` is the official text from https://www.apache.org/licenses/LICENSE-2.0.txt
     (SHA-256 `cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30`; matches
     the SPDX text).
-  - `NOTICE`: "Copyright 2026 Zackary Holt".
+  - `NOTICE`: "Copyright 2026 Zackary Holt" (ORCID iD 0009-0007-3965-4043 added at the
+    owner's request, 2026-11-06).
   - `pyproject.toml` `license = "Apache-2.0"`, `CITATION.cff` `license: Apache-2.0`, and
     the README.
 - Per-file license headers are not required by Apache-2.0 and are not used.

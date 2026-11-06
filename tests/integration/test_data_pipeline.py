@@ -16,7 +16,13 @@ import pytest
 
 from roboforge.data.features import FeatureExtractor
 from roboforge.data.normalization import Normalizer
-from roboforge.data.pipeline import build_task, check_task, load_specs, load_task_artifacts
+from roboforge.data.pipeline import (
+    build_task,
+    check_task,
+    load_specs,
+    load_task_artifacts,
+    write_task,
+)
 from roboforge.data.processed import (
     EQUAL_ATOL,
     ROBOSUITE_F32_ATOL,
@@ -218,6 +224,15 @@ def test_can_rebuild_reproduces_committed_artifacts(can_lowdim_path) -> None:
     a, b = build_task("can"), build_task("can")
     assert a.task_manifest == b.task_manifest and a.normalization == b.normalization
     assert check_task(a) == []
+
+
+def test_build_refuses_to_overwrite_differing_committed_artifacts(can_lowdim_path,
+                                                                tmp_path) -> None:
+    art = build_task("can")
+    art.split = {**art.split, "notes": "tampered"}
+    with pytest.raises(ValueError, match="refusing to write"):
+        write_task(art, processed_root=tmp_path)
+    assert not list(tmp_path.rglob("*.hdf5"))
 
 
 @pytest.mark.slow

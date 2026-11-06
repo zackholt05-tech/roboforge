@@ -190,8 +190,22 @@ def build_task(task: str) -> TaskArtifacts:
     return TaskArtifacts(task, conv, episodes, split, normalization, manifest, ver, issues)
 
 
-def write_task(art: TaskArtifacts, processed_root: Path | None = None) -> dict[str, str]:
-    """Write the processed file and the three committed JSON artifacts; return their paths."""
+def write_task(art: TaskArtifacts, processed_root: Path | None = None,
+               update_committed: bool = False) -> dict[str, str]:
+    """Write the processed file, and the committed JSON artifacts only if asked to.
+
+    By default the committed split, normalization and task manifest must already equal the
+    rebuild (:func:`check_task`). Otherwise this raises before writing anything, so a
+    rebuild on a different platform or code revision can never silently overwrite the
+    committed contract. ``update_committed=True`` is for an intentional, recorded change of
+    the data contract.
+    """
+    if not update_committed:
+        problems = check_task(art)
+        if problems:
+            raise ValueError(f"{art.task}: committed artifacts differ from this rebuild; "
+                             f"refusing to write (use --update-committed only for an "
+                             f"intentional, recorded change): {problems}")
     out = processed_path(art.task, art.converter_version, processed_root)
     m = art.task_manifest
     attrs = {"task": art.task, "converter_version": art.converter_version,
@@ -200,6 +214,8 @@ def write_task(art: TaskArtifacts, processed_root: Path | None = None) -> dict[s
              "source_low_dim_sha256": m["source"]["files"]["low_dim"]["sha256"]}
     if write_processed(out, art.episodes, attrs) != m["processed"]["content_sha256"]:
         raise AssertionError("written processed content hash differs from manifest")
+    if not update_committed:
+        return {"processed": str(out)}
     paths = committed_paths(art.task, art.converter_version)
     write_json(paths["split"], art.split)
     write_json(paths["normalization"], art.normalization)

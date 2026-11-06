@@ -4,18 +4,24 @@ For each task, the robomimic files are hash-verified and features are recomputed
 saved MuJoCo states. They are then verified against the dataset obs blocks, and the
 pipeline writes:
 
-* ``$ROBOFORGE_DATA_ROOT/processed/robomimic_v1.5_ph/<task>/lowdim_v1.hdf5`` (gitignored);
-* ``data/splits/<task>_ph.json``, ``data/normalization/<task>_ph_lowdim_v1.json`` and
-  ``data/manifests/tasks/<task>_ph.json`` (committed, byte-deterministic).
+* ``$ROBOFORGE_DATA_ROOT/processed/robomimic_v1.5_ph/<task>/lowdim_v1.hdf5`` (gitignored),
+  only after the rebuild has been shown to equal the committed artifacts.
 
-``--check`` rebuilds everything in memory, writes nothing and exits non-zero if any committed
-artifact differs. It is the split/normalization/processed-content determinism contract that
-``make verify-data`` enforces.
+The committed artifacts are ``data/splits/<task>_ph.json``,
+``data/normalization/<task>_ph_lowdim_v1.json`` and ``data/manifests/tasks/<task>_ph.json``
+(byte-deterministic). The flags control them:
+
+* ``--check`` rebuilds everything in memory, writes nothing and exits non-zero if any
+  committed artifact differs. It is the determinism contract that ``make verify-data``
+  enforces.
+* ``--update-committed`` (re)writes the committed artifacts. Use it only for an intentional
+  data-contract change, recorded in docs/DECISIONS.md.
 
 Usage::
 
-    python scripts/build_data.py --tasks lift can
+    python scripts/build_data.py --tasks lift can                 # processed files only
     python scripts/build_data.py --tasks lift can --check
+    python scripts/build_data.py --tasks lift can --update-committed
 """
 
 from __future__ import annotations
@@ -35,8 +41,11 @@ def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint."""
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--tasks", nargs="+", default=["lift", "can"])
-    p.add_argument("--check", action="store_true",
-                   help="rebuild in memory and compare with committed artifacts; write nothing")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true",
+                      help="rebuild in memory and compare with committed artifacts; write nothing")
+    mode.add_argument("--update-committed", action="store_true",
+                      help="also (re)write the committed split/normalization/task manifests")
     args = p.parse_args(argv)
     failures = 0
     for task in args.tasks:
@@ -62,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"   check: {'PASS' if not problems else 'FAIL'}")
             failures += bool(problems)
         else:
-            for k, v in write_task(art).items():
+            for k, v in write_task(art, update_committed=args.update_committed).items():
                 print(f"   wrote {k}: {v}")
     return 1 if failures else 0
 

@@ -17,9 +17,11 @@ Why not use robosuite's observations directly:
 
 The function is pure: it copies ``qpos`` into a private scratch ``MjData`` and runs
 ``mj_kinematics`` there, so it never mutates the live simulation and gives the same value for
-the same state whether the state came from a dataset file or a rollout. Formulas and
-quaternion conventions are robosuite's own (``robosuite.utils.transform_utils``), so the result
-equals robosuite's observation wherever robosuite's observation is current.
+the same state whether the state came from a dataset file or a rollout. Feature definitions
+and quaternion conventions are robosuite's. Every ``relation: equal`` feature reproduces
+robosuite's observation bitwise wherever that observation is current. The corrected relative
+position (``pos_in_eef_frame``) is evaluated in float64 from MuJoCo's rotation matrix, so it
+agrees with robosuite's float32 implementation only to about 1e-7 m (KI-018).
 """
 
 from __future__ import annotations

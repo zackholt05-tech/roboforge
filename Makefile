@@ -40,7 +40,7 @@ verify-data:  ## HDF5 checks, low_dim==raw, obs/state alignment, replay of all d
 		--out-dir $(VERIFY_OUT)
 	$(MAKE) check-data TASKS="$(TASKS)"
 
-build-data:  ## Build processed data + committed split/normalization/task manifests (Session 1)
+build-data:  ## Build processed data (gitignored); fails unless committed artifacts match
 	$(RUN) python scripts/build_data.py --tasks $(TASKS)
 
 check-data:  ## Rebuild in memory; fail unless committed data artifacts match exactly

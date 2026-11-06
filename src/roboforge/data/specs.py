@@ -56,7 +56,8 @@ class FeatureSpec:
 
     ``relation`` states how the feature compares with the dataset block: ``equal`` (must
     reproduce it exactly) or ``corrected_same_step`` (the dataset block is known to be wrong,
-    KI-003; the feature is robosuite's own formula evaluated on same-step poses).
+    KI-003). In the second case the feature is robosuite's definition evaluated on same-step
+    poses, in float64, and agrees with robosuite's float32 formula to about 1e-7 (KI-018).
     """
 
     name: str

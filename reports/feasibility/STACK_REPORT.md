@@ -80,10 +80,14 @@ All 11 Lift checks and 10 Can checks PASS:
 
 ## 6. Data loader + one-batch forward pass (item 6)
 `roboforge.data.windows.LowDimWindowDataset` produces `obs [T_o, D]`, `obs_valid [T_o]`,
-`action [T_p, 7]` and `action_valid [T_p]` within episode bounds. Tests cover
-boundaries/padding, no future-observation leakage, and real Lift windows (2×19 obs, 16×7
-actions, finite, |a| ≤ 1). A tiny MLP forward pass with masked MSE on one batch is finite.
-The forward pass only, no backward: D-014.
+`action [T_p, 7]` and `action_valid [T_p]` within episode bounds.
+- Tests cover window boundaries and padding masks, and the absence of future-observation
+  leakage.
+- On **real Lift data**, the loader was checked for window shapes and values only:
+  2×19 obs, 16×7 actions, finite, |a| ≤ 1.
+- The tiny-MLP forward pass with masked MSE ran on **synthetic** HDF5 data, and its
+  output is finite. It was forward-only, with no backward pass (D-014). A forward pass on
+  real data is a Session 1 test.
 
 ## 7. Closed-loop random policy and success signal (item 7)
 Covered in §3: random actions give no success. Success comes from robosuite's own
@@ -125,6 +129,23 @@ Conditions carried forward:
 3. **Plugin hooks:** confirm before Session 3 that the plugin hook no longer blocks
    training code (KI-007).
 4. **Linux/EGL:** verify before Sessions 5 and 8 (KI-001).
+
+## 11. Spec audit — MASTER_SPEC claims vs. verified facts
+| Spec claim / assumption | Verified fact (Session 0) | Change adopted |
+|---|---|---|
+| §2.1 "robomimic 0.5-series", pin exact release | PyPI has only 0.3.0. The v0.5.0 tag downloads CLIP ViT-L/14 at import and predates 12 fixes (incl. diffusion-policy and HF repo-ID fixes). | Pin git master `d309eae` (D-004) |
+| §2.1 MuJoCo official bindings, version unspecified | The latest mujoco (3.17.0) breaks robosuite 1.5.1. 3.2.7 and 3.3.0 both work. | Pin `mujoco==3.2.7` (D-002) |
+| §2.1 robosuite v1.5.1 branch | Confirmed by the robomimic docs and the `env_version` in the data. PyPI 1.5.2 requires mujoco ≥3.3 and was not evaluated. | Pin tag commit `51cc017` (D-003) |
+| §2.2 downloader CLI form | `download_datasets.py --tasks … --dataset_types ph --hdf5_types low_dim --dry_run` works (from robomimic master; the HF repo was renamed to `robomimic/robomimic_datasets`). | Own fetcher with pinned revision + SHA-256 (D-007) |
+| §2.2 raw datasets for RGB/depth extraction | Raw `demo_v15` files contain `states` and `model_file`. **No pre-rendered v1.5 PH image HDF5 exists** (registry `image: None`). | RGB must come from `dataset_states_to_obs`-style extraction (Session 8) |
+| §2.3(5) headless render on Linux | Verified on macOS (CGL). Linux image built, but the container run failed (Docker storage I/O error). | Marked INCOMPLETE (KI-001) |
+| §3.3 operator partitions | The HDF5 files contain no operator metadata. | No held-out-operator claims |
+| §3.5 OOD initial states | Lift's default placement is only ±3 cm x/y + random yaw. | OOD needs explicitly widened ranges (KI-011) |
+| §4.1 `reset(initial_state_or_seed)` | robosuite task envs reject `seed=`; resets use the global `np.random`. Restoring serialized states is exact. | Seed path only via global RNG; eval restores serialized states (D-008) |
+| §4.2 object_state is privileged but correct | Can's relative-pose blocks lag one update and are wrong at t=0; world-frame blocks are exact. | One state→feature function for train + eval (D-010, KI-003) |
+| §4.3 7-D action not assumed | Read from data and env: 7-D OSC_POSE delta + gripper, [−1, 1], 20 Hz. | Recorded in SIMULATOR_CONTRACT |
+| §6.2 GPU T4/L4/A10 | Physics is CPU-bound (~160–200 steps/s/core). A GPU may be unnecessary for state-based models. | L4/T4 only after local benchmarks; eval on CPU (D-015) |
+| §6.5 Make targets | Only working targets defined (setup, test, test-fast, lint, smoke-sim, download, verify-data, probe-obs). | Later targets added per session (D-016) |
 
 ## Command log index
 - `logs/session0/download_sha256.log`

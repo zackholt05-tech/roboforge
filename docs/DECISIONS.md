@@ -50,6 +50,11 @@ are generated from the HDF5 metadata, and a test asserts they still match it.
   file is SHA-256-checked against the HF LFS oid recorded in the manifest.
 - Downloaded: Lift and Can, PH, `low_dim` and `raw` (`demo_v15`, which has states and model
   XML for later RGB/depth extraction). Total 170 MB.
+- Variant choice: **PH (proficient-human)**, because MASTER_SPEC prescribes it for the
+  core benchmark. It is the cleanest single-quality demo set (200 per task), which suits a
+  fair algorithm comparison. MH (multi-human) and MG (machine-generated) differ in data
+  quality and quantity; they belong only to an explicitly separate dataset-quality study
+  (spec §7.4).
 - Square PH: metadata recorded but not downloaded. **No pre-rendered `image` HDF5 exists**
   for v1.5 PH (registry link is `None`), so RGB must be regenerated from states
   (`dataset_states_to_obs.py`).
@@ -99,9 +104,9 @@ recorded in `THIRD_PARTY_NOTICES.md`.
 
 ### D-014 Session 0 model check is forward-only (FIXED for Session 0)
 A plugin hook (ml-pipeline) blocked code containing a backward pass. Session 0 only
-requires a one-batch forward pass (§2.3 item 6). The owner has since set
-`ML_PIPELINE_ENFORCE=0` globally and disabled the cto-toolkit plugin; both take effect
-after a Claude Code restart.
+requires a one-batch forward pass (§2.3 item 6). At the owner's request, the agent then
+added `ML_PIPELINE_ENFORCE=0` to `~/.claude/settings.json` (`env`). The owner disabled
+the cto-toolkit plugin. Both take effect after a Claude Code restart.
 
 ### D-015 Compute split: GPU for training only; rollouts on CPU (DEFAULT)
 State-based Level 1 evaluation needs no rendering, and MuJoCo stepping is CPU-bound

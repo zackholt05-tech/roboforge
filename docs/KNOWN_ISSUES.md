@@ -91,8 +91,8 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
 - The `ml-pipeline` hook blocks any file containing a backward pass.
 - `cto-toolkit` hooks blocked shell commands containing the substring "format" (e.g.
   `ruff format`, `docker --format`) and post-write test reviews.
-- The owner set `ML_PIPELINE_ENFORCE=0` and disabled `cto-toolkit@synced` in
-  `~/.claude/settings.json`.
+- At the owner's request, the agent added `ML_PIPELINE_ENFORCE=0` under `env` in
+  `~/.claude/settings.json`. The owner disabled `cto-toolkit@synced`.
 - **Verify after restart:** creating a file with a training step is no longer blocked
   (required in Session 3).
 

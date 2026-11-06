@@ -6,6 +6,8 @@ NEXT_SESSION: 1
 BLOCKERS: none for Session 1    # non-blocking open items: KI-001, KI-003, KI-007, KI-008
 LAST_VERIFIED_COMMIT: 29645cf1cf7f5bcb248b56e9585b61be37ad7c0e   # evidence regenerated from this clean tree; committed in the next commit
 CODE_COMMIT: 29645cf1cf7f5bcb248b56e9585b61be37ad7c0e
+EVIDENCE_COMMIT: d9754686f8dc458c730e34bd94c8f0474f4bcee1   # reports stamped 29645cf, dirty=false
+# later Session 0 commits (if any) change docs only; verify with: git diff 29645cf HEAD -- src scripts configs tests
 RESOURCE_SPEND: {usd: 0.00, gpu_hours: 0, notes: "no remote compute used"}
 UPDATED: 2026-11-05
 ```
@@ -22,7 +24,7 @@ UPDATED: 2026-11-05
 | Dataset structure inspected programmatically | DONE | `reports/feasibility/data_report_*.json` |
 | Simulation environment tested | DONE (macOS) | `smoke_sim_*.json` |
 | Minimal rollout attempted | DONE | random closed-loop + 400 demo replays |
-| Rendering tested | DONE on macOS; **INCOMPLETE on Linux** | frames/; KI-001 |
+| Rendering tested | DONE on macOS; **INCOMPLETE on Linux** (container run failed) | frames/; KI-001 |
 | Repository structure established | DONE | README layout |
 | Automated tests + reproducible setup | DONE | `make setup/test/smoke-sim/download/verify-data` |
 | Research and evaluation conventions documented | DONE (DRAFT) | RESEARCH_PROTOCOL.md |

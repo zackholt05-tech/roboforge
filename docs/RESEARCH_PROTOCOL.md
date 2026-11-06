@@ -104,8 +104,9 @@ must never be compared causally with camera-based policies.
     × training seed) runs all 50 held-out starts, once per start if deterministic. All
     models see the same starts, so every comparison is paired by `state_id`.
   - *Stochastic policies* (diffusion): the noise seed is derived from
-    `(policy_seed, state_id, repeat)`, with R = 1 repeat by default (TO FINALIZE, Session 4).
-    Repeats of a deterministic policy are never added, because they would be duplicates.
+    `(policy_seed, state_id, repeat)` with `policy_seed = 0` and R = 1 repeat (finalized in
+    §6.4 by the amendment of 2026-11-06). Repeats of a deterministic policy are never added,
+    because they would be duplicates.
 - **Expected saturation (KI-011).** Lift validation starts lie 0.5–4.1 mm (median 1.8 mm)
   in x/y from the nearest demonstration start, so the Lift validation suite is
   in-distribution by construction. Published BC results on Lift PH low-dim are near 100 %.
@@ -124,7 +125,7 @@ action space, float32 on CPU, and the decode/clip path of §4. Parameter counts 
 | **BC-MLP** | MLP 2 × 1024, ReLU, linear output (robomimic BC) | 1 / 1 / 1 | 1,077,255 | DEFAULT (Session 3) |
 | **BC-RNN** | LSTM 2 layers, hidden 296, linear head on the last valid step | context L = 10 / 1 / 1 | 1,080,703 | DEFAULT (Session 3) |
 | **BC-MLP-chunk** | MLP 2 × 1024, ReLU, linear output | 2 / 16 / 8 | 1,204,336 | DEFAULT (H2-c control) |
-| **Diffusion** | conditional 1D temporal U-Net, DDPM/DDIM | 2 / 16 / 8 | TO FINALIZE (Session 4) | TO FINALIZE (Session 4) |
+| **Diffusion** | flatten encoder + conditional 1D temporal U-Net (64, 128), ε-prediction, K = 100 `squaredcos_cap_v2`, DDIM-10 sampling, EMA (§6.4) | 2 / 16 / 8 | 1,092,551 | DEFAULT (Session 4, §6.4) |
 
 - **BC-RNN inference** (deviation from robomimic, recorded):
   - At every decision the LSTM re-runs from a zero state over the last ≤ L observations,
@@ -145,7 +146,8 @@ action space, float32 on CPU, and the decode/clip path of §4. Parameter counts 
     (+11.8 %).
   - Diffusion's count is reported in Session 4. If it exceeds 2× the BC budget, a
     capacity-matched BC-MLP and BC-RNN at diffusion's count are added to the comparison
-    (MASTER_SPEC §5.7).
+    (MASTER_SPEC §5.7). **Result (Session 4):** 1,092,551 parameters, +1.4 % vs BC-MLP, so
+    the rule is not triggered and no capacity-matched configurations are added.
 - **GMM-BC** (optional, spec §5.4): not run. It would need its own matched budget; adding it
   later is an amendment.
 
@@ -179,6 +181,50 @@ action space, float32 on CPU, and the decode/clip path of §4. Parameter counts 
 - **Seeds:** 3 training seeds `{0, 1, 2}` per family × task (spec §3.4 target), unless an
   owner-approved, precommitted reduction is recorded.
 
+### 6.4 Diffusion family (FINALIZED 2026-11-06, Session 4, amendment §13)
+Every value below was fixed before the first reported diffusion run. Code:
+`src/roboforge/models/{diffusion,unet1d,noise_schedule}.py`, `src/roboforge/train/ema.py`;
+config `configs/models/diffusion_unet.yaml`.
+
+| Item | Value |
+|---|---|
+| Observation encoder | none with parameters: the normalized `T_o × 19` window is flattened into a 38-D global condition (robomimic's low-dim path). Padding repeats the first observation (D-022); `obs_valid` adds nothing. This is exactly BC-MLP-chunk's input |
+| Noise-prediction network | conditional 1D temporal U-Net (Diffusion Policy `ConditionalUnet1D`, adapted from robomimic `d309eae`, MIT): down widths **(64, 128)**, i.e. 2 encoder stages (T_p 16 → 8), a bottleneck of 2 residual blocks at width 128, 1 decoder stage (8 → 16); kernel 5; GroupNorm with 8 groups; Mish. Every residual block gets FiLM scale and bias from `[timestep embedding ‖ 38-D condition]`. Timestep embedding: 64-D sinusoidal → Linear 256 → Mish → Linear 64 |
+| Parameters | **1,092,551** (exact; `reports/session4/param_counts.json`): +1.4 % vs BC-MLP (1,077,255), +1.1 % vs BC-RNN, −9.3 % vs BC-MLP-chunk (1,204,336) |
+| Capacity rule (§6.1) | **not triggered**: 1,092,551 ≤ 2 × 1,077,255 = 2,154,510. No capacity-matched BC configurations are added |
+| Forward process | DDPM, K = **100** training timesteps, `squaredcos_cap_v2` betas (abar_0 = 0.99937, abar_99 = 2.4e-7), `A_t = sqrt(abar_t) A_0 + sqrt(1 − abar_t) ε` on the normalized chunk |
+| Prediction target | **ε** (noise) |
+| Loss | masked MSE between ε̂ and ε over the valid (non-padded) action steps and all 7 dimensions (the same masked MSE of §6.1). Per sample, `t ~ U{0..99}` and `ε ~ N(0, I)` come from the run's own generator, seeded `SeedSequence([s, 2])`. It is checkpointed, so resuming is bitwise |
+| Sampler | **DDIM**, **10** inference steps (timesteps 90, 80, …, 0), η = 0 (deterministic given the initial noise), `set_alpha_to_one`. `clip_sample`: x̂_0 is clipped to [−1, 1] at every step, so the final chunk lies in the normalized range. **1 sample per decision** |
+| Why DDIM-10 | measured on the canonical container (`reports/session4/latency_pre_amendment/`, untrained 200-step checkpoint, 1 thread, median of 60 decisions): DDIM-10 takes 42 ms per decision, DDIM-16 67 ms and DDPM-100 436 ms (natively 11 / 16 / 99 ms). DDPM-100 would make every canonical evaluation about 5–10× longer for the main suite (Sessions 6–7, Lift and Can). The training objective is identical for both samplers. DDPM-100 (robomimic's default) stays a declared alternative for the denoising-steps ablation (Session 7) |
+| EMA | yes: diffusers 0.11.1 `EMAModel` semantics, power 0.75, inv_gamma 1, max decay 0.9999, updated after every optimizer step (as in robomimic `d309eae`). **The EMA weights are the evaluated and selected network**; the trained weights are checkpointed as well. BC families have no EMA (§6.2). EMA belongs to the reference recipe; the EMA ablation is listed for Session 7 |
+| Horizons | T_o = 2, T_p = 16, T_a = 8, identical to BC-MLP-chunk (H2-c). A decision at frame t predicts `a[t .. t+15]` (D-022) and executes `a[t .. t+7]`, then replans. robomimic instead predicts `a[t−1 .. t+14]` and executes from index 1. Both execute `a[t]` first; RoboForge keeps BC-MLP-chunk's window (recorded deviation) |
+| Optimization | identical to §6.2: AdamW, lr 1e-4, betas (0.9, 0.999), weight decay 0, constant LR, batch 100, no gradient clipping (norm logged), 1 torch thread, CPU, float32. **Deviation from robomimic's diffusion defaults** (cosine LR with 500 warm-up steps, L2 1e-6), chosen to keep the optimizer matched across families |
+| Budget | pilot: 30,000 steps, checkpoints every 5,000 (the Session 3 pilot budget, unchanged). Main runs: the BC main budget of §6.3 |
+| Offline metrics | logged on the EMA network every 1,000 steps: fixed-draw noise-prediction MSE (train and valid) and the MSE of seeded sampled chunks vs the demonstrated chunks (valid only). Never used for selection (§7.4) |
+| Selection | §7 unchanged, on the EMA network of every checkpoint |
+
+**Stochastic evaluation (fills §5).**
+- **Noise-seed rule:** a stochastic policy starts each episode with a new `torch.Generator`
+  seeded with `SeedSequence([policy_seed, uint64(sha256(state_id)[:8], little-endian),
+  repeat]).generate_state(1, uint64)[0]` (`roboforge.eval.learned.noise_seed`). Every decision
+  of the episode consumes it in order: first the initial noise `A_K`, then any sampler noise
+  (none for DDIM with η = 0). The global RNG is never read. An episode's actions therefore
+  depend only on the checkpoint, the seed triple and the observations, never on episode order.
+- **policy_seed = 0** for every evaluation: every checkpoint, every training seed, validation
+  and the held-out test. Checkpoints of one run are thus compared under common random numbers.
+- **R = 1** (repeat 0) for validation, checkpoint selection and the held-out test: one rollout
+  per (checkpoint, state), like the deterministic families. Repeats r ≥ 1 may only be added by
+  an amendment before `docs/FINAL_TEST_FREEZE.md`; they would be averaged per (seed, state)
+  before the bootstrap (§9).
+- Plan diversity is measured from repeated samples at fixed conditions in the denoising export
+  (8 extra seeds `1,000,000 + i`), never by adding rollouts.
+- Each rollout record stores its seed (`policy_episode`). The evaluation run ID ends in
+  `__ps0r0`.
+
+**Tuning accounting.** The Session 4 diffusion Lift pilot is **trial 1 of 4** of the diffusion
+family on Lift (§6.3).
+
 ## 7. Checkpoint-selection rule (binding, identical for every family)
 1. A training run saves checkpoints at steps `k · C`, `k = 1..K` (cadence C and count K from
    §6.3). The last checkpoint is the final step.
@@ -207,8 +253,11 @@ unbiased estimate.
   smoothness (mean |Δa| per 0.05 s step); inference latency (ms per decision, one thread,
   canonical container); training wall-clock and CPU seconds; failure categories (Session 7,
   defined before the test).
-- **Diffusion-specific** (Session 4): denoising steps, samples per decision, plan diversity,
-  clip frequency.
+- **Diffusion-specific** (finalized in §6.4): denoising steps (10, DDIM) and samples per
+  decision (1), both fixed; inference latency per decision on the canonical container; plan
+  diversity (per-step, per-dimension standard deviation of 8 extra samples at fixed exported
+  conditions, normalized units); clip frequency of the decoded actions, motion dimensions
+  separately from the gripper (KI-022).
 
 ## 9. Planned uncertainty analysis (fixed before any result)
 - **Per checkpoint:** k / n with a Wilson 95 % interval (n = 50).
@@ -278,3 +327,4 @@ unbiased estimate.
 |---|---|---|---|---|
 | 2026-11-06 | all | v1 finalized from the Session 0–2 draft | Session 3 requirement: finalize before any reported run | none (no reported run existed) |
 | 2026-11-06 | §6.3 | The Session 3 BC-MLP-chunk Lift pilot also counts as **trial 1 of BC-MLP-chunk** on Lift | It was run and reported alongside the BC-MLP and BC-RNN pilots; every reported run must count against its family's tuning budget | accounting only: no rule or result changes |
+| 2026-11-06 | §5, §6.1, §6.4 (new), §8 | **Session 4: every diffusion item marked TO FINALIZE is fixed**: flatten observation encoder; 1D U-Net (64, 128) with 64-D timestep embedding and FiLM, 1,092,551 parameters (capacity rule not triggered); DDPM forward process K = 100, `squaredcos_cap_v2`, ε-prediction, masked MSE; DDIM-10 sampler, η = 0, `clip_sample`, 1 sample per decision; EMA (power 0.75) as the evaluated network; T_o/T_p/T_a = 2/16/8; BC optimizer and budgets; noise-seed rule with `policy_seed = 0`, R = 1; the Session 4 Lift pilot is diffusion's tuning trial 1 | MASTER_SPEC Session 4 requires these values before the first reported diffusion run. Sampler chosen from latency measured on the canonical container (DDIM-10 42 ms vs DDPM-100 436 ms per decision); architecture sized to the 1.08 M BC budget within the spec's bounds (width 64–256, 2–3 stages) | none: committed before the first diffusion pilot run |

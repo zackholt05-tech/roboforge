@@ -1,0 +1,15 @@
+# BC-RNN primary configuration (RESEARCH_PROTOCOL §6.1; DEFAULT, Session 3).
+# LSTM 2 layers x 296 hidden over a context of L = 10 observations, one action out.
+# 1,080,703 params (+0.3 % vs BC-MLP). The LSTM re-runs from a zero state over the valid steps
+# of the last L observations at every decision, in training and inference alike.
+schema: roboforge.train_config/1
+name: bc_rnn
+family: bc_rnn
+task: lift
+seed: 0
+horizons: {obs: 10, pred: 1, exec: 1}
+model: {cell: lstm, hidden: 296, layers: 2, dropout: 0.0}
+loss: {kind: mse}
+optim: {name: adamw, lr: 1.0e-4, betas: [0.9, 0.999], weight_decay: 0.0, schedule: constant}
+train: {max_steps: 30000, batch_size: 100, ckpt_every: 5000, val_every: 1000, log_every: 100,
+        num_threads: 1, grad_clip: null}

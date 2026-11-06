@@ -6,6 +6,13 @@ the observation of frame ``t`` and produces frame ``t + 1``. Per-frame arrays ha
 rows; per-action arrays have ``T`` rows, and ``reward[t]`` / ``success[t + 1]`` describe the
 frame that action ``t`` produced.
 
+**Observation hook (Session 3, D-032).** If the policy defines ``observe(obs)``, the runner
+calls it with frame 0's observation after the reset and with every new frame's observation
+right after each executed action, including actions inside a chunk. A chunked policy with
+an observation history therefore sees every frame, not only the frames it decides at. The
+hook only feeds the policy; it never touches the simulator. An exception in it ends the
+episode as a recorded error.
+
 Every frame stores the flattened MuJoCo state, so everything else (features, kinematics, success,
 renders) can be re-derived and audited. :func:`verify_record` does exactly that: it
 re-simulates the executed actions from the snapshot and re-evaluates success on the recorded
@@ -123,6 +130,7 @@ def run_episode(env: RoboForgeEnv, policy: Any, initial_state: InitialState, *,
     """
     obs, meta = env.reset(initial_state)
     policy.reset_episode(meta)
+    observe = getattr(policy, "observe", None)
     kin = env.kinematics
     frames: dict[str, list[Any]] = {k: [] for k in (
         "state", "obs", "time_s", "joint_qpos", "joint_qvel", "body_pos", "body_quat_wxyz",
@@ -149,6 +157,11 @@ def run_episode(env: RoboForgeEnv, policy: Any, initial_state: InitialState, *,
     add_frame(obs, meta.initial_success, meta.initial_success)
     terminated = truncated = False
     stop, error, decision = "running", None, 0
+    if observe is not None:
+        try:
+            observe(obs)
+        except Exception as exc:  # recorded, never swallowed
+            stop, error = "error", {"type": type(exc).__name__, "message": str(exc)}
     while stop == "running":
         t0 = time.perf_counter()
         try:
@@ -178,6 +191,12 @@ def run_episode(env: RoboForgeEnv, policy: Any, initial_state: InitialState, *,
                          ("phase", 1 if info["phase"] == "hold" else 0)):
                 steps[k].append(v)
             add_frame(obs, info["success"], info["success_robosuite_raw"])
+            if observe is not None:
+                try:
+                    observe(obs)
+                except Exception as exc:  # recorded, never swallowed
+                    stop, error = "error", {"type": type(exc).__name__, "message": str(exc)}
+                    break
             hold_done = terminated and info["phase"] == "hold" and env.hold_remaining == 0
             if truncated or (terminated and env.hold_steps == 0) or hold_done:
                 stop = "terminated_success" if terminated else "truncated_horizon"

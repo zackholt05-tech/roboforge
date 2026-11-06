@@ -50,7 +50,12 @@ class PolicyInfo:
 
 
 class Policy(Protocol):
-    """Minimal closed-loop interface used by the rollout runner (Session 3 extends it)."""
+    """Closed-loop interface used by the rollout runner.
+
+    Policies may also define ``observe(obs)``. The runner then calls it with every frame's
+    observation, after the reset and after each executed action (D-032). Learned policies
+    (:class:`roboforge.eval.learned.LearnedPolicy`) use it to keep their observation history.
+    """
 
     info: PolicyInfo
 

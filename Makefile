@@ -16,7 +16,9 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 
 .PHONY: help setup test test-fast lint smoke-sim download verify-data probe-obs build-data \
 	check-data audit-data eval-states check-eval-states replay-demos check-sim-contract \
-	check-determinism sanity-eval sanity-eval-canonical export-clip web-contract in-sim
+	check-determinism sanity-eval sanity-eval-canonical export-clip web-contract in-sim \
+	train-smoke train eval select param-counts overfit-check benchmark-policies \
+	diagnose-actions check-ckpt-equivalence
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -87,3 +89,52 @@ web-contract:  ## Check the exported clip with the real three.js library (node; 
 
 in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD="python scripts/x.py"
 	$(IN_SIM) $(CMD)
+
+# ---------------------------------------------------------------- Session 3: baselines
+# Training runs on local CPU (no remote compute). Closed-loop evaluation that is reported or
+# enters checkpoint selection runs on the canonical container (D-017), writing evidence to
+# reports/session$(EVIDENCE_SESSION) and records to runs/.
+MODEL ?= bc_mlp
+TASK ?= lift
+SEED ?= 0
+PREFIX ?= s3
+EVAL_SET ?= validation
+EVIDENCE_SESSION ?= 3
+IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
+SMOKE_DIR ?= logs/tmp/train_smoke
+
+train-smoke:  ## CPU miniature: overfit checks + 200-step BC-MLP/BC-RNN runs + 2-start dev evals
+	$(RUN) python scripts/overfit_check.py --task lift --out-dir $(SMOKE_DIR)
+	$(RUN) python scripts/train_smoke.py --out-dir $(SMOKE_DIR)
+
+train:  ## Train one run on local CPU: make train MODEL=bc_mlp|bc_rnn|bc_mlp_chunk TASK=lift SEED=0
+	$(RUN) python scripts/train.py --config configs/models/$(MODEL).yaml --task $(TASK) \
+		--seed $(SEED) --prefix $(PREFIX)
+
+eval:  ## Closed-loop validation of every checkpoint of RUN=runs/<id> on the canonical container
+	@if [ "$(EVAL_SET)" != "validation" ]; then \
+	  echo "EVAL_SET=$(EVAL_SET) refused: only the validation suite is accessible before the freeze" >&2; \
+	  exit 2; fi
+	@test -n "$(RUN)" || (echo "set RUN=runs/<train_run_id>" >&2; exit 2)
+	$(IN_SIM_S) python scripts/eval_policy.py --train-run $(RUN) \
+		--reports-dir reports/session$(EVIDENCE_SESSION)
+
+select:  ## Apply the RESEARCH_PROTOCOL §7 selection rule to RUN=runs/<id>
+	$(RUN) python scripts/select_checkpoint.py --train-run $(RUN) \
+		--reports-dir reports/session$(EVIDENCE_SESSION)
+
+param-counts:  ## Exact parameter counts and capacity-matched tiers
+	$(RUN) python scripts/param_counts.py
+
+overfit-check:  ## Deliberate overfit of tiny batches / 2 demos on real Lift data
+	$(RUN) python scripts/overfit_check.py --task lift
+
+benchmark-policies:  ## Training cost + inference latency of RUNS="runs/<a> runs/<b>" (canonical container)
+	$(IN_SIM_S) python scripts/benchmark_policies.py --train-runs $(RUNS)
+
+diagnose-actions:  ## Controller axes/signs, teacher-forced errors, closed-loop clipping for RUNS=...
+	$(RUN) python scripts/diagnose_actions.py --train-runs $(RUNS)
+
+check-ckpt-equivalence:  ## Reload equivalence (2 loads, fresh process, eval record, S2 sanity) for RUN=...
+	$(RUN) python scripts/check_checkpoint_equivalence.py --write-sanity-reference
+	$(IN_SIM_S) python scripts/check_checkpoint_equivalence.py --train-run $(RUN)

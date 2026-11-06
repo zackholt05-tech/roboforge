@@ -1,0 +1,15 @@
+# BC-MLP primary configuration (RESEARCH_PROTOCOL §6.1; DEFAULT, Session 3).
+# robomimic's BC architecture: MLP 2 x 1024 ReLU, one frame in, one action out. 1,077,255 params.
+# Every value is required; use `scripts/train.py --set section.key=value` to override (recorded).
+schema: roboforge.train_config/1
+name: bc_mlp
+family: bc_mlp
+task: lift
+seed: 0
+horizons: {obs: 1, pred: 1, exec: 1}
+model: {hidden: [1024, 1024], activation: relu, layer_norm: false, dropout: 0.0}
+loss: {kind: mse}
+optim: {name: adamw, lr: 1.0e-4, betas: [0.9, 0.999], weight_decay: 0.0, schedule: constant}
+# Session 3 pilot budget (§6.3): 30k steps, checkpoints every 5k; identical for every family.
+train: {max_steps: 30000, batch_size: 100, ckpt_every: 5000, val_every: 1000, log_every: 100,
+        num_threads: 1, grad_clip: null}

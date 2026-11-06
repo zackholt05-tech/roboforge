@@ -1,0 +1,13 @@
+# BC-MLP-chunk: the output-horizon control for H2-c (RESEARCH_PROTOCOL §2, §6.1).
+# Same hidden layers as BC-MLP; diffusion's horizons T_o = 2, T_p = 16, T_a = 8. 1,204,336 params.
+schema: roboforge.train_config/1
+name: bc_mlp_chunk
+family: bc_mlp
+task: lift
+seed: 0
+horizons: {obs: 2, pred: 16, exec: 8}
+model: {hidden: [1024, 1024], activation: relu, layer_norm: false, dropout: 0.0}
+loss: {kind: mse}
+optim: {name: adamw, lr: 1.0e-4, betas: [0.9, 0.999], weight_decay: 0.0, schedule: constant}
+train: {max_steps: 30000, batch_size: 100, ckpt_every: 5000, val_every: 1000, log_every: 100,
+        num_threads: 1, grad_clip: null}

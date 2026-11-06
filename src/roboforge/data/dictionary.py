@@ -92,8 +92,10 @@ def _task_section(m: dict[str, Any], a: dict[str, Any]) -> list[str]:
         lines.append(f"- `{name}` (KI-003 corrected): stored robomimic block minus corrected "
                      f"feature, max {v['stored_minus_corrected_max_t0']:.3g} m at t = 0 and "
                      f"{v['stored_minus_corrected_max_t_gt0']:.3g} m at t > 0; stored block "
-                     f"equals the one-step-lag formula to "
-                     f"{v['stored_vs_lag_hypothesis_max_t_gt0']:.1e} m.")
+                     f"equals robosuite's one-step-lag formula to "
+                     f"{v['stored_vs_robosuite_lag_formula_max_t_gt0']:.1e} m. The feature is "
+                     f"evaluated in float64; it matches robosuite's float32 formula to "
+                     f"{v['max_abs_vs_robosuite_float32_formula']:.1e} m.")
     alts = {"lengths": f"Fraction of {m['task']} train and valid demos per 5-step episode-length "
                        "bin",
             "actions": f"Density of each of the 7 {m['task']} action dimensions, train vs valid",

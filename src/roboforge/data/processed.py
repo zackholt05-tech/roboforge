@@ -6,10 +6,11 @@ blocks before anything is written:
 
 * ``relation: equal`` features must equal the stored block exactly (``EQUAL_ATOL`` allows
   for the ≤1.1e-16 cross-platform float noise measured in Session 0, KI-013);
-* ``corrected_same_step`` features (Can relative position, KI-003) must equal robosuite's
-  formula applied to the *stored* same-step eef and object poses. Their difference from the
+* ``corrected_same_step`` features (Can relative position, KI-003) must equal an
+  independent float64 evaluation on the *stored* same-step eef and object poses, and match
+  robosuite's own (float32) formula to ``ROBOSUITE_F32_ATOL``. Their difference from the
   stored (lagged) block is reported, and so is the stored block's match to the one-step-lag
-  hypothesis.
+  formula.
 
 Any failure raises; nothing is written. Arrays are stored as float32 (the precision models
 consume) under ``$ROBOFORGE_DATA_ROOT/processed`` (gitignored). The content hash covers
@@ -34,6 +35,8 @@ from roboforge.paths import data_root
 
 PROCESSED_SCHEMA = "roboforge.processed/1"
 EQUAL_ATOL = 1e-12
+# robosuite.utils.transform_utils.quat2mat casts to float32 (KI-018).
+ROBOSUITE_F32_ATOL = 1e-6
 ARRAY_ORDER = ("obs", "actions", "rewards", "dones")
 
 
@@ -90,39 +93,60 @@ def stored_pose_blocks(spec: ObservationSpec, f: FeatureSpec, obs: h5py.Group) -
             "obj_quat": find("body_quat_xyzw", "body", f.body)}
 
 
+def quat_xyzw_to_mat(q: np.ndarray) -> np.ndarray:
+    """Rotation matrix of a unit quaternion ``(x, y, z, w)`` in float64 (normalizes first)."""
+    x, y, z, w = np.asarray(q, dtype=np.float64) / np.linalg.norm(q)
+    return np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+                     [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+                     [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
+
+
 def _check_corrected(spec: ObservationSpec, f: FeatureSpec, obs: h5py.Group, computed: np.ndarray,
                      ver: Verification) -> None:
-    """Verify a corrected feature against robosuite's formula on stored same-step poses."""
+    """Verify a corrected ``pos_in_eef_frame`` feature on the stored same-step poses.
+
+    Three comparisons, all from the *stored* world-frame eef and object poses:
+
+    * an independent float64 reference (own quaternion-to-matrix formula), which must agree
+      to ``EQUAL_ATOL``;
+    * robosuite's own formula (``T.pose_in_A_to_pose_in_B``), which uses a float32 rotation
+      matrix, so it must agree to ``ROBOSUITE_F32_ATOL``;
+    * robosuite's formula with the object pose one step older, which reproduces the stored
+      (lagged) block. The residual is recorded as evidence for KI-003.
+    """
     if f.kind != "pos_in_eef_frame":
         raise ValueError(f"{f.name}: no reference check defined for corrected kind {f.kind}")
     from roboforge.data.features import robosuite_transforms
 
     T, p = robosuite_transforms(), stored_pose_blocks(spec, f, obs)
 
-    def rel(t_obj: int, t_eef: int) -> np.ndarray:
+    def rel_robosuite(t_obj: int, t_eef: int) -> np.ndarray:
         world_in_eef = T.pose_inv(T.pose2mat((p["eef_pos"][t_eef], p["eef_quat"][t_eef])))
         obj = T.pose2mat((p["obj_pos"][t_obj], p["obj_quat"][t_obj]))
         return T.mat2pose(T.pose_in_A_to_pose_in_B(obj, world_in_eef))[0]
 
     n = len(computed)
-    ref = np.stack([rel(t, t) for t in range(n)])
+    ref = np.stack([quat_xyzw_to_mat(p["eef_quat"][t]).T @ (p["obj_pos"][t] - p["eef_pos"][t])
+                    for t in range(n)])
+    rs = np.stack([rel_robosuite(t, t) for t in range(n)])
     stored = _block(obs, f)
-    lag = np.stack([rel(t - 1, t) for t in range(1, n)]) if n > 1 else np.zeros((0, f.dim))
-    stats = ver.corrected.setdefault(f.name, {"max_abs_vs_same_step_reference": 0.0,
-                                               "stored_minus_corrected_max_t0": 0.0,
-                                               "stored_minus_corrected_max_t_gt0": 0.0,
-                                               "stored_vs_lag_hypothesis_max_t_gt0": 0.0})
-    upd = {"max_abs_vs_same_step_reference": float(np.abs(computed - ref).max()),
+    lag = np.stack([rel_robosuite(t - 1, t) for t in range(1, n)]) if n > 1 else None
+    upd = {"max_abs_vs_float64_same_step_reference": float(np.abs(computed - ref).max()),
+           "max_abs_vs_robosuite_float32_formula": float(np.abs(computed - rs).max()),
            "stored_minus_corrected_max_t0": float(np.abs(stored[0] - computed[0]).max()),
            "stored_minus_corrected_max_t_gt0":
                float(np.abs(stored[1:] - computed[1:]).max()) if n > 1 else 0.0,
-           "stored_vs_lag_hypothesis_max_t_gt0":
-               float(np.abs(stored[1:] - lag).max()) if n > 1 else 0.0}
+           "stored_vs_robosuite_lag_formula_max_t_gt0":
+               float(np.abs(stored[1:] - lag).max()) if lag is not None else 0.0}
+    stats = ver.corrected.setdefault(f.name, dict.fromkeys(upd, 0.0))
     for k, v in upd.items():
         stats[k] = max(stats[k], v)
-    if upd["max_abs_vs_same_step_reference"] > EQUAL_ATOL:
-        raise AssertionError(f"{f.name}: differs from same-step reference by "
-                             f"{upd['max_abs_vs_same_step_reference']:.3e}")
+    if upd["max_abs_vs_float64_same_step_reference"] > EQUAL_ATOL:
+        raise AssertionError(f"{f.name}: differs from the float64 same-step reference by "
+                             f"{upd['max_abs_vs_float64_same_step_reference']:.3e}")
+    if upd["max_abs_vs_robosuite_float32_formula"] > ROBOSUITE_F32_ATOL:
+        raise AssertionError(f"{f.name}: differs from robosuite's formula by "
+                             f"{upd['max_abs_vs_robosuite_float32_formula']:.3e}")
 
 
 def build_episodes(env: Any, low: h5py.File, spec: ObservationSpec,

@@ -82,8 +82,8 @@
 | Evaluation horizon | 400 control steps |
 | Flagged episodes | none |
 | Split | `data/splits/can_ph.json` (SHA-256 `743779b0ad9cacd5bab85a74421f6fba4ace5e980f5979a4a3534c82f042b46f`) |
-| Normalization | `data/normalization/can_ph_lowdim_v1.json` (SHA-256 `e61dbf0c496171aabb09372a40f217b19bd3c32f08c3106079d6f268308be64a`) |
-| Processed content | `$ROBOFORGE_DATA_ROOT/processed/robomimic_v1.5_ph/can/lowdim_v1.hdf5` (SHA-256 `5504b757beafee66b1265102953029fb4f19795460fe6c995ae169c24ff82d3c`) |
+| Normalization | `data/normalization/can_ph_lowdim_v1.json` (SHA-256 `e0437cd7b8e48403366d19f7b0e6116e2224723b8a5240b2d7ba008403b3228d`) |
+| Processed content | `$ROBOFORGE_DATA_ROOT/processed/robomimic_v1.5_ph/can/lowdim_v1.hdf5` (SHA-256 `e6055a6f066f53b987ed27a7b5894f20ec7053fc9cdf3222b4ad79ed3834ea7b`) |
 | Observation spec | 19-D, SHA-256 `71e89629bc3447b02b4bb7ec2f470e4a72f4d44ec04a74f90b6da146f425b71c` |
 | Action spec | 7-D, SHA-256 `bcae0b7110c56e1bfdf8e2754c03ff95c8c9e77a34c56ef9ebae11e60d7fa77f` |
 
@@ -115,7 +115,7 @@
 - `robot0_eef_quat`: 0 within-episode sign flips; w < 0 in 59.7% of steps (min |w| 4.5e-07).
 - `Can_quat`: 0 within-episode sign flips; w < 0 in 46.4% of steps (min |w| 0.00026).
 - `Can_to_robot0_eef_quat` is **not** an input (dropped, D-010): stored block 598 sign flips, same-step recomputation 446 flips over 23,207 steps.
-- `Can_to_robot0_eef_pos` (KI-003 corrected): stored robomimic block minus corrected feature, max 0.861 m at t = 0 and 0.0914 m at t > 0; stored block equals the one-step-lag formula to 2.2e-16 m.
+- `Can_to_robot0_eef_pos` (KI-003 corrected): stored robomimic block minus corrected feature, max 0.861 m at t = 0 and 0.0914 m at t > 0; stored block equals robosuite's one-step-lag formula to 2.2e-16 m. The feature is evaluated in float64; it matches robosuite's float32 formula to 1.4e-07 m.
 
 ### Figures (generated; source tables in `reports/data_audit.json`)
 

@@ -19,6 +19,7 @@ from roboforge.data.normalization import Normalizer
 from roboforge.data.pipeline import build_task, check_task, load_specs, load_task_artifacts
 from roboforge.data.processed import (
     EQUAL_ATOL,
+    ROBOSUITE_F32_ATOL,
     build_episodes,
     load_processed,
     processed_path,
@@ -102,8 +103,10 @@ def test_recomputed_features_equal_dataset(task, env, low, which) -> None:
     assert ver.final_state_success == {demo: True}
     if task == "can":  # KI-003: corrected, and the stored block really is one update stale
         c = ver.corrected["Can_to_robot0_eef_pos"]
-        assert c["max_abs_vs_same_step_reference"] <= EQUAL_ATOL
-        assert c["stored_vs_lag_hypothesis_max_t_gt0"] <= 1e-12
+        assert c["max_abs_vs_float64_same_step_reference"] <= EQUAL_ATOL
+        assert c["max_abs_vs_robosuite_float32_formula"] <= ROBOSUITE_F32_ATOL
+        # robosuite's float32 rotation is platform-dependent under numba (KI-018)
+        assert c["stored_vs_robosuite_lag_formula_max_t_gt0"] <= ROBOSUITE_F32_ATOL
         assert c["stored_minus_corrected_max_t0"] > 1e-2
     processed = load_processed(processed_path(task, "lowdim_v1"), demos=[demo])
     np.testing.assert_array_equal(processed[demo]["obs"], episodes[demo]["obs"])
@@ -123,7 +126,8 @@ def test_corrected_can_feature_equals_robosuite_with_fresh_cache(can_lowdim_path
         env._get_observations(force_update=True)
         fresh = env._get_observations(force_update=True)
         feats = ext.dict_from_sim(env.sim)
-        np.testing.assert_array_equal(feats["Can_to_robot0_eef_pos"], fresh["object-state"][0:3])
+        np.testing.assert_allclose(feats["Can_to_robot0_eef_pos"], fresh["object-state"][0:3],
+                                   rtol=0, atol=ROBOSUITE_F32_ATOL)  # robosuite: float32 rotation
         np.testing.assert_array_equal(feats["Can_pos"], fresh["Can_pos"])
     env.close()
 

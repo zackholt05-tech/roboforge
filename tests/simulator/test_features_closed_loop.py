@@ -14,6 +14,7 @@ import pytest
 
 from roboforge.data.features import FeatureExtractor
 from roboforge.data.pipeline import load_specs
+from roboforge.data.processed import ROBOSUITE_F32_ATOL
 from roboforge.sim.factory import load_sim_config, make_env
 from roboforge.sim.state_replay import reset_to_state
 
@@ -79,7 +80,7 @@ def test_computing_features_does_not_change_the_rollout(task: str) -> None:
 
 @pytest.mark.parametrize("task", ["lift", "can"])
 def test_current_robosuite_observations_equal_features(task: str) -> None:
-    """With forward kinematics and a fresh cache, robosuite == features for every block."""
+    """With current kinematics and a fresh cache, robosuite == features (corrected: to f32)."""
     spec, act_spec = load_specs(task)
     env, _, _ = _start(task)
     ext = FeatureExtractor(spec)
@@ -94,6 +95,10 @@ def test_current_robosuite_observations_equal_features(task: str) -> None:
         fresh = env._get_observations(force_update=True)
         for f in spec.features:
             block = fresh[_robosuite_key(f)][f.dataset_ref.lo:f.dataset_ref.hi]
-            np.testing.assert_array_equal(feats[f.name], block, err_msg=f.name)
+            if f.relation == "equal":
+                np.testing.assert_array_equal(feats[f.name], block, err_msg=f.name)
+            else:  # corrected relative position: robosuite uses a float32 rotation matrix
+                np.testing.assert_allclose(feats[f.name], block, rtol=0,
+                                           atol=ROBOSUITE_F32_ATOL, err_msg=f.name)
     env.close()
     assert stale_seen > 0.0  # raw env.step observations lag the state by one physics substep

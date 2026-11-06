@@ -227,6 +227,8 @@ def closed_loop_audit(env: Any, low: h5py.File, spec: ObservationSpec,
             "max_abs_env_step_obs_minus_feature": raw_err,
             "max_abs_current_robosuite_obs_minus_feature": fresh_err,
             "interpretation": "env.step observations are read from kinematics one physics "
-                              "substep old (and, for Can's relative block, one update old); "
-                              "with current kinematics and a fresh cache robosuite equals the "
-                              "canonical features"}
+                              "substep old (and, for Can's relative block, one update old). "
+                              "With current kinematics and a fresh cache, robosuite equals the "
+                              "canonical features exactly, except the corrected relative "
+                              "position, which robosuite evaluates with a float32 rotation "
+                              "matrix (agreement to float32 precision)"}

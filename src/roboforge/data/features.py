@@ -115,13 +115,15 @@ class BoundFeatureExtractor:
             return np.array([d.qpos[a] for a in ids["qpos_adr"]])
         if f.kind == "pos_diff_world":  # robosuite _get_obj_eef_sensor: obj_pos - eef_pos
             return np.array(d.xpos[ids["body"]]) - np.array(d.site_xpos[ids["ref_site"]])
-        if f.kind == "pos_in_eef_frame":  # robosuite _get_rel_obj_eef_sensor, same-step poses
-            eef_pos = np.array(d.site_xpos[ids["ref_site"]])
-            eef_quat = T.convert_quat(np.array(d.xquat[ids["ref_body"]]), to="xyzw")
-            obj_pose = T.pose2mat((np.array(d.xpos[ids["body"]]),
-                                   T.convert_quat(np.array(d.xquat[ids["body"]]), to="xyzw")))
-            world_in_eef = T.pose_inv(T.pose2mat((eef_pos, eef_quat)))
-            return T.mat2pose(T.pose_in_A_to_pose_in_B(obj_pose, world_in_eef))[0]
+        if f.kind == "pos_in_eef_frame":
+            # robosuite _get_rel_obj_eef_sensor semantics, on same-step poses: the object
+            # position in the frame with origin at the grip site and the orientation of the
+            # hand body. Evaluated in float64 from MuJoCo's own rotation matrix: robosuite's
+            # T.quat2mat casts to float32, which limits it to ~1e-7 and makes the value
+            # platform-dependent under numba (KI-018), so this feature matches robosuite only
+            # to float32 precision, by design.
+            rot = np.array(d.xmat[ids["ref_body"]]).reshape(3, 3)
+            return rot.T @ (np.array(d.xpos[ids["body"]]) - np.array(d.site_xpos[ids["ref_site"]]))
         raise ValueError(f"unknown feature kind {f.kind!r}")
 
     def from_flat_state(self, state: np.ndarray) -> np.ndarray:

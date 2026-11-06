@@ -5,7 +5,10 @@
 #   infra/containers/run_sim_cpu.sh python scripts/check_determinism.py
 #
 # The host working tree's code, configs, committed data artifacts and docs are bind-mounted
-# READ-ONLY; only reports/session2, runs and logs/session2 are writable. The script refuses to
+# READ-ONLY; only reports/session<N>, logs/session<N> and runs are writable, where N is
+# ROBOFORGE_EVIDENCE_SESSION (default 2), e.g.
+#   ROBOFORGE_EVIDENCE_SESSION=3 make in-sim CMD="python scripts/smoke_sim.py --task lift ..."
+# Earlier sessions' evidence stays read-only or unmounted. The script refuses to
 # run if the local image ID differs from the pinned one. The host git revision and dirty flag
 # are passed in, because the container has no .git directory. Commands run with the image's
 # own locked venv (/app/.venv, no `uv sync` at run time, so the platform never changes) and the
@@ -23,7 +26,12 @@ DIRTY=0
 if [[ -n "$(git status --porcelain -- . ':(exclude)reports' ':(exclude)logs' ':(exclude)runs')" ]]; then
   DIRTY=1
 fi
-mkdir -p reports/session2 runs logs/session2
+S="${ROBOFORGE_EVIDENCE_SESSION:-2}"
+if [[ ! "$S" =~ ^[0-9]+$ ]]; then
+  echo "ROBOFORGE_EVIDENCE_SESSION must be a session number, got '$S'" >&2
+  exit 2
+fi
+mkdir -p "reports/session$S" runs "logs/session$S"
 ro() { printf -- "-v %s:/app/%s:ro " "$PWD/$1" "$1"; }
 # Eval-state generation (scripts/generate_eval_states.py without --check) needs a writable
 # data/eval_states; every other use mounts it read-only.
@@ -35,8 +43,8 @@ exec docker run --rm \
   $(ro data/manifests) $(ro data/splits) $(ro data/normalization) \
   -v "$PWD/data/eval_states:/app/data/eval_states:$EVAL_MODE" \
   $(ro data/raw) $(ro data/processed) \
-  -v "$PWD/reports/session2:/app/reports/session2" -v "$PWD/runs:/app/runs" \
-  -v "$PWD/logs/session2:/app/logs/session2" \
+  -v "$PWD/reports/session$S:/app/reports/session$S" -v "$PWD/runs:/app/runs" \
+  -v "$PWD/logs/session$S:/app/logs/session$S" \
   -v "$PWD/reports/feasibility:/app/reports/feasibility:ro" \
   -e ROBOFORGE_CONTAINER_IMAGE="$IMAGE" -e ROBOFORGE_CONTAINER_IMAGE_ID="$ACTUAL" \
   -e ROBOFORGE_GIT_SHA="$(git rev-parse HEAD)" -e ROBOFORGE_GIT_DIRTY="$DIRTY" \

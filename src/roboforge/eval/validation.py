@@ -15,6 +15,10 @@ of its task, recorded with :func:`roboforge.eval.rollout.run_episode`:
 The summary marks whether it ran on the canonical platform (D-017). Only canonical,
 complete (50/50 starts) evaluations are eligible for checkpoint selection. Native
 macOS results are labeled development-only.
+
+A stochastic policy (diffusion) samples each episode with the noise seed of
+``(policy_seed, state_id, repeat)`` (RESEARCH_PROTOCOL §5); its evaluation run ID ends in
+``__ps<policy_seed>r<repeat>``, so different repeats never share a directory.
 """
 
 from __future__ import annotations
@@ -108,10 +112,21 @@ def _summarize(episodes: list[dict[str, Any]], dim: int) -> dict[str, Any]:
             "latency_ms_median_of_episode_medians": float(np.median(lat)) if lat else None}
 
 
+def eval_run_id(train_run_id: str, step: int, platform_id: str, *, stochastic: bool,
+                policy_seed: int = 0, repeat: int = 0, n_partial: int | None = None) -> str:
+    """Evaluation run ID of one checkpoint on the validation suite."""
+    rid = f"{train_run_id}__val_step{step:07d}__{platform_id}"
+    if stochastic:
+        rid += f"__ps{int(policy_seed)}r{int(repeat)}"
+    return rid + (f"__first{n_partial}" if n_partial is not None else "")
+
+
 def evaluate_checkpoint(train_run_dir: Path, step: int, *, runs_dir: Path,
                         n_states: int | None = None, n_verify: int = 3,
-                        num_threads: int = 1) -> dict[str, Any]:
-    """Evaluate one checkpoint of a completed training run on the validation suite."""
+                        num_threads: int = 1, policy_seed: int = 0,
+                        repeat: int = 0) -> dict[str, Any]:
+    """Evaluate one checkpoint of a completed training run on the validation suite.
+    ``policy_seed`` and ``repeat`` only affect stochastic policies."""
     train_run_dir = Path(train_run_dir)
     tm = read_train_manifest(train_run_dir)
     if tm["status"] != "complete":
@@ -122,15 +137,17 @@ def evaluate_checkpoint(train_run_dir: Path, step: int, *, runs_dir: Path,
     ckpt_path = REPO_ROOT / ck[step]["path"] if not Path(ck[step]["path"]).is_absolute() \
         else Path(ck[step]["path"])
     policy = LearnedPolicy.from_checkpoint(ckpt_path, expected_sha256=ck[step]["sha256"],
-                                           num_threads=num_threads)
+                                           num_threads=num_threads, policy_seed=policy_seed,
+                                           repeat=repeat)
     task = tm["config"]["task"]
     platform = evaluation_platform()
     canonical = platform["platform_id"] == canonical_platform_id()
     states = load_suite(task, VALIDATION)
     partial = n_states is not None and n_states < len(states)
     states = states[:n_states] if partial else states
-    eval_id = f"{tm['run_id']}__val_step{step:07d}__{platform['platform_id']}" + (
-        f"__first{len(states)}" if partial else "")
+    eval_id = eval_run_id(tm["run_id"], step, platform["platform_id"],
+                          stochastic=policy.stochastic, policy_seed=policy_seed, repeat=repeat,
+                          n_partial=len(states) if partial else None)
     out_dir = Path(runs_dir) / eval_id
     out_dir.mkdir(parents=True, exist_ok=False)
     env = RoboForgeEnv(task)
@@ -145,6 +162,8 @@ def evaluate_checkpoint(train_run_dir: Path, step: int, *, runs_dir: Path,
                 verified.append({"state_id": init.state_id, **verify_record(rec, init)})
             episodes.append({"state_id": init.state_id,
                              "physics_sha256": rec.meta["physics_sha256"],
+                             **({"noise_seed": rec.meta["policy_episode"]["noise_seed"]}
+                                if policy.stochastic else {}),
                              **episode_stats(rec, codec)})
     finally:
         env.close()
@@ -154,6 +173,8 @@ def evaluate_checkpoint(train_run_dir: Path, step: int, *, runs_dir: Path,
         "created_utc": datetime.now(tz=UTC).isoformat(),
         "train_run_id": tm["run_id"], "checkpoint": {"step": step, **ck[step]},
         "policy": policy.info.to_dict(), "task": task, "suite": VALIDATION,
+        "stochastic_policy": ({"policy_seed": policy_seed, "repeat": repeat,
+                               "samples_per_decision": 1} if policy.stochastic else None),
         "partition": "eval_validation",
         "suite_manifest_content_sha256": read_manifest(task, VALIDATION)["content_sha256"],
         "platform": platform, "canonical_platform": canonical,

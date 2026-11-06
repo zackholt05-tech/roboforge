@@ -18,7 +18,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	check-data audit-data eval-states check-eval-states replay-demos check-sim-contract \
 	check-determinism sanity-eval sanity-eval-canonical export-clip web-contract in-sim \
 	train-smoke train eval select param-counts overfit-check benchmark-policies \
-	diagnose-actions check-ckpt-equivalence
+	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -90,25 +90,29 @@ web-contract:  ## Check the exported clip with the real three.js library (node; 
 in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD="python scripts/x.py"
 	$(IN_SIM) $(CMD)
 
-# ---------------------------------------------------------------- Session 3: baselines
+# ---------------------------------------------------------------- Sessions 3-4: policies
 # Training runs on local CPU (no remote compute). Closed-loop evaluation that is reported or
 # enters checkpoint selection runs on the canonical container (D-017), writing evidence to
 # reports/session$(EVIDENCE_SESSION) and records to runs/. TRAIN_RUN (not RUN, which is the uv
-# command above) names a training run directory.
+# command above) names a training run directory. EVIDENCE_SESSION follows
+# ROBOFORGE_EVIDENCE_SESSION when that is set, else the current session (D-039); host and
+# container commands both receive it, and the scripts derive their default output
+# directories from it.
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-PREFIX ?= s3
+PREFIX ?= s4
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= 3
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),4)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
+RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
 
-train-smoke:  ## CPU miniature: overfit checks + 200-step BC-MLP/BC-RNN runs + 2-start dev evals
+train-smoke:  ## CPU miniature: overfit checks + 200-step BC-MLP/BC-RNN/diffusion runs + 2-start dev evals
 	$(RUN) python scripts/overfit_check.py --task lift --out-dir $(SMOKE_DIR)
 	$(RUN) python scripts/train_smoke.py --out-dir $(SMOKE_DIR)
 
-train:  ## Train one run on local CPU: make train MODEL=bc_mlp|bc_rnn|bc_mlp_chunk TASK=lift SEED=0
+train:  ## Train one run on local CPU: make train MODEL=bc_mlp|bc_rnn|bc_mlp_chunk|diffusion_unet TASK=lift SEED=0
 	$(RUN) python scripts/train.py --config configs/models/$(MODEL).yaml --task $(TASK) \
 		--seed $(SEED) --prefix $(PREFIX)
 
@@ -121,21 +125,29 @@ eval:  ## Closed-loop validation of every checkpoint of TRAIN_RUN=runs/<id> on t
 		--reports-dir reports/session$(EVIDENCE_SESSION)
 
 select:  ## Apply the RESEARCH_PROTOCOL §7 selection rule to TRAIN_RUN=runs/<id>
-	$(RUN) python scripts/select_checkpoint.py --train-run $(TRAIN_RUN) \
+	$(RUN_S) python scripts/select_checkpoint.py --train-run $(TRAIN_RUN) \
 		--reports-dir reports/session$(EVIDENCE_SESSION)
 
 param-counts:  ## Exact parameter counts and capacity-matched tiers
-	$(RUN) python scripts/param_counts.py
+	$(RUN_S) python scripts/param_counts.py
 
 overfit-check:  ## Deliberate overfit of tiny batches / 2 demos on real Lift data
-	$(RUN) python scripts/overfit_check.py --task lift
+	$(RUN_S) python scripts/overfit_check.py --task lift
 
 benchmark-policies:  ## Training cost + inference latency of RUNS="runs/<a> runs/<b>" (canonical container)
 	$(IN_SIM_S) python scripts/benchmark_policies.py --train-runs $(RUNS)
 
 diagnose-actions:  ## Controller axes/signs, teacher-forced errors, closed-loop clipping for RUNS=...
-	$(RUN) python scripts/diagnose_actions.py --train-runs $(RUNS)
+	$(RUN_S) python scripts/diagnose_actions.py --train-runs $(RUNS)
 
 check-ckpt-equivalence:  ## Reload equivalence (2 loads, fresh process, eval record, S2 sanity) for TRAIN_RUN=...
-	$(RUN) python scripts/check_checkpoint_equivalence.py --write-sanity-reference
+	$(RUN_S) python scripts/check_checkpoint_equivalence.py --write-sanity-reference
 	$(IN_SIM_S) python scripts/check_checkpoint_equivalence.py --train-run $(TRAIN_RUN)
+
+# ---------------------------------------------------------------- Session 4: diffusion
+diffusion-reference:  ## Diffusion schedulers/U-Net/sampling/EMA vs diffusers 0.11.1 + robomimic d309eae
+	$(RUN_S) python scripts/compare_diffusion_reference.py
+
+export-denoising:  ## Real denoising traces of EVAL_RUN=runs/<eval_run_id> (canonical container)
+	@test -n "$(EVAL_RUN)" || (echo "set EVAL_RUN=runs/<eval_run_id>" >&2; exit 2)
+	$(IN_SIM_S) python scripts/export_denoising.py --eval-run $(EVAL_RUN)

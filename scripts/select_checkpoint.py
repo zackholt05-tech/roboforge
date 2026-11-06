@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 from roboforge.eval.selection import select_checkpoint
-from roboforge.paths import REPO_ROOT, repo_relative
+from roboforge.paths import evidence_reports_dir, repo_relative
 from roboforge.provenance import git_revision, sha256_file
 from roboforge.train.run import read_manifest
 
@@ -26,8 +26,10 @@ def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint."""
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--train-run", type=Path, required=True)
-    p.add_argument("--reports-dir", type=Path, default=REPO_ROOT / "reports" / "session3")
+    p.add_argument("--reports-dir", type=Path, default=None,
+                   help="default: reports/session$ROBOFORGE_EVIDENCE_SESSION")
     args = p.parse_args(argv)
+    args.reports_dir = args.reports_dir or evidence_reports_dir()
     tm = read_manifest(args.train_run)
     files = sorted((args.reports_dir / "validation").glob(f"{tm['run_id']}__val_step*.json"))
     evals = [json.loads(f.read_text()) for f in files]

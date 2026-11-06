@@ -39,6 +39,29 @@ def feasibility_reports_dir() -> Path:
     return REPO_ROOT / "reports" / "feasibility"
 
 
+EVIDENCE_SESSION_ENV = "ROBOFORGE_EVIDENCE_SESSION"
+
+
+def evidence_session() -> int:
+    """The session whose evidence a command writes: ``$ROBOFORGE_EVIDENCE_SESSION``.
+
+    There is deliberately no default. Evidence tools shared across sessions derive their
+    output directory from this value (DECISIONS D-039), so they can never write into an
+    earlier session's committed evidence by accident. The container wrapper mounts
+    ``reports/session<N>`` writable for the same ``N``.
+    """
+    raw = os.environ.get(EVIDENCE_SESSION_ENV, "")
+    if not raw.isdigit():
+        raise RuntimeError(f"set {EVIDENCE_SESSION_ENV}=<session number> (or pass an explicit "
+                           f"output directory); got {raw!r}")
+    return int(raw)
+
+
+def evidence_reports_dir(*parts: str) -> Path:
+    """``reports/session<N>/<parts>`` for the current :func:`evidence_session`."""
+    return REPO_ROOT / "reports" / f"session{evidence_session()}" / Path(*parts)
+
+
 def repo_relative(path: Path | str) -> str:
     """Return ``path`` as a POSIX string relative to the repo root, or absolute if outside it.
 

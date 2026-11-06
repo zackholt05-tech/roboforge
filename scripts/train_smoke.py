@@ -1,4 +1,4 @@
-"""CPU train/eval smoke: a 200-step BC-MLP and BC-RNN run, each evaluated on 2 starts.
+"""CPU train/eval smoke: 200-step BC-MLP, BC-RNN and diffusion runs, each on 2 starts.
 
     python scripts/train_smoke.py --out-dir logs/tmp/train_smoke
 
@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     runs = args.out_dir / f"runs_{int(time.time())}"
     ok = True
-    for name in ("bc_mlp", "bc_rnn"):
+    for name in ("bc_mlp", "bc_rnn", "diffusion_unet"):
         cfg = load_config(REPO_ROOT / "configs" / "models" / f"{name}.yaml",
                           [f"train.max_steps={args.steps}", f"train.ckpt_every={args.steps}",
                            f"train.val_every={args.steps}"])
@@ -47,7 +47,7 @@ def main(argv: list[str] | None = None) -> int:
         good = (m["status"] == "complete" and m["reload_check"]["passed"]
                 and s["verify_passed"] and s["n_errors"] == 0)
         ok &= good
-        print(f"[smoke {name}] {m['timing']['steps_per_s']:.0f} steps/s, valid MSE "
+        print(f"[smoke {name}] {m['timing']['steps_per_s']:.1f} steps/s, valid MSE "
               f"{m['final_offline']['valid']['mse']:.4f}, reload "
               f"{m['reload_check']['passed']}; rollouts {s['successes']}/{s['n_episodes']} "
               f"({s['label']}), errors {s['n_errors']}, audit {s['verify_passed']} -> "

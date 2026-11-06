@@ -7,8 +7,10 @@ validation starts of its task. There is deliberately no suite option. Each check
 SHA-256 is verified against the training manifest before loading. Every episode is recorded
 under ``runs/<eval_run_id>/``. The summary goes to ``<reports-dir>/validation/`` on the
 canonical platform (D-017), or to ``<reports-dir>/dev/`` labeled DEVELOPMENT ONLY anywhere
-else. Run with ``ROBOFORGE_EVIDENCE_SESSION=3`` so the container may write
-``reports/session3``.
+else. ``--reports-dir`` defaults to ``reports/session<N>`` with
+``N = $ROBOFORGE_EVIDENCE_SESSION`` (D-039), the directory the container may write.
+``--policy-seed`` and ``--repeat`` select the noise-seed triple of a stochastic policy
+(RESEARCH_PROTOCOL §5); deterministic policies ignore them.
 """
 
 from __future__ import annotations
@@ -23,7 +25,7 @@ from roboforge.sim.backend import configure_mujoco_gl
 configure_mujoco_gl()
 
 from roboforge.eval.validation import evaluate_checkpoint  # noqa: E402
-from roboforge.paths import REPO_ROOT  # noqa: E402
+from roboforge.paths import REPO_ROOT, evidence_reports_dir  # noqa: E402
 from roboforge.train.run import read_manifest  # noqa: E402
 
 
@@ -37,8 +39,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--verify", type=int, default=3, help="re-simulate the first N episodes")
     p.add_argument("--num-threads", type=int, default=1)
     p.add_argument("--runs-dir", type=Path, default=REPO_ROOT / "runs")
-    p.add_argument("--reports-dir", type=Path, default=REPO_ROOT / "reports" / "session3")
+    p.add_argument("--reports-dir", type=Path, default=None,
+                   help="default: reports/session$ROBOFORGE_EVIDENCE_SESSION")
+    p.add_argument("--policy-seed", type=int, default=0)
+    p.add_argument("--repeat", type=int, default=0)
     args = p.parse_args(argv)
+    args.reports_dir = args.reports_dir or evidence_reports_dir()
     tm = read_manifest(args.train_run)
     steps = ([c["step"] for c in tm["checkpoints"]] if args.steps == ["all"]
              else [int(s) for s in args.steps])
@@ -46,7 +52,8 @@ def main(argv: list[str] | None = None) -> int:
     for step in steps:
         s = evaluate_checkpoint(args.train_run, step, runs_dir=args.runs_dir,
                                 n_states=args.n_states, n_verify=args.verify,
-                                num_threads=args.num_threads)
+                                num_threads=args.num_threads, policy_seed=args.policy_seed,
+                                repeat=args.repeat)
         sub = "validation" if s["canonical_platform"] else "dev"
         out = args.reports_dir / sub / f"{s['eval_run_id']}.json"
         out.parent.mkdir(parents=True, exist_ok=True)

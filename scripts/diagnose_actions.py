@@ -29,7 +29,8 @@ Looks for clipping, sign and coordinate problems from three directions:
      `object_rose_without_success`;
    - motion-dimension clipping (dims 0–5) in successful vs failed episodes.
 
-The report goes to ``reports/session3/diagnostics/actions.json``.
+The report goes to ``<reports-dir>/diagnostics/actions.json`` (default
+``reports/session$ROBOFORGE_EVIDENCE_SESSION``, D-039).
 """
 
 from __future__ import annotations
@@ -49,7 +50,7 @@ import torch  # noqa: E402
 
 from roboforge.eval.learned import LearnedPolicy  # noqa: E402
 from roboforge.eval.rollout import RolloutRecord  # noqa: E402
-from roboforge.paths import REPO_ROOT, repo_relative  # noqa: E402
+from roboforge.paths import REPO_ROOT, evidence_reports_dir, repo_relative  # noqa: E402
 from roboforge.provenance import evaluation_platform, git_revision  # noqa: E402
 from roboforge.sim.env_adapter import RoboForgeEnv  # noqa: E402
 from roboforge.sim.eval_states import load_suite  # noqa: E402
@@ -204,8 +205,9 @@ def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint."""
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--train-runs", type=Path, nargs="+", required=True)
-    p.add_argument("--reports-dir", type=Path, default=REPO_ROOT / "reports" / "session3")
+    p.add_argument("--reports-dir", type=Path, default=None)
     args = p.parse_args(argv)
+    args.reports_dir = args.reports_dir or evidence_reports_dir()
     runs, tasks = [], set()
     for run in args.train_runs:
         tm = read_manifest(run)

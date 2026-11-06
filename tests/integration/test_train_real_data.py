@@ -106,3 +106,24 @@ def test_train_run_writes_an_immutable_complete_manifest(tmp_path) -> None:
         train_run(cfg, tmp_path, "test")  # run directories are never reused
     payload = torch.load(m["checkpoints"][-1]["path"], weights_only=True)
     assert payload["hashes"] == m["data"] and payload["global_step"] == 40
+
+
+def test_diffusion_tiny_batch_overfit_on_real_windows() -> None:
+    """Primary diffusion architecture on 32 real Lift windows: the noise-prediction error
+    and the error of seeded sampled chunks both fall, with finite gradients throughout."""
+    cfg = load_config(CONFIGS / "diffusion_unet.yaml",
+                      ["train.batch_size=32", "optim.lr=1.0e-3", "train.max_steps=300",
+                       "train.ckpt_every=300"])
+    train, _ = load_windows(cfg)
+    idx = np.arange(0, len(train), len(train) // 32)[:32]
+    batch = WindowTensors(train.obs_history[idx], train.obs_valid[idx],
+                          train.future_action[idx], train.valid_mask[idx],
+                          tuple(train.episode_id[i] for i in idx), train.start_t[idx])
+    tr = Trainer(cfg, batch, None, data_context("lift", "test"))
+    before = offline_metrics(tr.model.eval(), batch)
+    for _ in range(300):
+        r = tr.step()
+        assert np.isfinite(r["loss"]) and np.isfinite(r["grad_norm"])
+    after = offline_metrics(tr.model.eval(), batch)
+    assert after["denoising_mse"] < 0.3 * before["denoising_mse"], (before, after)
+    assert after["mse"] < 0.25 * before["mse"], (before, after)

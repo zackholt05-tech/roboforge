@@ -20,6 +20,44 @@ official project page (source noted). Re-verify before publication (Session 11).
 | robomimic | commit `d309eaecc18acf4152a830a895a6984b8ac71b05` (v0.5.0 + 15) | MIT | GitHub license field / `LICENSE` |
 | PyTorch, torchvision, NumPy, h5py, diffusers, transformers, etc. | see `uv.lock` | their respective licenses (BSD/MIT/Apache-2.0) | to be enumerated per package before release |
 
+## Adapted code (Session 4)
+
+| RoboForge file | Adapted from | License | What was taken |
+|---|---|---|---|
+| `src/roboforge/models/unet1d.py` | robomimic `d309eae`, `robomimic/models/diffusion_policy_nets.py` (robomimic's copy of the `ConditionalUnet1D` of Diffusion Policy, Chi et al., `real-stanford/diffusion_policy`) | MIT (robomimic: Copyright (c) 2021 Stanford Vision and Learning Lab) | module structure, parameter names and forward arithmetic of the conditional 1D U-Net (sinusoidal timestep embedding, FiLM residual blocks, down/up sampling). Loading robomimic's weights reproduces its outputs bitwise (`tests/unit/test_diffusion_reference.py`) |
+| `src/roboforge/models/noise_schedule.py` | `diffusers==0.11.1` `DDPMScheduler`, `DDIMScheduler`, `betas_for_alpha_bar` | Apache-2.0 (file headers: `scheduling_ddpm.py` Copyright 2022 UC Berkeley Team and The HuggingFace Team; `scheduling_ddim.py` Copyright 2022 Stanford University Team and The HuggingFace Team) | the scheduler equations and their float32 operation order, re-implemented so every coefficient can be recorded; bitwise equal to diffusers in tests |
+| `src/roboforge/train/ema.py` | `diffusers==0.11.1` `training_utils.EMAModel` | Apache-2.0 (the diffusers package license; this file has no own header) | the EMA warm-up decay rule and update, re-implemented with checkpointable state; bitwise equal in tests |
+
+diffusers and robomimic are installed from `uv.lock`; their code is not vendored. The
+Diffusion Policy algorithm is credited to Chi et al. (citation below); RoboForge's
+contribution is the controlled benchmark, not the algorithm.
+
+robomimic license (applies to the adapted portions of `src/roboforge/models/unet1d.py`):
+
+```text
+MIT License
+
+Copyright (c) 2021 Stanford Vision and Learning Lab
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 Robot and object assets (Franka Panda meshes, Lift cube, PickPlace bins/can) ship inside
 the robosuite package (`robosuite/models/assets/`). Session 0 found no separate license or
 notice file in that directory; they are distributed with robosuite under its MIT license.
@@ -97,5 +135,6 @@ https://diffusion-policy.cs.columbia.edu/ (code: `real-stanford/diffusion_policy
 }
 ```
 
-If any code is later adapted (not just imported) from robomimic, Diffusion Policy or DP3,
-the file must carry a header naming the source, revision and license.
+Any code adapted (not just imported) from robomimic, Diffusion Policy, diffusers or DP3
+must carry a header naming the source, revision and license, and be listed under "Adapted
+code" above.

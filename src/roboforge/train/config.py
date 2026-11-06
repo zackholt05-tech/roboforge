@@ -15,14 +15,14 @@ from typing import Any
 
 import yaml
 
-from roboforge.models.bc import FAMILIES, config_dict, model_config
+from roboforge.models.registry import FAMILIES, LOSS_KINDS, config_dict, model_config
 from roboforge.provenance import sha256_json
 
 SCHEMA = "roboforge.train_config/1"
 SECTIONS = ("horizons", "model", "loss", "optim", "train")
 OPTIMIZERS = ("adamw",)
 SCHEDULES = ("constant", "cosine")
-LOSSES = ("mse",)
+LOSSES = tuple(sorted(set(LOSS_KINDS.values())))
 
 
 @dataclass(frozen=True)
@@ -107,10 +107,14 @@ def from_dict(d: dict[str, Any]) -> RunConfig:
     hz = Horizons(**{k: int(v) for k, v in d["horizons"].items()})
     if min(hz.obs, hz.pred, hz.exec) < 1 or hz.exec > hz.pred:
         raise ValueError(f"invalid horizons {hz}: need >= 1 and exec <= pred")
-    model = config_dict(model_config(family, d["model"]))
+    typed_model = model_config(family, d["model"])
+    if hasattr(typed_model, "check_horizon"):
+        typed_model.check_horizon(hz.pred)
+    model = config_dict(typed_model)
     _exact_keys("loss", d["loss"], {"kind"})
-    if d["loss"]["kind"] not in LOSSES:
-        raise ValueError(f"loss {d['loss']['kind']!r} not in {LOSSES}")
+    if d["loss"]["kind"] != LOSS_KINDS[family]:
+        raise ValueError(f"loss {d['loss']['kind']!r} is not the {family} loss "
+                         f"{LOSS_KINDS[family]!r}")
     _exact_keys("optim", d["optim"], {"name", "lr", "betas", "weight_decay", "schedule"})
     o = d["optim"]
     optim = Optim(name=o["name"], lr=float(o["lr"]), betas=tuple(float(b) for b in o["betas"]),

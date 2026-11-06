@@ -6,7 +6,8 @@ Counts are taken from the instantiated networks (``count_parameters``), never co
 hand. For each target budget (0.27 M, 1.08 M = the primary tier, 4.3 M) the script finds
 the width that brings BC-MLP (2 hidden layers), BC-RNN (2-layer LSTM and GRU) and
 BC-MLP-chunk closest to the target. A later session can then match diffusion's parameter
-count (RESEARCH_PROTOCOL §6.1). Writes ``reports/session3/param_counts.json``.
+count (RESEARCH_PROTOCOL §6.1). Writes ``<out>`` (default
+``reports/session$ROBOFORGE_EVIDENCE_SESSION/param_counts.json``, D-039).
 """
 
 from __future__ import annotations
@@ -16,8 +17,8 @@ import json
 import sys
 from pathlib import Path
 
-from roboforge.models.bc import build_model, count_parameters
-from roboforge.paths import REPO_ROOT, repo_relative
+from roboforge.models.registry import build_model, count_parameters
+from roboforge.paths import REPO_ROOT, evidence_reports_dir, repo_relative
 from roboforge.provenance import git_revision
 from roboforge.train.config import load_config
 
@@ -48,11 +49,11 @@ def matched(family: str, base: dict, key: str, t_o: int, t_p: int, target: int) 
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint."""
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    p.add_argument("--out", type=Path, default=REPO_ROOT / "reports" / "session3" /
-                   "param_counts.json")
+    p.add_argument("--out", type=Path, default=None)
     args = p.parse_args(argv)
+    args.out = args.out or evidence_reports_dir("param_counts.json")
     primary = {}
-    for name in ("bc_mlp", "bc_rnn", "bc_mlp_chunk"):
+    for name in ("bc_mlp", "bc_rnn", "bc_mlp_chunk", "diffusion_unet"):
         cfg = load_config(REPO_ROOT / "configs" / "models" / f"{name}.yaml")
         primary[name] = {"family": cfg.family, "model": cfg.model,
                          "horizons": vars(cfg.horizons),
@@ -68,8 +69,21 @@ def main(argv: list[str] | None = None) -> int:
         "bc_rnn gru (L=10,T_p=1)": matched("bc_rnn", {**rnn, "cell": "gru"}, "hidden", 10, 1, t),
         "bc_mlp_chunk (T_o=2,T_p=16)": matched("bc_mlp", mlp, "hidden", 2, 16, t)}
         for t in TARGETS}
+    d = primary["diffusion_unet"]
+    net = build_model(d["family"], d["model"], OBS_DIM, ACTION_DIM, d["horizons"]["obs"],
+                      d["horizons"]["pred"])
+    d["breakdown"] = {k: count_parameters(getattr(net.unet, k)) for k in (
+        "diffusion_step_encoder", "down_modules", "mid_modules", "up_modules", "final_conv")}
+    d["breakdown"]["observation_encoder"] = count_parameters(net.encoder)
+    budget = primary["bc_mlp"]["params"]
+    capacity_rule = {"rule": "RESEARCH_PROTOCOL §6.1: if diffusion exceeds 2x the 1.08 M BC "
+                             "budget, add capacity-matched BC-MLP and BC-RNN",
+                     "bc_budget_params": budget, "threshold_params": 2 * budget,
+                     "diffusion_params": d["params"], "ratio": d["params"] / budget,
+                     "triggered": d["params"] > 2 * budget}
     report = {"schema": "roboforge.param_counts/1", "obs_dim": OBS_DIM,
               "action_dim": ACTION_DIM, "primary": primary, "matched_tiers": tiers,
+              "capacity_rule": capacity_rule,
               "git": git_revision()}
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=1) + "\n")

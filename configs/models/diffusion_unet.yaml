@@ -1,0 +1,19 @@
+# Conditional diffusion action policy (RESEARCH_PROTOCOL §6.1, amendment 2026-11-06, Session 4).
+# 1D temporal U-Net (adapted from Diffusion Policy / robomimic d309eae, MIT) over normalized
+# action chunks, conditioned by FiLM on the flattened T_o x 19 normalized observation window.
+# Horizons equal BC-MLP-chunk's (H2-c). Optimizer, batch, steps and checkpoint cadence equal
+# the BC families' (§6.2-6.3). 1,092,551 parameters.
+schema: roboforge.train_config/1
+name: diffusion_unet
+family: diffusion_unet
+task: lift
+seed: 0
+horizons: {obs: 2, pred: 16, exec: 8}
+model: {down_dims: [64, 128], step_embed_dim: 64, kernel_size: 5, n_groups: 8,
+        num_train_timesteps: 100, beta_schedule: squaredcos_cap_v2, prediction_type: epsilon,
+        clip_sample: true, sampler: ddim, inference_steps: 10, ddim_eta: 0.0,
+        ema: true, ema_power: 0.75, ema_max_decay: 0.9999}
+loss: {kind: denoising_mse}
+optim: {name: adamw, lr: 1.0e-4, betas: [0.9, 0.999], weight_decay: 0.0, schedule: constant}
+train: {max_steps: 30000, batch_size: 100, ckpt_every: 5000, val_every: 1000, log_every: 100,
+        num_threads: 1, grad_clip: null}

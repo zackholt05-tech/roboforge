@@ -39,7 +39,7 @@ from roboforge.provenance import (
 from roboforge.train.checkpoint import checkpoint_name, load_checkpoint, save_checkpoint
 from roboforge.train.config import RunConfig, run_id
 from roboforge.train.data import WindowTensors
-from roboforge.train.loop import Trainer, offline_metrics
+from roboforge.train.loop import Trainer, noise_generator_seed, offline_metrics
 
 MANIFEST_SCHEMA = "roboforge.train_run/1"
 
@@ -70,24 +70,51 @@ def load_windows(cfg: RunConfig) -> tuple[WindowTensors, WindowTensors]:
             WindowTensors.from_dataset(SequenceDataset.from_committed(cfg.task, "valid", **kw)))
 
 
-def reload_check(trainer: Trainer, ckpt: Path, sha256: str) -> dict[str, Any]:
-    """Reload ``ckpt`` into a fresh network; compare parameters and outputs bitwise."""
-    from roboforge.eval.learned import model_from_payload
+RELOAD_SAMPLE_SEED = 0  # generator seed of the seeded-sample comparison in reload_check
 
-    fresh = model_from_payload(load_checkpoint(ckpt, expected_sha256=sha256))
-    mine = trainer.model.state_dict()
-    theirs = fresh.state_dict()
-    params_equal = mine.keys() == theirs.keys() and all(torch.equal(mine[k], theirs[k])
-                                                        for k in mine)
+
+def _states_equal(a: torch.nn.Module, b: torch.nn.Module) -> bool:
+    sa, sb = a.state_dict(), b.state_dict()
+    return sa.keys() == sb.keys() and all(torch.equal(sa[k], sb[k]) for k in sa)
+
+
+def reload_check(trainer: Trainer, ckpt: Path, sha256: str) -> dict[str, Any]:
+    """Reload ``ckpt`` into a fresh inference network; compare parameters and outputs bitwise.
+
+    The inference network is the EMA copy when the family uses EMA (diffusion); the trained
+    weights are then compared as well. For a stochastic network the outputs are seeded
+    samples: both networks sample with generators seeded identically and must agree bitwise.
+    """
+    from roboforge.eval.learned import model_from_payload, trained_model_from_payload
+
+    payload = load_checkpoint(ckpt, expected_sha256=sha256)
+    fresh = model_from_payload(payload)
+    mine = trainer.inference_model
+    params_equal = _states_equal(mine, fresh)
+    trained_equal = _states_equal(trainer.model, trained_model_from_payload(payload))
     data = trainer.valid_data or trainer.train_data
     b = data.batch(np.arange(min(512, len(data))))
-    trainer.model.eval()
+    was_training = mine.training
+    mine.eval()
     with torch.no_grad():
-        a = trainer.model(b["obs_history"], b["obs_valid"])
-        c = fresh(b["obs_history"], b["obs_valid"])
+        if trainer.stochastic:
+            a = mine.sample(b["obs_history"], b["obs_valid"],
+                            torch.Generator().manual_seed(RELOAD_SAMPLE_SEED))
+            c = fresh.sample(b["obs_history"], b["obs_valid"],
+                             torch.Generator().manual_seed(RELOAD_SAMPLE_SEED))
+        else:
+            a = mine(b["obs_history"], b["obs_valid"])
+            c = fresh(b["obs_history"], b["obs_valid"])
+    mine.train(was_training)
+    out_equal = bool(torch.equal(a, c))
     return {"checkpoint": repo_relative(ckpt), "params_bitwise_equal": bool(params_equal),
-            "outputs_bitwise_equal": bool(torch.equal(a, c)), "n_windows_compared": len(b[
-                "obs_history"]), "passed": bool(params_equal and torch.equal(a, c))}
+            "trained_params_bitwise_equal": bool(trained_equal),
+            "inference_network": "ema" if trainer.ema is not None else "trained",
+            "outputs": "seeded samples (generator seed 0)" if trainer.stochastic
+            else "deterministic forward",
+            "outputs_bitwise_equal": out_equal,
+            "n_windows_compared": len(b["obs_history"]),
+            "passed": bool(params_equal and trained_equal and out_equal)}
 
 
 def train_run(cfg: RunConfig, runs_dir: Path, prefix: str,
@@ -121,6 +148,13 @@ def train_run(cfg: RunConfig, runs_dir: Path, prefix: str,
         manifest.update(dims=trainer.dims, param_count=trainer.param_count,
                         num_threads=torch.get_num_threads(), device="cpu",
                         torch_version=str(torch.__version__))
+        if trainer.stochastic:
+            manifest["seeds"]["diffusion_noise_generator"] = (
+                f"torch.Generator().manual_seed({noise_generator_seed(cfg.seed)}) = "
+                f"SeedSequence([{cfg.seed}, 2]).generate_state(1, uint64)")
+            manifest["diffusion"] = {**trainer.model.describe(),
+                                     "ema": trainer.ema.config() if trainer.ema else None,
+                                     "inference_network": "ema" if trainer.ema else "trained"}
 
         def save(tr: Trainer) -> dict[str, Any]:
             path = run_dir / "checkpoints" / checkpoint_name(tr.global_step)
@@ -132,8 +166,9 @@ def train_run(cfg: RunConfig, runs_dir: Path, prefix: str,
             checkpoints=result["checkpoints"],
             timing={"wall_s": result["wall_s"], "cpu_s": result["cpu_s"],
                     "steps_per_s": cfg.train.max_steps / result["wall_s"]},
-            final_offline={"train": offline_metrics(trainer.model, train),
-                           "valid": offline_metrics(trainer.model, valid)},
+            final_offline={"train": offline_metrics(trainer.inference_model, train,
+                                                    sample=False),
+                           "valid": offline_metrics(trainer.inference_model, valid)},
             reload_check=reload_check(trainer, run_dir / "checkpoints" /
                                       checkpoint_name(last["step"]), last["sha256"]),
             metrics_sha256=sha256_file(run_dir / "metrics.jsonl"), status="complete")

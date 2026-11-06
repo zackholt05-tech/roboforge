@@ -13,6 +13,10 @@ an observation history therefore sees every frame, not only the frames it decide
 hook only feeds the policy; it never touches the simulator. An exception in it ends the
 episode as a recorded error.
 
+**Per-episode policy provenance (Session 4).** If the policy defines ``episode_info()``, its
+result is stored as ``policy_episode`` in the record metadata (e.g. the noise seed of a
+stochastic policy). It never enters the arrays, so ``physics_sha256`` is unaffected.
+
 Every frame stores the flattened MuJoCo state, so everything else (features, kinematics, success,
 renders) can be re-derived and audited. :func:`verify_record` does exactly that: it
 re-simulates the executed actions from the snapshot and re-evaluates success on the recorded
@@ -241,6 +245,9 @@ def run_episode(env: RoboForgeEnv, policy: Any, initial_state: InitialState, *,
         "arrays": {k: {"shape": list(v.shape), "dtype": v.dtype.str} for k, v in arrays.items()},
         "arrays_sha256": arrays_sha256(arrays),
         "physics_sha256": arrays_sha256(arrays, exclude=TIMING_ARRAYS), "outcome": outcome}
+    episode_info = getattr(policy, "episode_info", None)
+    if episode_info is not None:  # per-episode policy provenance, e.g. a sampler noise seed
+        record_meta["policy_episode"] = episode_info()
     return RolloutRecord(record_meta, arrays)
 
 

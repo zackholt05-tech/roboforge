@@ -27,7 +27,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-020 | LOW | MITIGATED (Session 2, D-017) | `uv sync`/`uv run` inside the pinned image would modify its environment |
 | KI-021 | MEDIUM | OPEN | BC-MLP compounds a missed grasp into out-of-workspace drift with saturated actions |
 | KI-022 | LOW | ACCEPTED | Gripper commands are clipped on 28–63 % of steps, harmlessly |
-| KI-023 | LOW | OPEN | Policy inference is ~13× slower in the canonical container than natively |
+| KI-023 | LOW | OPEN | Policy inference is 13–17× slower in the canonical container than natively |
 | KI-024 | MEDIUM | OPEN | Offline validation MSE rises during training and does not track closed-loop success |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 and EGL not
@@ -380,7 +380,7 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   separately from the gripper. A total clip rate would be dominated by this harmless gripper
   clipping.
 
-### KI-023 — Policy inference is ~13× slower in the canonical container than natively
+### KI-023 — Policy inference is 13–17× slower in the canonical container than natively
 - **Measured** with `scripts/benchmark_policies.py` (1 torch thread, median per decision of
   `observe` + `act`):
 
@@ -390,7 +390,8 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   | BC-MLP-chunk | 0.075 ms | 1.259 ms |
   | BC-RNN | 0.655 ms | 8.626 ms |
 
-  Sources: `reports/session3/cost_latency/{darwin-arm64-native,linux-aarch64-container-1f685638f28c}.json`.
+  Ratios: 13.0× (BC-MLP), 16.9× (BC-MLP-chunk), 13.2× (BC-RNN). Sources:
+  `reports/session3/cost_latency/{darwin-arm64-native,linux-aarch64-container-1f685638f28c}.json`.
 - **Cause (not isolated):** the Docker Desktop Linux VM plus the CPU path of the
   linux-aarch64 torch wheel (a CUDA build, KI-010).
 - **Impact:**

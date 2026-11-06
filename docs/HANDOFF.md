@@ -129,9 +129,11 @@ can start.
 - **Cost:**
   - 30k steps take 146 s (BC-MLP), 983 s (BC-RNN) and 155 s (BC-MLP-chunk) on local CPU,
     3 concurrent runs.
-  - Container inference is ~13× slower than native: 0.91 / 8.6 / 1.26 ms per decision
+  - Container inference is 13–17× slower than native: 0.91 / 8.6 / 1.26 ms per decision
     (KI-023).
-  - A 50-start Lift validation evaluation takes 1–4 min in the container.
+  - A 50-start Lift validation evaluation took 43–101 s of wall time in the container
+    (`wall_s` in the 18 summaries). Those runs were not isolated: up to three containers and
+    the BC-RNN training ran at the same time.
 
 ## 6. Known action/controller quirks
 - The OSC_POSE delta is in the world frame. Rotation commands also translate the grip-site
@@ -167,6 +169,21 @@ can start.
 - KI-001: x86_64 and EGL are unverified.
 - KI-008: 55 GB free.
 - KI-020, KI-019, KI-018: the rules still apply.
+- **Session-3 paths are hardcoded in the tooling.** Fix this before Session 4 writes evidence:
+  - The Makefile has `EVIDENCE_SESSION ?= 3`. Its `eval`, `select`, `benchmark-policies` and
+    `check-ckpt-equivalence` targets therefore mount and write `reports/session3`, whatever
+    `ROBOFORGE_EVIDENCE_SESSION` is set to. Pass `EVIDENCE_SESSION=4` explicitly, or make
+    its default follow `ROBOFORGE_EVIDENCE_SESSION`.
+  - The scripts' `--reports-dir` and `--out-dir` defaults point to `reports/session3`; pass
+    `reports/session4`.
+  - `scripts/check_checkpoint_equivalence.py` hardcodes `OUT` and `REFERENCE` to
+    `reports/session3/checkpoint_equivalence/`. A session-4 container does not mount that
+    directory, so the report would be lost and check E would fail. Parameterize the path
+    (a recorded change) and copy the Session 2 sanity reference into the session-4 evidence
+    first.
+- **The BC stack assumes a deterministic forward pass plus masked action MSE.** This applies
+  to `Trainer.step`, `offline_metrics`, `reload_check`, `LearnedPolicy.act` and the
+  `FAMILIES` registry. Diffusion needs a family-specific loss and a seeded sampling path.
 
 ## 10. Budget
 $0.00 spent; local CPU only. Session 4 needs no approval for local CPU. Any paid compute
@@ -232,7 +249,12 @@ model and checkpoint selection only on the eval_validation suite; never load, na
 summarize or reset to the held-out test states and do not create docs/FINAL_TEST_FREEZE.md;
 every reported or selection rollout on the canonical container via
 infra/containers/run_sim_cpu.sh with ROBOFORGE_EVIDENCE_SESSION=4 (never uv sync/uv run
-inside the image, KI-020); native macOS rollouts are development-only; never call
+inside the image, KI-020). The Session 3 tooling hardcodes session-3 evidence paths
+(HANDOFF §9): pass EVIDENCE_SESSION=4 to make targets and --reports-dir/--out-dir
+reports/session4 to scripts, or fix the defaults as a recorded change, and parameterize
+scripts/check_checkpoint_equivalence.py's output and sanity-reference paths before using it
+under session 4. The BC trainer and LearnedPolicy assume a deterministic forward pass plus
+masked action MSE, so diffusion needs a family-specific loss and sampling path; native macOS rollouts are development-only; never call
 mj_forward on live evaluation data (KI-019); never use robosuite transform helpers for
 precision-critical values (KI-018); checkpoints and anything a container rollout reads
 live under runs/<run_id>/; every run writes an immutable manifest with git SHA + dirty flag

@@ -1,0 +1,38 @@
+# Canonical Level 1 data pipeline config for Can (robomimic v1.5 PH, low-dim state).
+# Session 1, DECISIONS D-010 / D-018..D-021. Every model family consumes exactly this
+# observation spec; changing it creates a new spec hash and a new processed dataset.
+#
+# KI-003: robosuite's Can_to_robot0_eef_{pos,quat} (robomimic `object` dims 0-6) lag one
+# observation update. Here the relative position is recomputed from the same-step MuJoCo
+# state (relation: corrected_same_step); the relative quaternion is dropped (D-010): it is
+# a function of robot0_eef_quat and Can_quat, and robosuite's w>=0 canonicalization makes
+# it flip sign hundreds of times across the dataset.
+task: can
+dataset: {dataset_type: ph, hdf5_type: low_dim}
+converter_version: lowdim_v1
+features:
+  - {name: robot0_eef_pos, kind: site_pos, site: gripper0_right_grip_site,
+     frame: world, units: m, privileged: false,
+     dataset_ref: {key: robot0_eef_pos, lo: 0, hi: 3}, relation: equal}
+  - {name: robot0_eef_quat, kind: body_quat_xyzw, body: robot0_right_hand,
+     frame: world, units: quat_xyzw, privileged: false,
+     dataset_ref: {key: robot0_eef_quat, lo: 0, hi: 4}, relation: equal}
+  - {name: robot0_gripper_qpos, kind: joint_qpos,
+     joints: [gripper0_right_finger_joint1, gripper0_right_finger_joint2],
+     frame: joint, units: m, privileged: false,
+     dataset_ref: {key: robot0_gripper_qpos, lo: 0, hi: 2}, relation: equal}
+  - {name: Can_to_robot0_eef_pos, kind: pos_in_eef_frame, body: Can_main,
+     ref_site: gripper0_right_grip_site, ref_body: robot0_right_hand,
+     frame: "eef: grip-site position + right_hand body orientation", units: m, privileged: true,
+     dataset_ref: {key: object, lo: 0, hi: 3}, relation: corrected_same_step}
+  - {name: Can_pos, kind: body_pos, body: Can_main,
+     frame: world, units: m, privileged: true,
+     dataset_ref: {key: object, lo: 7, hi: 10}, relation: equal}
+  - {name: Can_quat, kind: body_quat_xyzw, body: Can_main,
+     frame: world, units: quat_xyzw, privileged: true,
+     dataset_ref: {key: object, lo: 10, hi: 14}, relation: equal}
+windows: {obs_horizon: 2, pred_horizon: 16}
+normalization:
+  obs: {mode: minmax, range_eps: 1.0e-4}
+  action: {mode: minmax, range_eps: 1.0e-4}
+split: {source: upstream_masks, train_mask: train, valid_mask: valid}

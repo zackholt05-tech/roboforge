@@ -8,8 +8,9 @@ cloning, recurrent behavior cloning and a conditional diffusion action policy on
 robomimic proficient-human demonstrations, and evaluated by closed-loop simulator rollouts
 from paired, held-out initial states.
 
-> **Status: Session 0 (feasibility) complete — no models trained, no results yet.**
-> Key findings: Results pending. See [docs/STATUS.md](docs/STATUS.md) and
+> **Status: Session 1 (canonical data pipeline) complete — no models trained, no results yet.**
+> Key findings: Results pending. See [docs/STATUS.md](docs/STATUS.md),
+> [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) and
 > [reports/feasibility/STACK_REPORT.md](reports/feasibility/STACK_REPORT.md).
 
 ## What has been verified (Session 0)
@@ -19,6 +20,11 @@ from paired, held-out initial states.
 - Official robomimic PH datasets for **Lift** and **Can** downloaded and SHA-256-verified.
 - Real 3D simulation: reset, step, success predicate, offscreen render (macOS CGL),
   exact MuJoCo state restore, and open-loop replay of all 400 recorded demonstrations.
+- Session 1: one canonical, hash-verified data pipeline for Lift and Can. Typed
+  task/action/observation specs, features recomputed from MuJoCo state by one function
+  shared with evaluation (fixes robosuite's lagged Can relative pose, KI-003), upstream
+  episode splits, train-only normalization, and an audited window sampler
+  ([docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md), `reports/data_audit.json`).
 - Known issues that shape later sessions are listed in [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 
 ## Quick start
@@ -28,7 +34,9 @@ make setup        # uv sync --frozen (Python 3.11 venv from uv.lock)
 make test         # unit + simulator tests; dataset tests skip if data absent
 make smoke-sim    # real Lift/Can reset/step/success/render, no dataset needed
 make download     # official Lift + Can PH datasets (~170 MB), SHA-256 verified
-make verify-data  # HDF5 audit, obs/state alignment, replay of all demonstrations
+make build-data   # processed Lift/Can features + committed split/normalization/task manifests
+make verify-data  # HDF5 audit, obs/state alignment, replay of all demos, data determinism check
+make audit-data   # reports/data_audit.json, figures, docs/DATA_DICTIONARY.md
 ```
 
 Requirements: macOS arm64 or Linux x86_64/aarch64, [uv](https://docs.astral.sh/uv/).
@@ -40,13 +48,18 @@ verified on linux/aarch64; x86_64 and EGL are not yet (KNOWN_ISSUES KI-001).
 
 ```text
 configs/simulator/   task contracts generated from dataset metadata (tested for equality)
-data/manifests/      dataset source registry: pinned revision, SHA-256, sizes (data itself is gitignored)
-src/roboforge/       data/ (fetch, inspect, windows) · sim/ (env factory, replay, render) ·
+configs/data/        canonical observation-feature selection, horizons, normalization per task
+data/manifests/      dataset source registry (pinned revision, SHA-256) + tasks/ task manifests
+data/splits/         episode-level train/valid split manifests (all IDs, hashed)
+data/normalization/  train-only normalization statistics (hashed)
+src/roboforge/       data/ (fetch, specs, features, processed, split, normalization, sequence,
+                     audit) · sim/ (env factory, replay, render) ·
                      models/ train/ eval/ viz/ compute/ (boundaries; implemented in later sessions)
 scripts/             reproducible CLIs used by the Makefile
 tests/               unit/ · simulator/ · integration/ (pytest markers: sim, data)
 infra/containers/    headless Linux simulation image
 reports/feasibility/ Session 0 evidence (JSON reports, rendered frames)
+reports/data_audit*  Session 1 dataset audit (JSON + figures)
 docs/                status, handoff, decisions, known issues, protocol drafts
 ```
 

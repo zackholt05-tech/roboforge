@@ -8,13 +8,10 @@ import pytest
 
 from roboforge.data.fetch import load_manifest, verify_file
 from roboforge.data.inspect import env_args, summarize_hdf5
-from roboforge.data.windows import LowDimWindowDataset
 from roboforge.sim.factory import load_sim_config, make_env, task_kwargs
 from roboforge.sim.state_replay import replay_demo, reset_to_state
 
 pytestmark = pytest.mark.data
-
-LIFT_OBS_KEYS = ["robot0_eef_pos", "robot0_eef_quat", "robot0_gripper_qpos", "object"]
 
 
 @pytest.mark.parametrize("task", ["lift", "can"])
@@ -72,11 +69,3 @@ def test_lift_open_loop_replay_demo0(lift_lowdim_path) -> None:
     assert r.reset_state_max_abs == 0.0
     assert r.dataset_final_state_success and r.replay_success_at_end
     assert r.max_errors["object_pos_max_abs_m"] < 0.01  # 1 cm tolerance (Session 0 observed ~1 mm)
-
-
-def test_lift_windows_on_real_data(lift_lowdim_path) -> None:
-    ds = LowDimWindowDataset(lift_lowdim_path, ["demo_0", "demo_1"], LIFT_OBS_KEYS,
-                             obs_horizon=2, pred_horizon=16)
-    item = ds[0]
-    assert item["obs"].shape == (2, 3 + 4 + 2 + 10) and item["action"].shape == (16, 7)
-    assert np.isfinite(item["obs"]).all() and np.abs(item["action"]).max() <= 1.0

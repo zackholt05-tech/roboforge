@@ -4,6 +4,7 @@ Downloads are driven by the committed manifest ``data/manifests/robomimic_v1.5_p
 (pinned Hugging Face revision + expected SHA-256). A file is accepted only if its
 SHA-256 matches the manifest; a mismatching file is never silently used. Existing
 files whose hash already matches are skipped, so re-running is cheap and idempotent.
+Interrupted downloads resume from their ``.part`` file with an HTTP Range request.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from __future__ import annotations
 import json
 import shutil
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -85,12 +87,51 @@ def verify_file(entry: DatasetFile, path: Path) -> str:
     return digest
 
 
+def _download_to_partial(url: str, partial: Path, expected_size: int,
+                         opener: Callable[..., Any]) -> int:
+    """Download ``url`` into ``partial``, resuming an interrupted ``.part`` file.
+
+    If ``partial`` already holds ``k`` bytes (``0 < k < expected_size``), an HTTP
+    ``Range: bytes=k-`` request is sent. The new bytes are appended only if the server
+    answers ``206`` with a ``Content-Range`` starting at ``k``. A ``200`` answer means the
+    server ignored the range, so the download restarts from zero. A ``.part`` file that is
+    already larger than expected is discarded. Returns the byte offset the download resumed
+    from (0 for a fresh download).
+    """
+    start = partial.stat().st_size if partial.exists() else 0
+    if start > expected_size:
+        partial.unlink()
+        start = 0
+    if start == expected_size:
+        return start
+    headers = {"Range": f"bytes={start}-"} if start else {}
+    with opener(urllib.request.Request(url, headers=headers), timeout=60) as response:
+        status = int(getattr(response, "status", None) or response.getcode())
+        if start and status == 206:
+            content_range = response.headers.get("Content-Range", "")
+            if not content_range.startswith(f"bytes {start}-"):
+                raise IntegrityError(f"{url}: Content-Range {content_range!r} != offset {start}")
+            mode = "ab"
+        elif status == 200:
+            start, mode = 0, "wb"
+        else:
+            raise IntegrityError(f"{url}: unexpected HTTP status {status}")
+        with partial.open(mode) as out:
+            shutil.copyfileobj(response, out, length=1 << 20)
+    return start
+
+
 def fetch_file(
-    entry: DatasetFile, source: dict[str, Any], root: Path | None = None, dry_run: bool = False
+    entry: DatasetFile, source: dict[str, Any], root: Path | None = None, dry_run: bool = False,
+    opener: Callable[..., Any] | None = None,
 ) -> dict[str, Any]:
     """Ensure ``entry`` exists locally with the expected hash; download it if needed.
 
-    Returns a provenance record (url, local path, sha256, action taken).
+    Downloads go to ``<dest>.part`` and resume from it after an interruption. A completed
+    download is size- and SHA-256-verified before it is renamed into place. On a mismatch,
+    the ``.part`` file is deleted and :class:`IntegrityError` is raised, so a corrupt file is
+    never used. ``opener`` defaults to :func:`urllib.request.urlopen` (injectable for tests).
+    Returns a provenance record (url, local path, sha256, action taken, resume offset).
     """
     dest = entry.destination(root)
     url = entry.url(source)
@@ -112,14 +153,14 @@ def fetch_file(
     dest.parent.mkdir(parents=True, exist_ok=True)
     partial = dest.with_suffix(dest.suffix + ".part")
     LOG.info("dataset_download_start", extra={"fields": {"url": url, "dest": str(dest)}})
-    with urllib.request.urlopen(url, timeout=60) as response, partial.open("wb") as out:
-        shutil.copyfileobj(response, out, length=1 << 20)
+    resumed_from = _download_to_partial(url, partial, entry.size_bytes,
+                                        opener or urllib.request.urlopen)
     try:
         digest = verify_file(entry, partial)
     except IntegrityError:
         partial.unlink(missing_ok=True)
         raise
     partial.rename(dest)
-    record.update(sha256=digest, action="downloaded")
+    record.update(sha256=digest, action="downloaded", resumed_from_bytes=resumed_from)
     LOG.info("dataset_downloaded", extra={"fields": record})
     return record

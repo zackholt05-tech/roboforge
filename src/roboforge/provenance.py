@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.metadata
+import json
 import os
 import platform
 import subprocess
@@ -42,6 +43,33 @@ def sha256_file(path: Path, chunk_size: int = 1 << 20) -> str:
         while chunk := fh.read(chunk_size):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def canonical_json(obj: Any) -> str:
+    """Serialize ``obj`` deterministically: sorted keys, no whitespace, ASCII, repr floats.
+
+    Two equal JSON-compatible objects always give the same string, so its hash identifies a
+    spec, split or statistics file independently of key order or formatting.
+    """
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=True,
+                      allow_nan=False)
+
+
+def sha256_json(obj: Any) -> str:
+    """Return the hex SHA-256 of :func:`canonical_json` of ``obj``."""
+    return hashlib.sha256(canonical_json(obj).encode("ascii")).hexdigest()
+
+
+def write_json(path: Path, obj: Any) -> None:
+    """Write ``obj`` as stable, human-readable JSON (sorted keys, 1-space indent, final newline).
+
+    Committed manifests are written with this function so that rebuilding them from the same
+    inputs yields byte-identical files.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(obj, sort_keys=True, indent=1, ensure_ascii=True,
+                               allow_nan=False) + "\n")
 
 
 EVIDENCE_DIRS: tuple[str, ...] = ("reports", "logs")

@@ -114,8 +114,12 @@ def render_demo_frames(env_args_: dict[str, Any], grp: h5py.Group, demo: str, ta
             "success_after_replay_with_renderer": success}
 
 
-def verify_task(task: str, replay_n: int | None, render: bool) -> dict[str, Any]:
-    """Run every check for one task and return the report dictionary."""
+def verify_task(task: str, replay_n: int | None, render: bool,
+                out_dir: Path) -> dict[str, Any]:
+    """Run every check for one task and return the report dictionary.
+
+    Rendered frames are written to ``out_dir / "frames"``, next to the JSON report.
+    """
     source, files = load_manifest()
     entries = {f.hdf5_type: f for f in files if f.task == task}
     report: dict[str, Any] = {"task": task, "environment": environment_snapshot(),
@@ -170,9 +174,9 @@ def verify_task(task: str, replay_n: int | None, render: bool) -> dict[str, Any]
         report["replay"] = aggregate_replay(results)
         report["replay"]["per_demo"] = results
         if render:
-            out_dir = feasibility_reports_dir() / "frames"
-            out_dir.mkdir(parents=True, exist_ok=True)
-            report["render"] = render_demo_frames(meta, g0, demos[0], task, out_dir)
+            frames_dir = out_dir / "frames"
+            frames_dir.mkdir(parents=True, exist_ok=True)
+            report["render"] = render_demo_frames(meta, g0, demos[0], task, frames_dir)
     report["integrity_checks"] = integrity_checks(report, sim_cfg)
     return report
 
@@ -238,7 +242,7 @@ def main(argv: list[str] | None = None) -> int:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     exit_code = 0
     for task in args.tasks:
-        report = verify_task(task, replay_n, args.render)
+        report = verify_task(task, replay_n, args.render, args.out_dir)
         out = args.out_dir / f"data_report_{task}.json"
         out.write_text(json.dumps(report, indent=1, default=str))
         r = report["replay"]

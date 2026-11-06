@@ -4,8 +4,8 @@ project: roboforge-3d
 current_session: 0
 session_status: PASS
 next_session: 1
-last_verified_commit: __EVIDENCE_COMMIT__
-code_commit: __CODE_COMMIT__
+last_verified_commit: 29645cf1cf7f5bcb248b56e9585b61be37ad7c0e   # evidence regenerated from this clean tree; committed in the next commit
+code_commit: 29645cf1cf7f5bcb248b56e9585b61be37ad7c0e
 python: 3.11.15
 sim_engine_version: mujoco 3.2.7
 robosuite_revision: 51cc01785bab80ffeed20da15e67d7dd4140e76a   # v1.5.1

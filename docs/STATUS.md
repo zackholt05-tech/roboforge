@@ -4,8 +4,8 @@ CURRENT_SESSION: 0
 SESSION_STATUS: PASS            # GO for Session 1; see reports/feasibility/STACK_REPORT.md §10
 NEXT_SESSION: 1
 BLOCKERS: none for Session 1    # non-blocking open items: KI-001, KI-003, KI-007, KI-008
-LAST_VERIFIED_COMMIT: __EVIDENCE_COMMIT__
-CODE_COMMIT: __CODE_COMMIT__
+LAST_VERIFIED_COMMIT: 29645cf1cf7f5bcb248b56e9585b61be37ad7c0e   # evidence regenerated from this clean tree; committed in the next commit
+CODE_COMMIT: 29645cf1cf7f5bcb248b56e9585b61be37ad7c0e
 RESOURCE_SPEND: {usd: 0.00, gpu_hours: 0, notes: "no remote compute used"}
 UPDATED: 2026-11-05
 ```

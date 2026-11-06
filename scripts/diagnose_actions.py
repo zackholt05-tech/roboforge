@@ -1,4 +1,4 @@
-"""Action-convention diagnostics for trained BC checkpoints (MASTER_SPEC Session 3).
+"""Action-convention diagnostics for trained checkpoints (MASTER_SPEC Sessions 3-4).
 
     python scripts/diagnose_actions.py --train-runs runs/<id1> runs/<id2>
 
@@ -15,7 +15,8 @@ Looks for clipping, sign and coordinate problems from three directions:
    Positions and orientations come from the canonical features (eef site position, hand
    quaternion xyzw), and the rotation increment is computed in float64 with numpy, not with
    robosuite helpers (KI-018).
-2. **Teacher-forced offline error** on the 20 validation demos, per action dimension:
+2. **Teacher-forced offline error** on the 20 validation demos, per action dimension (a
+   stochastic policy is scored on one seeded sample per window, generator seed 1):
    - normalized MSE and RMSE in action units;
    - gripper sign agreement with the demonstration;
    - the fraction of decoded actions that fall outside [−1, 1] and would be clipped.
@@ -27,7 +28,11 @@ Looks for clipping, sign and coordinate problems from three directions:
      `success`, `gripper_never_closed`, `missed_grasp_then_drift` (the object never rose and
      the end effector ends more than 0.2 m away), `missed_grasp_stayed_near` and
      `object_rose_without_success`;
-   - motion-dimension clipping (dims 0–5) in successful vs failed episodes.
+   - motion-dimension clipping (dims 0–5) in successful vs failed episodes;
+   - **receding-horizon and normalization checks** on every episode record: each decision
+     executes ``min(T_a, remaining)`` actions with ``chunk_offset`` 0, 1, …; executed actions
+     equal ``ActionCodec.decode(raw_policy_action)``; the number of decisions is
+     ``ceil(steps / T_a)``; and the raw normalized actions' range.
 
 The report goes to ``<reports-dir>/diagnostics/actions.json`` (default
 ``reports/session$ROBOFORGE_EVIDENCE_SESSION``, D-039).
@@ -48,6 +53,7 @@ configure_mujoco_gl()
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
+from roboforge.data.pipeline import load_specs  # noqa: E402
 from roboforge.eval.learned import LearnedPolicy  # noqa: E402
 from roboforge.eval.rollout import RolloutRecord  # noqa: E402
 from roboforge.paths import REPO_ROOT, evidence_reports_dir, repo_relative  # noqa: E402
@@ -119,7 +125,12 @@ def controller_axes(task: str) -> dict[str, Any]:
 def teacher_forced(policy: LearnedPolicy, tm: dict[str, Any]) -> dict[str, Any]:
     """Per-dimension offline error on the validation demos, in normalized and action units."""
     _, valid = load_windows(from_dict(tm["config"]))
-    pred = policy.model(valid.obs_history, valid.obs_valid).double().numpy()
+    with torch.no_grad():
+        if policy.stochastic:
+            pred = policy.model.sample(valid.obs_history, valid.obs_valid,
+                                       torch.Generator().manual_seed(1)).double().numpy()
+        else:
+            pred = policy.model(valid.obs_history, valid.obs_valid).double().numpy()
     target = valid.future_action.double().numpy()
     m = valid.valid_mask.numpy()
     p, y = pred[m], target[m]  # [N_valid_steps, A] normalized
@@ -180,10 +191,39 @@ def failure_breakdown(records_dir: Path, eef: slice) -> dict[str, Any]:
             "failures": [f for f in feats if f["category"] != "success"]}
 
 
-def closed_loop(tm: dict[str, Any], reports: Path) -> list[dict[str, Any]]:
+def receding_horizon(records_dir: Path, codec: Any, t_a: int) -> dict[str, Any]:
+    """Replanning and decode checks over every episode record of one evaluation."""
+    n_eps, bad, raw_min, raw_max = 0, [], np.inf, -np.inf
+    for d in sorted((records_dir / "episodes").iterdir()):
+        rec = RolloutRecord.load(d)
+        a = rec.arrays
+        steps = len(a["decision_index"])
+        expect_dec = np.arange(steps) // t_a
+        problems = []
+        if not np.array_equal(a["decision_index"], expect_dec):
+            problems.append("decision_index")
+        if not np.array_equal(a["chunk_offset"], np.arange(steps) % t_a):
+            problems.append("chunk_offset")
+        if steps and not np.array_equal(codec.decode(a["raw_policy_action"])[0],
+                                        a["executed_action"]):
+            problems.append("decode")
+        if len(np.unique(a["decision_index"])) != -(-steps // t_a):
+            problems.append("n_decisions")
+        if steps:
+            raw_min = min(raw_min, float(a["raw_policy_action"].min()))
+            raw_max = max(raw_max, float(a["raw_policy_action"].max()))
+        n_eps += 1
+        if problems:
+            bad.append({"state_id": d.name, "problems": problems})
+    return {"n_episodes": n_eps, "t_a": t_a, "episodes_with_problems": bad,
+            "raw_normalized_min": raw_min, "raw_normalized_max": raw_max,
+            "passed": not bad}
+
+
+def closed_loop(tm: dict[str, Any], reports: Path,
+                policy: LearnedPolicy | None = None) -> list[dict[str, Any]]:
     """Clip and gripper statistics plus the failure breakdown of every canonical
-    validation evaluation of the run."""
-    from roboforge.data.pipeline import load_specs
+    validation evaluation of the run (and, given ``policy``, the receding-horizon checks)."""
 
     lo, hi = load_specs(tm["config"]["task"])[0].slices()["robot0_eef_pos"]
     out = []
@@ -197,6 +237,14 @@ def closed_loop(tm: dict[str, Any], reports: Path) -> list[dict[str, Any]]:
                     "decoded_min_per_dim": np.min([e["decoded_min"] for e in eps], 0).tolist(),
                     "decoded_max_per_dim": np.max([e["decoded_max"] for e in eps], 0).tolist(),
                     "gripper_sign_changes_mean": s["gripper_sign_changes_mean"],
+                    "motion_clip_fraction_per_step": float(np.sum(
+                        [e["clip_fraction_per_dim"][:-1] for e in eps], 0).max() / len(eps))
+                    if eps else None,
+                    "gripper_clip_fraction": s["clip_fraction_per_dim"][-1],
+                    "receding_horizon": (receding_horizon(
+                        REPO_ROOT / s["records_dir"], policy.codec(load_specs(
+                            tm["config"]["task"])[1]), policy.exec_horizon)
+                        if policy is not None else None),
                     "source": repo_relative(f)})
     return out
 
@@ -217,8 +265,8 @@ def main(argv: list[str] | None = None) -> int:
             policy = LearnedPolicy.from_checkpoint(REPO_ROOT / c["path"], c["sha256"])
             tf.append({"step": c["step"], "sha256": c["sha256"], **teacher_forced(policy, tm)})
         runs.append({"train_run_id": tm["run_id"], "name": tm["config"]["name"],
-                     "teacher_forced_valid_demos": tf,
-                     "closed_loop_validation": closed_loop(tm, args.reports_dir)})
+                     "family": tm["config"]["family"], "teacher_forced_valid_demos": tf,
+                     "closed_loop_validation": closed_loop(tm, args.reports_dir, policy)})
     axes = {t: controller_axes(t) for t in sorted(tasks)}
     report = {"schema": "roboforge.action_diagnostics/1", "platform": evaluation_platform(),
               "git": git_revision(), "controller_axes": axes, "runs": runs}
@@ -232,8 +280,11 @@ def main(argv: list[str] | None = None) -> int:
     for r in runs:
         for c in r["closed_loop_validation"]:
             fb = c["failure_breakdown"]
+            rh = c["receding_horizon"]
             print(f"{r['name']} step {c['step']}: {c['successes']}/{c['n']} {fb['counts']}; "
-                  f"motion clip success/failure {fb['motion_clip_fraction_mean']}")
+                  f"motion clip success/failure {fb['motion_clip_fraction_mean']}; gripper "
+                  f"clip {c['gripper_clip_fraction']:.3f}; receding horizon "
+                  f"{'PASS' if rh and rh['passed'] else rh}")
         for tf in r["teacher_forced_valid_demos"]:
             print(f"{r['name']} step {tf['step']} teacher-forced: gripper sign agreement "
                   f"{tf['gripper_sign_agreement']:.3f}; RMSE "

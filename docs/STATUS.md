@@ -33,10 +33,11 @@ UPDATED: 2026-11-05
 | Handoff prepared | DONE | HANDOFF.md |
 
 ## Owner decisions pending
-1. LICENSE for RoboForge's own code (D-013).
-2. Confirm after a Claude Code restart that the plugin hooks are off (KI-007).
-3. Optional: prune the Docker build cache (27.5 GB reclaimable) if disk space is needed
+1. Confirm after a Claude Code restart that the plugin hooks are off (KI-007).
+2. Optional: prune the Docker build cache (27.5 GB reclaimable) if disk space is needed
    (KI-008).
 
-Done with owner approval (2026-11-05): Docker Desktop restarted (storage repaired, Linux
-check completed); scratch `venv330` deleted.
+Decided or done with owner approval (2026-11-05):
+- License: Apache-2.0 (D-013; `LICENSE`, `NOTICE`).
+- Docker Desktop restarted (storage repaired, Linux check completed).
+- Scratch `venv330` deleted.

@@ -54,5 +54,10 @@ docs/                status, handoff, decisions, known issues, protocol drafts
 
 Project author: **Zackary Holt**. RoboForge relies on robomimic, robosuite, MuJoCo and the
 Diffusion Policy line of work; datasets, licenses and required citations are listed in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The license for RoboForge's own code has
-not been chosen yet.
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## License
+
+RoboForge is licensed under the [Apache License 2.0](LICENSE); see also [NOTICE](NOTICE).
+Third-party software, datasets and assets keep their own licenses
+([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).

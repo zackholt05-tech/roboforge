@@ -1,7 +1,7 @@
 # Third-Party Notices and Attribution
 
-RoboForge (project author: Zackary Holt) builds on the work of other researchers and
-open-source projects. This file records what is used, under which license, and how it
+RoboForge (project author: Zackary Holt; licensed under Apache-2.0, see `LICENSE` and
+`NOTICE`) builds on the work of other researchers and open-source projects. This file records what is used, under which license, and how it
 must be cited. RoboForge does **not** redistribute any third-party dataset, simulator
 asset, mesh, or pretrained weight; datasets are fetched from their official source by
 `scripts/download_data.py` and verified against SHA-256 hashes in

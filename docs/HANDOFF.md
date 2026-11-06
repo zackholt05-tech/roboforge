@@ -19,7 +19,8 @@ dataset_sha256:
 action_dim: 7            # OSC_POSE delta (3 pos + 3 axis-angle) + gripper, bounds [-1, 1], 20 Hz
 success_signal: "robosuite env._check_success() (Lift: cube z > table + 0.04 m; Can: can in goal bin)"
 training_spend_usd: 0
-next_required_owner_approval: none for Session 1 (LICENSE choice pending)
+next_required_owner_approval: none for Session 1
+license: Apache-2.0      # DECISIONS D-013; LICENSE + NOTICE
 ```
 
 # Session 0 Handoff
@@ -53,7 +54,8 @@ evidence is in `reports/feasibility/STACK_REPORT.md`.
 ## 3. Files created
 - Build / tooling: `pyproject.toml`, `uv.lock`, `Makefile`, `.gitignore`,
   `.gitattributes`, `.dockerignore`, `.env.example`.
-- Top-level docs: `README.md`, `CITATION.cff`, `THIRD_PARTY_NOTICES.md`.
+- Top-level docs: `README.md`, `CITATION.cff`, `THIRD_PARTY_NOTICES.md`, `LICENSE`
+  (Apache-2.0), `NOTICE`.
 - `configs/simulator/{lift,can}.yaml` (generated from data; equality tested).
 - `data/manifests/robomimic_v1.5_ph.json`.
 - `src/roboforge/`:

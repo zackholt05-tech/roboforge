@@ -98,9 +98,24 @@ and apply it identically to all models.
 - No commit template, hooks path, template dir or trailer configuration exists globally.
 - Commits carry no AI co-author trailers.
 
-### D-013 No LICENSE chosen (OWNER DECISION PENDING)
-The spec makes the RoboForge code license an owner choice. Third-party licenses are
-recorded in `THIRD_PARTY_NOTICES.md`.
+### D-013 RoboForge is released under the Apache License 2.0 (FIXED, owner decision 2026-11-05)
+- **Decision (Zackary Holt):** RoboForge is to be released under **Apache-2.0**.
+- **Scope:** everything authored for RoboForge in this repository. Third-party software,
+  the robomimic datasets and robosuite/MuJoCo assets keep their own licenses
+  (`THIRD_PARTY_NOTICES.md`). All are compatible: MIT and Apache-2.0 dependencies, and no
+  third-party code is vendored.
+- **Why Apache-2.0 over MIT** (both were offered): it adds an explicit patent grant and a
+  NOTICE mechanism, and matches MuJoCo's license.
+- **Applied:**
+  - `LICENSE` is the official text from https://www.apache.org/licenses/LICENSE-2.0.txt
+    (SHA-256 `cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30`; matches
+    the SPDX text).
+  - `NOTICE`: "Copyright 2026 Zackary Holt".
+  - `pyproject.toml` `license = "Apache-2.0"`, `CITATION.cff` `license: Apache-2.0`, and
+    the README.
+- Per-file license headers are not required by Apache-2.0 and are not used.
+- Choosing the license does **not** authorize publishing the repository; remote
+  publication still needs separate owner approval.
 
 ### D-014 Session 0 model check is forward-only (FIXED for Session 0)
 A plugin hook (ml-pipeline) blocked code containing a backward pass. Session 0 only

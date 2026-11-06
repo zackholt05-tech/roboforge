@@ -112,6 +112,7 @@ boundary tests.
 - Assets: Panda and object meshes ship inside robosuite (no separate license file found;
   covered by robosuite's MIT license). Rendered PNGs here are RoboForge renders.
 - No pretrained weights are used.
+- RoboForge's own license: Apache-2.0 (owner decision, D-013).
 - Citations: `THIRD_PARTY_NOTICES.md` (BibTeX copied from official sources).
 
 ## 9. Resource estimates (item 9) — details in `docs/COMPUTE_PLAN.md`

@@ -164,6 +164,8 @@ def build_task(task: str) -> TaskArtifacts:
         "action_spec": act_spec.to_dict(), "action_spec_sha256": act_spec.sha256(),
         "observation_spec": obs_spec.to_dict(), "observation_spec_sha256": obs_spec.sha256(),
         "windows": {**cfg["windows"],
+                    "status": "default horizons, overridable per run; every run manifest "
+                              "records the T_o/T_p it used",
                     "obs_padding": "repeat first observation; obs_valid=False",
                     "action_padding": "repeat last action; valid_mask=False (masked from loss)"},
         "episodes": [{"id": d, "length": n, "split": split_of[d], "flagged": d in issues}

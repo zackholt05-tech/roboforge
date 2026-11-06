@@ -81,13 +81,17 @@ class FeatureSpec:
 
 @dataclass(frozen=True)
 class ObservationSpec:
-    """Ordered low-dimensional state observation used by all Level 1 policies."""
+    """Ordered per-step low-dimensional state observation used by all Level 1 policies.
+
+    This is the per-step contract only. The observation history length ``T_o`` is a
+    per-run parameter, recorded in each run manifest, so that one-frame BC, BC-RNN and
+    diffusion can share one spec hash.
+    """
 
     task: str
     modality: str
     quat_convention: str
     features: tuple[FeatureSpec, ...]
-    obs_horizon: int
 
     @property
     def dim(self) -> int:
@@ -124,7 +128,7 @@ class ObservationSpec:
         feats = tuple(FeatureSpec(**{**f, "dataset_ref": DatasetRef(**f["dataset_ref"]),
                                      "joints": tuple(f["joints"])}) for f in d["features"])
         spec = cls(task=d["task"], modality=d["modality"], quat_convention=d["quat_convention"],
-                   features=feats, obs_horizon=int(d["obs_horizon"]))
+                   features=feats)
         if spec.dim != d["dim"] or {k: list(v) for k, v in spec.slices().items()} != d["slices"]:
             raise ValueError("observation spec dict has inconsistent dim/slices")
         return spec
@@ -250,7 +254,7 @@ def build_observation_spec(cfg: dict[str, Any], f: h5py.File) -> ObservationSpec
             if f'name="{n}"' not in xml:
                 raise ValueError(f"{feat.name}: MuJoCo element {n!r} not in dataset model XML")
     return ObservationSpec(task=cfg["task"], modality="low_dim_state", quat_convention="xyzw",
-                           features=feats, obs_horizon=int(cfg["windows"]["obs_horizon"]))
+                           features=feats)
 
 
 def build_action_spec(f: h5py.File) -> ActionSpec:

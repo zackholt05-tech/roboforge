@@ -1,7 +1,7 @@
-# Research Protocol — DRAFT (Sessions 0–1)
+# Research Protocol — DRAFT (Sessions 0–2)
 
 > **Status: DRAFT. Not frozen.** This document fixes the conventions established in
-> Sessions 0 and 1. It marks every item as **ESTABLISHED** (backed by Session 0 evidence or a
+> Sessions 0–2. It marks every item as **ESTABLISHED** (backed by Session 0 evidence or a
 > spec requirement) or **TO FINALIZE (Session N)**. It must be completed and committed in
 > Session 3, before any reported runs. It becomes binding for the final test only through
 > `docs/FINAL_TEST_FREEZE.md` (Session 7). No results exist yet.
@@ -59,17 +59,41 @@ outcome.
   relied on (KI-002).
 - **ESTABLISHED:** all rollouts in one comparison run on one platform and container image.
   Physics is not bit-identical across platforms (KI-013, D-017).
-- **DEFAULT seed conventions (finalized and generated in Session 2):**
+- **ESTABLISHED (Session 2, D-017):** the canonical evaluation platform is the pinned
+  Linux aarch64 container `roboforge-sim-cpu:session0` (image ID `sha256:1f685638…`), run
+  through `infra/containers/run_sim_cpu.sh`. Native macOS results are development-only.
+- **ESTABLISHED (Session 2, D-025): suites generated, saved and hashed**
+  (`data/eval_states/`, generated on the canonical container):
+
+  | Task | Suite | Partition | Seeds | n | Content SHA-256 |
+  |---|---|---|---|---|---|
+  | Lift | validation | `eval_validation` | 100000 + i | 50 | `0b1368fa…` |
+  | Lift | final_test | `eval_final_test` | 900000 + i | 50 | `e0249865…` (locked) |
+  | Can | validation | `eval_validation` | 100000 + i | 50 | `85767338…` |
+  | Can | final_test | `eval_final_test` | 900000 + i | 50 | `5f407748…` (locked) |
+
+  - The seed blocks [100000, 200000) and [900000, 1000000) are reserved.
+  - The final-test states cannot be loaded, and their seeds cannot be reset to, until
+    `docs/FINAL_TEST_FREEZE.md` (Session 7) is committed and names each suite's content
+    hash. Research-integrity tests enforce this.
+  - Model selection (§6) uses **only** `eval_validation`.
+- **DEFAULT seed conventions:**
   - Training seeds: `{0, 1, 2}` per algorithm × task (spec §3.4 target: 3 seeds).
-  - Validation start states: global seeds `100000 + i`, `i ∈ [0, 50)`.
-  - Final-test start states: global seeds `900000 + i`, `i ∈ [0, 50)`. These are generated
-    and hashed in Session 2. Script access stays blocked until `FINAL_TEST_FREEZE.md` exists.
   - Stochastic-policy noise seeds: derived deterministically from
     `(policy_seed, state_id, repeat)`, and never reused across models in a way that
-    duplicates trials.
-- Horizon: 400 control steps for Lift and Can, the robomimic registry rollout horizon. An
-  episode ends at first success or at the horizon. **TO FINALIZE (Session 2):** decide
-  whether success must persist.
+    duplicates trials. The random sanity policy already uses
+    `default_rng([policy_seed, sha256(state_id)[:8]])` (D-027).
+- **ESTABLISHED (Session 2, D-026): termination and success.**
+  - Horizon: 400 control steps for Lift and Can, the robomimic registry rollout horizon.
+  - The scored episode ends at the **first success**, evaluated on the post-step state's
+    current kinematics, or is truncated at the horizon. Success need not persist.
+  - An optional `hold_steps` persistence diagnostic (default 0) may be reported
+    separately. It never changes the primary metric.
+- **ESTABLISHED (Session 2, D-027): sanity baseline for H1.** The random-uniform and no-op
+  policies on the validation suite of the canonical platform:
+  - 0/50 successes for every task × policy (random-uniform seed 0 and no-op; all 200
+    episodes truncated at 400 steps; `reports/session2/sanity_eval/`).
+  - Demonstration replay is labeled non-autonomous and is never a result.
 
 ## 6. Model comparison and selection
 - **Families (ESTABLISHED):**

@@ -8,7 +8,7 @@ cloning, recurrent behavior cloning and a conditional diffusion action policy on
 robomimic proficient-human demonstrations, and evaluated by closed-loop simulator rollouts
 from paired, held-out initial states.
 
-> **Status: Session 1 (canonical data pipeline) complete — no models trained, no results yet.**
+> **Status: Session 2 (simulator adapter and evaluation apparatus) complete — no models trained, no results yet.**
 > Key findings: Results pending. See [docs/STATUS.md](docs/STATUS.md),
 > [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) and
 > [reports/feasibility/STACK_REPORT.md](reports/feasibility/STACK_REPORT.md).
@@ -25,6 +25,18 @@ from paired, held-out initial states.
   shared with evaluation (fixes robosuite's lagged Can relative pose, KI-003), upstream
   episode splits, train-only normalization, and an audited window sampler
   ([docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md), `reports/data_audit.json`).
+- Session 2: the measurement apparatus.
+  - `RoboForgeEnv` resets only from exact serialized snapshots and validates and clips
+    actions. Success is scored on current kinematics, at first success, with a 400-step
+    horizon.
+  - Validation and final-test initial-state suites are hashed; the final test stays locked
+    until `docs/FINAL_TEST_FREEZE.md` exists.
+  - A frame-indexed rollout recorder with a re-simulation audit, plus random and no-op
+    sanity policies.
+  - Two-process determinism checks, and a MuJoCo → three.js clip export verified with the
+    real three.js library.
+  - Canonical evaluation runs in a pinned Linux container
+    ([docs/SIMULATOR_CONTRACT.md](docs/SIMULATOR_CONTRACT.md), DECISIONS D-017, D-024–D-030).
 - Known issues that shape later sessions are listed in [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 
 ## Quick start
@@ -38,6 +50,11 @@ make check-data   # rebuild the data pipeline in memory; must equal the committe
 make build-data   # write the processed Lift/Can features (gitignored); refuses on any mismatch
 make verify-data  # HDF5 audit, obs/state alignment, replay of all demos, data determinism check
 make audit-data   # reports/data_audit.json, figures, docs/DATA_DICTIONARY.md
+make check-eval-states   # regenerate the eval suites in memory; must equal data/eval_states
+make replay-demos        # 12 sampled demos/task through RoboForgeEnv: divergence, montage, video
+make check-determinism   # two fresh processes, same seed -> bitwise-identical rollouts
+make sanity-eval-canonical  # random + no-op policies on the validation suite, pinned container
+make export-clip && make web-contract  # one real clip, verified against three.js (node)
 ```
 
 Requirements: macOS arm64 or Linux x86_64/aarch64, [uv](https://docs.astral.sh/uv/).
@@ -50,17 +67,22 @@ verified on linux/aarch64; x86_64 and EGL are not yet (KNOWN_ISSUES KI-001).
 ```text
 configs/simulator/   task contracts generated from dataset metadata (tested for equality)
 configs/data/        canonical observation-feature selection, horizons, normalization per task
+configs/eval/        evaluation suites (seeds, final-test lock, termination) + canonical platform
 data/manifests/      dataset source registry (pinned revision, SHA-256) + tasks/ task manifests
 data/splits/         episode-level train/valid split manifests (all IDs, hashed)
 data/normalization/  train-only normalization statistics (hashed)
+data/eval_states/    validation + final-test initial-state suites (final test locked)
 src/roboforge/       data/ (fetch, specs, features, processed, split, normalization, sequence,
-                     audit) · sim/ (env factory, replay, render) ·
-                     models/ train/ eval/ viz/ compute/ (boundaries; implemented in later sessions)
+                     audit) · sim/ (env adapter, snapshots, eval suites, kinematics, render) ·
+                     eval/ (policies, rollout recorder) · viz/ (three.js coordinates, clip) ·
+                     models/ train/ compute/ (boundaries; implemented in later sessions)
 scripts/             reproducible CLIs used by the Makefile
-tests/               unit/ · simulator/ · integration/ (pytest markers: sim, data)
-infra/containers/    headless Linux simulation image
+tests/               unit/ · simulator/ · integration/ · research_integrity/ · web_contract/
+                     (pytest markers: sim, data, render, slow, web)
+infra/containers/    headless Linux simulation image + run_sim_cpu.sh (canonical platform)
 reports/feasibility/ Session 0 evidence (JSON reports, rendered frames)
 reports/data_audit*  Session 1 dataset audit (JSON + figures)
+reports/session2/    Session 2 evidence (replay, contract, determinism, sanity eval, clip)
 docs/                status, handoff, decisions, known issues, protocol drafts
 ```
 

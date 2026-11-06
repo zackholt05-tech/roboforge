@@ -1,0 +1,20 @@
+HEAD 283a8115d63b8698503af607a67f6a06c3676745 dirty=0 start 2026-11-06T07:26:55Z
+smoke_sim rc=0 15s :: make smoke-sim SMOKE_OUT=logs/session2/smoke_sim
+lint rc=0 0s :: make lint
+test rc=0 79s :: make test
+eval_states_check_macos rc=0 56s :: make check-eval-states
+eval_states_check_container rc=0 90s :: infra/containers/run_sim_cpu.sh python scripts/generate_eval_states.py --tasks lift can --check --report-dir reports/session2/eval_states_container
+eval_states_regenerate_container rc=0 89s :: make eval-states
+data_unchanged rc=0 0s :: bash -c test -z "$(git status --porcelain data/)" && echo data/ clean
+replay_demos rc=0 48s :: make replay-demos
+check_sim_contract rc=0 133s :: make check-sim-contract
+determinism_macos rc=0 33s :: uv run --frozen python scripts/check_determinism.py --tasks lift can --out-dir reports/session2/determinism/macos
+determinism_container rc=0 57s :: infra/containers/run_sim_cpu.sh python scripts/check_determinism.py --tasks lift can --out-dir reports/session2/determinism/container
+determinism_compare_lift rc=0 1s :: uv run --frozen python scripts/check_determinism.py --compare reports/session2/determinism/macos/darwin-arm64-native_lift.json reports/session2/determinism/container/linux-aarch64-container-1f685638f28c_lift.json
+determinism_compare_can rc=0 0s :: uv run --frozen python scripts/check_determinism.py --compare reports/session2/determinism/macos/darwin-arm64-native_can.json reports/session2/determinism/container/linux-aarch64-container-1f685638f28c_can.json
+sanity_eval_canonical rc=0 956s :: make sanity-eval-canonical
+export_clip rc=0 3s :: make export-clip
+web_contract rc=0 1s :: make web-contract
+done 2026-11-06T07:52:56Z
+eval_states_regenerate_container (re-run, clean tree) rc=0 :: make eval-states
+data_unchanged (re-run) rc=0 :: data/ clean

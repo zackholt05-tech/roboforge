@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>RoboForge web diagnostic: exported clip</title>
+<style>body{font:14px system-ui;background:#1d1d1f;color:#f5f0e6;margin:16px}
+canvas{background:#2b2b2e}img{width:256px;height:256px}label{margin-right:12px}</style></head>
+<body><h1>Exported clip (diagnostic)</h1>
+<p id="label"></p><p>Projected body origins and parent links of the robot (green) and of
+the object (yellow). The points use the three.js-frame data and the frontview camera, with
+three.js projection math re-implemented in JS. The MuJoCo reference renders below are the
+ground truth.</p>
+<canvas id="c" width="256" height="256" aria-label="projected skeleton of the exported clip">
+</canvas><br><label>frame <input id="s" type="range" min="0" value="0"></label>
+<span id="info"></span><div id="refs"></div>
+<script src="clip.js"></script><script>
+const C = window.ROBOFORGE_CLIP, cv = document.getElementById("c"), g = cv.getContext("2d");
+document.getElementById("label").textContent = C.label + " | run " + C.run_id +
+  " | physics_sha256 " + C.physics_sha256.slice(0, 12);
+const cam = C.camera, [qx, qy, qz, qw] = cam.quaternion_xyzw;
+const R = [[1-2*(qy*qy+qz*qz), 2*(qx*qy-qw*qz), 2*(qx*qz+qw*qy)],
+           [2*(qx*qy+qw*qz), 1-2*(qx*qx+qz*qz), 2*(qy*qz-qw*qx)],
+           [2*(qx*qz-qw*qy), 2*(qy*qz+qw*qx), 1-2*(qx*qx+qy*qy)]];
+const f = 1 / Math.tan(cam.fov_deg * Math.PI / 360);
+function proj(p) { const d = [0, 1, 2].map(i => p[i] - cam.position[i]);
+  const c = [0, 1, 2].map(j => d[0]*R[0][j] + d[1]*R[1][j] + d[2]*R[2][j]);
+  return [(f * cam.height / cam.width * c[0] / -c[2] + 1) / 2 * cam.width,
+          (1 - f * c[1] / -c[2]) / 2 * cam.height]; }
+function draw(k) { g.clearRect(0, 0, 256, 256); const P = C.pos[k].map(proj);
+  C.names.forEach((n, i) => { const pi = C.parents[i] ? C.names.indexOf(C.parents[i]) : -1;
+    g.strokeStyle = C.categories[i] === "robot" ? "#3ddc84" : "#ffd60a";
+    g.fillStyle = g.strokeStyle; g.fillRect(P[i][0] - 1.5, P[i][1] - 1.5, 3, 3);
+    if (pi >= 0) { g.beginPath(); g.moveTo(...P[i]); g.lineTo(...P[pi]); g.stroke(); } });
+  document.getElementById("info").textContent = "frame " + k + " / " + (C.pos.length - 1) +
+    (C.success[k] ? " | success predicate true" : ""); }
+const s = document.getElementById("s"); s.max = C.pos.length - 1;
+s.oninput = () => draw(+s.value); draw(0);
+document.getElementById("refs").innerHTML = C.refs.map(k =>
+  `<figure style="display:inline-block"><img src="ref_t${String(k).padStart(3, "0")}` +
+  `_frontview.png" alt="MuJoCo frontview render at frame ${k}"><figcaption>MuJoCo ` +
+  `render, frame ${k}</figcaption></figure>`).join("");
+</script></body></html>

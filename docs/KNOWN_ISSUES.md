@@ -17,12 +17,14 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-010 | LOW | OPEN | Docker sim image is 8.7 GB |
 | KI-011 | MEDIUM | OPEN | Lift's initial-state distribution is narrow |
 | KI-012 | LOW | ACCEPTED | Repackaged v1.5 datasets ≠ CoRL 2021 numbers |
-| KI-013 | MEDIUM | OPEN (Session 2) | Physics is not bit-identical across platforms |
-| KI-014 | MEDIUM | OPEN (Session 2) | robosuite default models carry 2 mocap markers absent from dataset models |
+| KI-013 | MEDIUM | MITIGATED (Session 2, D-017) | Physics and numpy RNG streams are not bit-identical across platforms |
+| KI-014 | MEDIUM | RESOLVED (Session 2) | robosuite default models carry 2 mocap markers absent from dataset models |
 | KI-015 | HIGH | MITIGATED | robosuite `env.step` observations are one physics substep stale |
-| KI-016 | MEDIUM | OPEN (Session 2) | `get_xml()` round trip changes the model at ~1e-7 |
+| KI-016 | MEDIUM | RESOLVED (Session 2, D-025) | `get_xml()` round trip changes the model at ~1e-7 |
 | KI-017 | LOW | ACCEPTED | Quaternion inputs are ambiguous in sign across episodes |
 | KI-018 | MEDIUM | RESOLVED (aarch64) | robosuite `quat2mat` is float32 and platform-dependent |
+| KI-019 | MEDIUM | MITIGATED (Session 2, D-024) | `mj_forward` on live data perturbs the rest of a rollout |
+| KI-020 | LOW | MITIGATED (Session 2, D-017) | `uv sync`/`uv run` inside the pinned image would modify its environment |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 and EGL not
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -131,6 +133,8 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
 - `docker system df` afterwards: images 46 GB (the RoboForge image is 25.6 GB unpacked),
   build cache 27.5 GB reclaimable. Pruning is an owner decision.
 - Session 1 start: 33 GB free. The processed Session 1 data add < 10 MB.
+- Session 2 end: 63 GB free. The committed eval suites take 128 KB; the gitignored
+  `runs/` sanity records take about 0.1 GB per full sanity evaluation.
 - RGB extraction (Session 8) needs ~0.5–1.5 GB per task at 84×84. Checkpoints and rollouts
   need more. Monitor `df -h` before heavy steps.
 
@@ -173,6 +177,25 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Action (Session 2, D-017):** run every rollout in one comparison on one pinned platform
   and image, record it in each run manifest, and never mix platforms within a results
   table.
+- **Session 2:**
+  - The canonical evaluation platform is the pinned Linux aarch64 container (D-017).
+    Every record stores its platform ID.
+  - **numpy RNG streams also differ by 1 ulp.** numpy's legacy `RandomState.randn` and
+    `np.sin` return values that differ by 1 ulp between macOS arm64 and the container;
+    uniform draws and `log` match (`logs/session2/diag/rng_{macos,linux}.json`).
+  - robosuite's reset samplers use these functions, so the same seed gives starts that
+    differ by ≤ 4.4e-16 between the platforms. The XML is identical.
+  - The committed evaluation suites were therefore generated on the container. They
+    regenerate bitwise there, and within 1e-12 elsewhere (`make check-eval-states`).
+    They restore exactly on every platform (D-025).
+  - Two fresh processes on the same platform are bitwise identical
+    (`reports/session2/determinism/`).
+  - **Amplification:** on macOS, a start regenerated from its seed differs from the stored
+    (container-generated) start by 4.4e-16 (Lift) or 2.8e-17 (Can). The same 400-step
+    random rollout from the two starts then differs by up to 0.144 (Lift) and 1.49 (Can)
+    in the state (`reports/session2/determinism/macos/`).
+  - Evaluation must therefore always restore the stored snapshot, never re-seed, and every
+    comparison must run on one platform.
 
 ### KI-014 — robosuite's default models carry two mocap markers the dataset models lack
 - In robosuite 1.5.1, `robosuite.make` builds models with two extra mocap bodies,
@@ -188,6 +211,20 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Action (Session 2):** decide whether evaluation initial states are compiled from the
   default robosuite model or from a dataset-style XML. Verify that dynamics match the
   dataset model on short rollouts, and check renders for the markers.
+- **Resolution (Session 2):** keep robosuite's default model, with no XML surgery
+  (`reports/session2/sim_contract_{lift,can}.json`, measured on macOS arm64).
+  - **Markers:** they sit at z = −1 with `contype = conaffinity = 0` in geom group 2.
+  - **Dynamics:**
+    - Replaying the 12 sampled demos with and without the markers gives bitwise-identical
+      states (check A).
+    - So do 5 evaluation starts × 400 steps of random arm actions, with the gripper
+      toggled every 40 steps (check B).
+  - **Renders:** they differ on 0 pixels on every camera (check C).
+  - **Dataset model vs evaluation model**, aligned by name (check D):
+    - the only extra bodies are the 2 markers;
+    - otherwise the models differ only in index shifts, `body_subtreemass` of the world
+      body (the markers' mass) and `site_rgba`, which is visual only;
+    - for Lift, also the per-reset cube sample.
 
 ### KI-015 — robosuite `env.step` observations are one physics substep stale
 - robosuite's `step` runs `sim.forward()`, the controller and `mj_step`, then reads
@@ -214,6 +251,18 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   and the recompiled model (found while writing `test_features_closed_loop.py`).
 - **Action (Session 2):** serialized evaluation states must store the exact XML string that
   was compiled. Every comparison must load that string; never a re-serialization.
+- **Explained and resolved (Session 2, D-025):** the live model and its saved XML differ
+  (`reports/session2/sim_contract_*.json`, check E):
+  - `dof_armature` by up to 3.3e-6;
+  - `body_quat` by ~1e-7;
+  - the cube's principal-axis ordering;
+  - static-body masses and inertias, which have no dynamic effect.
+
+  A snapshot stores the saved XML (`mj_saveLastXML`, the robomimic convention). Every
+  restore compiles exactly that string, so the evaluation model *is* the saved XML. The
+  model generated before saving is never run.
+- Tests check that restores are exact and that the portable and raw XML strings compile
+  identically (`tests/unit/test_snapshot.py`, `tests/simulator/test_env_adapter.py`).
 
 ### KI-017 — Quaternion inputs are continuous within episodes but ambiguous across them
 - All quaternion inputs have 0 within-episode sign flips (`reports/data_audit.json`).
@@ -241,3 +290,34 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   `SequenceDataset.from_committed` refuses a mismatching file.
 - **Rule for later sessions:** never use robosuite's transform helpers to compute policy
   inputs or evaluation metrics that need more than float32 precision.
+
+### KI-019 — `mj_forward` on live data perturbs the rest of a rollout
+- `mj_forward` recomputes accelerations and overwrites MuJoCo's `qacc_warmstart`, the
+  solver warm start that the next `mj_step` uses. The flattened state does not include it.
+- **Measured on macOS arm64** (`reports/session2/sim_contract_*.json`, check F
+  reference). From validation start 0, the first 150 recorded random actions of validation
+  start 2's episode were replayed twice: once plainly, and once with `mj_forward` after
+  every step. Maximum state difference:
+  - Can: up to 0.587 in the state;
+  - Lift: 6.6e-12.
+- `mj_kinematics` plus the success predicate is inert: 0.0 difference (check F, 3
+  validation starts).
+- **Mitigation (D-024):** success and kinematics are evaluated with `mj_kinematics` only.
+  Features, rendering and recording use scratch `MjData`.
+- **Rule for later sessions:** never call `mj_forward`, `sim.forward()` or robosuite's
+  observation refresh on the live data of an evaluation episode.
+
+### KI-020 — `uv sync` / `uv run` inside the pinned image would modify its environment
+- **Measured:** `uv sync --frozen --dry-run` in `roboforge-sim-cpu:session0`
+  (`logs/session2/diag/container_uv_sync_dry_run.log`) would:
+  - reinstall `nvidia-cusparselt-cu13`;
+  - rebuild the editable `roboforge`;
+  - install `ruff`.
+
+  `uv run` would do the same, so the platform would change at run time.
+- **Mitigation:** `infra/containers/run_sim_cpu.sh` runs the image's own `/app/.venv`
+  directly, with the mounted `src/` first on `PYTHONPATH` and no `uv` call. Lint runs on
+  the host.
+- **Session 5:** the remote image build should make `uv sync --frozen` a no-op, or record
+  why it is not.
+

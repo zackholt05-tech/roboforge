@@ -135,7 +135,7 @@ Session 1 extends it with `configs/data/`, `data/splits/`, `data/normalization/`
 `compute`) exist only as documented boundaries until their session. CLIs live in `scripts/`,
 and Make targets exist only where a working command exists (spec §6.5).
 
-### D-017 One evaluation platform per comparison (DEFAULT for Session 2)
+### D-017 One evaluation platform per comparison (DEFAULT for Session 2 — superseded: FIXED in Session 2, see below)
 Physics differs at floating-point level between macOS arm64 and Linux aarch64 (KI-013).
 Default: all rollouts that enter one comparison (every algorithm, seed and initial state)
 run on the same platform and container image. The platform is recorded in each run
@@ -278,3 +278,257 @@ Session 1 command outputs go under `logs/session1/` (Make variables `VERIFY_OUT`
 `SMOKE_OUT`), so Session 0's evidence in `reports/feasibility/` keeps the commit it was
 generated from. Re-rendered `verify_data` frames that are byte-identical to Session 0's
 are not committed again; the comparison is recorded in the ledger.
+
+## Session 2 (2026-11-06)
+Evidence: `reports/session2/` and `logs/session2/` (D-031), regenerated from the clean
+code commit `283a811`.
+
+### D-017 Evaluation platform: the pinned Linux aarch64 container (FIXED, Session 2; was DEFAULT)
+- **Platform:**
+  - image `roboforge-sim-cpu:session0`, ID
+    `sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c`;
+  - Python 3.11.18, `MUJOCO_GL=osmesa`;
+  - host: Apple M1 Pro, Docker Desktop 29.9.2 (linux/arm64 VM).
+
+  Its platform ID is `linux-aarch64-container-1f685638f28c` (`configs/eval/platform.yaml`).
+- **How to run:** every rollout that enters a comparison runs through
+  `infra/containers/run_sim_cpu.sh`. This covers validation checkpoint selection from
+  Session 3 on and the final test. The wrapper:
+  - refuses any other image ID;
+  - mounts code, configs, docs and the committed data read-only;
+  - uses the image's own locked venv, with no `uv sync` at run time (KI-020);
+  - passes the host git SHA and dirty flag in.
+  - makes only `reports/session<N>`, `logs/session<N>` and `runs/` writable, with N from
+    `ROBOFORGE_EVIDENCE_SESSION` (default 2; added in `b739e99`).
+- **Recorded:** every record and report stores `roboforge.provenance.evaluation_platform()`.
+  Results from different platform IDs are never pooled in one table.
+- **Why not native macOS:**
+  - It cannot be pinned: an OS update can change libm/Accelerate results.
+  - Session 2 measured 1-ulp differences in numpy's legacy `randn` and `np.sin` between the
+    two platforms (KI-013).
+  - The container also matches remote Linux execution.
+- **Development use:** native macOS stays the development platform, and its outputs carry
+  `darwin-arm64-native`.
+- **Not covered:**
+  - The same image on a different host CPU (e.g. x86_64 Modal) is a different platform,
+    and is unverified (KI-001).
+  - Rebuilding the image changes the platform ID. Every rollout of an affected comparison
+    must then be re-run.
+
+### D-024 `RoboForgeEnv` adapter contract (FIXED)
+`src/roboforge/sim/env_adapter.py` (MASTER_SPEC §4.1).
+- **Construction:**
+  - the robosuite env is built from `configs/simulator/<task>.yaml`;
+  - specs are loaded hash-checked with `load_specs`;
+  - the env's `action_spec` must equal the committed `ActionSpec`;
+  - `reward_shaping` is refused.
+- **Reset always goes through an exact snapshot.**
+  - `reset(InitialState)` compiles the snapshot's XML in a fresh `MjSim`, restores the
+    state (`reset_to_state`) and asserts an exact read-back.
+  - `reset(seed)` first checks the seed against the reserved blocks (D-025), then
+    generates and restores a snapshot.
+  - **Hidden state:** a restore resets everything outside the flattened state. That is
+    MuJoCo's `qacc_warmstart`, `ctrl` and mocap poses, and robosuite's gripper integrator,
+    controller goals and step counter. Two episodes from the same snapshot are therefore
+    identical, whatever ran before (check G: 0.0).
+- **`step(action)`:**
+  - The action must have shape `(ActionSpec.dim,)` and be finite. Otherwise it raises
+    `InvalidActionError` and leaves the state untouched; invalid actions are never repaired.
+  - Finite actions are clipped to the `ActionSpec` bounds. `clip_mask` reports which
+    entries were clipped.
+  - It returns `(Observation, reward, terminated, truncated, info)`. The observation is
+    `FeatureExtractor.from_sim` of the post-step state (D-010, KI-015); robosuite's
+    observation is discarded.
+  - Stepping after the episode ends raises `EpisodeDoneError`.
+- **Success (D-026):** `mj_kinematics` on the live data, then the task's `_check_success()`.
+  - `mj_kinematics` only writes positions derived from `qpos`, so it is inert for the
+    dynamics (check F: 0.0).
+  - `mj_forward` is not used: it overwrites `qacc_warmstart` and perturbs the rest of
+    the rollout (check F reference; KI-019).
+  - robosuite's own value, computed on stale kinematics, is recorded as
+    `success_robosuite_raw` and is never scored.
+- **Rendering:** `ShadowRenderer` renders from a scratch `MjData` built from the state,
+  with robosuite's geom groups `(0, 1, 1, 0, 0, 0)`.
+  - Measured on macOS (CGL), 256², 3 validation starts per task, every camera
+    (`logs/session2/diag/shadow_vs_robosuite_macos.json`): identical to robosuite's
+    renderer, except `frontview`, which differs by 1 grey level on 6 px (Lift) and 23 px
+    (Can).
+  - The unit test at 96² Lift `frontview` is pixel-identical.
+  - OSMesa was not compared.
+  - Rendering never touches the live data.
+- **Kinematics:** `KinematicsExtractor` uses a scratch `MjData` with `mj_kinematics`,
+  `mj_comPos` and `mj_camlight`.
+  - It returns world poses of every body except the world and mocap bodies, categorized as
+    robot, free_object or fixture.
+  - It also returns joint `qpos`/`qvel`, site positions and camera extrinsics/intrinsics.
+  - Quaternions are wxyz, MuJoCo's convention.
+
+### D-025 Evaluation initial-state suites, XML convention and the final-test lock (FIXED)
+`src/roboforge/sim/{snapshot,eval_states}.py`, `configs/eval/suites.yaml`, `data/eval_states/`.
+- **XML convention:** a snapshot stores `env.sim.model.get_xml()`, MuJoCo's
+  `mj_saveLastXML` of the live model after reset. This is the robomimic dataset
+  convention.
+  - Asset paths are rewritten to robosuite-relative ones (`portable_xml`), so the string is
+    machine-independent.
+  - Restores compile it through `env.edit_model_xml`. Capture verifies that the portable
+    and raw strings compile to the same model.
+  - **Why not robosuite's generator XML (`env.model.get_xml()`):** it is not the model that
+    ran. Lift samples the cube size at every reset, and PickPlace edits bin and
+    visual-object `body_pos` at runtime.
+  - The saved XML is therefore the evaluation model, and every restore compiles exactly
+    that string (KI-016 resolved).
+- **Suites:**
+  - `validation` uses seeds `100000 + i`; `final_test` uses seeds `900000 + i`;
+    `i ∈ [0, 50)` for both tasks.
+  - Ad-hoc `reset(seed)` may not use the reserved blocks [100000, 200000) and
+    [900000, 1000000).
+  - Generation seeds `random` and `np.random`, then calls `env.reset()`. It verifies the
+    restore and that no start is already a success.
+  - Lift has 50 unique XMLs per suite (sampled cube sizes); Can has 1.
+  - Content hashes:
+
+    | Task | validation | final_test |
+    |---|---|---|
+    | Lift | `0b1368fa…` | `e0249865…` |
+    | Can | `85767338…` | `5f407748…` |
+
+    The full values are in the manifests and `partitions.json`.
+- **Storage:** each suite has an open manifest (`<suite>.json`), which holds hashes only,
+  never state values. The states themselves sit in `<suite>.data.jsonl.xz`.
+- **Generated on the canonical container (D-017):** `make eval-states` runs there.
+  - Regeneration is bitwise there.
+  - On macOS it agrees within 4.4e-16, because numpy's legacy `randn` and `np.sin` differ
+    by 1 ulp (KI-013).
+  - The committed values are canonical, and they restore exactly on every platform.
+  - `write_suite` refuses to overwrite a differing suite without `--overwrite`, which
+    needs a recorded decision.
+- **Final-test lock:** `load_suite(task, "final_test")` and `reset(seed)` with a seed in
+  [900000, 1000000) raise `FinalTestLockedError`. They keep raising until
+  `docs/FINAL_TEST_FREEZE.md`:
+  - exists;
+  - is tracked by git and unmodified;
+  - names the suite's `content_sha256`.
+- **What reads the locked data:**
+  - Only `eval_states.py`, `snapshot.py` and `scripts/generate_eval_states.py` may contain
+    the suite name (`tests/research_integrity/`).
+  - The data file is decompressed in exactly three places, all in `eval_states.py`:
+    - its hash check;
+    - `load_suite` after the lock check;
+    - the generator's reproducibility check. It compares regenerated against stored
+      values and reports only the maximum difference.
+- **Partition labels** (`snapshot.PARTITIONS`): `demo_train`, `demo_valid`,
+  `eval_validation`, `eval_final_test`, `eval_adhoc`.
+  - Every snapshot, record and report carries its partition.
+  - `data/eval_states/<task>/partitions.json` indexes the demo split and both suites.
+
+### D-026 Success, reward and termination (FIXED)
+- **Success:** the task predicate (robosuite `_check_success`) on the post-step state's
+  current kinematics (D-024).
+- **Reward:** sparse, 1.0 on a success step and 0 otherwise.
+- **Scored outcome:** the episode ends (`terminated`) at the **first success**. It is
+  `truncated` at the task manifest's `eval_horizon_steps` (400 for both tasks).
+  - Primary metric: success before the horizon.
+  - Secondary: `first_success_step`.
+- **Persistence:** `hold_steps = k > 0` keeps stepping k more control steps after the first
+  success and records `success_held_through_hold`. It is a diagnostic only. The default is
+  0, and it never changes the scored outcome.
+- **Why first success:**
+  - it matches robomimic's rollout default, `experiment.rollout.terminate_on_success =
+    True` (`robomimic/config/base_config.py`), which counts any success before the horizon;
+  - every demonstration's success persists to its end (Session 1);
+  - persistence over a fixed hold is available as a declared diagnostic, if a policy turns
+    out to knock objects off after success.
+
+### D-027 Sanity policies and non-autonomous instrumentation (FIXED)
+`src/roboforge/eval/policies.py`.
+- **Policy metadata:** every policy carries a `PolicyInfo` (name, kind, learned,
+  autonomous, action space, label), stored in each record.
+- **`RandomPolicy`:**
+  - i.i.d. uniform actions over the `ActionSpec` bounds; it ignores observations;
+  - its per-episode RNG is `default_rng([policy_seed, uint64(sha256(state_id)[:8])])`, so
+    streams are reproducible per (seed, state) and distinct across states.
+- **`NoOpPolicy`:** zero actions, i.e. a zero OSC delta. Gripper action 0 holds the current
+  gripper state.
+- **`DemoReplayPolicy`:**
+  - it plays a demonstration's recorded actions open-loop;
+  - it is labeled `autonomous = False`, with a label that starts "NON-AUTONOMOUS";
+  - when it runs out of actions it stops the episode with `stop_reason =
+    "policy_exhausted"`;
+  - it is instrumentation and never a result.
+- **Learned policies (Session 3 on)** implement the same `Policy` protocol. They may return
+  action chunks, and normalized outputs are decoded with `ActionCodec`.
+
+### D-028 Rollout record schema `roboforge.rollout/1` and frame convention (FIXED)
+`src/roboforge/eval/rollout.py`.
+- **Frame convention:** frame k is the state after k executed actions; frame 0 is the
+  restored snapshot. Action t is chosen from frame t's observation and produces frame t+1.
+  - Per-frame arrays have T+1 rows: `state`, `obs`, `time_s`, `joint_qpos`, `joint_qvel`,
+    `body_pos`, `body_quat_wxyz`, `success`, `success_robosuite_raw`.
+  - Per-action arrays have T rows: `raw_policy_action`, `executed_action`, `clip_mask`,
+    `reward`, `reward_robosuite_raw`, `decision_index`, `chunk_offset`,
+    `planning_latency_ms`, `phase`.
+  - Optional RGB frames are stored with their `rgb_frame_index`.
+- **Files:** `record.json` holds the metadata, outcome and array index. `arrays.npz` holds
+  the compressed arrays.
+- **Hashes:**
+  - `arrays_sha256` hashes (name, dtype, shape, bytes) in sorted order.
+  - `physics_sha256` is the same hash without the wall-clock `planning_latency_ms`. Two
+    runs of the same episode on one platform must give the same `physics_sha256`.
+- **Metadata:** platform (D-017), git, packages, simulator constants, specs and hashes, the
+  initial-state reference (ID, partition, hashes), policy info, body and joint names with
+  categories, and the frame convention.
+- **Outcome fields:**
+  - `success`, `first_success_step` and robosuite's raw counterpart;
+  - `steps`, `terminated`, `truncated`;
+  - `stop_reason`: `terminated_success`, `truncated_horizon`, `policy_exhausted` or
+    `error`;
+  - error type and message;
+  - the hold diagnostic;
+  - clip counts.
+- **Policy errors:** an invalid policy output ends the episode as a recorded failure
+  (`stop_reason = "error"`), never a crash or a silent repair.
+- **Audit:** `verify_record` re-simulates the executed actions from the snapshot (states
+  and observations) and re-evaluates success on the recorded states.
+
+### D-029 Demonstration-replay sample (FIXED)
+- **Sampling rule** (`replay_compare.select_demos`, declared before the first run):
+  - sort the 200 demos by (length, index) into 10 bins of 20;
+  - draw one demo per bin with `default_rng(0)`;
+  - add the lowest-index Session 0 replay failure (Lift `demo_177`, Can `demo_11`);
+  - add validation-split demos (lowest index first) until there are ≥ 2.
+  - Result: 12 demos per task.
+- **Gates:**
+  - each replay through `RoboForgeEnv` + recorder must be **bitwise** equal to a bare
+    robosuite loop;
+  - it must match Session 0's legacy metrics on the same platform;
+  - dataset actions must cause zero clip events.
+- **Divergence from the recorded states is reported, not gated (KI-004).**
+
+### D-030 MuJoCo → three.js conversion (FIXED)
+`src/roboforge/viz/coords.py`. MuJoCo is z-up; three.js is y-up. Both are right-handed.
+- **Positions:** `p_three = C p_mj`, with `C = [[1,0,0],[0,0,1],[0,−1,0]]`, i.e.
+  (x, y, z) → (x, z, −y).
+- **Rotations:** `q_three = q_C ⊗ q_mj`, with `q_C = (cos(−π/4), sin(−π/4), 0, 0)` (wxyz).
+  three.js stores xyzw.
+  - This equals one root `Group` with `rotation.x = −π/2` and untouched MuJoCo poses
+    inside.
+- **Cameras:** MuJoCo cameras look along −z with +y up, like three.js, so they convert like
+  bodies. `fov` = `cam_fovy` (vertical, degrees).
+- **Verification** (`scripts/export_clip.py`, `tests/web_contract/`): one real Lift demo
+  replay, checked three ways.
+  - Re-derived forward kinematics equals MuJoCo's world poses.
+  - three.js-convention projection equals MuJoCo's pinhole projection.
+  - Projected geom vertices fall inside MuJoCo segmentation masks.
+
+  The real three.js library (npm `three@0.187.0`, run in node) reproduces the conversion
+  and projection.
+- **Clip format:** `roboforge.web_clip/1`. Its metadata keeps the record's provenance
+  (`require_provenance`).
+
+### D-031 Session 2 evidence location (FIXED)
+- Session 2 command outputs go under `logs/session2/` and `reports/session2/` (Make
+  variable `S2_OUT`).
+- Per-episode rollout records go under `runs/<run_id>/`. They are gitignored and can be
+  regenerated; summaries and hashes are committed in the reports.
+- The evidence was regenerated from the clean code commit `283a811`. Each JSON carries its
+  git SHA, dirty flag and platform.

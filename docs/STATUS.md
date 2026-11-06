@@ -1,40 +1,43 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 1
-SESSION_STATUS: PASS            # canonical Lift/Can data pipeline; GO for Session 2
-NEXT_SESSION: 2
-BLOCKERS: none for Session 2    # open items carried forward: KI-001, KI-007, KI-013, KI-014, KI-016
-LAST_VERIFIED_COMMIT: 599e3267593698485ce734ae28cac62f2e539185   # lint, 124 tests, build-data, check-data re-run here
-EVIDENCE_COMMIT: c69551fc02f00841a05cbe2352539f1c6aca400c   # full evidence (smoke, verify-data, audit, Linux check)
-# Code changes c69551f -> 599e326: build-data write protection (--update-committed), docstrings,
-# one regression test. No data artifact changed. Verify: git diff c69551f 599e326 --stat
+CURRENT_SESSION: 2
+SESSION_STATUS: PASS            # simulator adapter, eval suites, recorder, three.js export; GO for Session 3
+NEXT_SESSION: 3
+BLOCKERS: none for Session 3    # open items carried forward: KI-001, KI-007, KI-008, KI-011, KI-019, KI-020
+LAST_VERIFIED_COMMIT: b739e99be81803b5e596ed8e8357633780e6a4d3   # lint, 185 tests, container smoke Lift 17/17 + Can 16/16
+# Code changes 283a811 -> b739e99: infra/containers/run_sim_cpu.sh only (ROBOFORGE_EVIDENCE_SESSION selects
+# the writable reports/logs session dirs; physics path unchanged). Verify: git diff 283a811 b739e99 --stat
+EVIDENCE_COMMIT: 283a8115d63b8698503af607a67f6a06c3676745   # every Session 2 report regenerated from this clean commit
+EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
+FINAL_TEST: LOCKED              # docs/FINAL_TEST_FREEZE.md does not exist
 RESOURCE_SPEND: {usd: 0.00, gpu_hours: 0, notes: "no remote compute used"}
 UPDATED: 2026-11-06
 ```
 
 # RoboForge Status
 
-## Session 1 acceptance criteria (MASTER_SPEC Session 1)
+## Session 2 acceptance criteria (MASTER_SPEC Session 2)
 | Criterion | Status | Evidence |
 |---|---|---|
-| Prerequisites re-verified (`make setup/download/test/smoke-sim`) | DONE | `logs/session1/prereq/`, EXPERIMENT_LEDGER E1-01 |
-| Fetcher: resumable downloads, integrity checks, no re-download of verified files | DONE | `src/roboforge/data/fetch.py`; `tests/unit/test_fetch_resume.py` (7 tests) |
-| Typed `TaskSpec` / `ActionSpec` / `ObservationSpec` read from the actual HDF5 | DONE | `src/roboforge/data/specs.py`; `data/manifests/tasks/*.json` |
-| KI-003 resolved: one state→feature function for dataset windows and closed-loop eval | DONE | D-010; `src/roboforge/data/features.py`; `tests/simulator/test_features_closed_loop.py` |
-| Features equal robosuite on Lift (all) and Can world-frame/robot blocks | DONE: max \|Δ\| 0.0 on all 400 demos | `reports/data_audit.json` → `feature_vs_dataset_max_abs` |
-| Erroneous or missing episodes flagged, never deleted | DONE (0 flagged) | `src/roboforge/data/sanity.py`; split manifests `flagged: {}` |
-| Deterministic episode-level split manifests (upstream masks, all IDs) | DONE | D-019; `data/splits/{lift,can}_ph.json` |
-| Window sampler with T_o/T_p and padding masks | DONE | D-022; `src/roboforge/data/sequence.py` |
-| Train-only reversible normalization, saved stats + hashes | DONE | D-020; `data/normalization/*.json` |
-| Transformed-data checksums; same source → identical splits/hashes | DONE on macOS arm64 and Linux aarch64 | `make check-data`; `logs/session1/docker_linux_aarch64_check_data.log` |
-| Dataset audit summaries + explorer figures | DONE | `reports/data_audit.json`, `reports/data_audit/*.png` |
-| `docs/DATA_DICTIONARY.md`, `docs/DATA_PROVENANCE.md` | DONE (dictionary generated) | `make audit-data` |
-| Tests: no future leakage, window boundaries, normalizer inversion, split determinism, one-batch forward pass on real data | DONE: 123 passed at `c69551f`, 124 at `599e326` | `logs/session1/pytest.log`, `logs/session1/post_599e326/` |
-| `make download`, `make verify-data` and inspection scripts pass on real Lift and Can | DONE | `logs/session1/verify_data.log` (12/12 integrity PASS, `check-data` PASS) |
-| Same observation spec for every model family | DONE (by construction: all data flows through `SequenceDataset`; T_o is per-run) | D-018, D-022 |
-| No training, no evaluator beyond data needs, no paid compute, no publication | DONE | — |
+| Prerequisites re-verified (setup, download, check-data, build-data, `data/` clean, test, smoke) | DONE at `4db6526` | `logs/session2/prereq/`, EXPERIMENT_LEDGER E2-01 |
+| Simulator wrapper: reset from exact snapshot, action stepping + clipping, reward, success, truncation, cameras, robot/object world transforms | DONE | D-024; `src/roboforge/sim/env_adapter.py`; `tests/simulator/test_env_adapter.py`; smoke adapter checks |
+| Demo replay on ≥ 10 sampled demos/task with divergence summary and video inspection; controller bounds | DONE: 12/task, all gates PASS, 0 clip events | D-029; `reports/session2/replay/` (E2-10) |
+| Seed reproducibility: two fresh processes, same controlled seed, matching trajectory within declared tolerance | DONE on the canonical container (tolerance 0.0): fresh processes restoring the stored snapshot give identical `physics_sha256`, and a fresh process regenerating the start from its seed reproduces the stored start and trajectory bitwise. On macOS only snapshot restores are bitwise; seed regeneration there diverges by up to 0.144 (Lift) / 1.49 (Can), which is why evaluation always restores snapshots (KI-013) | `reports/session2/determinism/` (E2-13, E2-14) |
+| Environment receives a valid dynamic-dimension action | DONE: action dim read from the committed `ActionSpec` (7) and checked against the env; wrong shapes/NaN/inf rejected, out-of-bounds clipped and reported | `tests/simulator/test_env_adapter.py`; smoke `adapter_valid_dynamic_dim_action` |
+| Eval initial-state generator, validation vs final test, episode limits, success definition | DONE: 50 + 50 starts/task, hashed; 400-step horizon; first-success rule | D-025, D-026; `data/eval_states/`; RESEARCH_PROTOCOL §5 |
+| Final-test states saved, hashed and blocked until `FINAL_TEST_FREEZE.md` | DONE: loading or resetting to the test seed block raises; enforced by tests | `tests/research_integrity/test_final_test_lock.py` |
+| Test metadata identifies train/validation/test partitions | DONE: partition label in every snapshot, record and report; `partitions.json` per task | D-025; `data/eval_states/*/partitions.json` |
+| Random/no-op policies + demo-replay instrumentation with non-autonomous labels | DONE | D-027; `src/roboforge/eval/policies.py` |
+| Random policy produces correctly recorded closed-loop outcomes | DONE on the canonical container: random and no-op 0/50 on both tasks, every episode truncated at 400, 0 errors, 0 clips; re-simulation audits pass | D-028; `reports/session2/sanity_eval/` (E2-15); `tests/simulator/test_rollout.py` |
+| Full rollout recorder with frame-indexed kinematics and frames | DONE | D-028; `src/roboforge/eval/rollout.py` |
+| One real clip exported; MuJoCo → three.js conversion verified with reference frames | DONE: Lift `demo_0` clip; FK 1e-15, projection 1e-13 px (3e-13 px in three.js r187), masks contain 100 % of projected vertices | D-030; `reports/session2/web_diagnostic/` (E2-16) |
+| KI-014 (markers) and KI-016 (XML) resolved; evaluation model chosen | DONE | KNOWN_ISSUES; `reports/session2/sim_contract_*.json` (E2-11) |
+| Evaluation platform (D-017) and termination rule decided | DONE: pinned Linux aarch64 container; first success | D-017, D-026 |
+| `make smoke-sim` and simulator tests pass | DONE: smoke Lift 17/17, Can 16/16; 185 tests passed | `logs/session2/{smoke_sim,test}.log` (E2-08) |
+| No training, no paid compute, no publication; committed data unchanged | DONE | `git status --short data/` empty after regeneration |
 
 ## Owner decisions pending
-1. Optional: prune the Docker build cache (27.5 GB reclaimable at Session 0) if disk space
-   is needed (KI-008; 33 GB free at Session 1 start).
-2. Nothing else is needed for Session 2.
+1. Optional: prune the Docker build cache if disk space is needed (KI-008; 63 GB free
+   at Session 2 end).
+2. Nothing else is needed for Session 3. Session 3 trains small models on local CPU only.
+   Any paid compute needs approval first.

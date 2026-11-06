@@ -8,10 +8,10 @@ https://modal.com/pricing on **2026-11-05** and **must be rechecked before any l
 ## 1. What actually needs compute (measured where possible)
 | Workload | Bound by | Session 0 measurement / estimate |
 |---|---|---|
-| MuJoCo stepping (closed-loop eval) | CPU, single-threaded per env | **Measured:** Lift ≈ 195 control steps/s/core, Can ≈ 163 (macOS arm64) |
+| MuJoCo stepping (closed-loop eval) | CPU, single-threaded per env | **Measured:** Lift ≈ 195 control steps/s/core, Can ≈ 163 (macOS arm64). Linux aarch64 Docker VM on the same laptop: Lift 161, Can 71 (replay median). Not representative of Modal x86_64. |
 | Policy inference in rollouts | CPU or GPU | **Unmeasured.** Diffusion with K denoising steps per replan × (400/T_a) replans per episode likely dominates eval time. Benchmark in Session 4 (DDPM-100 vs DDIM-10). |
 | Training state-based policies | GPU optional | **Unmeasured.** Lift has 9,666 samples with ~19-D obs and 7-D actions; small models may train acceptably on CPU/MPS. Benchmark locally first (Session 3–4). |
-| Rendering (RGB extraction, videos) | GPU (EGL) or CPU (OSMesa) | **Measured (macOS CGL):** 8–25 ms per 256² frame. Not needed for state-based Level 1 eval. |
+| Rendering (RGB extraction, videos) | GPU (EGL) or CPU (OSMesa) | **Measured:** macOS CGL 7–25 ms per 256² frame; Linux OSMesa (CPU) 88–196 ms. At ~0.1–0.2 s/frame, 2 cameras over all demos is roughly 0.5–1 core-hour (Lift) and 1–2.5 core-hours (Can), an estimate. Not needed for state-based Level 1 eval. |
 | Storage | — | Raw datasets: 170 MB (Lift + Can). RGB 84×84 ×2 cameras: ~0.4 GB Lift, ~1 GB Can uncompressed (estimate). |
 
 **Eval sim budget, upper bound** (spec target: 3 seeds × 3 algorithms × 50 states = 450
@@ -71,7 +71,7 @@ The simulation itself is cheap; diffusion inference is the unknown.
 1. Does the lockfile install on linux/x86_64 in a Modal image? (Only linux/aarch64 was tested.)
 2. Does MuJoCo EGL rendering work in Modal GPU containers? Modal documents that the NVIDIA
    driver (610.57.04, CUDA 13.3 driver API) is installed. EGL/graphics capability is
-   **not documented**. Fallback: OSMesa on CPU.
+   **not documented**. Fallback: OSMesa on CPU (verified on linux/aarch64, KI-001).
 3. Does torch 2.15 from PyPI (CUDA build) run on the Modal driver? Expected yes; verify with
    a ≤15-minute approved smoke job (Gate A).
 4. CPU-only torch wheels for eval images, to avoid the 8.7 GB image (KI-010).

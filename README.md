@@ -33,8 +33,8 @@ make verify-data  # HDF5 audit, obs/state alignment, replay of all demonstration
 
 Requirements: macOS arm64 or Linux x86_64/aarch64, [uv](https://docs.astral.sh/uv/).
 Linux headless rendering uses `MUJOCO_GL=osmesa` or `egl` (see
-[infra/containers/Dockerfile.sim-cpu](infra/containers/Dockerfile.sim-cpu)); it is not yet
-verified end-to-end (KNOWN_ISSUES KI-001).
+[infra/containers/Dockerfile.sim-cpu](infra/containers/Dockerfile.sim-cpu)). OSMesa is
+verified on linux/aarch64; x86_64 and EGL are not yet (KNOWN_ISSUES KI-001).
 
 ## Repository layout
 

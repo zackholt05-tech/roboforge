@@ -54,6 +54,8 @@ outcome.
 - **ESTABLISHED:** initial conditions are serialized MuJoCo states (model XML + flattened
   `[time, qpos, qvel]`), restored identically for every model. robosuite seeding cannot be
   relied on (KI-002).
+- **ESTABLISHED:** all rollouts in one comparison run on one platform and container image.
+  Physics is not bit-identical across platforms (KI-013, D-017).
 - **DEFAULT seed conventions (finalized and generated in Session 2):**
   - Training seeds: `{0, 1, 2}` per algorithm × task (spec §3.4 target: 3 seeds).
   - Validation start states: global seeds `100000 + i`, `i ∈ [0, 50)`.

@@ -4,8 +4,8 @@ project: roboforge-3d
 current_session: 0
 session_status: PASS
 next_session: 1
-last_verified_commit: 29645cf1cf7f5bcb248b56e9585b61be37ad7c0e   # evidence regenerated from this clean tree; committed in the next commit
-code_commit: 29645cf1cf7f5bcb248b56e9585b61be37ad7c0e
+last_verified_commit: a9c67938b516915fc4a1244e5b188dd0ae358775   # macOS + Linux container evidence regenerated from this clean tree
+code_commit: 590812e19fb38abe7633c3782cc0d0d6a2e26cc9   # + compare_platform_evidence.py; evidence committed in the next commit
 python: 3.11.15
 sim_engine_version: mujoco 3.2.7
 robosuite_revision: 51cc01785bab80ffeed20da15e67d7dd4140e76a   # v1.5.1
@@ -19,7 +19,7 @@ dataset_sha256:
 action_dim: 7            # OSC_POSE delta (3 pos + 3 axis-angle) + gripper, bounds [-1, 1], 20 Hz
 success_signal: "robosuite env._check_success() (Lift: cube z > table + 0.04 m; Can: can in goal bin)"
 training_spend_usd: 0
-next_required_owner_approval: none for Session 1 (LICENSE choice and Docker restart are optional/pending)
+next_required_owner_approval: none for Session 1 (LICENSE choice pending)
 ```
 
 # Session 0 Handoff
@@ -46,6 +46,9 @@ evidence is in `reports/feasibility/STACK_REPORT.md`.
   - minimal episode-bounded window loader.
 - Smoke tests, the observation-consistency probe, a headless Linux Dockerfile, docs, and
   attribution.
+- Ran the full smoke and data checks in the Linux aarch64 container with OSMesa. Compared
+  the results with macOS (`scripts/compare_platform_evidence.py`). Fixed two `--out-dir`
+  bugs found on the way (`e0b26ae`, `a9c6793`).
 
 ## 3. Files created
 - Build / tooling: `pyproject.toml`, `uv.lock`, `Makefile`, `.gitignore`,
@@ -58,12 +61,13 @@ evidence is in `reports/feasibility/STACK_REPORT.md`.
   - `data/{fetch,inspect,windows}.py`;
   - `sim/{backend,factory,renderer,state_replay}.py`;
   - empty boundary packages `models/ train/ eval/ viz/ compute/`.
-- `scripts/{download_data,smoke_sim,verify_data,probe_obs_consistency}.py`.
-- `tests/{conftest.py, unit/*, simulator/test_lift_sim.py, integration/test_datasets.py}`.
+- `scripts/{download_data,smoke_sim,verify_data,probe_obs_consistency,compare_platform_evidence}.py`.
+- `tests/{conftest.py, unit/*, simulator/test_lift_sim.py, integration/{test_datasets,test_verify_data_cli}.py}`.
 - `infra/containers/Dockerfile.sim-cpu`.
 - `docs/{STATUS,HANDOFF,DECISIONS,KNOWN_ISSUES,EXPERIMENT_LEDGER,RESEARCH_PROTOCOL,DATA_PROVENANCE,SIMULATOR_CONTRACT,REPRODUCIBILITY,COMPUTE_PLAN}.md`.
-- `reports/feasibility/` (STACK_REPORT + JSON + frames), `logs/session0/*.log`,
-  `runs/README.md`.
+- `reports/feasibility/` (STACK_REPORT + JSON + frames), including
+  `linux_aarch64_osmesa/` (Linux container reports, frames, platform comparison);
+  `logs/session0/*.log`; `runs/README.md`.
 - Outside the repo, by owner request: `~/.claude/settings.json` gained
   `env.ML_PIPELINE_ENFORCE=0`. The owner also disabled `cto-toolkit@synced`.
 
@@ -86,24 +90,28 @@ Overrides: `egl-probe` Linux-only. Dev: pytest, ruff.
 
 ## 6. Simulator findings
 - Reset, step, success, render, exact state restore and cross-process determinism all
-  verified on macOS.
+  verified on macOS and in the Linux aarch64 container (OSMesa).
 - Open-loop replay: Lift 199/200, Can 190/200. The controller is consistent; contact
   divergence is accepted (KI-004).
 - **Can relative-pose observations are lagged** (KI-003).
 - **robosuite seeding is global-RNG only** (KI-002).
-- Linux headless rendering unverified (KI-001).
+- **Physics is not bit-identical across platforms** (KI-013): the same pass/fail outcomes,
+  but Can trajectories differ by up to 5 cm. Evaluate each comparison on one platform (D-017).
+- linux/x86_64 install and EGL unverified (KI-001).
 - Details: `docs/SIMULATOR_CONTRACT.md`.
 
 ## 7. Tests executed (final run recorded in the evidence commit)
-- `make test`: 48 passed (unit 28, simulator 12, integration 8).
+- `make test`: 56 passed (unit 35, simulator 12, integration 9).
 - `make lint`: clean.
 - `make smoke-sim`: Lift 11/11, Can 10/10 PASS.
 - `make verify-data`: all integrity checks PASS for both tasks.
 - `make probe-obs`: Lift exact, Can lag confirmed.
-- Docker build OK; container run FAILED (KI-001).
+- Linux aarch64 container (OSMesa): smoke 21/21 and integrity 12/12 PASS; frames inspected.
+- macOS evidence regenerated on `a9c6793`: identical to the previous run except timings;
+  all 20 frames byte-identical.
 
 ## 8. Architectural decisions
-`docs/DECISIONS.md` D-001…D-016. The most consequential for Session 1:
+`docs/DECISIONS.md` D-001…D-017. The most consequential for Session 1:
 - **D-010:** Can observation features computed from MuJoCo state by one function for both
   training and evaluation.
 - **D-008:** serialized evaluation states.
@@ -113,8 +121,9 @@ Overrides: `egl-probe` Linux-only. Dev: pytest, ruff.
 `docs/KNOWN_ISSUES.md`. Highest:
 - **KI-003:** must be resolved in the Session 1 observation spec.
 - **KI-007:** confirm the hooks are off before Session 3 training code.
-- **KI-001:** Linux/EGL unverified; needed by Session 5/8.
-- **KI-008:** disk space (17 GB free).
+- **KI-013:** cross-platform physics differences; fix the evaluation platform in Session 2.
+- **KI-001:** linux/x86_64 and EGL unverified; needed by Session 5/8.
+- **KI-008:** disk space (36 GB free).
 - **KI-011:** narrow Lift initial distribution, relevant to OOD claims.
 
 ## 10. Exact starting instructions for Session 1

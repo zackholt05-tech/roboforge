@@ -6,7 +6,8 @@ Configs: `configs/simulator/{lift,can}.yaml`. Evidence:
 
 ## Stack
 Python 3.11.15 · mujoco 3.2.7 · robosuite 1.5.1 (`51cc017`) · robomimic `d309eae`.
-Backend: `MUJOCO_GL=cgl` on macOS (verified), `egl`/`osmesa` on Linux (KI-001).
+Backend: `MUJOCO_GL=cgl` on macOS (verified), `osmesa` on Linux aarch64 (verified in Docker),
+`egl` unverified (KI-001). Physics is platform-dependent at floating-point level (KI-013).
 
 ## Shared (Lift, PickPlaceCan)
 | Property | Value |

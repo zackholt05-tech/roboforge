@@ -54,8 +54,8 @@ All 11 Lift checks and 10 Can checks PASS:
 ## 4. Demonstration replay (item 4) — `data_report_{lift,can}.json`
 - **State restore:** model XML + `states[0]` read back exactly (max error 0.0, all 400 demos).
 - **Observation alignment:** observations recomputed from `states[t]` equal the stored
-  `obs[t]` (0.0) for every key and sub-block, except Can's two relative-pose blocks
-  (KI-003).
+  `obs[t]` for every key and sub-block (0.0 on macOS; ≤ 1.1e-16 on Linux), except Can's two
+  relative-pose blocks (KI-003).
 - **Open-loop action replay** (mujoco 3.2.7):
   - Lift 199/200 succeed. Task-object position error median 1.1 mm, p95 3.2 mm. Robot joint
     p95 3.2 mrad.
@@ -74,9 +74,20 @@ All 11 Lift checks and 10 Can checks PASS:
   - Can: can in the left bin → can in the right goal-bin compartment.
   - Images are upright: the OpenGL convention is flipped in `sim/renderer.py`.
 - Render cost: 8–25 ms/frame.
-- **Linux headless: NOT VERIFIED** (KI-001). The image built and the lockfile installed on
-  linux/aarch64, but running the container failed after Docker storage corruption (host
-  disk filled). EGL on Modal is unverified. Not required for state-based Level 1.
+- **Linux headless (verified on aarch64, KI-001):** in the Docker image
+  `roboforge-sim-cpu:session0` with `MUJOCO_GL=osmesa`, running the committed `a9c6793` code:
+  - smoke checks: Lift 11/11, Can 10/10 PASS;
+  - `verify_data --replay-demos all --render`: 12/12 integrity checks PASS.
+  - All 20 frames were inspected visually and are correct and upright. They differ from
+    the macOS frames by 0.3–2.2 mean grey levels.
+  - OSMesa takes 88–196 ms/frame.
+  - Evidence: `linux_aarch64_osmesa/`.
+- **Still unverified:** linux/x86_64 install and EGL on Modal. Neither is required for
+  state-based Level 1.
+- **Cross-platform physics (KI-013):** replay outcomes and the failing-demo sets are
+  identical on both platforms, but per-demo trajectories differ: up to 0.27 mm (Lift) and
+  5.0 cm (Can) in task-object error. Each comparison must therefore be evaluated on one
+  platform (D-017).
 
 ## 6. Data loader + one-batch forward pass (item 6)
 `roboforge.data.windows.LowDimWindowDataset` produces `obs [T_o, D]`, `obs_valid [T_o]`,
@@ -105,7 +116,7 @@ boundary tests.
 
 ## 9. Resource estimates (item 9) — details in `docs/COMPUTE_PLAN.md`
 - Disk: 170 MB of raw data. RGB extraction ≈ 0.4–1 GB per task (estimate). **Local disk
-  has only 17 GB free** (KI-008).
+  has 36 GB free** (KI-008).
 - Simulation: ≈ 195 (Lift) / 163 (Can) control steps/s/core. The full 450-rollout × 400-step
   eval suite is ≈ 15–18 core-minutes of physics per task, excluding policy inference.
 - Training memory/time: unmeasured. Low-dim models are expected to be feasible on
@@ -128,7 +139,9 @@ Conditions carried forward:
 2. **Evaluation initial states:** must be serialized MuJoCo states (KI-002).
 3. **Plugin hooks:** confirm before Session 3 that the plugin hook no longer blocks
    training code (KI-007).
-4. **Linux/EGL:** verify before Sessions 5 and 8 (KI-001).
+4. **linux/x86_64 and EGL:** verify before Sessions 5 and 8 (KI-001).
+5. **Evaluation platform:** fix one platform for every comparison in Session 2 (KI-013,
+   D-017).
 
 ## 11. Spec audit — MASTER_SPEC claims vs. verified facts
 | Spec claim / assumption | Verified fact (Session 0) | Change adopted |
@@ -138,7 +151,8 @@ Conditions carried forward:
 | §2.1 robosuite v1.5.1 branch | Confirmed by the robomimic docs and the `env_version` in the data. PyPI 1.5.2 requires mujoco ≥3.3 and was not evaluated. | Pin tag commit `51cc017` (D-003) |
 | §2.2 downloader CLI form | `download_datasets.py --tasks … --dataset_types ph --hdf5_types low_dim --dry_run` works (from robomimic master; the HF repo was renamed to `robomimic/robomimic_datasets`). | Own fetcher with pinned revision + SHA-256 (D-007) |
 | §2.2 raw datasets for RGB/depth extraction | Raw `demo_v15` files contain `states` and `model_file`. **No pre-rendered v1.5 PH image HDF5 exists** (registry `image: None`). | RGB must come from `dataset_states_to_obs`-style extraction (Session 8) |
-| §2.3(5) headless render on Linux | Verified on macOS (CGL). Linux image built, but the container run failed (Docker storage I/O error). | Marked INCOMPLETE (KI-001) |
+| §2.3(5) headless render on Linux | Verified on macOS (CGL) and Linux aarch64 (OSMesa, Docker): all checks pass, frames correct. x86_64 and EGL unverified. | KI-001 narrowed to x86_64/EGL |
+| §5 reproducibility (implicit: same code ⇒ same rollouts) | Physics differs across platforms at floating-point level; Can trajectories diverge by up to 5 cm. | One platform per comparison (D-017, KI-013) |
 | §3.3 operator partitions | The HDF5 files contain no operator metadata. | No held-out-operator claims |
 | §3.5 OOD initial states | Lift's default placement is only ±3 cm x/y + random yaw. | OOD needs explicitly widened ranges (KI-011) |
 | §4.1 `reset(initial_state_or_seed)` | robosuite task envs reject `seed=`; resets use the global `np.random`. Restoring serialized states is exact. | Seed path only via global RNG; eval restores serialized states (D-008) |
@@ -154,5 +168,7 @@ Conditions carried forward:
 - `smoke_sim.log`
 - `probe_obs_consistency.log`
 - `docker_build_sim_cpu.log`
-- `docker_linux_aarch64_osmesa.log` (the failure)
+- `docker_linux_aarch64_osmesa.log` (the failure before the Docker restart)
+- `docker_linux_aarch64_osmesa_after_restart.log` (the passing Linux run)
+- `platform_comparison.log`
 - `upstream_download_datasets_dry_run.log`

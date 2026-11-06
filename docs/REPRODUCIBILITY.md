@@ -32,5 +32,9 @@ Every JSON report embeds `environment_snapshot()`: Python, platform, package ver
 - Torch: `torch.manual_seed` in tests. Training determinism settings are defined in Session 3.
 
 ## What is not reproducible yet
-- Linux headless rendering (KI-001) and x86_64 installation are unverified.
+- linux/x86_64 installation and EGL rendering are unverified. linux/aarch64 with OSMesa is
+  verified in Docker (KI-001).
+- Physics is not bit-identical across platforms: macOS and Linux give the same pass/fail
+  outcomes but different trajectories (KI-013). Reproduce rollouts on the platform recorded
+  in the run manifest.
 - Remote (Modal) execution: none performed.

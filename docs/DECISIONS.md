@@ -117,3 +117,10 @@ benchmarks show it is needed. See `docs/COMPUTE_PLAN.md`.
 The spec's functional boundaries are kept. Packages (`models`, `train`, `eval`, `viz`,
 `compute`) exist only as documented boundaries until their session. CLIs live in `scripts/`,
 and Make targets exist only where a working command exists (spec §6.5).
+
+### D-017 One evaluation platform per comparison (DEFAULT for Session 2)
+Physics differs at floating-point level between macOS arm64 and Linux aarch64 (KI-013).
+Default: all rollouts that enter one comparison (every algorithm, seed and initial state)
+run on the same platform and container image. The platform is recorded in each run
+manifest, and results from different platforms are never pooled in one table. Session 2
+chooses the platform; a Linux image is preferred because it matches remote execution.

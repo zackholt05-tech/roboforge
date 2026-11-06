@@ -5,35 +5,44 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 
 | ID | Severity | Status | Summary |
 |---|---|---|---|
-| KI-001 | MEDIUM | OPEN | Linux headless rendering not verified end-to-end |
+| KI-001 | LOW | PARTIAL | Linux aarch64 OSMesa verified; x86_64 install and EGL unverified |
 | KI-002 | HIGH | MITIGATED | robosuite seeding does not control reset randomness |
 | KI-003 | HIGH | OPEN (Session 1) | Can relative-pose observations are lagged / wrong at t=0 |
 | KI-004 | MEDIUM | ACCEPTED | Open-loop demo replay is not exact |
 | KI-005 | HIGH | MITIGATED | Latest mujoco breaks robosuite v1.5.1 |
 | KI-006 | LOW | MITIGATED | egl_probe does not build on macOS |
 | KI-007 | MEDIUM | PENDING RESTART | Local Claude Code plugin hooks blocked legitimate commands |
-| KI-008 | MEDIUM | OPEN | Local disk nearly full; Docker storage corrupted |
+| KI-008 | MEDIUM | OPEN | Local disk nearly full (Docker storage repaired) |
 | KI-009 | LOW | OPEN | Evidence files contain absolute local paths |
 | KI-010 | LOW | OPEN | Docker sim image is 8.7 GB |
 | KI-011 | MEDIUM | OPEN | Lift's initial-state distribution is narrow |
 | KI-012 | LOW | ACCEPTED | Repackaged v1.5 datasets ≠ CoRL 2021 numbers |
+| KI-013 | MEDIUM | OPEN (Session 2) | Physics is not bit-identical across platforms |
 
-### KI-001 — Linux headless rendering not verified end-to-end
-- **Verified:** on linux/aarch64 (Docker Desktop VM, Debian bookworm), `uv sync --frozen`
-  installed the full lockfile, built `egl_probe`, and produced image
-  `roboforge-sim-cpu:session0` (`logs/session0/docker_build_sim_cpu.log`).
+### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 and EGL not
+- **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
+  - `uv sync --frozen` installs the full lockfile on linux/aarch64 (Debian bookworm) and
+    builds `egl_probe` (`logs/session0/docker_build_sim_cpu.log`).
+  - In image `roboforge-sim-cpu:session0` (kernel 7.0.14-linuxkit aarch64, Python 3.11.18
+    from the `python:3.11-slim-bookworm` base, `MUJOCO_GL=osmesa`), running the committed
+    code from `a9c6793`:
+    - `smoke_sim.py`: Lift 11/11 and Can 10/10 checks PASS.
+    - `verify_data.py --replay-demos all --render`: all 12 integrity checks PASS.
+  - The 20 rendered frames were inspected visually and are correct and upright. They differ
+    from macOS CGL frames by 0.3–2.2 mean grey levels, and ≤ 0.9 % of pixels differ by
+    more than 16 levels.
+  - Evidence: `reports/feasibility/linux_aarch64_osmesa/`,
+    `logs/session0/docker_linux_aarch64_osmesa_after_restart.log`,
+    `logs/session0/platform_comparison.log`.
+- **Measured cost:** OSMesa takes 88–196 ms per 256² frame (mean over 9 frames per task,
+  including first-frame setup), against 7–8 ms with macOS CGL.
 - **Not verified:**
-  - Running `smoke_sim.py`/`verify_data.py` inside it with `MUJOCO_GL=osmesa`. After the
-    host disk filled, Docker returned `input/output error` on the image blob.
   - linux/x86_64 install (Modal's architecture).
   - EGL on Modal GPUs.
-- **Impact:** none for Level 1 state-based training/evaluation (no rendering needed).
-  Matters for RGB extraction (Session 8) and video export.
-- **Recovery:** restart Docker Desktop (or Troubleshoot → Clean/Purge data, which deletes
-  *all* local Docker data). Then:
-  `docker build -f infra/containers/Dockerfile.sim-cpu -t roboforge-sim-cpu .`
-  `docker run --rm -v "$PWD/data/raw:/app/data/raw:ro" -v "$PWD/out:/out" roboforge-sim-cpu`
-  Read the PNG it writes.
+- **Impact:** none for Level 1 state-based work. RGB extraction (Session 8) can fall back to
+  OSMesa on CPU, which is about 10–25× slower than hardware rendering.
+- **History:** the first container run (before the restart) failed with Docker storage
+  `input/output error` after the host disk filled (`docker_linux_aarch64_osmesa.log`).
 
 ### KI-002 — robosuite seeding does not control reset randomness
 - robosuite v1.5.1 `Lift`/`PickPlaceCan` constructors raise `TypeError` on `seed=`.
@@ -98,8 +107,12 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
 
 ### KI-008 — Local disk nearly full; Docker storage corrupted
 - The disk had 55 GB free at session start; it filled during the Docker image export.
-- After the owner freed space: 17 GB free.
-- Docker's containerd store now returns I/O errors (KI-001).
+- After the owner freed space: 17 GB free. After deleting the scratch mujoco 3.3.0
+  environment (`venv330`, 1.8 GB, owner-approved): 36 GB free.
+- Docker's containerd store returned I/O errors until the owner-approved Docker Desktop
+  restart; it is healthy since.
+- `docker system df` afterwards: images 46 GB (the RoboForge image is 25.6 GB unpacked),
+  build cache 27.5 GB reclaimable. Pruning is an owner decision.
 - RGB extraction (Session 8) needs ~0.5–1.5 GB per task at 84×84. Checkpoints and rollouts
   need more. Monitor `df -h` before heavy steps.
 
@@ -108,7 +121,7 @@ Some files contain `/Users/zackaryholt/...` paths: `reports/feasibility/*.json`
 (environment snapshot, file paths) and `logs/session0/*.log`. Scrub or regenerate before a
 public release (Session 12).
 
-### KI-010 — Docker sim image is 8.7 GB
+### KI-010 — Docker sim image is 8.7 GB (25.6 GB unpacked)
 The PyPI torch wheels for linux-aarch64 (and x86_64) bundle CUDA libraries. CPU rollout
 images should install CPU-only torch, or omit torch for pure-simulation jobs (Session 5).
 
@@ -123,3 +136,22 @@ images should install CPU-only torch, or omit torch for pure-simulation jobs (Se
 ### KI-012 — Repackaged v1.5 datasets ≠ CoRL 2021 numbers
 The robomimic docs state results may not match the original `mujoco-py`-based datasets.
 Never compare RoboForge numbers to the 2021 paper as if they were the same benchmark.
+
+### KI-013 — Physics is not bit-identical across platforms
+- The same code, lockfile and mujoco 3.2.7 were run on macOS arm64 and on Linux aarch64
+  (Docker), replaying all 400 demos open-loop
+  (`reports/feasibility/linux_aarch64_osmesa/platform_comparison.json`).
+- **The same:** replay successes (Lift 199/200, Can 190/200), the exact set of failing
+  demos, every integrity and smoke check, state restore (0.0).
+- **Different:** per-demo trajectory errors. The largest difference in task-object position
+  error is 0.27 mm (Lift) and 5.0 cm (Can). First-success steps differ by at most one step (Can).
+  Observations recomputed from states are exact on macOS and within 1.1e-16 on Linux.
+- **Cause (inferred, not isolated):** floating-point differences between the two platforms'
+  MuJoCo/NumPy builds, amplified by contact dynamics. The platforms also differ in Python
+  patch version (3.11.15 on macOS, 3.11.18 in the image); all package versions are equal.
+- Remote images should pin the Python patch version too (Session 5).
+- **Impact:** a closed-loop rollout of the same policy from the same serialized state can
+  end differently on different platforms, mostly in contact-rich tasks such as Can.
+- **Action (Session 2, D-017):** run every rollout in one comparison on one pinned platform
+  and image, record it in each run manifest, and never mix platforms within a results
+  table.

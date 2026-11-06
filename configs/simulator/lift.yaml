@@ -1,0 +1,70 @@
+# Simulator task contract for 'lift' (robomimic v1.5 PH).
+# GENERATED in Session 0 from data/raw/robomimic_v1.5/lift/ph/low_dim_v15.hdf5 data.attrs['env_args']
+# (rendering kwargs removed). tests/integration verify this file still equals the dataset metadata.
+# eval_horizon_steps: robomimic registry PH horizon (robomimic@d309eae robomimic/__init__.py).
+task: lift
+env_name: Lift
+dataset_env_version: 1.5.1
+env_type: 1
+eval_horizon_steps: 400
+# Free joint(s) of the task-relevant object(s); other free bodies (e.g. PickPlace's inactive
+# Milk/Bread/Cereal parked at (10,10,10)) are excluded from replay-fidelity metrics.
+# Layout of robomimic's 'object' low-dim obs (robosuite Lift observable order). All blocks
+# verified exactly consistent with MuJoCo state in Session 0 (reports/feasibility/obs_consistency.json).
+object_obs_blocks:
+  cube_pos: [0, 3]
+  cube_quat_xyzw: [3, 7]
+  gripper_to_cube_pos: [7, 10]
+lagged_object_obs_blocks: []
+# Regression guard for open-loop action replay of recorded demos (Session 0 observed 199/200
+# with mujoco 3.2.7 and 3.3.0). Engineering check only, not a research metric.
+replay_success_rate_min: 0.98
+task_object_joints:
+- cube_joint0
+env_kwargs:
+  ignore_done: true
+  use_object_obs: true
+  control_freq: 20
+  controller_configs:
+    type: BASIC
+    body_parts:
+      right:
+        type: OSC_POSE
+        input_max: 1
+        input_min: -1
+        output_max:
+        - 0.05
+        - 0.05
+        - 0.05
+        - 0.5
+        - 0.5
+        - 0.5
+        output_min:
+        - -0.05
+        - -0.05
+        - -0.05
+        - -0.5
+        - -0.5
+        - -0.5
+        kp: 150
+        damping: 1
+        impedance_mode: fixed
+        kp_limits:
+        - 0
+        - 300
+        damping_limits:
+        - 0
+        - 10
+        position_limits: null
+        orientation_limits: null
+        uncouple_pos_ori: true
+        control_delta: true
+        interpolation: null
+        ramp_ratio: 0.2
+        input_ref_frame: world
+        gripper:
+          type: GRIP
+  robots:
+  - Panda
+  lite_physics: false
+  reward_shaping: false

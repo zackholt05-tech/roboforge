@@ -1,0 +1,69 @@
+[project]
+name = "roboforge"
+version = "0.0.1"
+description = "RoboForge: a controlled empirical comparison of behavior cloning and diffusion policies for simulated 3D robotic manipulation (robosuite + MuJoCo + robomimic)."
+readme = "README.md"
+authors = [{ name = "Zackary Holt" }]
+# Python 3.11 is the verified interpreter (Session 0). robomimic pins
+# transformers==4.41.2 / diffusers==0.11.1 / huggingface_hub==0.23.4; 3.11 has
+# wheels for every pinned package on macOS arm64 and Linux x86_64.
+requires-python = "==3.11.*"
+# LICENSE for RoboForge's own code is an owner decision (see docs/DECISIONS.md).
+dependencies = [
+    # Physics engine. Pinned: mujoco 3.17.0 (latest at time of Session 0) breaks
+    # robosuite v1.5.1 at env construction; see reports/feasibility/STACK_REPORT.md.
+    "mujoco==3.2.7",
+    # robosuite v1.5.1 tag (commit 51cc017), the version robomimic's v1.5
+    # datasets document and record in env_args.
+    "robosuite @ git+https://github.com/ARISE-Initiative/robosuite.git@51cc01785bab80ffeed20da15e67d7dd4140e76a",
+    # robomimic master @ d309eae (v0.5.0 + 15 commits). The v0.5.0 tag downloads
+    # CLIP ViT-L/14 at import time and predates the dataset HF repo rename.
+    "robomimic @ git+https://github.com/ARISE-Initiative/robomimic.git@d309eaecc18acf4152a830a895a6984b8ac71b05",
+    "torch",
+    "torchvision",
+    "h5py",
+    "numpy",
+    "pyyaml",
+    "imageio",
+]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[tool.uv]
+# egl_probe (a robomimic dependency) needs CMake + EGL headers to build and is
+# only used to pick an EGL GPU on Linux. Restrict it to Linux so macOS installs.
+override-dependencies = ["egl-probe>=1.0.1 ; sys_platform == 'linux'"]
+environments = [
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/roboforge"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "sim: requires robosuite + MuJoCo (no dataset, no network)",
+    "data: requires downloaded robomimic datasets under ROBOFORGE_DATA_ROOT",
+    "render: requires a working offscreen OpenGL context",
+    "slow: takes more than ~30 s",
+]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]

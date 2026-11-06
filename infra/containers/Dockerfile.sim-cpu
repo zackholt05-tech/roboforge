@@ -1,0 +1,29 @@
+# RoboForge headless simulation image (CPU, OSMesa software rendering).
+# Purpose: prove the locked environment installs and renders on headless Linux
+# (Session 0); basis for the CPU rollout/eval image (Session 5). No GPU required.
+#
+#   docker build -f infra/containers/Dockerfile.sim-cpu -t roboforge-sim-cpu .
+#   docker run --rm -v "$PWD/data/raw:/app/data/raw:ro" -v "$PWD/out:/out" roboforge-sim-cpu \
+#       uv run --frozen --no-dev python scripts/smoke_sim.py --task lift --out-dir /out
+FROM python:3.11-slim-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+# git: git-pinned robosuite/robomimic; cmake/build-essential/libegl-dev: build egl_probe
+# (robomimic dependency, Linux only); libosmesa6: MuJoCo osmesa backend; libgl1/libglib2.0-0: opencv.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git cmake build-essential libegl-dev libegl1 libosmesa6 libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghcr.io/astral-sh/uv:0.11.11 /uv /usr/local/bin/uv
+
+WORKDIR /app
+ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
+COPY pyproject.toml uv.lock README.md ./
+COPY src ./src
+RUN uv sync --frozen --no-dev
+COPY scripts ./scripts
+COPY configs ./configs
+COPY data/manifests ./data/manifests
+
+ENV MUJOCO_GL=osmesa PYOPENGL_PLATFORM=osmesa
+CMD ["uv", "run", "--frozen", "--no-dev", "python", "scripts/smoke_sim.py", "--task", "lift", "--out-dir", "/out"]

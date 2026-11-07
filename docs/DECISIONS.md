@@ -1190,3 +1190,18 @@ Lift selections are final (D-058): no Lift run is retrained, retuned or reselect
   variant evaluation has ID `<train>__<suite>_step<N>__<platform>[__ps0r0][__var-<variant>]`,
   schema `roboforge.robustness_eval/1`, `eligible_for_selection: false`, and its summary goes
   to `reports/session7/robustness/evals/`.
+
+### D-065 Preregistered failure taxonomy (FIXED; replaces the post-hoc categories)
+- `roboforge.eval.taxonomy`, config `configs/eval/failure_taxonomy.yaml`, CLI
+  `scripts/failure_taxonomy.py`. Rules: RESEARCH_PROTOCOL §14.5. Computed only from the
+  recorded arrays; contacts are not recorded, so "grasp-lifted" means a rise ≥ 1 cm above the
+  rest height (minimum z over frames 0–10) while the executed gripper command was closing.
+- **Why the rest height:** Lift drops the cube 1 cm onto the table at t = 0, so the post-hoc
+  `diagnose_actions` rule (rise from frame 0) missed lifts of 1–2 cm.
+- **Dry run** (LEDGER E7-02): on all 12,000 Session 6 Lift episodes of the 12 chosen runs,
+  every episode has exactly one label and the failure totals equal the post-hoc ones
+  (BC-MLP 439, BC-MLP-chunk 257, BC-RNN 146, diffusion 18); some post-hoc "missed grasp then
+  drift" episodes become `dropped`. The Can dry run follows on the Session 7 validation
+  records before the freeze.
+- `scripts/diagnose_actions.py` keeps its post-hoc categories for the Session 3–6 reports;
+  every Session 7 failure analysis uses this taxonomy.

@@ -1,0 +1,15 @@
+# Preregistered failure taxonomy (RESEARCH_PROTOCOL §14.5, DECISIONS D-065). Read by
+# roboforge.eval.taxonomy. Changing anything here before the freeze needs a dated protocol
+# amendment; after the freeze it is fixed by docs/FINAL_TEST_FREEZE.md.
+schema: roboforge.failure_taxonomy/1
+# Ordered, exhaustive, mutually exclusive: the first matching rule labels an episode.
+categories: [success, engineering_error, gripper_never_closed, no_grasp_drift, no_grasp_near,
+             timeout_holding, in_goal_bin_not_success, dropped]
+task_object_body: {lift: cube_main, can: Can_main}
+rest_frames: 11              # rest height = minimum object z over frames 0..10 (0.5 s)
+rise_m: 0.01                 # grasp-lifted: rise >= 0.01 m while the gripper is closed
+far_m: 0.20                  # no grasp: final end-effector-object distance > 0.20 m = drift
+gripper_closed: "executed gripper command of the preceding step > 0"
+can_goal_bin:                # Can only: footprint of the goal bin (robosuite PickPlace bin2)
+  body: bin2
+  half_size_xy_m: [0.195, 0.245]   # bin_size (0.39, 0.49) / 2, read from robosuite v1.5.1

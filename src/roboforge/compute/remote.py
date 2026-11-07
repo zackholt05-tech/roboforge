@@ -190,27 +190,26 @@ def train_job(plan: dict[str, Any], *, commit: Callable[[], None] | None = None,
     return result
 
 
-def _smoke(backend: str, out_dir: Path) -> dict[str, Any]:
+def _render(backend: str, out_dir: Path) -> dict[str, Any]:
+    """Run ``scripts/render_probe.py`` under ``MUJOCO_GL=backend`` in a fresh process (MuJoCo
+    reads the backend at import). Raises, with the whole record, unless every camera passed.
+
+    The probe image has no dataset and no evaluation suite, so this deliberately does not use
+    ``smoke_sim.py``, which needs the validation suite (KNOWN_ISSUES KI-033)."""
     from roboforge.paths import REPO_ROOT
 
     env = {**os.environ, "MUJOCO_GL": backend, "PYOPENGL_PLATFORM": backend}
+    out = out_dir / f"render_{backend}.json"
     t = time.perf_counter()
-    p = subprocess.run([sys.executable, str(REPO_ROOT / "scripts" / "smoke_sim.py"), "--task",
-                        "lift", "--out-dir", str(out_dir / backend)], env=env,
+    p = subprocess.run([sys.executable, str(REPO_ROOT / "scripts" / "render_probe.py"),
+                        "--task", "lift", "--out", str(out)], env=env,
                        capture_output=True, text=True, timeout=600)
-    lines = (p.stdout + p.stderr).splitlines()
-    return {"backend": backend, "returncode": p.returncode,
-            "passed": sum("[PASS]" in x for x in lines),
-            "failed": sum("[FAIL]" in x for x in lines),
-            "wall_s": time.perf_counter() - t, "tail": lines[-15:]}
-
-
-def _smoke_checked(backend: str, out_dir: Path) -> dict[str, Any]:
-    """:func:`_smoke`, raising (with the whole record) unless every check passed."""
-    r = _smoke(backend, out_dir)
-    if r["returncode"] or r["failed"] or not r["passed"]:
-        raise RuntimeError(f"smoke_sim with MUJOCO_GL={backend} failed: {json.dumps(r)}")
-    return r
+    rec = {"backend": backend, "returncode": p.returncode, "wall_s": time.perf_counter() - t,
+           "result": json.loads(out.read_text()) if out.is_file() else None,
+           "tail": (p.stdout + p.stderr).splitlines()[-15:]}
+    if p.returncode or not (rec["result"] or {}).get("ok"):
+        raise RuntimeError(f"render probe with MUJOCO_GL={backend} failed: {json.dumps(rec)}")
+    return rec
 
 
 def _section(name: str, fn: Callable[[], Any], failed: list[str]) -> dict[str, Any]:
@@ -256,7 +255,7 @@ def probe_job(plan: dict[str, Any], *, out_dir: Path) -> dict[str, Any]:
                 "nvidia_smi": smi.stdout.strip() or smi.stderr.strip()}
 
     cuda = _section("cuda", cuda_info, failed)
-    render = {b: _section(f"render:{b}", lambda b=b: _smoke_checked(b, out_dir), failed)
+    render = {b: _section(f"render:{b}", lambda b=b: _render(b, out_dir), failed)
               for b in ("egl", "osmesa")}
     p = plan["probe"]
     devices = ["cpu"] + (["cuda"] if cuda["ok"] and cuda["value"]["available"] else [])

@@ -38,6 +38,9 @@ from roboforge.paths import REPO_ROOT
 from roboforge.provenance import git_revision, sha256_file
 
 FAMILIES = ("bc_mlp", "bc_rnn", "bc_mlp_chunk", "diffusion_unet")
+# The Gate A training smoke, trained on Modal CPU and downloaded (Session 5): its full-run
+# rate, including offline metrics and checkpoints, gives the full-run/pure-step ratio.
+MODAL_SMOKE_RUN = "s5modal2_diffusion_unet_lift_seed0_2fda84af"
 PILOTS = {"bc_mlp": "s3_bc_mlp_lift_seed0_dbf312cd", "bc_rnn": "s3_bc_rnn_lift_seed0_2e7cffe3",
           "bc_mlp_chunk": "s3_bc_mlp_chunk_lift_seed0_bb8b4dd6",
           "diffusion_unet": "s4_diffusion_unet_lift_seed0_336e15e9"}
@@ -51,8 +54,9 @@ ASSUME = {
                                      "the mean demo length (116), high = every episode runs to "
                                      "the 400-step horizon"},
     "modal_cpu_time_factor": {"low": 0.8, "high": 1.6,
-                              "why": "Modal x86_64 single-thread speed relative to the M1 Pro "
-                                     "is unmeasured until Gate A"},
+                              "why": "fallback only, used if the Gate A probe's CPU profile or "
+                                     "the Modal training smoke is missing: Modal x86_64 "
+                                     "single-thread time relative to the M1 Pro"},
     "gpu_steps_per_s": {"low": {"diffusion_unet": 40, "bc_rnn": 60, "bc_mlp": 250,
                                 "bc_mlp_chunk": 250},
                         "high": {"diffusion_unet": 150, "bc_rnn": 250, "bc_mlp": 800,
@@ -108,8 +112,17 @@ def measured_inputs() -> dict[str, Any]:
     probe = json.loads(probe_p.read_text()) if probe_p.is_file() else None
     if probe:
         sources.append(_src(probe_p))
+    smoke_p = REPO_ROOT / "runs" / MODAL_SMOKE_RUN / "manifest.json"
+    modal_smoke = None
+    if smoke_p.is_file():
+        m = json.loads(smoke_p.read_text())
+        modal_smoke = {"run_id": MODAL_SMOKE_RUN, "steps_per_s": m["timing"]["steps_per_s"],
+                       "n_segments": m["timing"]["n_segments"],
+                       "max_steps": m["config"]["train"]["max_steps"]}
+        sources.append(_src(smoke_p))
     return {"train": train, "lift_eval": lift_eval, "latency_ms_per_decision": latency,
             "rollout_profile": prof, "train_concurrency": conc, "gpu_probe": probe,
+            "modal_smoke": modal_smoke,
             "sources": sources}
 
 
@@ -117,10 +130,25 @@ def _profile_row(prof: dict[str, Any], job: str, p: int) -> dict[str, Any]:
     return next(r for r in prof["levels"] if r["job"] == job and r["P"] == p)
 
 
+def probe_steps_per_s(probe: dict[str, Any] | None, device: str,
+                      family: str) -> float | None:
+    """Measured pure-step rate of ``family`` on ``device`` in the Gate A probe, if that
+    section succeeded."""
+    sec = ((probe or {}).get("training_profile") or {}).get(device, {}).get(family)
+    return float(sec["value"]["steps_per_s_median"]) if sec and sec.get("ok") else None
+
+
 def gpu_steps_per_s(probe: dict[str, Any] | None, family: str) -> float | None:
     """Measured CUDA steps/s of ``family`` from the Gate A probe, if that section succeeded."""
-    sec = ((probe or {}).get("training_profile") or {}).get("cuda", {}).get(family)
-    return float(sec["value"]["steps_per_s_median"]) if sec and sec.get("ok") else None
+    return probe_steps_per_s(probe, "cuda", family)
+
+
+def full_run_ratio(inp: dict[str, Any]) -> float | None:
+    """Modal full-run rate / pure-step rate, both measured for diffusion: the training
+    smoke (offline metrics and checkpoints included) over the probe's CPU profile."""
+    smoke = inp.get("modal_smoke")
+    pure = probe_steps_per_s(inp.get("gpu_probe"), "cpu", "diffusion_unet")
+    return smoke["steps_per_s"] / pure if smoke and pure else None
 
 
 def suite_counts(tuning: str, steps: int, ckpt_every: int) -> dict[str, Any]:
@@ -189,19 +217,28 @@ def modal_training_cost(inp: dict[str, Any], proj: dict[str, Any], cfg: dict[str
     start = ASSUME["modal_start_overhead_s"]["value"]
     out: dict[str, Any] = {"device": device}
     probe = inp.get("gpu_probe")
+    ratio = full_run_ratio(inp)
+    measured: list[str] = []
     for bound in ("low", "high"):
         usd, hours = 0.0, 0.0
         for f in FAMILIES:
-            if device == "cpu":
+            # Low bound: the measured pure-step rate. High bound: that rate times the measured
+            # full-run/pure-step ratio (offline metrics, checkpoints, slower containers).
+            sps = probe_steps_per_s(probe, device, f)
+            if sps is not None and ratio is not None:
+                rate = sps if bound == "low" else sps * ratio
+                if bound == "low":
+                    measured.append(f)
+            elif device == "cpu":
                 fac = ASSUME["modal_cpu_time_factor"]["low" if bound == "low" else "high"]
-                secs = c["steps_per_run"] / inp["train"][f]["steps_per_s"] * fac
+                rate = inp["train"][f]["steps_per_s"] / fac
+            else:
+                rate = ASSUME["gpu_steps_per_s"]["high" if bound == "low" else "low"][f]
+            secs = c["steps_per_run"] / rate
+            if device == "cpu":
                 fn = cfg["functions"]["train_cpu"]
                 res = Resources(secs + start, fn["cpu"], fn["memory_mib"] / 1024)
             else:
-                sps = gpu_steps_per_s(probe, f)
-                if sps is None:
-                    sps = ASSUME["gpu_steps_per_s"]["high" if bound == "low" else "low"][f]
-                secs = c["steps_per_run"] / sps
                 fn = cfg["functions"]["gpu_probe"]
                 res = Resources(secs + start, fn["cpu"], fn["memory_mib"] / 1024, fn["gpu"])
             usd += per * cost_usd(res, pricing)["total_usd"]
@@ -211,10 +248,12 @@ def modal_training_cost(inp: dict[str, Any], proj: dict[str, Any], cfg: dict[str
                                    cfg["build_allowance"]["memory_gib"]), pricing)["total_usd"]
         out[bound] = {"usd": reserve * usd + build, "container_h": reserve * hours,
                       "sequential_wall_h_max_containers_1": reserve * hours}
-    measured = [f for f in FAMILIES if gpu_steps_per_s(probe, f) is not None]
-    out["gpu_source"] = (None if device == "cpu" else
-                         f"Gate A probe (measured: {', '.join(measured)}; others scenario range)"
-                         if measured else "scenario range (unmeasured)")
+    out["full_run_ratio"] = ratio
+    out["rate_source"] = (
+        f"measured on Modal ({', '.join(measured)}): Gate A probe pure-step rate (low) and "
+        f"x {ratio:.3f} full-run ratio of the Modal training smoke (high)"
+        + ("" if len(measured) == len(FAMILIES) else "; other families: stated assumption")
+        if measured else "stated assumption (no Modal measurement)")
     return out
 
 
@@ -315,7 +354,7 @@ def main(argv: list[str] | None = None) -> int:
               f"{sc['modal_cpu_training']['high']['usd']:.2f} | Modal GPU training "
               f"${sc['modal_gpu_training']['low']['usd']:.2f}-"
               f"{sc['modal_gpu_training']['high']['usd']:.2f} "
-              f"({sc['modal_gpu_training']['gpu_source']})")
+              f"({sc['modal_gpu_training']['rate_source']})")
     return 0
 
 

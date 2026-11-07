@@ -873,7 +873,7 @@ from, and all were clean.
 - **Compatibility:** uninterrupted runs produce the same manifest fields as before, plus
   `launch`, `segments`, `resume_checkpoints` and `timing.n_segments`. Checkpoints add
   `fit_state`. Loading pre-Session-5 checkpoints is unchanged. The Session 3–4 selected
-  checkpoints still pass the equivalence checks (E5-xx).
+  checkpoints still pass the equivalence checks (E5-14).
 
 ### D-047 Modal launch policy and remote layout (FIXED for Session 5; DEFAULT for later sessions)
 `configs/compute/modal.yaml`, `infra/modal_app.py`, `src/roboforge/compute/`.

@@ -1205,3 +1205,18 @@ Lift selections are final (D-058): no Lift run is retrained, retuned or reselect
   records before the freeze.
 - `scripts/diagnose_actions.py` keeps its post-hoc categories for the Session 3–6 reports;
   every Session 7 failure analysis uses this taxonomy.
+
+### D-066 The §9 hierarchical paired bootstrap as implemented (FIXED)
+- `roboforge.eval.statistics.hierarchical_paired_bootstrap`: per family an outcome matrix
+  (seeds × states, one state order for all families); B = 10,000 replicates, seed
+  `20261106`. Each replicate draws the state indices once for every family (pairing) and the
+  seed indices independently per family; statistic = mean over resampled seeds × states;
+  95 % percentile intervals (numpy linear interpolation); differences on the same replicates.
+- **Draw order** (fixed, part of the freeze): one `default_rng(20261106)`; first the
+  `(B, 50)` state indices, then each family's `(B, n_seeds)` seed indices in the declared
+  family order.
+- `separation()`: "separated (+/−)" when the interval excludes 0, else "not separated"
+  (§14.6). Wilson intervals per checkpoint as before.
+- Unit tests on synthetic controls: identical families not separated, certain differences
+  exact, one shared state draw (paired difference exactly 0 under identical outcomes), seed
+  resampling per family, reproducibility, a binomial sanity interval, input validation.

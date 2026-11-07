@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import textwrap
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -86,8 +87,11 @@ def _style(ax: plt.Axes) -> None:
 
 
 def _footer(fig: plt.Figure, src: str, git: dict[str, Any], when: str) -> None:
+    """Validation-only label, source and revision, wrapped to the figure width (about 17
+    characters per inch at 6.5 pt) so that no figure can clip the label."""
     rev = f"{git['sha'][:8]}{'-dirty' if git['dirty'] else ''}"
-    fig.text(0.01, 0.005, f"{LABEL}\nsource: {src}\ngit {rev} · generated {when}",
+    label = textwrap.fill(LABEL, width=max(60, int(fig.get_figwidth() * 17)))
+    fig.text(0.01, 0.005, f"{label}\nsource: {src}\ngit {rev} · generated {when}",
              fontsize=6.5, color=MUTED, va="bottom")
 
 
@@ -311,12 +315,14 @@ def fig_latency(summary: dict[str, Any], lat: dict[str, dict[str, Any]], out: Pa
                 foot: tuple) -> Path | None:
     if not lat:
         return None
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(figsize=(8, 4.6))
+    xs = []
     for fam in summary["families"]:
         if fam["family"] not in lat:
             continue
         succ = [r["selection"]["successes"] for r in chosen_runs(fam)]
         x = lat[fam["family"]]["median_ms"]
+        xs.append(x)
         m = float(np.mean(succ))
         ax.errorbar([x], [m], yerr=[[m - min(succ)], [max(succ) - m]], fmt="none",
                     ecolor=MUTED, lw=1, capsize=3)
@@ -324,15 +330,16 @@ def fig_latency(summary: dict[str, Any], lat: dict[str, dict[str, Any]], out: Pa
         ax.annotate(f"{FAMILY_LABEL[fam['family']]} (trial {fam['chosen_trial']})", (x, m),
                     xytext=(6, 4), textcoords="offset points", fontsize=8, color=INK)
     ax.set_xscale("log")
-    ax.set_xlabel("median decision latency, ms (observe + act, 1 thread, canonical "
-                  "container, run alone; final checkpoint of the seed-0 run)", fontsize=8,
+    ax.set_xlim(min(xs) / 1.6, max(xs) * 5)  # room for the right-most label
+    ax.set_xlabel("median decision latency, ms (observe + act, 1 thread)\ncanonical "
+                  "container, run alone; final checkpoint of the seed-0 run", fontsize=8,
                   color=MUTED)
     ax.set_ylabel("mean successes / 50 over seeds\n(bars: min-max seed)", fontsize=8,
                   color=MUTED)
     ax.set_title("Validation success of the selected checkpoints vs inference latency",
                  fontsize=9, color=INK, loc="left")
     _style(ax)
-    fig.tight_layout(rect=(0, 0.12, 1, 1))
+    fig.tight_layout(rect=(0, 0.14, 1, 1))
     _footer(fig, *foot)
     p = out / "success_vs_latency.png"
     fig.savefig(p, dpi=150)

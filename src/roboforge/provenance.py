@@ -82,12 +82,14 @@ def git_revision(repo: Path = REPO_ROOT) -> dict[str, Any]:
     under :data:`EVIDENCE_DIRS` is excluded so that writing one report does not mark the
     next report as produced from a modified tree. Inside the evaluation container, which has
     no ``.git``, the wrapper script passes the host revision in ``ROBOFORGE_GIT_SHA`` and
-    ``ROBOFORGE_GIT_DIRTY``.
+    ``ROBOFORGE_GIT_DIRTY``; a Modal job receives the launch plan's revision the same way,
+    with ``ROBOFORGE_GIT_SOURCE`` naming where it came from.
     """
     host_sha = os.environ.get("ROBOFORGE_GIT_SHA")
-    if host_sha:  # inside the evaluation container: the bind-mounted host tree's revision
+    if host_sha:  # inside a container: the revision of the host tree that launched it
         return {"sha": host_sha, "dirty": os.environ.get("ROBOFORGE_GIT_DIRTY") == "1",
-                "source": "host working tree (infra/containers/run_sim_cpu.sh)"}
+                "source": os.environ.get("ROBOFORGE_GIT_SOURCE",
+                                         "host working tree (infra/containers/run_sim_cpu.sh)")}
     try:
         sha = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=True

@@ -70,3 +70,34 @@ def load_checkpoint(path: Path, expected_sha256: str | None = None) -> dict[str,
     if missing or payload.get("schema") != SCHEMA:
         raise CheckpointError(f"{path}: not a {SCHEMA} checkpoint (missing {missing})")
     return payload
+
+
+def payload_differences(a: Any, b: Any, path: str = "") -> list[str]:
+    """Where two checkpoint payloads differ: tensors by ``torch.equal`` (bitwise, with dtype
+    and shape), every other value by ``==``. Empty means content-identical.
+
+    Two content-identical payloads can still give files with different SHA-256: the pickle
+    inside ``torch.save`` memoizes repeated Python objects by identity, so a value shared
+    between config and optimizer in one process and loaded separately in another serializes
+    differently. Resumed-versus-uninterrupted checks therefore compare content; file hashes
+    remain the integrity check for storage and transfer.
+    """
+    if isinstance(a, torch.Tensor) or isinstance(b, torch.Tensor):
+        ok = (isinstance(a, torch.Tensor) and isinstance(b, torch.Tensor)
+              and a.dtype == b.dtype and a.shape == b.shape and torch.equal(a, b))
+        return [] if ok else [path or "<root>"]
+    if isinstance(a, dict) and isinstance(b, dict):
+        if a.keys() != b.keys():
+            return [f"{path}: keys {sorted(map(str, set(a) ^ set(b)))}"]
+        return [d for k in a for d in payload_differences(a[k], b[k], f"{path}.{k}")]
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        if type(a) is not type(b) or len(a) != len(b):
+            return [f"{path}: sequence type/length"]
+        return [d for i, (x, y) in enumerate(zip(a, b, strict=True))
+                for d in payload_differences(x, y, f"{path}[{i}]")]
+    return [] if (type(a) is type(b) and a == b) else [path or "<root>"]
+
+
+def checkpoint_differences(path_a: Path, path_b: Path) -> list[str]:
+    """:func:`payload_differences` of two checkpoint files (both loaded ``weights_only``)."""
+    return payload_differences(load_checkpoint(path_a), load_checkpoint(path_b))

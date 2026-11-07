@@ -18,7 +18,9 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	check-data audit-data eval-states check-eval-states replay-demos check-sim-contract \
 	check-determinism sanity-eval sanity-eval-canonical export-clip web-contract in-sim \
 	train-smoke train eval select param-counts overfit-check benchmark-policies \
-	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising
+	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
+	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
+	cost-estimate
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -33,7 +35,7 @@ test-fast:  ## Unit tests only (no simulator, no dataset)
 	$(RUN) pytest tests/unit
 
 lint:  ## Ruff lint
-	$(RUN) ruff check src scripts tests
+	$(RUN) ruff check src scripts tests infra
 
 smoke-sim:  ## Real Lift + Can reset/step/success/render checks (no dataset needed)
 	@for t in $(TASKS); do $(RUN) python scripts/smoke_sim.py --task $$t --out-dir $(SMOKE_OUT) \
@@ -101,9 +103,11 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-PREFIX ?= s4
+# Defaults bumped to Session 5 (DECISIONS D-048) so that no Session 5 command can write into
+# Session 4 evidence or reuse the s4 run prefix by omission.
+PREFIX ?= s5
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),4)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),5)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -151,3 +155,36 @@ diffusion-reference:  ## Diffusion schedulers/U-Net/sampling/EMA vs diffusers 0.
 export-denoising:  ## Real denoising traces of EVAL_RUN=runs/<eval_run_id> (canonical container)
 	@test -n "$(EVAL_RUN)" || (echo "set EVAL_RUN=runs/<eval_run_id>" >&2; exit 2)
 	$(IN_SIM_S) python scripts/export_denoising.py --eval-run $(EVAL_RUN)
+
+# ---------------------------------------------------------------- Session 5: Modal + costs
+# The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.
+# Every modal-* target below is a DRY RUN (no server contact, nothing created). A paid launch
+# needs `$(MODAL_PY) infra/modal_app.py ... --budget-approved <A-xx>` with an approval recorded
+# in docs/EXPERIMENT_LEDGER.md (roboforge.compute.approval).
+MODAL_PY ?= python3
+MODAL_TIMEOUT_S ?= 1800
+modal-dry-run:  ## Dry-run plan + upper-bound estimate of one Modal CPU training job (MODEL, TASK, SEED, PREFIX)
+	$(MODAL_PY) infra/modal_app.py train --config configs/models/$(MODEL).yaml --task $(TASK) \
+		--seed $(SEED) --prefix $(PREFIX) --timeout-s $(MODAL_TIMEOUT_S)
+
+modal-probe-dry-run:  ## Dry-run plan + estimate of the Gate A GPU probe
+	$(MODAL_PY) infra/modal_app.py probe
+
+SIM_ROOT ?= logs/tmp/s5_modal_sim
+modal-sim:  ## Local simulation of a Modal job: preemption, SIGKILL, deadline, duplicate, resume, retrieval
+	$(RUN_S) python scripts/modal_sim.py --root $(SIM_ROOT) \
+		--config configs/models/diffusion_unet.yaml --prefix s5sim \
+		--set train.max_steps=2000 --set train.ckpt_every=500 --set train.val_every=500 \
+		--set train.log_every=100 --sigint-at 650 --sigkill-at 1150 --deadline-s 30 \
+		--install --report reports/session$(EVIDENCE_SESSION)/modal_sim/report.json
+
+fetch-run:  ## Download RUN_ID from the Modal runs Volume and install it into runs/ (hash-checked)
+	$(MODAL_PY) infra/modal_app.py fetch --run-id $(RUN_ID)
+
+profile-rollouts:  ## Parallel canonical containers on validation starts: physics vs inference vs rendering
+	$(RUN_S) python scripts/profile_parallel.py --levels 1 2 4 \
+		--out-dir reports/session$(EVIDENCE_SESSION)/rollout_profile
+
+cost-estimate:  ## Main-suite cost/time projection from the measured numbers (estimates)
+	$(RUN_S) python -m roboforge.compute.estimate suite \
+		--out reports/session$(EVIDENCE_SESSION)/cost/suite_projection.json

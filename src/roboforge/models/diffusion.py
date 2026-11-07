@@ -171,10 +171,12 @@ class DiffusionPolicy(nn.Module):
             raise ValueError(f"future_action shape {tuple(future_action.shape)} != [B, "
                              f"{self.pred_horizon}, {self.action_dim}]")
         cond = self.encoder(obs_history, obs_valid)
+        # ``device`` follows the data (CPU in every protocol run; a CUDA generator and batch
+        # only in the Session 5 GPU throughput profile). On CPU the draws are unchanged.
         noise = torch.randn(future_action.shape, generator=generator,
-                            dtype=future_action.dtype)
+                            dtype=future_action.dtype, device=future_action.device)
         t = torch.randint(0, self.schedule.num_train_timesteps, (future_action.shape[0],),
-                          generator=generator).long()
+                          generator=generator, device=future_action.device).long()
         noisy = self.schedule.add_noise(future_action, noise, t)
         with unet_backend():
             eps_hat = self.unet(noisy, t, cond)

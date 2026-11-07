@@ -83,7 +83,7 @@ class NoiseSchedule:
     def add_noise(self, x0: torch.Tensor, noise: torch.Tensor,
                   timesteps: torch.Tensor) -> torch.Tensor:
         """Forward process ``A_t = sqrt(abar_t) A_0 + sqrt(1 - abar_t) eps`` per batch item."""
-        acp = self.alphas_cumprod.to(dtype=x0.dtype)
+        acp = self.alphas_cumprod.to(dtype=x0.dtype, device=x0.device)
         a = (acp[timesteps] ** 0.5).flatten()
         b = ((1 - acp[timesteps]) ** 0.5).flatten()
         while a.ndim < x0.ndim:

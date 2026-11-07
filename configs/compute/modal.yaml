@@ -1,0 +1,58 @@
+# Modal integration settings and the posted price snapshot used by every cost ESTIMATE
+# (Session 5; DECISIONS D-045..D-047; docs/COMPUTE_PLAN.md).
+#
+# Prices are copied from https://modal.com/pricing as fetched on fetched_utc. They are list
+# prices, not a bill: the invoice also depends on credits, region and preemption multipliers,
+# billed keep-alive and any charges this file does not model. Re-fetch before every launch and
+# bump fetched_utc. Credits are NOT a spending cap; only a workspace budget set in the Modal
+# dashboard is (https://modal.com/docs/guide/budgets).
+schema: roboforge.modal_config/1
+pricing:
+  source: https://modal.com/pricing
+  fetched_utc: "2026-11-06"
+  plan: starter
+  monthly_credits_usd: 30.0
+  gpu_usd_per_s: {T4: 0.000164, L4: 0.000222, A10: 0.000306, L40S: 0.000542,
+                  A100-40GB: 0.000583, A100-80GB: 0.000694, H100: 0.001097}
+  cpu_usd_per_core_s: 0.0000131     # per physical core (= 2 vCPU); minimum 0.125 core
+  memory_usd_per_gib_s: 0.00000222
+  volume_usd_per_gib_month: 0.09    # first 1 TiB per month free
+  volume_free_gib: 1024
+  egress_usd_per_gib: 0.04          # Starter includes 1 TiB/month free egress
+  multipliers: {non_preemptible: 3.0, region_min: 1.15, region_max: 1.75}
+  billed_keepalive_s: 60            # Modal default scaledown window, billed; we set 2 s
+  notes:
+    - "Functions are preemptible by default; preemption sends SIGINT, then SIGKILL 30 s later,
+      and Modal restarts the function on the same input."
+    - "Whether image builds are billed is not stated on the pricing page (unverified); the
+      estimates below reserve an allowance for them."
+    - "Billing reports (modal billing report) are documented for Team/Enterprise plans."
+
+app:
+  name: roboforge
+  python: "3.11"
+  uv_version: "0.11.11"             # same uv as infra/containers/Dockerfile.sim-cpu
+  # Same apt packages as infra/containers/Dockerfile.sim-cpu (git: git-pinned robosuite and
+  # robomimic; cmake/build-essential/libegl-dev: egl_probe; libosmesa6/libegl1/libgl1:
+  # MuJoCo backends; libglib2.0-0: opencv).
+  apt: [git, cmake, build-essential, libegl-dev, libegl1, libosmesa6, libgl1, libglib2.0-0]
+  repo_root: /app                   # REPO_ROOT inside the container (src/roboforge -> /app)
+  # Code and committed artifacts mounted at container start (never baked, never on a Volume).
+  code_dirs: [src, scripts, configs, data/manifests, data/splits, data/normalization]
+  volumes:
+    data: {name: roboforge-data, mount: /data}     # ROBOFORGE_DATA_ROOT: processed HDF5
+    runs: {name: roboforge-runs, mount: /app/runs}  # = <repo>/runs: manifests stay portable
+
+# Function resources. Launch policy is fixed for every function: one container at most, no
+# automatic retries, a 2 s scaledown window, preemptible, and an explicit timeout. The
+# training job stops itself deadline_margin_s before its timeout, writes a resume checkpoint
+# and returns, so the hard timeout is never the normal way a job ends.
+policy: {max_containers: 1, retries: 0, scaledown_window_s: 2, deadline_margin_s: 180}
+functions:
+  train_cpu: {gpu: null, cpu: 2.0, memory_mib: 4096, default_timeout_s: 1800,
+              max_timeout_s: 21600}
+  gpu_probe: {gpu: L4, cpu: 4.0, memory_mib: 16384, default_timeout_s: 900,
+              max_timeout_s: 900}
+# Allowance added to every launch estimate for image build and container start, until a real
+# build is measured (estimate; billed or not is unverified).
+build_allowance: {cpu: 4.0, memory_gib: 16.0, seconds: 900}

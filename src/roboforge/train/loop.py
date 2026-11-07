@@ -40,6 +40,7 @@ from roboforge.train.checkpoint import SCHEMA, CheckpointError
 from roboforge.train.config import RunConfig
 from roboforge.train.data import EpochStreamSampler, WindowTensors
 from roboforge.train.ema import EMA
+from roboforge.train.stop import StopControl
 
 # Fixed seeds of the offline diffusion metrics: the same noise, timesteps and initial samples
 # at every evaluation, so values are comparable across steps (never used for selection).
@@ -144,6 +145,9 @@ class Trainer:
                 self.ema = EMA(self.model, power=cfg.model["ema_power"],
                                max_value=cfg.model["ema_max_decay"])
         self.global_step = 0
+        # Per-step values not yet averaged into a train metrics row. Checkpointed (as
+        # ``fit_state``) so that a resumed run writes the same rows as an uninterrupted one.
+        self.log_window: list[dict[str, float]] = []
 
     @property
     def inference_model(self) -> torch.nn.Module:
@@ -208,7 +212,8 @@ class Trainer:
                 "normalization": self.context["normalization"],
                 "hashes": self.context["hashes"], "git": self.context["git"],
                 "torch_version": str(torch.__version__), "device": "cpu",
-                "num_threads": torch.get_num_threads()}
+                "num_threads": torch.get_num_threads(),
+                "fit_state": {"log_window": [dict(w) for w in self.log_window]}}
 
     def load_state(self, payload: dict[str, Any]) -> None:
         """Restore a checkpoint of the same config for exact resumption (strict)."""
@@ -226,29 +231,51 @@ class Trainer:
         if self.ema is not None:
             self.ema.load_state_dict(payload["ema_state"])
         self.global_step = int(payload["global_step"])
+        # Checkpoints from before Session 5 have no fit_state: their cadence steps are
+        # multiples of log_every, where the window is empty.
+        fit_state = payload.get("fit_state") or {"log_window": []}
+        self.log_window = [{k: float(v) for k, v in w.items()} for w in fit_state["log_window"]]
 
     def fit(self, metrics_path: Path | None = None,
-            on_checkpoint: Callable[[Trainer], dict[str, Any]] | None = None) -> dict[str, Any]:
-        """Train to ``max_steps``. Logs metrics (JSON lines) and calls ``on_checkpoint`` every
-        ``ckpt_every`` steps; returns the timing and the collected checkpoint records."""
+            on_checkpoint: Callable[[Trainer], dict[str, Any]] | None = None, *,
+            stop: StopControl | None = None,
+            on_stop: Callable[[Trainer], dict[str, Any]] | None = None,
+            wall_before: float = 0.0, cpu_before: float = 0.0,
+            on_log: Callable[[int, float, float], None] | None = None) -> dict[str, Any]:
+        """Train to ``max_steps``, or until ``stop`` asks to stop (Session 5).
+
+        Logs metrics (JSON lines) and calls ``on_checkpoint`` every ``ckpt_every`` steps. A
+        step's metric rows are written **before** its checkpoint, so a checkpoint never
+        exists without its rows. After every step ``stop`` is checked. On a request the loop
+        calls ``on_stop(trainer)`` to write a resume checkpoint, unless the step was just
+        checkpointed on cadence, and returns. The per-step values not yet averaged into a
+        train row live in :attr:`log_window`, which every checkpoint carries. A resumed
+        segment also passes the wall/CPU seconds of earlier segments (``wall_before``,
+        ``cpu_before``), so its rows equal an uninterrupted run's apart from the timing
+        fields. ``on_log`` is a heartbeat called at every train row with the cumulative
+        times. Returns this segment's timing and checkpoint records, and the stop reason or
+        ``None``.
+        """
         t = self.cfg.train
         wall0, cpu0 = time.perf_counter(), time.process_time()
-        window: list[dict[str, float]] = []
         checkpoints: list[dict[str, Any]] = []
+        stopped: str | None = None
+        resume_record: dict[str, Any] | None = None
         with contextlib.ExitStack() as stack:
             out = stack.enter_context(Path(metrics_path).open("a")) if metrics_path else None
             while self.global_step < t.max_steps:
-                window.append(self.step())
+                self.log_window.append(self.step())
                 s = self.global_step
                 rows = []
                 if s % t.log_every == 0:
+                    window = self.log_window
                     g = np.array([w["grad_norm"] for w in window])
                     rows.append({"kind": "train", "step": s, "epoch": self.sampler.epoch,
                                  "loss": float(np.mean([w["loss"] for w in window])),
                                  "grad_norm_mean": float(g.mean()),
                                  "grad_norm_max": float(g.max()), "lr": window[-1]["lr"],
-                                 "wall_s": time.perf_counter() - wall0})
-                    window = []
+                                 "wall_s": wall_before + time.perf_counter() - wall0})
+                    self.log_window = []
                 if s % t.val_every == 0 or s % t.ckpt_every == 0:
                     net = self.inference_model
                     row = {"kind": "offline", "step": s,
@@ -257,11 +284,21 @@ class Trainer:
                     if self.valid_data is not None:
                         row["valid"] = offline_metrics(net, self.valid_data)
                     rows.append(row)
-                if s % t.ckpt_every == 0 and on_checkpoint is not None:
-                    checkpoints.append({"step": s, **on_checkpoint(self)})
-                if out is not None:
+                if out is not None and rows:
                     for r in rows:
                         out.write(json.dumps(r, allow_nan=False) + "\n")
                     out.flush()
+                if s % t.log_every == 0 and on_log is not None:
+                    on_log(s, wall_before + time.perf_counter() - wall0,
+                           cpu_before + time.process_time() - cpu0)
+                cadence = s % t.ckpt_every == 0
+                if cadence and on_checkpoint is not None:
+                    checkpoints.append({"step": s, **on_checkpoint(self)})
+                if stop is not None and s < t.max_steps and stop.check(s):
+                    stopped = stop.reason
+                    if not cadence and on_stop is not None:
+                        resume_record = {"step": s, **on_stop(self)}
+                    break
         return {"wall_s": time.perf_counter() - wall0, "cpu_s": time.process_time() - cpu0,
-                "checkpoints": checkpoints}
+                "checkpoints": checkpoints, "stopped": stopped,
+                "resume_checkpoint": resume_record}

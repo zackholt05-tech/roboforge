@@ -103,4 +103,11 @@ had a canonical validation evaluation and never entered selection. At most they 
 dev-only native rollouts on 2 starts (train-smoke) or latency timing. On Can: none. Each family's remaining search space must
 be written here before its next tuning run.
 
-Owner approvals for paid compute: **none requested, none granted.**
+## Owner approvals for paid compute
+Machine-read by `roboforge.compute.approval` (D-049): a paid Modal launch is refused unless a
+`granted` row below covers its function and the committed spend plus the launch's upper-bound
+estimate stays within the cap. Caps are client-side guards, not Modal spending limits.
+
+| ID | Date | Gate | Functions | Cap (USD) | Status | Evidence |
+|---|---|---|---|---|---|---|
+| A-01 | 2026-11-06 | Gate A | gpu_probe, train_cpu | 2.00 | granted | Owner, Session 5 (23:35 EST): general instruction "please do not exceed the $30 monthly quota if possible"; then chose "Approve, $2 cap" for: 1 L4 GPU probe (≤ 15 min, upper bound $0.36), a 2,000-step diffusion CPU training smoke with simulated preemption (timeout 15 min, $0.11) and its resume launch (timeout 20 min, $0.12); max_containers=1, retries=0, preemptible; Volumes roboforge-data and roboforge-runs. Month-to-date Modal usage before Session 5: $5.27 (another app), so ≈ $24.73 of the $30 credit remained |

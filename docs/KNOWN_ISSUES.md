@@ -26,13 +26,20 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-019 | MEDIUM | MITIGATED (Session 2, D-024) | `mj_forward` on live data perturbs the rest of a rollout |
 | KI-020 | LOW | MITIGATED (Session 2, D-017) | `uv sync`/`uv run` inside the pinned image would modify its environment |
 | KI-021 | MEDIUM | OPEN | BC-MLP compounds a missed grasp into out-of-workspace drift with saturated actions |
-| KI-022 | LOW | ACCEPTED | Gripper commands are clipped on 28–63 % of steps, harmlessly |
+| KI-022 | LOW | ACCEPTED | Gripper commands are clipped on 19–73 % of steps (BC), harmlessly |
 | KI-023 | LOW | OPEN | Policy inference is 13–17× slower in the canonical container than natively (diffusion DDIM-10: 3.7×) |
 | KI-024 | MEDIUM | OPEN | Offline validation MSE rises during training and does not track closed-loop success |
 | KI-025 | LOW | ACCEPTED | robomimic `d309eae` ignores `algo.unet.*` and always builds its 65.8 M U-Net |
 | KI-026 | LOW | MITIGATED (Session 4, D-040) | NNPACK makes the 1D U-Net about 3× slower on macOS arm64 |
 | KI-027 | LOW | ACCEPTED | Diffusion samples depend on batch size at float-rounding level |
 | KI-028 | MEDIUM | OPEN | All diffusion pilot failures are one start, under one noise seed (R = 1) |
+| KI-029 | LOW | ACCEPTED | Content-identical checkpoints can have different file SHA-256 |
+| KI-030 | MEDIUM | RESOLVED (Session 5) | Gate A probe lost every result to a BC-RNN CUDA device bug |
+| KI-031 | MEDIUM | RESOLVED (Session 5) | Modal reschedules an interrupted input despite retries=0 |
+| KI-032 | LOW | RESOLVED (Session 5) | Paths under a symlinked mount were recorded absolute |
+| KI-033 | LOW | OPEN | The Modal image carries no evaluation suite; EGL vs OSMesa pending |
+| KI-034 | MEDIUM | OPEN | Lift validation is saturated: most §7 choices are decided by the first-success tiebreak |
+| KI-035 | LOW | ACCEPTED | Host contention during the Session 6 suite inflated wall times (results unaffected) |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -167,6 +174,11 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
     including Adam state) plus 18 validation evaluations × 50 episode records.
   - A Session 6 main suite (3 families × 3 seeds × 2 tasks × 10 checkpoints, with
     evaluations) is expected to need a few GB. That is an estimate, not measured.
+- **Session 6 end (measured):** 29 GB free. `runs/` holds 9.7 GB, of which the Session 6 Lift
+  suite is 8.7 GB (24 runs × 20 checkpoints plus 480 evaluations × 50 episode records);
+  `reports/session6/` is 34 MB. Swap was 20.0 of 21.5 GB in use (KI-035). The Can suite
+  (Session 7, episodes up to 400 steps) needs a similar or larger amount: check `df -h`
+  before it.
 
 ### KI-009 — Evidence files contain absolute local paths
 Some files contain `/Users/zackaryholt/...` paths: `reports/feasibility/*.json`
@@ -378,8 +390,23 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   Session 6, within the matched budget: early checkpoints, weight decay, dropout, observation
   noise and action chunking. Lift success is therefore **not** saturated for one-step BC
   (best 47/50).
+- **Session 6 (main budget, 100k steps; all 20 checkpoints of the 12 chosen-configuration
+  runs, `reports/session6/diagnostics/actions.json`):** the mode persists and remains
+  BC-MLP's main loss.
+  - **BC-MLP** (chosen trial 4, weight decay 0.1): 439 of 3,000 episodes fail, 349 of them
+    `missed_grasp_then_drift` (69 stayed near, 21 gripper never closed). Motion dimensions
+    are clipped on 17–78 % of the steps of failed episodes against ≤ 3.3 % in successes, and
+    the raw normalized actions reach −28 to +41 in the drift episodes.
+  - **BC-MLP-chunk** (chosen trial 2, cosine): 257 failures, 252 of them drift; motion
+    clipping 33–89 % in failures; raw actions −51 to +71.
+  - **BC-RNN:** 146 failures, mostly `missed_grasp_stayed_near` (97); motion clipping ≤ 4 %.
+    **Diffusion:** 18 failures, 16 of them stayed near; no clipping (its actions stay within
+    [−1, 1]).
+  - Weight decay 0.1 was BC-MLP's best trial (49/50 at seed 0; 48 and 49 at seeds 1–2), so
+    the tested regularization reduced the drift but did not remove it. BC-MLP stays below
+    50/50 in every trial and seed (47–49/50).
 
-### KI-022 — Gripper commands are clipped on 28–63 % of steps, harmlessly
+### KI-022 — Gripper commands are clipped on 19–73 % of steps (BC), harmlessly
 - The demonstrations' gripper action is exactly ±1, which is also the training range, so
   min-max normalization maps it to ±1.
   - Regression outputs overshoot ±1 slightly.
@@ -390,6 +417,10 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Reporting rule:** report clip and saturation rates for the motion dimensions (0–5)
   separately from the gripper. A total clip rate would be dominated by this harmless gripper
   clipping.
+- **Session 6:** across all 480 evaluations the gripper is clipped on 26–67 % of steps per
+  evaluation for BC-MLP, 27–73 % for BC-MLP-chunk and 19–56 % for BC-RNN. Diffusion never
+  clips (0 %): its sampled actions stay within [−1, 1]. Motion clipping is reported apart
+  (KI-021).
 
 ### KI-023 — Policy inference is 13–17× slower in the canonical container than natively
 - **Measured** with `scripts/benchmark_policies.py` (1 torch thread, median per decision of
@@ -445,6 +476,16 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - closed-loop success is flat (49–50/50).
 
   The two offline metrics disagree with each other, as well as with the closed loop.
+- **Session 6 (100k steps, chosen seed-0 runs, valid-demo MSE at 5k → 15k → 50k → 100k):**
+  - BC-MLP (weight decay 0.1): 0.042 → 0.054 → 0.074 → 0.093 (lowest at 1k);
+  - BC-MLP-chunk (cosine): 0.048 → 0.062 → 0.076 → 0.079 (lowest at 3k);
+  - BC-RNN (weight decay 0.1): 0.034 → 0.044 → 0.053 → 0.056 (lowest at 5k);
+  - diffusion (lr 3e-4), EMA: noise-prediction MSE 0.058 → 0.066 → 0.137 → 0.173 (lowest
+    at 7k), while the sampled-chunk MSE falls 0.108 → 0.090 → 0.069 → 0.065.
+
+  Training loss falls throughout. Closed-loop success peaks at 5k–15k for BC and is flat at
+  49–50/50 for diffusion, whose §7 selections fall at 35k–100k. No offline metric entered
+  any selection (§7.4).
 
 ### KI-025 — robomimic `d309eae` ignores `algo.unet.*` and always builds its 65.8 M U-Net
 - `robomimic/algo/diffusion_policy.py` (lines 74–77) constructs
@@ -508,6 +549,22 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - a diagnostic-only multi-seed rerun of this start.
 
   Neither may change selection retroactively.
+- **Session 6** (120 evaluations, 6,000 episodes per family, all checkpoints;
+  `logs/session6/analysis/per_start_failures.json`): `lift_validation_0029` failed
+
+  | Family | Failures on 0029 (of 120) | Rate on 0029 | Rate over all starts |
+  |---|---|---|---|
+  | diffusion_unet | 15 | 12.5 % | 0.65 % (39 / 6,000; 7 distinct starts) |
+  | BC-MLP-chunk | 43 | 35.8 % | 8.6 % (515 / 6,000) |
+  | BC-MLP | 16 | 13.3 % | 14.7 % (884 / 6,000) |
+  | BC-RNN | 3 | 2.5 % | 4.1 % (244 / 6,000) |
+
+  - The start is hard for the two T_a = 8 families (about 4× and 19× their base rates), not
+    for the single-step ones.
+  - BC-MLP-chunk is deterministic, so for it the start itself is hard; no noise seed is
+    involved. For diffusion, start and seed remain confounded under R = 1.
+  - Descriptive only: never used for selection. The options above still apply only by an
+    amendment before the freeze.
 
 ### KI-029 — Content-identical checkpoints can have different file SHA-256
 - **Observed (Session 5):** a run interrupted at step 30 and resumed wrote a step-40
@@ -608,3 +665,92 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
     code directories.
 - **Impact:** none on Level 1. Evaluation and rendering run on the canonical container,
   where OSMesa is verified. RGB extraction (Session 8) can stay local.
+
+### KI-034 — Lift validation is saturated: most §7 choices are decided by the first-success tiebreak
+- **Observed** (Session 6 main suite, `reports/session6/{selection,tuning}/`):
+  - 12 of the 16 seed-0 selected checkpoints score 50/50; every diffusion, BC-MLP-chunk and
+    BC-RNN trial does. Only BC-MLP's four trials stay below 50 (47–49/50).
+  - The Wilson 95 % interval of a 50/50 checkpoint is [0.929, 1.000]. On success alone,
+    Lift validation cannot separate those three families or their trials.
+  - In 3 of 4 families the §6.3 choice was therefore decided by the mean first-success
+    step. The chosen trial led the runner-up by only 0.12–0.68 control steps (20 Hz):
+
+    | Family | Trials at the top success count | Chosen | Mean first-success step of the tied trials |
+    |---|---|---|---|
+    | diffusion_unet | 4 (50/50) | trial 3 | 45.54 vs 45.76, 46.56, 46.92 |
+    | bc_mlp_chunk | 4 (50/50) | trial 2 | 44.62 vs 45.30, 45.64, 50.26 |
+    | bc_rnn | 4 (50/50) | trial 4 | 43.10 vs 43.22, 43.40, 43.50 |
+    | bc_mlp | 1 (49/50) | trial 4 | none tied (47, 48, 47 for trials 1–3) |
+
+  - The **§7 checkpoint choice** within a run is mostly a first-success tiebreak too.
+- **This is the predeclared rule working as written**, not a defect. The rule and its
+  tiebreaks were fixed before any result (RESEARCH_PROTOCOL §7, §6.3).
+- **But:** differences this small in mean first-success step are within the
+  episode-to-episode spread. Do not read a chosen trial as better than a tied
+  alternative. The choice is a deterministic way to pick one configuration, not evidence of
+  a better one.
+- **BC selections sit at the earliest checkpoints.** The three BC families select at
+  5k–15k in 17 of 18 runs (5k in 8). The exception is BC-MLP trial 3 (lr 3e-4), selected at
+  100k. Success declines slowly after the early checkpoints while offline validation MSE
+  rises (KI-024). The 5k cadence cannot show whether BC peaks before 5k; finding out would
+  need an amendment.
+- **Diffusion selects late (35k–100k), with success flat at 49–50/50.** The chosen seed-0
+  run (trial 3, lr 3e-4) selected its **final** checkpoint, 100k, so that selection sits at
+  the budget boundary. Its seeds 1 and 2 selected 95k and 80k. A longer budget might move
+  the selection further; the protocol does not allow testing that in Level 1.
+- **Implication for Session 7:**
+  - the paired Lift test will likely not separate the 50/50 families on success. Its
+    preregistered analysis should be written knowing that, as a paired comparison with CIs
+    that can be reported as "not separated", not as a ranking;
+  - mean first-success step and per-start failure patterns are secondary descriptors, and
+    any use as an outcome must be declared in the freeze;
+  - Can (harder) is where success differences are more likely to show.
+  - Any change of R (KI-028), or any added validation statistic, needs an amendment written
+    before the freeze. It may not change Session 6 selections retroactively.
+
+### KI-035 — Host contention during the Session 6 suite inflated wall times (results unaffected)
+- **Observed:** the suite itself ran up to 10 jobs at once (peak from its event log; limits
+  8 training runs, 4 evaluation containers and 10 jobs in total, D-054) on an M1 Pro with 8 performance and 2
+  efficiency cores.
+  For most of the suite a CPU-bound process from another project also ran, and the machine
+  was swapping (20.0 of 21.5 GB of swap in use at the end).
+  - **Training:** the four diffusion trials took 5.10–5.12 h of wall time per 100k steps
+    (4.4 CPU-h each), against 3.9 h projected from the Session 5 concurrency profile
+    (7.5 steps/s alone, 1.24× slowdown at 8 processes). The two diffusion replicates (same code and
+    model, trial 3 with seeds 1 and 2; 12:58–16:22 UTC) ran with fewer neighbours: **3.39 h**
+    each (3.36 CPU-h), faster than the projection. The foreign process's end time was not
+    recorded; it was no longer running at a check at about 15:43 UTC. BC-RNN took
+    1.42–1.45 h for the trials and 0.89 h for the replicates.
+  - **Evaluation:** per-container throughput, in control steps per second (which removes
+    the episode-length effect of failed episodes running to 400 steps), fell 1.6–3.1×
+    against the Session 3–4 evaluations:
+
+    | Family | Sessions 3–4 (steps/s, 6 evaluations) | Session 6 (steps/s, 120 evaluations) | Ratio |
+    |---|---|---|---|
+    | BC-MLP | 56.9 | 18.4 | 3.1× |
+    | BC-MLP-chunk | 54.2 | 25.8 | 2.1× |
+    | BC-RNN | 35.2 | 21.4 | 1.6× |
+    | diffusion_unet | 44.3 | 19.1 | 2.3× |
+
+    The Session 5 parallel profile alone predicts about 4 / 1.78 = 2.25× per container at
+    4 parallel containers (E5-10), before any training load. The 480 evaluations took
+    26.92 container-hours in all (mean 202 s, median 171 s per 50-start evaluation).
+  - The suite's own concurrency and the foreign process were **not separated**. The ratios
+    above combine both.
+- **Mitigation (scheduling only):** `logs/session6/suite/renice_loop.sh` set every BC
+  training process to nice 15 every 60 s, so the diffusion runs on the critical path won CPU
+  contention. Each change is logged in `logs/session6/suite/renice.log`. The suite's processes
+  had inherited nice 5. One early manual `renice -n 15` is an increment on macOS: it put the
+  BC-MLP trials at nice 20 (logged), and the loop uses the absolute form. No run was stopped
+  or relaunched.
+- **Why results are unaffected:**
+  - training is deterministic on CPU with 1 thread, and scheduling does not enter it;
+  - trial 1's 5k–30k checkpoints are content-identical to the Session 3–4 pilots
+    (`logs/session6/analysis/pilot_prefix_equivalence.json`);
+  - their 24 Session 6 evaluations reproduce the pilots' episode for episode, including
+    every `physics_sha256` (`logs/session6/analysis/pilot_eval_reproduction.json`);
+  - evaluation physics does not depend on wall time.
+- **Impact:** only wall-time and throughput numbers. The training steps/s recorded in the
+  Session 6 manifests (and repeated in `reports/session6/cost_latency/`) are contended
+  numbers, not a clean throughput profile. COMPUTE_PLAN projections for Session 7 should use
+  the Session 5 profiles, scaled by the factors above if the host is shared again.

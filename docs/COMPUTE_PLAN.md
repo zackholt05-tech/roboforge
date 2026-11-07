@@ -1,4 +1,4 @@
-# Compute and Modal Plan (Session 5: implemented, tested on Modal, Gate C decided)
+# Compute and Modal Plan (Session 5: implemented, tested on Modal, Gate C decided; Session 6: Lift suite ran locally)
 
 **Status (2026-11-07):**
 - **Built and tested:** the Modal integration (D-045–D-050).
@@ -6,6 +6,9 @@
   A-01 is closed.
 - **Gate C:** the owner chose **local CPU only, $0**, for the main suite (D-051). No Modal
   resource is used in Sessions 6–7 without a new approval row in `docs/EXPERIMENT_LEDGER.md`.
+- **Session 6:** the Lift main suite ran under Gate C: 33.25 CPU core-hours of training,
+  26.92 container-hours of evaluation, 9.80 h elapsed, **$0**. No Modal call (§4, "Session 6
+  (Lift) actual vs projected").
 - **Prices:** fetched from https://modal.com/pricing on **2026-11-06**
   (`configs/compute/modal.yaml`). Recheck before any future launch.
 - **Modal client:** 1.6.3, outside the project venv (`/opt/anaconda3`, profile
@@ -17,7 +20,7 @@
 | Local CPU training, 1 thread (M1 Pro) | BC-MLP 205 steps/s, BC-RNN 30.5, BC-MLP-chunk 193, diffusion 8.75. These are full 30k-step pilot runs including offline metrics (S3–S4). Concurrent diffusion: 7.5 / 29.2 / 41.8 / 48.5 aggregate steps/s at 1 / 4 / 6 / 8 processes; slowdown at 8 is 1.24 (S5) | pilot manifests, `reports/session5/cost/train_concurrency.json` |
 | Modal CPU training, 1 thread, x86_64 | Probe container, pure step: BC-MLP 60.4, BC-RNN 12.3, BC-MLP-chunk 87.0, diffusion 8.41 steps/s. A full diffusion run on `train_cpu` (2 cores), metrics and checkpoints included: **6.16 steps/s**, i.e. 0.733 × pure step (S5) | `reports/session5/modal/probe_result.json`, `runs/s5modal2_*/manifest.json` |
 | Modal L4 training | BC-MLP 658, BC-RNN 307, BC-MLP-chunk 664, diffusion **65.2** steps/s, pure step (S5) | `probe_result.json` |
-| Closed-loop evaluation, canonical container | 50-start Lift evaluations take 43–101 s (BC) and 60–88 s (diffusion) (S3–S4). Parallel containers on Lift diffusion: 1.43× at 2, **1.78× at 4**. On Can (random policy): 3.38× at 4. `physics_sha256` unchanged (S5) | `reports/session5/rollout_profile/` |
+| Closed-loop evaluation, canonical container | 50-start Lift evaluations take 43–101 s (BC) and 60–88 s (diffusion) (S3–S4). Parallel containers on Lift diffusion: 1.43× at 2, **1.78× at 4**. On Can (random policy): 3.38× at 4. `physics_sha256` unchanged (S5). Under the Session 6 suite load (4 containers plus up to 8 training runs and a foreign process): 18–26 control steps/s per container, 1.6–3.1× below S3–S4 (KI-035) | `reports/session5/rollout_profile/`, `reports/session6/validation/` |
 | Rendering, 256² | Canonical container: OSMesa and EGL 39–47 ms per frame; macOS CGL 4.6–5.0 ms (S5). Modal GPU EGL vs OSMesa: **PENDING** (KI-001, KI-033) | `logs/session5/modal/render_probe_container_*.log` |
 | Storage | 13–18 MB per checkpoint. Full suite at 100k / 5k: ≈ 27.6 GiB of checkpoints and records (estimate) | `suite_projection.json` |
 
@@ -97,6 +100,31 @@ in all. The test evaluations, 25 % failed-run reserve, storage and rendering are
 - **Rendering:** 40 clips × 400 frames × 2 cameras ≈ 0.4 core-hours with OSMesa (Session 10).
 - **Approved limit:** **$0 paid compute** for the main suite (Gate C, D-051). Any change needs
   a new owner approval row with a cap, and, for GPU training, a protocol amendment.
+
+### Session 6 (Lift) actual vs projected
+Lift is half of the chosen variant above. The projection includes the 25 % failed-run
+reserve; Session 6 had no failed run.
+
+| Quantity | Projected (Session 5, Lift share) | Actual (Session 6) | Source |
+|---|---|---|---|
+| Training runs / validation evaluations | 24 / 480 | 24 / 480 | `reports/session6/suite/level1_core_lift.json` |
+| Training core time | 32.7 core-h (26.2 without the reserve) | **33.25 CPU core-h** (37.54 h summed run wall time) | `logs/session6/analysis/run_table.md` |
+| Training on the critical path | ≈ 3.9 h per diffusion run, two waves | 5.10–5.12 h per diffusion trial, then 3.39 h per replicate (8.5 h in all) | run manifests, KI-035 |
+| Evaluation | 5.4–8.2 h elapsed at 4 containers (≈ 9.6–14.6 single-container hours, derived as × 1.78) | **26.92 container-hours** summed over up to 4 concurrent, contended containers (mean 202 s per evaluation) | suite events |
+| Elapsed, end to end | 10.5–13.3 h (training, then evaluation) | **9.80 h** (06:59–16:47 UTC; the orchestrator overlaps evaluation with training) | suite events |
+| Storage | full suite ≈ 20–28 GiB | `runs/s6_*` 8.7 GB; `reports/session6/` 34 MB | `du` |
+| Cost | $0 | **$0** | — |
+
+- Contention (the suite's own 10 concurrent jobs plus a foreign process) slowed training by
+  about 1.3× on the critical path and evaluation by 1.6–3.1× per container (KI-035). The
+  overlap of training and evaluation more than made up for it.
+- Container-hours are not comparable one to one with the projection's single-container
+  hours. The Session 5 parallel profile predicts about 2.25× per container at 4 in parallel;
+  26.92 / 2.25 ≈ 12.0 single-container hours, inside the projected range (derived, not
+  measured).
+- **For Session 7 (Can):** the projection's Can share is about 17–42 h of evaluation elapsed
+  (the full-suite 22.4–50.7 h minus Lift's 5.4–8.2 h; estimate), plus training like Lift's.
+  Use the Session 5 profiles; if the host is shared again, scale by the Session 6 factors.
 
 ## 5. Approval gates (MASTER_SPEC §6.3)
 - **Gate A:** GPU smoke. **Done** under A-01, $0.148 of $2.00, closed. EGL vs OSMesa on Modal

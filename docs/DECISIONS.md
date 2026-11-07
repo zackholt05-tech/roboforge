@@ -1071,3 +1071,64 @@ commit; no tracked file was edited while runs were in flight.
   are committed in the reports.
 - The orchestrator rehearsal (`s6dev_*`, 200 steps) wrote to `logs/session6/rehearsal/`. It
   is development only: never a trial, never in `reports/session6/validation/`.
+
+### D-057 Validation figures and episode montages: inputs, labels and a fixed example rule (FIXED)
+- **`scripts/plot_validation.py`** (`make figures`) reads only the suite summary
+  (`reports/session6/suite/level1_core_lift.json`), the validation summaries it cites, the
+  training metrics of those runs, the committed training split (action histograms, via
+  `SequenceDataset.from_committed`) and the canonical latency report. It writes:
+  - `training_curves.png`: training loss, and offline validation-demo MSE marked "never
+    selects" (KI-024);
+  - `validation_success.png`: successes per checkpoint, with the §7 selection ringed;
+  - `seed_spread.png`;
+  - `action_histograms.png`, with motion and gripper dimensions apart (KI-022);
+  - `success_vs_latency.png`;
+  - `validation_table.md` and `index.json`, with input and output hashes.
+- **Labels:** every figure and the table carry the same footer: "VALIDATION ONLY …
+  Development numbers, not the held-out test", the source file and the git revision.
+  Colours: one fixed hue per trial (validated categorical palette, CVD-checked). Replicate
+  seeds are dashed (seed 1) or dotted (seed 2), and a legend is always present.
+- **`scripts/render_episodes.py`** draws the success and failure examples by a rule fixed in
+  the script before any rendering. For each family, among the chosen configuration's
+  selected checkpoints ordered by seed, it takes the first success (sorted `state_id`) of
+  the lowest seed, and the first failure of the lowest seed that has one.
+  - Tiles are drawn from the **recorded** physics states with `ShadowRenderer` on scratch
+    data after `restore()`. Nothing is re-simulated, and no live data is touched (KI-019).
+  - The recorded `physics_sha256` is checked against the summary.
+  - Frames are labelled with the render platform: illustration only, the records are the
+    evidence.
+  - Output: `episodes_<family>.png` and `episodes_index.json` (rule, chosen episodes, record
+    hashes).
+- Neither script loads an evaluation suite other than validation, and neither selects
+  anything (contamination check, LEDGER E6-11).
+- **Evidence locations** extend D-056: `logs/session6/{analysis,diagnostics,final}/` and
+  `reports/session6/{suite,selection,tuning,cost_latency,diagnostics,figures}/`, plus
+  `reports/session6/lift_test_configuration.json`.
+
+### D-058 Lift test configuration recorded, not frozen (FIXED)
+- **Machine-readable record:** `reports/session6/lift_test_configuration.json`, written by
+  `logs/session6/analysis/test_configuration_record.py` from the tuning choices and the
+  selection records. It lists, per family:
+  - the chosen trial, its overrides and its config SHA-256;
+  - for seeds 0, 1 and 2, the training run ID, the §7-selected step, the checkpoint SHA-256
+    and the validation result it was selected on.
+
+  That is 12 checkpoints. HANDOFF repeats them.
+- **Held-out initial-state schedule:** referenced **only** by its manifest content hash
+  `e02498651b9d5bb88b6aec0870c5e3277cadaaeaf0e325abf86c79e89b1f22da` (50 states). The hash
+  is the one field read from `reports/session2/eval_states_lift.json`. No test state, ID or
+  statistic was loaded, printed or named. It differs from the validation hash
+  (`0b1368fa…`) used by every Session 6 summary.
+- **This is not the freeze.** Rollout counts, the paired CI method, aggregation, the failure
+  taxonomy and the example-selection rule for the test belong to `docs/FINAL_TEST_FREEZE.md`
+  in Session 7, together with Can. The Lift entries may be frozen as recorded here or not at
+  all; they may not be re-selected.
+
+### D-059 Session 6 scheduling under host contention: renice BC training, never relaunch (FIXED)
+- While a foreign CPU-bound process shared the host (KI-035),
+  `logs/session6/suite/renice_loop.sh` set BC training processes to nice 15 every 60 s.
+  Diffusion stayed at the inherited nice 5, so the diffusion runs on the critical path won
+  contention.
+- Scheduling only: CPU training with 1 thread is deterministic, and evaluation physics does
+  not depend on wall time. The trial-1 checkpoints and evaluations reproduce the pilots
+  exactly (E6-07). No run was stopped, retried or relaunched.

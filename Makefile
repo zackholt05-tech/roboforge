@@ -20,7 +20,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	train-smoke train eval select param-counts overfit-check benchmark-policies \
 	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
 	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
-	cost-estimate train-main suite suite-plan
+	cost-estimate train-main suite suite-plan figures
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -142,6 +142,13 @@ suite-plan:  ## Resolve SUITE_PLAN and print trial -> run ID (launches nothing)
 suite:  ## Run SUITE_PLAN end to end (Gate C limits: 8 training runs, 4 containers, 10 in all)
 	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/run_suite.py \
 		--plan $(SUITE_PLAN)
+
+# Validation-only figures, table and episode montages from a finished suite (D-057).
+SUITE_SUMMARY ?= reports/session$(EVIDENCE_SESSION)/suite/level1_core_lift.json
+LATENCY ?=
+figures:  ## Validation-only figures, table and episode montages from SUITE_SUMMARY (LATENCY=<benchmark json>)
+	$(RUN_S) python scripts/plot_validation.py --summary $(SUITE_SUMMARY) $(if $(LATENCY),--latency $(LATENCY))
+	$(RUN_S) python scripts/render_episodes.py --summary $(SUITE_SUMMARY)
 
 eval:  ## Closed-loop validation of every checkpoint of TRAIN_RUN=runs/<id> on the canonical container
 	@if [ "$(EVAL_SET)" != "validation" ]; then \

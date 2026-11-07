@@ -802,3 +802,197 @@ The amendment fixes:
 - Training and evaluation records go under `runs/` (gitignored). Their summaries and hashes
   are committed in the reports.
 - Development-only artifacts are labeled `dev` or `pre_amendment`.
+
+## Session 5 (2026-11-06 to 2026-11-07)
+Evidence: `reports/session5/`, `logs/session5/` and the cumulative cost ledger
+`reports/compute/cost_ledger.jsonl` (D-052).
+
+Code commits, in order:
+- `c7f043f`: resumable runs and the Modal integration;
+- `2477312`: Volumes created before `app.run`;
+- `af9c93a`: BC-RNN device fix;
+- `a2fe706`: probe sections and launch results;
+- `1d04672`: preemption drill, attempt cap, `repo_relative`;
+- `6951c7a`: render probe and measured Modal rates;
+- `db10a1b`: attempt-aware upper bound and 5k-cadence projections.
+
+The last verified code commit is `db10a1b`. Each evidence record names the commit it ran
+from, and all were clean.
+
+### D-045 The Modal SDK stays outside the project venv; one Modal entrypoint (FIXED)
+- `uv.lock` and `pyproject.toml` are unchanged. The Modal client (1.6.3) lives in a separate
+  Python (here `/opt/anaconda3`, set with `MODAL_PY`).
+- `infra/modal_app.py` is the only file that imports `modal`. It never imports RoboForge on
+  the local side. It calls the project venv (`uv run --frozen python -m
+  roboforge.compute.plan`) for:
+  - plans and run IDs;
+  - git state, data hashes and prices;
+  - the approval gate and the cost ledger.
+- A unit test asserts that no module under `src/` imports `modal`.
+- **Why:** adding the SDK to the lock would change every platform's environment, the
+  canonical image included (D-017). The local side needs only the SDK.
+
+### D-046 Resumable, interrupt-safe training runs (FIXED)
+`src/roboforge/train/{journal,stop}.py`, `train_run(..., launch_id, resume, stop)`,
+`scripts/train.py --resume --launch-id --max-wall-s`.
+- **Launch lock.** `launch.json` (exclusive create) holds the creating launch's nonce.
+  - The same launch ID resumes (Modal restarts a preempted function on the same input).
+  - A different launch ID raises `RunExistsError`, unless it is an explicit `resume` launch.
+  - A run with a manifest is immutable; a restart of its own launch returns the manifest.
+- **Stops act between optimizer steps only.** SIGINT/SIGTERM handlers (main thread only),
+  a deadline and `stop_at_step` set a flag. The loop then writes a **resume checkpoint**
+  (`resume/step_<N>.pt`, indexed in `resume.jsonl`) and returns `status: interrupted`. No
+  manifest is written then.
+  - Without handlers, a `KeyboardInterrupt` records an `aborted` segment, and the run
+    resumes from its last indexed checkpoint.
+- **Only cadence checkpoints enter selection.** `checkpoints.jsonl` indexes each
+  `checkpoints/step_<N>.pt` after its atomic write. The manifest's `checkpoints` lists only
+  these; resume checkpoints are listed separately (`resume_checkpoints`).
+- **What a hard kill can leave:**
+  - an open segment, recorded as `lost` with its last heartbeat;
+  - a torn `.pt.tmp`, or a checkpoint renamed into place without its index line: both are
+    moved to `orphans/`, never used;
+  - metric rows past the resume point, which are truncated.
+
+  An indexed checkpoint whose SHA-256 mismatches raises; there is no fallback to an older
+  file.
+- **Metrics rows** of a step are now written before its checkpoint, and the unaveraged
+  train-row window (`fit_state.log_window`) travels in every checkpoint. A resumed run
+  therefore writes the same rows. Wall-time fields are cumulative over segments.
+- **Equivalence:** an interrupted and resumed run equals an uninterrupted one:
+  - every cadence checkpoint is content-identical (every tensor bitwise, every value
+    equal);
+  - the metric rows match apart from wall-clock fields, and so do the final offline
+    metrics.
+
+  This holds for off-cadence and on-cadence stops, for BC-MLP and diffusion (EMA and noise
+  generator), for real SIGINT/SIGTERM, and after simulated hard-kill debris
+  (`tests/integration/test_resumable_run.py`, 9 tests). File SHA-256 can differ for
+  content-identical checkpoints (KI-029), so equivalence compares content
+  (`checkpoint_differences`). File hashes stay the integrity check.
+- **Compatibility:** uninterrupted runs produce the same manifest fields as before, plus
+  `launch`, `segments`, `resume_checkpoints` and `timing.n_segments`. Checkpoints add
+  `fit_state`. Loading pre-Session-5 checkpoints is unchanged. The Session 3–4 selected
+  checkpoints still pass the equivalence checks (E5-xx).
+
+### D-047 Modal launch policy and remote layout (FIXED for Session 5; DEFAULT for later sessions)
+`configs/compute/modal.yaml`, `infra/modal_app.py`, `src/roboforge/compute/`.
+- **Image:**
+  - `debian_slim(python 3.11)` plus the apt packages of `Dockerfile.sim-cpu`;
+  - `uv_sync(frozen=True, --no-dev, uv 0.11.11)` from `uv.lock`. Nothing calls `uv` at run
+    time (KI-020).
+  - The code directories are mounted at `/app`: `src`, `scripts`, `configs` and
+    `data/{manifests,splits,normalization}`. No evaluation suite and no test state leave
+    the machine (KI-033).
+- **Volumes:** `roboforge-data` at `/data` (`ROBOFORGE_DATA_ROOT`; the processed HDF5,
+  hash-checked against the plan in every attempt) and `roboforge-runs` at `/app/runs`.
+  Modal mounts `/app/runs` through a symlink. Recorded paths stay `runs/<run_id>/...`
+  (D-050) and resolve unchanged after download.
+- **Policy for every function:**
+  - `max_containers=1`, `retries=0`, `single_use_containers=True`;
+  - `scaledown_window=2` s;
+  - preemptible;
+  - an explicit per-launch timeout via `with_options`, with the job's own deadline
+    `deadline_margin_s` (180 s) earlier;
+  - one small GPU at most (`gpu_probe`: L4); never multi-GPU.
+- **Attempts:** Modal reschedules an input whose container exits on an interrupt, even with
+  `retries=0`, and each attempt gets the full timeout (KI-031). The job therefore counts its
+  launch's attempts in the run journal. At `max_attempts_per_launch` (4) it returns
+  `status: error` without training. The launch upper bound prices all 4 attempts.
+- **Functions:**
+  - `train_cpu` (2 cores, 4 GiB): CPU training with 1 torch thread, the protocol's training
+    setting (RESEARCH_PROTOCOL §6.2);
+  - `gpu_probe` (L4, 4 cores, 16 GiB, 15 min): Gate A only.
+    - Each section (CUDA info, EGL and OSMesa render checks, each family's CPU and CUDA
+      training profile) is recorded separately, with tracebacks, and printed as one JSON
+      line.
+    - The render check is `scripts/render_probe.py`, which needs no dataset or suite.
+  - GPU training is not a protocol path. It would need a dated amendment.
+- **Engineering smoke only:**
+  - `simulate_preemption_s` arms `remote.arm_preemption_drill`: a real SIGINT, then SIGKILL
+    30 s later, as in a Modal preemption, on a launch's first attempt only.
+    `modal.exception.simulate_preemption` is not used: it raises `KeyboardInterrupt` and
+    bypasses the job's handler.
+  - `stop_at_step` ends a launch cleanly, so a separate `resume` launch has work.
+- **Default is a dry run.** `python infra/modal_app.py train|probe ...` prints the plan and
+  the upper-bound estimate, logs a `dry_run` event and contacts no server. It was verified
+  with an empty `HOME` and no Modal token.
+- **A paid launch** needs `--budget-approved A-xx`. The gate (`roboforge.compute.plan
+  authorize`) checks:
+  - a clean tree;
+  - an unused run ID (`new`) or a previously launched one (`resume`);
+  - the approval row in `docs/EXPERIMENT_LEDGER.md` (status `granted`, function in scope);
+  - committed spend + upper bound ≤ cap.
+
+  Only then does it log the `launch` event. The launcher records the result even when the
+  remote call raises `KeyboardInterrupt`.
+- **Kill path:** Ctrl-C in the launching terminal (it stops the ephemeral app), or
+  `python infra/modal_app.py cancel --app-id ap-...` (`modal app stop --yes`).
+- **Platform:** a Modal image is a different platform from the canonical container (D-017).
+  It never produces canonical evaluation evidence. Modal-trained checkpoints are evaluated
+  only on the canonical container after a hash-checked download. Session 5 did exactly that
+  (E5-08).
+
+### D-048 Makefile defaults bumped to Session 5 (FIXED)
+`EVIDENCE_SESSION` now falls back to 5 and `PREFIX` to `s5`, so that a Session 5 command
+cannot write into `reports/session4` or reuse the `s4` prefix by omission. Every Session 5
+command also passed `ROBOFORGE_EVIDENCE_SESSION=5` explicitly. `make modal-sim` takes
+`SIM_ROOT`, `SIM_PREFIX` and `SIM_REPORT`. **Session 6 must pass `EVIDENCE_SESSION=6
+PREFIX=s6` (or bump the defaults as a recorded change).**
+
+### D-049 Cost ledger and owner approvals (FIXED)
+- `reports/compute/cost_ledger.jsonl` (`roboforge.cost_event/1`) is append-only, committed
+  and cumulative across sessions. Its events:
+  - `dry_run`;
+  - `launch` (approval, resources, timeout, upper bound);
+  - `result` (status, measured container seconds, list-price cost of that time);
+  - `billing` (amounts from `modal billing report`, never computed).
+- The spend counted against a cap is per launch: billed if reconciled, else the
+  measured-time estimate, else the upper bound. The upper bound covers
+  `max_attempts_per_launch` attempts of the full timeout, plus the build/start allowance
+  (D-047).
+- Approvals are rows of the table "Owner approvals for paid compute" in
+  `docs/EXPERIMENT_LEDGER.md`: ID, date, gate, functions, cap, status, evidence (the owner's
+  words). `roboforge.compute.approval` parses them.
+- **Not a hard stop:** the gate is client-side, and Modal can act outside it (KI-031).
+  Only a Modal workspace budget caps spending.
+- A closed approval is set to `exhausted`. A-01 was closed at the end of Gate A (E5-17).
+
+### D-050 Repository-relative paths are lexical first (FIXED)
+`roboforge.paths.repo_relative` now tries the unresolved absolute path first, and resolves
+symlinks only if that path is not inside the repository.
+- **Why:** a directory mounted through a symlink inside the repository keeps its
+  repository path. Modal mounts `/app/runs` that way, and the old resolve-first rule wrote
+  `/__modal/volumes/<id>/...` into the run journal (KI-032).
+- **Effect:**
+  - Paths without symlinks are unchanged. Every Session 1–4 manifest still verifies.
+  - Paths outside the repository are recorded resolved, as before (`/out` in a container).
+  - `tests/integration/test_remote_job.py` and the local simulation mount runs through a
+    symlink and assert `runs/<run_id>/...`.
+
+### D-051 Main-suite compute path: local CPU only (FIXED by owner Gate C, 2026-11-07)
+- The owner chose **local CPU only, $0** for the main suite (Gate C; EXPERIMENT_LEDGER
+  Gate C entry).
+  - Training: the development host, 1 torch thread, at most 8 concurrent runs (measured
+    slowdown 1.24 at 8).
+  - Evaluation: the canonical container, at most 4 in parallel (measured 1.78× throughput;
+    `physics_sha256` unchanged).
+- **No Modal resource is used in Sessions 6–7** without a new recorded approval. A-01 is
+  closed.
+- **Training budget** (RESEARCH_PROTOCOL §13, 2026-11-07): 100,000 steps, checkpoints every
+  5,000, identical across the 4 families and both tasks.
+- **Why local:**
+  - It is the protocol's training platform, the same as tuning trial 1.
+  - It is free.
+  - It is faster in wall time than Modal CPU at `max_containers=1`: 97–132 sequential
+    container-hours for the full suite, $12.35–16.72.
+  - Modal GPU ($12.36–16.02) would be a protocol deviation, and its CUDA kernels are not
+    bitwise deterministic.
+  - Figures: `reports/session5/cost/suite_projection.json` (estimates).
+
+### D-052 Session 5 evidence location (FIXED)
+`reports/session5/` and `logs/session5/`, with `ROBOFORGE_EVIDENCE_SESSION=5` set
+explicitly, plus the cumulative `reports/compute/cost_ledger.jsonl`. The fetched
+Modal-trained run (`runs/s5modal2_*`) and the simulated runs (`runs/s5sim*`) are gitignored
+like every run. Their manifests, hashes and retrieval reports are in `logs/session5/modal/`
+and `reports/session5/modal_sim/`.

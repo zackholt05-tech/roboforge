@@ -168,11 +168,18 @@ action space, float32 on CPU, and the decode/clip path of §4. Parameter counts 
   of gradient steps and checkpoint cadence, so every family sees the same number of training
   samples. Wall-clock and CPU time are reported per run.
   - *Session 3 pilot:* 30,000 steps, checkpoints every 5,000 steps (6 checkpoints).
-  - *Main runs (Session 6):* DEFAULT 100,000 steps, checkpoints every 10,000 (10
-    checkpoints). Session 5 must confirm this from measured costs before any main run; it
-    stays identical across families.
+  - *Main runs (Sessions 6–7):* **FIXED (amendment 2026-11-07):** 100,000 steps,
+    checkpoints every **5,000** (K = 20 checkpoints), identical across families and on both
+    tasks. Every one of the 20 checkpoints is evaluated (§7, no stride). Measured costs and
+    the reason for the 5k cadence: `reports/session5/cost/suite_projection.json`, §13.
 - **Tuning budget:** at most **4 configurations per family per task**, each trained with
   seed 0 and selected by the rule of §7.
+  - Every tuning run uses the main budget above. A family's configuration is chosen by
+    comparing the §7-selected checkpoints of its seed-0 runs: highest validation success
+    count, then lower mean first-success step, then the lower trial number.
+  - Trial 1 is the pilot's configuration. It is re-trained at the main budget with seed 0;
+    this re-run is trial 1 at the main budget, not an additional trial. The 30k pilot stays
+    a recorded development run and is never compared with main-budget runs.
   - The search space of each family is written in `docs/EXPERIMENT_LEDGER.md` before its
     first tuning run.
   - The **Session 3 pilots count as trial 1** for BC-MLP and BC-RNN on Lift, so diffusion
@@ -328,3 +335,4 @@ unbiased estimate.
 | 2026-11-06 | all | v1 finalized from the Session 0–2 draft | Session 3 requirement: finalize before any reported run | none (no reported run existed) |
 | 2026-11-06 | §6.3 | The Session 3 BC-MLP-chunk Lift pilot also counts as **trial 1 of BC-MLP-chunk** on Lift | It was run and reported alongside the BC-MLP and BC-RNN pilots; every reported run must count against its family's tuning budget | accounting only: no rule or result changes |
 | 2026-11-06 | §5, §6.1, §6.4 (new), §8 | **Session 4: every diffusion item marked TO FINALIZE is fixed**: flatten observation encoder; 1D U-Net (64, 128) with 64-D timestep embedding and FiLM, 1,092,551 parameters (capacity rule not triggered); DDPM forward process K = 100, `squaredcos_cap_v2`, ε-prediction, masked MSE; DDIM-10 sampler, η = 0, `clip_sample`, 1 sample per decision; EMA (power 0.75) as the evaluated network; T_o/T_p/T_a = 2/16/8; BC optimizer and budgets; noise-seed rule with `policy_seed = 0`, R = 1; the Session 4 Lift pilot is diffusion's tuning trial 1 | MASTER_SPEC Session 4 requires these values before the first reported diffusion run. Sampler chosen from latency measured on the canonical container (DDIM-10 42 ms vs DDPM-100 436 ms per decision); architecture sized to the 1.08 M BC budget within the spec's bounds (width 64–256, 2–3 stages) | none: committed before the first diffusion pilot run |
+| 2026-11-07 | §6.3, §7 | **Session 5: main training budget fixed** at 100,000 steps with checkpoints every **5,000** (K = 20; was DEFAULT 100k / 10k), identical across the **4 main-suite families** (BC-MLP, BC-RNN, BC-MLP-chunk as the H2-c control, diffusion; MASTER_SPEC's "3 algorithms" plus the control already in §6.1) and on Lift and Can. All 20 checkpoints are evaluated (no stride). Tuning runs use the main budget; trial 1 is the pilot configuration re-trained at the main budget with seed 0 (not an extra trial); the configuration is chosen by the §7 ordering of the seed-0 runs' selected checkpoints. Compute (owner Gate C, 2026-11-07): local CPU only, 1 torch thread, ≤ 8 concurrent training runs; evaluation on the canonical container, ≤ 4 in parallel; no Modal | Owner decision after the Session 5 measurements. Every family's best Lift pilot checkpoint came at ≤ 15k of 30k steps and BC-MLP's at 5k (47/50), which a 10k cadence never evaluates; 100k keeps headroom for Can and diffusion. Cost is local time only: Lift ≈ 5.1 h training (core-h ÷ 8; the two tuning waves make the critical path ≥ 2 diffusion runs) + 5.4–8.2 h evaluation; full suite evaluation 22–51 h (estimates). Parallel evaluation does not change results (`physics_sha256` equal at 4 containers) | none: no main-suite run exists |

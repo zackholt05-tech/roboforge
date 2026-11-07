@@ -34,7 +34,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-027 | LOW | ACCEPTED | Diffusion samples depend on batch size at float-rounding level |
 | KI-028 | MEDIUM | OPEN | All diffusion pilot failures are one start, under one noise seed (R = 1) |
 
-### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 and EGL not
+### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
   - `uv sync --frozen` installs the full lockfile on linux/aarch64 (Debian bookworm) and
     builds `egl_probe` (`logs/session0/docker_build_sim_cpu.log`).
@@ -51,9 +51,16 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
     `logs/session0/platform_comparison.log`.
 - **Measured cost:** OSMesa takes 88–196 ms per 256² frame (mean over 9 frames per task,
   including first-frame setup), against 7–8 ms with macOS CGL.
-- **Not verified:**
-  - linux/x86_64 install (Modal's architecture).
-  - EGL on Modal GPUs.
+- **Verified on Modal (Session 5, Gate A, approval A-01):**
+  - **linux/x86_64 install:** `Image.uv_sync(frozen=True, --no-dev)` installed the whole
+    lockfile. Every job imported torch 2.15.0, mujoco 3.2.7 and robosuite 1.5.1 and ran:
+    training on CPU in all launches, the CUDA profiles in the probe.
+  - **CUDA:** NVIDIA L4, driver 610.57.04, torch CUDA 13.2. All four families trained on
+    the GPU (EXPERIMENT_LEDGER E5-09).
+- **Not verified:** EGL vs OSMesa inside a Modal GPU container. The probe's render check
+  failed before rendering because the image carries no evaluation suite (KI-033). A fixed
+  check (`scripts/render_probe.py`) is ready for a future approved probe. In the canonical
+  (CPU) container both OSMesa and EGL render, at 39–47 ms per 256² frame.
 - **Impact:** none for Level 1 state-based work. RGB extraction (Session 8) can fall back to
   OSMesa on CPU, which is about 10–25× slower than hardware rendering.
 - **History:** the first container run (before the restart) failed with Docker storage
@@ -501,3 +508,103 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - a diagnostic-only multi-seed rerun of this start.
 
   Neither may change selection retroactively.
+
+### KI-029 — Content-identical checkpoints can have different file SHA-256
+- **Observed (Session 5):** a run interrupted at step 30 and resumed wrote a step-40
+  checkpoint with a different SHA-256 from the uninterrupted run's step-40 file. Every tensor
+  was bitwise equal and every other value equal (`payload_differences` empty).
+- **Cause:** the zip member `data.pkl` differed in length (6,935 vs 6,978 bytes). The pickle
+  inside `torch.save` memoizes repeated Python objects by identity. In the uninterrupted
+  process, values such as the optimizer's `betas` tuple are the same objects as the
+  config's. After `load_state_dict` they are separate objects, so they serialize differently.
+- **Rule:** resume and transfer equivalence compares **content**
+  (`roboforge.train.checkpoint.checkpoint_differences`). The file SHA-256 remains the
+  integrity check for storage and download, and it is what manifests and selection record.
+- **Impact:** none on results. A resumed run's checkpoint hashes are its own, recorded in its
+  manifest like any other run's.
+
+### KI-030 — Gate A probe lost every result to a BC-RNN CUDA device bug (FIXED, Session 5)
+- **Observed:** probe launch 2 (L4, app `ap-YAO3zMqPWKlHWy5cyQ0kT2`, billed $0.0657, 184 s of
+  L4) failed in the CUDA training profile of `bc_rnn`: `RuntimeError: Expected all tensors
+  to be on the same device ... cuda:0 and cpu`. `BCRNN.encode` built its alignment index with
+  `torch.arange(horizon)` on the CPU. The probe's sections ran in one call chain, so the one
+  exception discarded every earlier result. The container log shows that the CPU profile of
+  all four families, both render smokes and the CUDA profile of `bc_mlp` had run.
+- **Fix:** the index is created on the mask's device (`af9c93a`). On the CPU it is the same
+  tensor, so protocol runs and reference tests are unchanged (full suite passed). A new test
+  runs BC-RNN on Apple MPS and compares it with the CPU output (the bug reproduced on MPS).
+- **Probe hardening:** every probe section (CUDA info, EGL smoke, OSMesa smoke, each family's
+  CPU and CUDA profile) runs separately. A failed section is recorded with its traceback,
+  and the status becomes `partial`. Each section is also printed as one JSON line, so `modal
+  app logs` keeps the evidence. A render smoke fails its section unless all checks passed.
+- **Also fixed:** the launcher read `app.app_id` after the app had stopped. The ledger result
+  of launch 2 therefore had no app ID; it was reconciled by hand from the launch log.
+- **Earlier launch 1** (`ap-LyuJSmb9OLUAKPQ0oGZMQt`, billed $0.00001) failed before any job
+  ran: `app.run()` looked up the Volumes before `_upload_data` created them (fixed in
+  2477312).
+
+### KI-031 — Modal reschedules an interrupted input despite retries=0; simulate_preemption bypasses SIGINT handlers (FIXED, Session 5)
+- **Observed:** the Gate A training smoke (app `ap-ObjyqZEiECqNHIh4j3xt7n`, run
+  `s5modal_diffusion_unet_lift_seed0_2fda84af`) ran 8 attempts in 12.5 min. Each attempt was
+  interrupted about 80 s into training and recorded as `aborted` with no resume checkpoint.
+  Each time, Modal started the same input again in a new container (AWS, GCP and Azure
+  regions). It was stopped by hand with `modal app stop`.
+- **Causes:**
+  1. `modal.exception.simulate_preemption` does not send SIGINT. Its SIGALRM handler raises
+     `KeyboardInterrupt` directly (modal 1.6.3, `exception.py`), so the job's SIGINT handler
+     never ran.
+  2. When the container exits on `KeyboardInterrupt`, Modal reschedules the input, although
+     the function has `retries=0`.
+  3. The plan re-armed the drill on every attempt, so the loop could not end on its own.
+- **Fixes:**
+  - The drill (`remote.arm_preemption_drill`) sends a real SIGINT, and SIGKILL 30 s later as
+    in a Modal preemption. It arms on a launch's first attempt only.
+  - Each launch has an attempt cap (`policy.max_attempts_per_launch: 4`). Past it, the job
+    returns `status: error` without training, so no restart loop can run unbounded.
+  - `stop_at_step` can end a launch cleanly, so that a separate resume launch has work to
+    do.
+  - `infra/modal_app.py cancel` passes `--yes` (it failed without a terminal).
+  - The launch upper bound prices all 4 allowed attempts, each held for the full timeout
+    (`db10a1b`). Before, one attempt was priced, while smoke 1 ran 8 attempts against a
+    $0.11 bound.
+- **Retry semantics now:**
+  - a function failure is not retried (`retries=0`);
+  - an interrupt or preemption reschedule runs at most 4 attempts per launch;
+  - `nonpreemptible=True` would avoid preemptions, at 3× the price.
+
+  The gate is client-side. Only a Modal workspace budget is a hard spending cap.
+  - `tests/integration/test_remote_job.py` covers the drill, the restart, the cap and the
+    paths.
+- **What the incident did prove:** every restart verified the data hash and resumed under
+  the same launch ID from the indexed step-500 checkpoint. It dropped the metric rows past
+  that point and recorded the segment. The checkpoint at step 1000 was renamed into place
+  but never indexed, the torn case that orphan quarantine handles.
+- **Run status:** `s5modal_diffusion_unet_lift_seed0_2fda84af` is abandoned and never used
+  as evidence. Its journal is kept in `logs/session5/modal/abandoned_<run_id>/`; it records
+  absolute paths (KI-032).
+
+### KI-032 — Paths under a symlinked mount were recorded absolute (FIXED, Session 5)
+- **Observed:** on Modal, `/app/runs` is a symlink to `/__modal/volumes/<id>`.
+  `repo_relative` resolved symlinks first, so the journal recorded
+  `/__modal/volumes/vo-…/<run_id>/checkpoints/…` instead of `runs/<run_id>/…`. Such paths do
+  not resolve after download.
+- **Fix:** `repo_relative` tries the lexical (unresolved) path first and falls back to the
+  resolved one. The local simulation now mounts its runs directory through a symlink too,
+  and the new remote-job test asserts repo-relative paths.
+
+### KI-033 — The Modal image carries no evaluation suite, so the probe's render check never rendered (OPEN: EGL vs OSMesa pending)
+- **Observed:** in the Gate A probe retry (app `ap-WKAnfgdtYEriXZDg6FtoCC`) both render
+  sections failed before rendering:
+  `FileNotFoundError: /app/data/eval_states/lift/validation.json`. `smoke_sim.py` loads
+  the validation suite. The image mounts only `src`, `scripts`, `configs` and
+  `data/{manifests,splits,normalization}`, which is deliberate: no evaluation state goes to
+  Modal.
+- **Consequence:** EGL vs OSMesa on a Modal GPU is still **unmeasured** (KI-001). The
+  approved retry was spent, and no further launch was made.
+- **Fix, ready for a future approved probe:** `scripts/render_probe.py` renders the task
+  offscreen with no dataset and no evaluation suite. The probe now uses it.
+  - Verified with OSMesa and EGL in the canonical container, and with CGL on macOS.
+  - `tests/simulator/test_render_probe.py` runs it from a copy holding only the image's
+    code directories.
+- **Impact:** none on Level 1. Evaluation and rendering run on the canonical container,
+  where OSMesa is verified. RGB extraction (Session 8) can stay local.

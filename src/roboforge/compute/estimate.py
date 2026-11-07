@@ -117,6 +117,12 @@ def _profile_row(prof: dict[str, Any], job: str, p: int) -> dict[str, Any]:
     return next(r for r in prof["levels"] if r["job"] == job and r["P"] == p)
 
 
+def gpu_steps_per_s(probe: dict[str, Any] | None, family: str) -> float | None:
+    """Measured CUDA steps/s of ``family`` from the Gate A probe, if that section succeeded."""
+    sec = ((probe or {}).get("training_profile") or {}).get("cuda", {}).get(family)
+    return float(sec["value"]["steps_per_s_median"]) if sec and sec.get("ok") else None
+
+
 def suite_counts(tuning: str, steps: int, ckpt_every: int) -> dict[str, Any]:
     """Runs and evaluations of the main suite (4 families x 2 tasks)."""
     configs = {"max": 4, "none": 1}[tuning]
@@ -192,10 +198,7 @@ def modal_training_cost(inp: dict[str, Any], proj: dict[str, Any], cfg: dict[str
                 fn = cfg["functions"]["train_cpu"]
                 res = Resources(secs + start, fn["cpu"], fn["memory_mib"] / 1024)
             else:
-                sps = None
-                if probe and probe.get("training_profile", {}).get("cuda"):
-                    sps = {r["family"]: r["steps_per_s_median"]
-                           for r in probe["training_profile"]["cuda"]}.get(f)
+                sps = gpu_steps_per_s(probe, f)
                 if sps is None:
                     sps = ASSUME["gpu_steps_per_s"]["high" if bound == "low" else "low"][f]
                 secs = c["steps_per_run"] / sps
@@ -208,8 +211,10 @@ def modal_training_cost(inp: dict[str, Any], proj: dict[str, Any], cfg: dict[str
                                    cfg["build_allowance"]["memory_gib"]), pricing)["total_usd"]
         out[bound] = {"usd": reserve * usd + build, "container_h": reserve * hours,
                       "sequential_wall_h_max_containers_1": reserve * hours}
-    out["gpu_source"] = ("Gate A probe (measured)" if probe and device == "cuda"
-                         else "scenario range (unmeasured)" if device == "cuda" else None)
+    measured = [f for f in FAMILIES if gpu_steps_per_s(probe, f) is not None]
+    out["gpu_source"] = (None if device == "cpu" else
+                         f"Gate A probe (measured: {', '.join(measured)}; others scenario range)"
+                         if measured else "scenario range (unmeasured)")
     return out
 
 

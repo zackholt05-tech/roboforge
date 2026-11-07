@@ -225,3 +225,22 @@ def test_job_estimate_cli_prices_the_requested_gpu(capsys) -> None:
     out = json.loads(capsys.readouterr().out)
     assert out["job"]["resources"]["gpu"] == "T4"
     assert out["job"]["gpu_usd"] == pytest.approx(0.000164 * (900 + 2))
+
+
+def test_probe_sections_record_failures_and_estimate_reads_only_successes() -> None:
+    from roboforge.compute.estimate import gpu_steps_per_s
+    from roboforge.compute.remote import _section
+
+    failed: list[str] = []
+    ok = _section("a", lambda: 1, failed)
+    bad = _section("b", lambda: 1 / 0, failed)
+    assert ok["ok"] and ok["value"] == 1
+    assert not bad["ok"] and bad["error"].startswith("ZeroDivisionError")
+    assert "Traceback" in bad["traceback"] and failed == ["b"]
+    probe = {"training_profile": {"cuda": {
+        "bc_mlp": {"ok": True, "value": {"steps_per_s_median": 250.0}},
+        "bc_rnn": {"ok": False, "error": "RuntimeError: x"}}}}
+    assert gpu_steps_per_s(probe, "bc_mlp") == 250.0
+    assert gpu_steps_per_s(probe, "bc_rnn") is None
+    assert gpu_steps_per_s(probe, "diffusion_unet") is None
+    assert gpu_steps_per_s(None, "bc_mlp") is None

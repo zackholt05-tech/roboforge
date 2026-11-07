@@ -46,7 +46,11 @@ def host_info() -> dict[str, Any]:
 
     modal_env = {k: v for k, v in os.environ.items()
                  if k.startswith("MODAL_") and "TOKEN" not in k and "SECRET" not in k}
-    return {"machine": platform.machine(), "system": platform.system(),
+    import threading
+
+    return {"main_thread": threading.current_thread() is threading.main_thread(),
+            "executable": sys.executable,
+            "machine": platform.machine(), "system": platform.system(),
             "platform": platform.platform(), "python": sys.version.split()[0],
             "cpu": _cpu_model(), "cpu_count": os.cpu_count(), "modal_env": modal_env,
             "packages": package_versions(("torch", "mujoco", "robosuite", "numpy"))}
@@ -127,8 +131,39 @@ def _smoke(backend: str, out_dir: Path) -> dict[str, Any]:
             "wall_s": time.perf_counter() - t, "tail": lines[-15:]}
 
 
+def _smoke_checked(backend: str, out_dir: Path) -> dict[str, Any]:
+    """:func:`_smoke`, raising (with the whole record) unless every check passed."""
+    r = _smoke(backend, out_dir)
+    if r["returncode"] or r["failed"] or not r["passed"]:
+        raise RuntimeError(f"smoke_sim with MUJOCO_GL={backend} failed: {json.dumps(r)}")
+    return r
+
+
+def _section(name: str, fn: Callable[[], Any], failed: list[str]) -> dict[str, Any]:
+    """Run one probe section. A failure is recorded with its traceback, not raised, so the
+    sections after it still run; the probe's status then says which sections failed."""
+    import traceback
+
+    t = time.perf_counter()
+    try:
+        rec = {"ok": True, "value": fn(), "seconds": time.perf_counter() - t}
+    except Exception as exc:  # recorded in the result and in its status
+        failed.append(name)
+        rec = {"ok": False, "error": f"{type(exc).__name__}: {exc}",
+               "traceback": traceback.format_exc(), "seconds": time.perf_counter() - t}
+    # One JSON line per section on stdout, so the container log keeps the evidence even if
+    # the job is later lost to a timeout or preemption.
+    print(json.dumps({"probe_section": name, **rec}, default=str), flush=True)
+    return rec
+
+
 def probe_job(plan: dict[str, Any], *, out_dir: Path) -> dict[str, Any]:
-    """Gate A probe: platform (KI-001), CUDA, EGL vs OSMesa rendering, training throughput."""
+    """Gate A probe: platform (KI-001), CUDA, EGL vs OSMesa rendering, training throughput.
+
+    Every section (and every family of each training profile) runs separately through
+    :func:`_section`. The status is ``complete`` only if all of them succeeded, otherwise
+    ``partial`` with the failed sections listed.
+    """
     import torch
 
     from roboforge.compute.profile import profile_training
@@ -136,21 +171,28 @@ def probe_job(plan: dict[str, Any], *, out_dir: Path) -> dict[str, Any]:
     t0 = time.perf_counter()
     _set_git_env(plan)
     out_dir.mkdir(parents=True, exist_ok=True)
-    smi = subprocess.run(["nvidia-smi", "--query-gpu=name,driver_version,memory.total",
-                          "--format=csv,noheader"], capture_output=True, text=True)
-    cuda = {"available": torch.cuda.is_available(), "torch": torch.__version__,
-            "torch_cuda": torch.version.cuda,
-            "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
-            "nvidia_smi": smi.stdout.strip() or smi.stderr.strip()}
-    render = [_smoke(b, out_dir) for b in ("egl", "osmesa")]
+    failed: list[str] = []
+
+    def cuda_info() -> dict[str, Any]:
+        smi = subprocess.run(["nvidia-smi", "--query-gpu=name,driver_version,memory.total",
+                              "--format=csv,noheader"], capture_output=True, text=True)
+        return {"available": torch.cuda.is_available(), "torch": torch.__version__,
+                "torch_cuda": torch.version.cuda,
+                "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+                "nvidia_smi": smi.stdout.strip() or smi.stderr.strip()}
+
+    cuda = _section("cuda", cuda_info, failed)
+    render = {b: _section(f"render:{b}", lambda b=b: _smoke_checked(b, out_dir), failed)
+              for b in ("egl", "osmesa")}
     p = plan["probe"]
-    prof = {"cpu_1thread": [profile_training(f, p["task"], "cpu", p["steps"])
-                            for f in p["families"]]}
-    if cuda["available"]:
-        prof["cuda"] = [profile_training(f, p["task"], "cuda", p["steps"])
-                        for f in p["families"]]
-    result = {"status": "complete", "launch_id": plan["launch_id"], "host": host_info(),
-              "cuda": cuda, "render": render, "training_profile": prof,
+    devices = ["cpu"] + (["cuda"] if cuda["ok"] and cuda["value"]["available"] else [])
+    prof = {d: {f: _section(f"profile:{d}:{f}",
+                            lambda d=d, f=f: profile_training(f, p["task"], d, p["steps"]),
+                            failed)
+                for f in p["families"]} for d in devices}
+    result = {"status": "partial" if failed else "complete", "failed_sections": failed,
+              "launch_id": plan["launch_id"], "host": host_info(), "cuda": cuda,
+              "render": render, "training_profile": prof,
               "container_wall_s": time.perf_counter() - t0}
     (out_dir / "probe_result.json").write_text(json.dumps(result, indent=1, default=str) + "\n")
     return result

@@ -93,11 +93,23 @@ def train_cpu(plan: dict[str, Any]) -> dict[str, Any]:
     from roboforge.compute.remote import train_job
 
     runs_vol.reload()  # see the latest committed state (a preemption restart resumes it)
+    sim = None
     if plan.get("simulate_preemption_s"):  # engineering smoke of the preemption path only
-        from modal.exception import simulate_preemption
+        sim = {"seconds": int(plan["simulate_preemption_s"])}
+        try:  # Modal's helper: SIGALRM -> SIGINT, a second interrupt 30 s later
+            from modal.exception import simulate_preemption
 
-        simulate_preemption(int(plan["simulate_preemption_s"]))
+            simulate_preemption(sim["seconds"])
+            sim["method"] = "modal.exception.simulate_preemption"
+        except ValueError:  # signal.signal needs the main thread: send a real SIGINT instead
+            import os
+            import signal
+            import threading
+
+            threading.Timer(sim["seconds"], os.kill, (os.getpid(), signal.SIGINT)).start()
+            sim["method"] = "threading.Timer -> os.kill(SIGINT) (not on the main thread)"
     res = train_job(plan, commit=runs_vol.commit)
+    res["simulated_preemption"] = sim
     res["modal"] = {"function": "train_cpu"}
     return res
 
@@ -164,15 +176,21 @@ def _launch(plan_path: Path, approval: str) -> int:
         return 2
     fn = train_cpu if plan["function"] == "train_cpu" else gpu_probe
     result: dict[str, Any]
+    app_id = None  # read while the app runs: app.app_id is unset again after it stops
     t0 = time.time()
     try:
         upload = _upload_data(plan)
         with modal.enable_output(), app.run():
+            app_id = app.app_id
             result = fn.with_options(timeout=plan["timeout_s"]).remote(plan)
-            result.setdefault("modal", {}).update(app_id=app.app_id, upload=upload)
-    except Exception as exc:  # recorded in the ledger, then re-raised for the operator
+            result.setdefault("modal", {}).update(app_id=app_id, upload=upload)
+    except BaseException as exc:  # incl. KeyboardInterrupt (Ctrl-C, or re-raised remotely)
         result = {"status": "error", "detail": f"{type(exc).__name__}: {exc}",
-                  "modal": {"app_id": app.app_id}}
+                  "modal": {"app_id": app_id}}
+        reraise = None if isinstance(exc, Exception) else exc
+    else:
+        reraise = None
+    # Written and logged in every case, so no launch event is left without its result.
     result["client_wall_s"] = time.time() - t0
     out = plan_path.with_suffix(".result.json")
     out.write_text(json.dumps(result, indent=1, default=str) + "\n")
@@ -180,6 +198,8 @@ def _launch(plan_path: Path, approval: str) -> int:
                 "--result", str(out))
     print(rec.stdout[-2000:], rec.stderr[-2000:])
     print(f"result: {out}")
+    if reraise is not None:
+        raise reraise
     return 0 if result.get("status") == "complete" else 1
 
 

@@ -140,8 +140,12 @@ def _print_plan(plan: dict[str, Any]) -> None:
 
 
 def _upload_data(plan: dict[str, Any]) -> dict[str, Any]:
-    """Create the data Volume if needed and upload the plan's processed file (paid path)."""
+    """Create both Volumes if needed and upload the plan's processed file (paid path only).
+
+    Runs **before** ``app.run()``: starting the app looks the Volumes up by name, so they
+    must exist by then."""
     vol = modal.Volume.from_name(APP["volumes"]["data"]["name"], create_if_missing=True)
+    vol.hydrate()
     modal.Volume.from_name(APP["volumes"]["runs"]["name"], create_if_missing=True).hydrate()
     rel = plan["data"]["processed_relpath"] if plan.get("data") else \
         "processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5"
@@ -162,8 +166,8 @@ def _launch(plan_path: Path, approval: str) -> int:
     result: dict[str, Any]
     t0 = time.time()
     try:
+        upload = _upload_data(plan)
         with modal.enable_output(), app.run():
-            upload = _upload_data(plan)
             result = fn.with_options(timeout=plan["timeout_s"]).remote(plan)
             result.setdefault("modal", {}).update(app_id=app.app_id, upload=upload)
     except Exception as exc:  # recorded in the ledger, then re-raised for the operator

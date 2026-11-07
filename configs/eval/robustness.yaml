@@ -1,0 +1,48 @@
+# Session 7 robustness starts (RESEARCH_PROTOCOL §14.1-14.2, DECISIONS D-063).
+# Read by roboforge.sim.robustness. Validation regime only: these starts never select a model,
+# and they are disjoint from the validation and held-out test suites. Changing anything here
+# changes the suite hashes and needs a dated protocol amendment before any run that uses them.
+schema: roboforge.robustness_suites/1
+tasks: [lift, can]
+partition: eval_robustness
+base:
+  name: robustness_base
+  seed_base: 300000          # state i uses global seed seed_base + i (standard reset distribution)
+  n_states: 50
+  reserved_seeds: [300000, 400000]   # ad-hoc resets may not use seeds in this block
+# OOD state i = perturbation of base state i; draws from
+# numpy.random.default_rng(SeedSequence([draw_seed, code, i, attempt])).
+draw_seed: 20261107
+ood:
+  ood_cube_shift:
+    code: 1
+    tasks: [lift]
+    kind: cube_shift
+    object_joint: cube_joint0
+    center_xy: [0.0, 0.0]          # Lift placement centre (table_offset x, y)
+    training_half_range_m: 0.03    # Lift places the cube in centre +- 0.03 m in x and y
+    radius_m: [0.05, 0.07]         # new centre radius ~ U[0.05, 0.07], angle ~ U[-pi, pi)
+  ood_arm_offset:
+    code: 2
+    tasks: [lift, can]
+    kind: arm_offset
+    joints: [robot0_joint1, robot0_joint2, robot0_joint3, robot0_joint4, robot0_joint5,
+             robot0_joint6, robot0_joint7]
+    offset_rad: 0.10               # every arm joint +- 0.10 rad, fair independent signs
+    training_noise_sigma_rad: 0.02 # robosuite's Gaussian initialization noise
+validity:
+  max_attempts: 20
+  joint_margin_rad: 0.01
+  max_penetration_m: 0.001
+  settle_steps: 20
+  settle_action: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0]   # hold pose, gripper open
+  settle_xy_tol_m: 0.01
+  settle_z_tol_m: 0.005
+  # At rest: the object moves < settle_rest_tol_m over the last settle_rest_window_steps steps.
+  # (Amended 2026-11-07: a can resting in its bin keeps ~0.01 m/s of contact-solver velocity
+  # jitter while its position changes < 0.1 mm over 2 s, so an instantaneous speed is no test.)
+  settle_rest_window_steps: 5
+  settle_rest_tol_m: 0.001
+# Contacts checked at t = 0: only pairs involving a robot body or the task object. Can's three
+# inactive objects are parked overlapping at (10, 10, 10) and are excluded from every metric
+# (docs/SIMULATOR_CONTRACT.md).

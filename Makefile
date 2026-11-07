@@ -15,7 +15,8 @@ S2_OUT ?= reports/session2
 IN_SIM := infra/containers/run_sim_cpu.sh
 
 .PHONY: help setup test test-fast lint smoke-sim download verify-data probe-obs build-data \
-	check-data audit-data eval-states check-eval-states replay-demos check-sim-contract \
+	check-data audit-data eval-states check-eval-states robustness-states \
+	check-robustness-states replay-demos check-sim-contract \
 	check-determinism sanity-eval sanity-eval-canonical export-clip web-contract in-sim \
 	train-smoke train eval select param-counts overfit-check benchmark-policies \
 	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
@@ -67,6 +68,14 @@ eval-states:  ## Generate eval suites ON THE CANONICAL CONTAINER (refuses to ove
 
 check-eval-states:  ## Regenerate eval suites in memory; bitwise on the generating platform, 1e-12 elsewhere
 	$(RUN) python scripts/generate_eval_states.py --tasks $(TASKS) --check
+
+robustness-states:  ## Session 7 robustness starts ON THE CANONICAL CONTAINER (RESEARCH_PROTOCOL §14, D-063)
+	ROBOFORGE_WRITE_EVAL_STATES=1 ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM) \
+		python scripts/generate_robustness_states.py --tasks $(TASKS)
+
+check-robustness-states:  ## Regenerate the robustness starts in memory and compare (bitwise on their platform)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN) python scripts/generate_robustness_states.py \
+		--tasks $(TASKS) --check
 
 replay-demos:  ## Replay >= 10 sampled demos/task through RoboForgeEnv; divergence, montage, video
 	$(RUN) python scripts/replay_demos.py --tasks $(TASKS) --video --out-dir $(S2_OUT)/replay

@@ -40,9 +40,11 @@ import numpy as np
 from roboforge.sim.state_replay import reset_to_state
 
 SNAPSHOT_SCHEMA = "roboforge.initial_state/1"
-# Demonstration episodes (offline data only), the two simulator evaluation suites, and ad-hoc
+# Demonstration episodes (offline data only), the two simulator evaluation suites, the
+# Session 7 robustness starts (validation regime, never selection; D-063), and ad-hoc
 # development starts (seeds outside every reserved block; never reported).
-PARTITIONS = ("demo_train", "demo_valid", "eval_validation", "eval_final_test", "eval_adhoc")
+PARTITIONS = ("demo_train", "demo_valid", "eval_validation", "eval_final_test", "eval_robustness",
+              "eval_adhoc")
 _FILE_ATTR = re.compile(r'(\bfile=")([^"]*)(")')
 _ABS_ATTR = re.compile(r'="(/[^"]*)"')
 

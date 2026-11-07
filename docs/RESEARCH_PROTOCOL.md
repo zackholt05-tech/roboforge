@@ -337,9 +337,10 @@ unbiased estimate.
 | 2026-11-06 | §5, §6.1, §6.4 (new), §8 | **Session 4: every diffusion item marked TO FINALIZE is fixed**: flatten observation encoder; 1D U-Net (64, 128) with 64-D timestep embedding and FiLM, 1,092,551 parameters (capacity rule not triggered); DDPM forward process K = 100, `squaredcos_cap_v2`, ε-prediction, masked MSE; DDIM-10 sampler, η = 0, `clip_sample`, 1 sample per decision; EMA (power 0.75) as the evaluated network; T_o/T_p/T_a = 2/16/8; BC optimizer and budgets; noise-seed rule with `policy_seed = 0`, R = 1; the Session 4 Lift pilot is diffusion's tuning trial 1 | MASTER_SPEC Session 4 requires these values before the first reported diffusion run. Sampler chosen from latency measured on the canonical container (DDIM-10 42 ms vs DDPM-100 436 ms per decision); architecture sized to the 1.08 M BC budget within the spec's bounds (width 64–256, 2–3 stages) | none: committed before the first diffusion pilot run |
 | 2026-11-07 | §6.3, §7 | **Session 5: main training budget fixed** at 100,000 steps with checkpoints every **5,000** (K = 20; was DEFAULT 100k / 10k), identical across the **4 main-suite families** (BC-MLP, BC-RNN, BC-MLP-chunk as the H2-c control, diffusion; MASTER_SPEC's "3 algorithms" plus the control already in §6.1) and on Lift and Can. All 20 checkpoints are evaluated (no stride). Tuning runs use the main budget; trial 1 is the pilot configuration re-trained at the main budget with seed 0 (not an extra trial); the configuration is chosen by the §7 ordering of the seed-0 runs' selected checkpoints. Compute (owner Gate C, 2026-11-07): local CPU only, 1 torch thread, ≤ 8 concurrent training runs; evaluation on the canonical container, ≤ 4 in parallel; no Modal | Owner decision after the Session 5 measurements. Every family's best Lift pilot checkpoint came at ≤ 15k of 30k steps and BC-MLP's at 5k (47/50), which a 10k cadence never evaluates; 100k keeps headroom for Can and diffusion. Cost is local time only: Lift ≈ 5.1 h training (core-h ÷ 8; the two tuning waves make the critical path ≥ 2 diffusion runs) + 5.4–8.2 h evaluation; full suite evaluation 22–51 h (estimates). Parallel evaluation does not change results (`physics_sha256` equal at 4 containers) | none: no main-suite run exists |
 | 2026-11-07 | §2, §8, §14 (new) | **Session 7 preregistration** (§14): a fresh in-distribution base set per task (`robustness_base`, seeds 300000 + i) and two OOD sets derived from it (`ood_cube_shift`, Lift only; `ood_arm_offset`, Lift and Can) with fixed magnitudes and validity checks; the H4 analysis; ablations A1 (EMA vs trained weights), A2 (DDIM-10 vs DDPM-100) and A3 (T_o = 1 vs 2, Can only); the failure taxonomy that replaces the post-hoc categories; and test-analysis items (R = 1, random baseline on the test, declared comparisons, separated/not separated, censored episode length as the secondary outcome, engineering reruns) | MASTER_SPEC Session 7 requires robustness sets, failure categories and ≥ 2 controlled ablations preregistered on validation before their runs, and the test analysis fixed before the freeze. Fresh starts avoid the selection bias of the validation suite. Lift's saturation (KI-034) is why A3 is Can only and why a censored secondary outcome is declared | none: committed before any robustness, ablation or test rollout and before any Can result was inspected |
+| 2026-11-07 | §14.2 | **Second Session 7 amendment, validity checks 4 and 5:** contacts are counted only when they involve a robot body or the task object; "at rest" means < 1 mm of motion over the last 5 settling steps instead of a final speed < 0.01 m/s | Found by the development dry run of the generator (3 base states per task, native, never used): every Can draw failed both checks because of the excluded inactive objects' overlap and of solver velocity jitter of a resting can, not because of the perturbation. Lift passed unchanged | none: no robustness state had been generated on the canonical platform and no robustness rollout existed |
 
 ## 14. Session 7 preregistration: robustness (H4), ablations (H3), failure taxonomy
-Amendment of 2026-11-07/08 (§13). Written before any run it governs: no robustness,
+Amendment of 2026-11-07 (§13), with the second amendment of the same day to §14.2. Written before any run it governs: no robustness,
 ablation or test rollout exists when it is committed. Everything here runs on the
 **validation regime** (never the held-out test states) on the canonical container, R = 1,
 policy_seed 0, first success or 400 steps, and nothing here selects or changes a model:
@@ -375,12 +376,19 @@ counter; same model XML, only `qpos` entries change; velocities stay zero. Draws
   1. the snapshot restores exactly (`snapshot.restore` read-back equality);
   2. the success predicate is false at t = 0;
   3. arm joints lie inside the model's joint ranges with ≥ 0.01 rad margin;
-  4. contacts at t = 0 (`mj_forward` on a scratch `MjData`): no contact involving a robot
-     geom that is absent from the base state, and no penetration deeper than 1 mm;
+  4. contacts at t = 0 (`mj_forward` on a scratch `MjData`), counting only contacts that
+     involve a robot body or the task object: no contact pair absent from the base state,
+     and no penetration deeper than 1 mm. *(Amended 2026-11-07, second amendment: the first
+     wording counted every contact, and Can's three inactive objects, parked overlapping at
+     (10, 10, 10) and excluded from all metrics, interpenetrate by up to 0.136 m in every
+     state, so every Can draw failed.)*
   5. passive settling on a scratch environment: 20 control steps of the action
      `[0, 0, 0, 0, 0, 0, −1]` (hold pose, gripper open); the task object ends within 5 mm of
      the base state's settled height after the same 20 steps, moves < 1 cm in x/y, and is
-     at rest (speed < 0.01 m/s).
+     at rest: it moves < 1 mm over the last 5 of the 20 steps. *(Amended 2026-11-07, second
+     amendment: the first wording used the final linear speed < 0.01 m/s, but a can resting
+     in its bin keeps about 0.01 m/s of contact-solver velocity jitter while its position
+     changes < 0.1 mm over 2 s, in validation and base states alike.)*
   A draw that fails any check is replaced by the next `attempt` (≤ 20); every rejection is
   recorded. If a state exhausts its attempts, the set is not used until a further dated
   amendment, before any robustness run.

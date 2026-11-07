@@ -96,12 +96,26 @@ def lock_status(task: str) -> tuple[bool, str]:
     return True, "unlocked"
 
 
+def _robustness_block() -> tuple[str, list[int], str] | None:
+    """(suite, reserved seeds, partition) of the Session 7 robustness base set, if configured."""
+    path = configs_dir() / "eval" / "robustness.yaml"
+    if not path.exists():
+        return None
+    import yaml
+
+    cfg = yaml.safe_load(path.read_text())
+    return cfg["base"]["name"], list(cfg["base"]["reserved_seeds"]), cfg["partition"]
+
+
 def suite_of_seed(seed: int) -> str | None:
     """Name of the suite whose reserved seed block contains ``seed`` (None = ad hoc)."""
     for name, cfg in suites_config()["suites"].items():
         lo, hi = cfg["reserved_seeds"]
         if lo <= seed < hi:
             return name
+    rb = _robustness_block()
+    if rb is not None and rb[1][0] <= seed < rb[1][1]:
+        return rb[0]
     return None
 
 
@@ -114,6 +128,9 @@ def check_seed_allowed(task: str, seed: int) -> str:
             raise FinalTestLockedError(f"seed {seed} is reserved for the final test: {why}")
     if suite is None:
         return "eval_adhoc"
+    rb = _robustness_block()
+    if rb is not None and suite == rb[0]:
+        return rb[2]
     return suites_config()["suites"][suite]["partition"]
 
 

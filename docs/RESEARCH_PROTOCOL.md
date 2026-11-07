@@ -24,8 +24,8 @@ outcome and will be reported as such.
 | H1 | Trained BC-MLP, BC-RNN and diffusion beat a non-learned random-action baseline in task success | each family's selected checkpoints vs `random_uniform` (0/50 on both validation suites, Session 2) | primary |
 | H2 | Diffusion's closed-loop success may exceed deterministic BC | diffusion vs BC-MLP and diffusion vs BC-RNN, each at its primary configuration (§6) | **primary comparison** |
 | H2-c | Any diffusion advantage is due to the generative model, not to action chunking | diffusion vs **BC-MLP-chunk** (identical T_o, T_p, T_a; §6.2) | secondary (required before attributing an H2 effect to the generative model) |
-| H3 | Observation history helps; separate the *history* benefit from the *generative* benefit | BC-RNN vs BC-MLP (history, deterministic head); diffusion T_o = 1 vs T_o = 2 ablation (Session 7) | secondary |
-| H4 | Robustness differs under implemented, physically valid perturbations | only on perturbation sets defined, validated and frozen before the main robustness runs (Session 7) | secondary |
+| H3 | Observation history helps; separate the *history* benefit from the *generative* benefit | BC-RNN vs BC-MLP (history, deterministic head); diffusion T_o = 1 vs T_o = 2 ablation (Session 7; §14.4, Can only) | secondary |
+| H4 | Robustness differs under implemented, physically valid perturbations | only on perturbation sets defined, validated and frozen before the main robustness runs (Session 7; §14.1–14.3) | secondary |
 | H5 | (Level 2, optional) point clouds vs RGB under a matched protocol | separate preregistration (`docs/LEVEL2_GO_NO_GO.md`) | out of scope here |
 
 Everything not in this table is **exploratory** and labeled so.
@@ -258,8 +258,8 @@ unbiased estimate.
 - **Secondary:** steps to first success; action saturation and clip rate per dimension
   (decoded actions outside [−1, 1] before clipping); gripper command sign changes; action
   smoothness (mean |Δa| per 0.05 s step); inference latency (ms per decision, one thread,
-  canonical container); training wall-clock and CPU seconds; failure categories (Session 7,
-  defined before the test).
+  canonical container); training wall-clock and CPU seconds; failure categories (the
+  taxonomy of §14.5, defined before the test).
 - **Diffusion-specific** (finalized in §6.4): denoising steps (10, DDIM) and samples per
   decision (1), both fixed; inference latency per decision on the canonical container; plan
   diversity (per-step, per-dimension standard deviation of 8 extra samples at fixed exported
@@ -336,3 +336,138 @@ unbiased estimate.
 | 2026-11-06 | §6.3 | The Session 3 BC-MLP-chunk Lift pilot also counts as **trial 1 of BC-MLP-chunk** on Lift | It was run and reported alongside the BC-MLP and BC-RNN pilots; every reported run must count against its family's tuning budget | accounting only: no rule or result changes |
 | 2026-11-06 | §5, §6.1, §6.4 (new), §8 | **Session 4: every diffusion item marked TO FINALIZE is fixed**: flatten observation encoder; 1D U-Net (64, 128) with 64-D timestep embedding and FiLM, 1,092,551 parameters (capacity rule not triggered); DDPM forward process K = 100, `squaredcos_cap_v2`, ε-prediction, masked MSE; DDIM-10 sampler, η = 0, `clip_sample`, 1 sample per decision; EMA (power 0.75) as the evaluated network; T_o/T_p/T_a = 2/16/8; BC optimizer and budgets; noise-seed rule with `policy_seed = 0`, R = 1; the Session 4 Lift pilot is diffusion's tuning trial 1 | MASTER_SPEC Session 4 requires these values before the first reported diffusion run. Sampler chosen from latency measured on the canonical container (DDIM-10 42 ms vs DDPM-100 436 ms per decision); architecture sized to the 1.08 M BC budget within the spec's bounds (width 64–256, 2–3 stages) | none: committed before the first diffusion pilot run |
 | 2026-11-07 | §6.3, §7 | **Session 5: main training budget fixed** at 100,000 steps with checkpoints every **5,000** (K = 20; was DEFAULT 100k / 10k), identical across the **4 main-suite families** (BC-MLP, BC-RNN, BC-MLP-chunk as the H2-c control, diffusion; MASTER_SPEC's "3 algorithms" plus the control already in §6.1) and on Lift and Can. All 20 checkpoints are evaluated (no stride). Tuning runs use the main budget; trial 1 is the pilot configuration re-trained at the main budget with seed 0 (not an extra trial); the configuration is chosen by the §7 ordering of the seed-0 runs' selected checkpoints. Compute (owner Gate C, 2026-11-07): local CPU only, 1 torch thread, ≤ 8 concurrent training runs; evaluation on the canonical container, ≤ 4 in parallel; no Modal | Owner decision after the Session 5 measurements. Every family's best Lift pilot checkpoint came at ≤ 15k of 30k steps and BC-MLP's at 5k (47/50), which a 10k cadence never evaluates; 100k keeps headroom for Can and diffusion. Cost is local time only: Lift ≈ 5.1 h training (core-h ÷ 8; the two tuning waves make the critical path ≥ 2 diffusion runs) + 5.4–8.2 h evaluation; full suite evaluation 22–51 h (estimates). Parallel evaluation does not change results (`physics_sha256` equal at 4 containers) | none: no main-suite run exists |
+| 2026-11-07 | §2, §8, §14 (new) | **Session 7 preregistration** (§14): a fresh in-distribution base set per task (`robustness_base`, seeds 300000 + i) and two OOD sets derived from it (`ood_cube_shift`, Lift only; `ood_arm_offset`, Lift and Can) with fixed magnitudes and validity checks; the H4 analysis; ablations A1 (EMA vs trained weights), A2 (DDIM-10 vs DDPM-100) and A3 (T_o = 1 vs 2, Can only); the failure taxonomy that replaces the post-hoc categories; and test-analysis items (R = 1, random baseline on the test, declared comparisons, separated/not separated, censored episode length as the secondary outcome, engineering reruns) | MASTER_SPEC Session 7 requires robustness sets, failure categories and ≥ 2 controlled ablations preregistered on validation before their runs, and the test analysis fixed before the freeze. Fresh starts avoid the selection bias of the validation suite. Lift's saturation (KI-034) is why A3 is Can only and why a censored secondary outcome is declared | none: committed before any robustness, ablation or test rollout and before any Can result was inspected |
+
+## 14. Session 7 preregistration: robustness (H4), ablations (H3), failure taxonomy
+Amendment of 2026-11-07/08 (§13). Written before any run it governs: no robustness,
+ablation or test rollout exists when it is committed. Everything here runs on the
+**validation regime** (never the held-out test states) on the canonical container, R = 1,
+policy_seed 0, first success or 400 steps, and nothing here selects or changes a model:
+every evaluated checkpoint is a §7-selected checkpoint of a §6.3-chosen configuration, fixed
+before these runs (Lift: D-058; Can: the Session 7 main suite).
+
+### 14.1 Fresh base starts (`robustness_base`)
+- Per task, 50 new starts from robosuite's standard reset distribution, seeds `300000 + i`
+  (i = 0..49), generated exactly like the validation suite (`snapshot.generate`), on the
+  canonical container. New reserved seed block [300000, 400000); partition
+  `eval_robustness`.
+- **Why fresh starts:** the 50 validation starts chose every checkpoint and configuration, so
+  validation success is biased upward (max over K = 20 checkpoints and 4 trials). A perturbed
+  start must be compared with its own unperturbed start on states that selected nothing.
+- In distribution by construction; never used for selection, tuning or the freeze.
+
+### 14.2 OOD perturbation sets (H4), derived from the base starts
+Each OOD state `i` is a deterministic function of base state `i`, the set's rule and a
+counter; same model XML, only `qpos` entries change; velocities stay zero. Draws come from
+`numpy.random.default_rng(SeedSequence([20261107, set_code, i, attempt]))`.
+
+| Set | Task(s) | Perturbation | Training distribution it leaves |
+|---|---|---|---|
+| `ood_cube_shift` (code 1) | Lift | cube centre moved to radius r ~ U[0.05, 0.07] m and angle θ ~ U[−π, π) around the placement centre (table centre); cube z and orientation unchanged | Lift places the cube in x, y ∈ [−0.03, 0.03] m (radius ≤ 0.0424 m); every OOD cube lies outside that square (KI-011) |
+| `ood_arm_offset` (code 2) | Lift, Can | each of the 7 arm joints offset by ±0.10 rad with independent fair signs; fingers unchanged | robosuite adds Gaussian joint noise σ = 0.02 rad; the offset is 5 σ on every joint at once |
+
+- Can has **no object-placement set**: its can is already sampled over the whole source bin
+  with random yaw, so a placement shift would leave the bin, i.e. change the task. Only the
+  robot-initial-condition perturbation applies to Can. Camera/appearance changes are not
+  tested (state policies see no images).
+- **Validity checks** (scratch data only, never live evaluation data; KI-019), all required
+  for every state:
+  1. the snapshot restores exactly (`snapshot.restore` read-back equality);
+  2. the success predicate is false at t = 0;
+  3. arm joints lie inside the model's joint ranges with ≥ 0.01 rad margin;
+  4. contacts at t = 0 (`mj_forward` on a scratch `MjData`): no contact involving a robot
+     geom that is absent from the base state, and no penetration deeper than 1 mm;
+  5. passive settling on a scratch environment: 20 control steps of the action
+     `[0, 0, 0, 0, 0, 0, −1]` (hold pose, gripper open); the task object ends within 5 mm of
+     the base state's settled height after the same 20 steps, moves < 1 cm in x/y, and is
+     at rest (speed < 0.01 m/s).
+  A draw that fails any check is replaced by the next `attempt` (≤ 20); every rejection is
+  recorded. If a state exhausts its attempts, the set is not used until a further dated
+  amendment, before any robustness run.
+- Each set is written like an evaluation suite (open manifest with hashes, compressed
+  snapshot file, `generated_on`, a bitwise `--check`), with the perturbation parameters,
+  attempts and per-state validity measurements (cube displacement, end-effector
+  displacement) in the manifest.
+
+### 14.3 Robustness evaluation and analysis (H4)
+- Per task, the 12 selected checkpoints (4 families × 3 training seeds) run every start of
+  `robustness_base` and of each OOD set of that task once (Lift: 3 sets × 12 = 36
+  evaluations; Can: 2 × 12 = 24).
+- **Primary H4 quantity:** success on each OOD set, per family (mean over seeds, per-seed
+  values listed).
+- **Secondary:** the paired drop, base − OOD success, paired by base index `i`; and the
+  between-family differences in OOD success and in drop.
+- **Uncertainty:** the §9 hierarchical bootstrap (B = 10,000, seed 20261106): seeds
+  resampled per family, the 50 base indices resampled once per replicate and shared by every
+  family and every set (state `i` of each OOD set is paired with base state `i`).
+- A difference is **separated** when its 95 % percentile interval excludes 0, otherwise
+  **not separated**. Robustness claims apply only to these two perturbations.
+
+### 14.4 Controlled ablations
+All on the `robustness_base` starts (fresh, so neither arm benefits from selection on them),
+same checkpoints, same noise-seed rule, one change each:
+
+| ID | Change | Arms | Families | Hypothesis |
+|---|---|---|---|---|
+| A1 | inference weights: EMA (primary) vs the trained (non-EMA) weights stored in the same checkpoint | 2 | diffusion, 3 seeds × 2 tasks | §6.4 EMA ablation |
+| A2 | sampler: DDIM-10 (primary) vs DDPM-100 (robomimic's default; K = 100, stochastic steps drawn from the same per-episode generator after the initial noise) | 2 | diffusion, 3 seeds × 2 tasks | §6.4 denoising-steps ablation |
+| A3 | observation history T_o = 1 vs 2: the chosen Can diffusion configuration retrained with `horizons.obs = 1` (all else equal, 3 seeds, main budget, all 20 checkpoints on the Can validation suite, §7 selection) | 2 | diffusion, Can | H3 (history vs generative head) |
+
+- **Bias disclosure (A1, A2):** the checkpoints were selected with the EMA weights and
+  DDIM-10, which favours the primary arm; evaluating on fresh starts removes the start-level
+  bias but not the checkpoint-level one. Reported as such.
+- **A3 scope:** Can only. Lift validation is saturated (KI-034: diffusion scores 49–50/50 at
+  every selected checkpoint), so T_o = 1 vs 2 cannot be told apart there on success, and its
+  cost (3 runs of 100k steps + 60 evaluations) buys no information. A3's arms are compared
+  on `robustness_base` (fresh) with the §9 bootstrap; its validation numbers are reported as
+  development numbers. A3's parameter count (19-D condition instead of 38-D) is reported.
+- H3's other half (BC-RNN vs BC-MLP) comes from the main comparison (§9).
+- If the budget forces it, A3 is dropped first and the omission recorded.
+
+### 14.5 Failure taxonomy (replaces the post-hoc `diagnose_actions` categories)
+Applied to every episode of the held-out test and of every Session 7 robustness and ablation
+evaluation, and descriptively to validation records. Computed only from the recorded arrays
+(`roboforge.eval.taxonomy`): task object = `cube_main` (Lift) / `Can_main` (Can);
+`rest_z` = minimum object z over frames 0–10; `rise_k` = z_k − rest_z; the gripper is
+**closed** at frame k ≥ 1 if the executed gripper command of step k − 1 is > 0; the object
+is **grasp-lifted** at frame k if rise_k ≥ 0.01 m while the gripper is closed. Ordered,
+exhaustive and mutually exclusive: the first matching rule labels the episode.
+
+| # | Category | Rule |
+|---|---|---|
+| 0 | `success` | the first-success rule (§5) fired |
+| 1 | `engineering_error` | stop reason `error` (policy or simulator exception, invalid action): engineering-incomplete, not task failure; still a failure in the primary metric |
+| 2 | `gripper_never_closed` | no executed gripper command > 0 |
+| 3 | `no_grasp_drift` | never grasp-lifted, and the final end-effector–object distance > 0.20 m |
+| 4 | `no_grasp_near` | never grasp-lifted, final distance ≤ 0.20 m |
+| 5 | `timeout_holding` | grasp-lifted at the final frame (still carrying at 400 steps). Lift: held below the 0.04 m success height; Can: carried, never placed |
+| 6 | `in_goal_bin_not_success` (Can only) | final can x/y inside the goal bin's footprint (`bin2` body ± bin_size/2), not held, success false (wrong quadrant or height) |
+| 7 | `dropped` | grasp-lifted at some frame but not at the end, and (Can) not in the goal bin footprint: the object was lost after lifting |
+
+- Attributes reported with every failure, never as categories: steps, final end-effector–
+  object distance, maximum rise, motion-dimension clip fraction (KI-022), first clip step.
+- Thresholds (0.01 m rise, 0.20 m distance) are those of the Session 3 diagnostics, fixed
+  before any test result. A dry run on the Session 6 Lift and Session 7 Can validation records
+  must give every episode exactly one label before the freeze.
+
+### 14.6 Test-analysis items fixed now (repeated verbatim in `docs/FINAL_TEST_FREEZE.md`)
+- **R = 1** for the held-out test, as in §6.4 (no repeats are added; KI-028's start/seed
+  confound for diffusion remains and is reported).
+- **H1 on the test:** the non-learned `random_uniform` policy (policy_seed 0) runs every
+  held-out start of each task once, so H1 is a paired comparison on the test states.
+- **Declared comparisons, per task** (no pooled Lift + Can number, §9): H1 each family −
+  random; H2 diffusion − BC-MLP and diffusion − BC-RNN (primary); H2-c diffusion −
+  BC-MLP-chunk; H3 BC-RNN − BC-MLP. Every other difference is exploratory. No p-values and no
+  multiplicity correction: intervals are reported for every declared difference.
+- **Separated / not separated:** a paired difference is *separated* when its 95 % percentile
+  interval (§9 bootstrap) excludes 0, and *not separated* otherwise. "Not separated" is a
+  reportable outcome, expected on Lift (KI-034); it is not evidence of equality.
+- **Secondary outcome** (declared now for the saturated case): the episode length with
+  failures censored at the 400-step horizon (first-success step if successful, else 400),
+  defined for every (seed, state) and analysed with the same paired bootstrap. The mean
+  first-success step over successful episodes only is reported descriptively, never compared.
+- **Engineering reruns:** an evaluation stopped by an engineering fault outside the policy
+  (container or host crash, out of disk) before writing its summary is rerun once from
+  scratch, with the incident recorded; evaluation is deterministic, so a rerun cannot change
+  an outcome. An error raised inside an episode (policy exception, invalid action) is an
+  outcome (`engineering_error`), never rerun.

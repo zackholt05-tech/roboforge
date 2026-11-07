@@ -1,0 +1,66 @@
+uv sync --frozen
+Checked 76 packages in 25ms
+uv run --frozen python scripts/download_data.py --tasks lift can
+{"ts": "2026-11-06T19:52:25.788480+00:00", "level": "INFO", "logger": "roboforge.data.fetch", "event": "dataset_verified", "task": "lift", "hdf5_type": "low_dim", "url": "https://huggingface.co/datasets/robomimic/robomimic_datasets/resolve/74fa018461f479cd9fd15b924a16103012096203/v1.5/lift/ph/low_dim_v15.hdf5", "local_path": "/Users/zackaryholt/Projects/roboforge/data/raw/robomimic_v1.5/lift/ph/low_dim_v15.hdf5", "expected_sha256": "2067777cb8b532e9263dd09fd6448c41cc31224bb27be4a3b734010ae13eb540", "sha256": "2067777cb8b532e9263dd09fd6448c41cc31224bb27be4a3b734010ae13eb540", "action": "verified_existing"}
+{"ts": "2026-11-06T19:52:25.813214+00:00", "level": "INFO", "logger": "roboforge.data.fetch", "event": "dataset_verified", "task": "lift", "hdf5_type": "raw", "url": "https://huggingface.co/datasets/robomimic/robomimic_datasets/resolve/74fa018461f479cd9fd15b924a16103012096203/v1.5/lift/ph/demo_v15.hdf5", "local_path": "/Users/zackaryholt/Projects/roboforge/data/raw/robomimic_v1.5/lift/ph/demo_v15.hdf5", "expected_sha256": "68f2a8cfe2502de1224f0708fb82e46da07abce108c63e721d72fc1618272f37", "sha256": "68f2a8cfe2502de1224f0708fb82e46da07abce108c63e721d72fc1618272f37", "action": "verified_existing"}
+{"ts": "2026-11-06T19:52:25.843383+00:00", "level": "INFO", "logger": "roboforge.data.fetch", "event": "dataset_verified", "task": "can", "hdf5_type": "low_dim", "url": "https://huggingface.co/datasets/robomimic/robomimic_datasets/resolve/74fa018461f479cd9fd15b924a16103012096203/v1.5/can/ph/low_dim_v15.hdf5", "local_path": "/Users/zackaryholt/Projects/roboforge/data/raw/robomimic_v1.5/can/ph/low_dim_v15.hdf5", "expected_sha256": "3f2eb92e0a5025d0095e866ac16cc8092d6a762abe27dec90dbaff9027282962", "sha256": "3f2eb92e0a5025d0095e866ac16cc8092d6a762abe27dec90dbaff9027282962", "action": "verified_existing"}
+{"ts": "2026-11-06T19:52:25.884844+00:00", "level": "INFO", "logger": "roboforge.data.fetch", "event": "dataset_verified", "task": "can", "hdf5_type": "raw", "url": "https://huggingface.co/datasets/robomimic/robomimic_datasets/resolve/74fa018461f479cd9fd15b924a16103012096203/v1.5/can/ph/demo_v15.hdf5", "local_path": "/Users/zackaryholt/Projects/roboforge/data/raw/robomimic_v1.5/can/ph/demo_v15.hdf5", "expected_sha256": "86961df85af1b9c6b9d4182a3755a8a4db6d0660cd550e45cca1f7accdb6d73d", "sha256": "86961df85af1b9c6b9d4182a3755a8a4db6d0660cd550e45cca1f7accdb6d73d", "action": "verified_existing"}
+data root: /Users/zackaryholt/Projects/roboforge/data
+[verified_existing] lift/low_dim -> /Users/zackaryholt/Projects/roboforge/data/raw/robomimic_v1.5/lift/ph/low_dim_v15.hdf5
+[verified_existing] lift/raw -> /Users/zackaryholt/Projects/roboforge/data/raw/robomimic_v1.5/lift/ph/demo_v15.hdf5
+[verified_existing] can/low_dim -> /Users/zackaryholt/Projects/roboforge/data/raw/robomimic_v1.5/can/ph/low_dim_v15.hdf5
+[verified_existing] can/raw -> /Users/zackaryholt/Projects/roboforge/data/raw/robomimic_v1.5/can/ph/demo_v15.hdf5
+{"n_files": 4}
+uv run --frozen python scripts/build_data.py --tasks lift can --check
+[robosuite WARNING] No private macro file found! (macros.py:53)
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+[robosuite WARNING] To setup, run: python /Users/zackaryholt/Projects/roboforge/.venv/lib/python3.11/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+[robosuite WARNING] Could not import robosuite_models. Some robots may not be available. If you want to use these robots, please install robosuite_models from source (https://github.com/ARISE-Initiative/robosuite_models) or through pip install. (__init__.py:30)
+[robosuite WARNING] Could not load the mink-based whole-body IK. Make sure you install related import properly, otherwise you will not be able to use the default IK controller setting for GR1 robot. (__init__.py:40)
+[lift] built in 88.6 s: obs_dim 19, action_dim 7, 180 train / 20 valid demos, flagged none
+   processed content 74e70119993830798c8b4ed87f202f64d8d2c9d573c0f376d54c4130e52d63c8
+   split 73097265526c03dfb7535aa9bff50aadd285cbfb554e563636d66395909c331e
+   normalization 253bfc7e63570bf3e8f8646a0094d1da4c5b729ba8f463b4955f01410b4812d6
+   observation_spec dfbd868e0ec11da76f66a71a9c3468e58590728ca95e93bbfb0a50ce182a7721
+   max |feature - dataset| over relation=equal features: 0.000e+00
+   check: PASS
+[can] built in 3.0 s: obs_dim 19, action_dim 7, 180 train / 20 valid demos, flagged none
+   processed content e6055a6f066f53b987ed27a7b5894f20ec7053fc9cdf3222b4ad79ed3834ea7b
+   split 743779b0ad9cacd5bab85a74421f6fba4ace5e980f5979a4a3534c82f042b46f
+   normalization e0437cd7b8e48403366d19f7b0e6116e2224723b8a5240b2d7ba008403b3228d
+   observation_spec 71e89629bc3447b02b4bb7ec2f470e4a72f4d44ec04a74f90b6da146f425b71c
+   corrected Can_to_robot0_eef_pos: max_abs_vs_float64_same_step_reference=7.216e-16, max_abs_vs_robosuite_float32_formula=1.354e-07, stored_minus_corrected_max_t0=8.612e-01, stored_minus_corrected_max_t_gt0=9.140e-02, stored_vs_robosuite_lag_formula_max_t_gt0=2.220e-16
+   max |feature - dataset| over relation=equal features: 0.000e+00
+   check: PASS
+uv run --frozen python scripts/build_data.py --tasks lift can
+[robosuite WARNING] No private macro file found! (macros.py:53)
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+[robosuite WARNING] To setup, run: python /Users/zackaryholt/Projects/roboforge/.venv/lib/python3.11/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+[robosuite WARNING] Could not import robosuite_models. Some robots may not be available. If you want to use these robots, please install robosuite_models from source (https://github.com/ARISE-Initiative/robosuite_models) or through pip install. (__init__.py:30)
+[robosuite WARNING] Could not load the mink-based whole-body IK. Make sure you install related import properly, otherwise you will not be able to use the default IK controller setting for GR1 robot. (__init__.py:40)
+[lift] built in 68.3 s: obs_dim 19, action_dim 7, 180 train / 20 valid demos, flagged none
+   processed content 74e70119993830798c8b4ed87f202f64d8d2c9d573c0f376d54c4130e52d63c8
+   split 73097265526c03dfb7535aa9bff50aadd285cbfb554e563636d66395909c331e
+   normalization 253bfc7e63570bf3e8f8646a0094d1da4c5b729ba8f463b4955f01410b4812d6
+   observation_spec dfbd868e0ec11da76f66a71a9c3468e58590728ca95e93bbfb0a50ce182a7721
+   max |feature - dataset| over relation=equal features: 0.000e+00
+   wrote processed: /Users/zackaryholt/Projects/roboforge/data/processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5
+[can] built in 2.0 s: obs_dim 19, action_dim 7, 180 train / 20 valid demos, flagged none
+   processed content e6055a6f066f53b987ed27a7b5894f20ec7053fc9cdf3222b4ad79ed3834ea7b
+   split 743779b0ad9cacd5bab85a74421f6fba4ace5e980f5979a4a3534c82f042b46f
+   normalization e0437cd7b8e48403366d19f7b0e6116e2224723b8a5240b2d7ba008403b3228d
+   observation_spec 71e89629bc3447b02b4bb7ec2f470e4a72f4d44ec04a74f90b6da146f425b71c
+   corrected Can_to_robot0_eef_pos: max_abs_vs_float64_same_step_reference=7.216e-16, max_abs_vs_robosuite_float32_formula=1.354e-07, stored_minus_corrected_max_t0=8.612e-01, stored_minus_corrected_max_t_gt0=9.140e-02, stored_vs_robosuite_lag_formula_max_t_gt0=2.220e-16
+   max |feature - dataset| over relation=equal features: 0.000e+00
+   wrote processed: /Users/zackaryholt/Projects/roboforge/data/processed/robomimic_v1.5_ph/can/lowdim_v1.hdf5
+uv run --frozen python scripts/generate_eval_states.py --tasks lift can --check
+[robosuite WARNING] No private macro file found! (macros.py:53)
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+[robosuite WARNING] To setup, run: python /Users/zackaryholt/Projects/roboforge/.venv/lib/python3.11/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+[robosuite WARNING] Could not import robosuite_models. Some robots may not be available. If you want to use these robots, please install robosuite_models from source (https://github.com/ARISE-Initiative/robosuite_models) or through pip install. (__init__.py:30)
+[robosuite WARNING] Could not load the mink-based whole-body IK. Make sure you install related import properly, otherwise you will not be able to use the default IK controller setting for GR1 robot. (__init__.py:40)
+[lift] check: PASS {"validation": {"generated_on": "linux-aarch64-container-1f685638f28c", "checked_on": "darwin-arm64-native", "bitwise_equal": false, "xml_equal": true, "max_abs_state_diff": 4.440892098500626e-16}, "final_test": {"generated_on": "linux-aarch64-container-1f685638f28c", "checked_on": "darwin-arm64-native", "bitwise_equal": false, "xml_equal": true, "max_abs_state_diff": 1.1102230246251565e-16}}
+[can] check: PASS {"validation": {"generated_on": "linux-aarch64-container-1f685638f28c", "checked_on": "darwin-arm64-native", "bitwise_equal": false, "xml_equal": true, "max_abs_state_diff": 1.1102230246251565e-16}, "final_test": {"generated_on": "linux-aarch64-container-1f685638f28c", "checked_on": "darwin-arm64-native", "bitwise_equal": false, "xml_equal": true, "max_abs_state_diff": 4.440892098500626e-16}}
+uv run --frozen ruff check src scripts tests
+All checks passed!
+PREREQ_PART1_DONE

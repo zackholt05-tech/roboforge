@@ -8,8 +8,9 @@ cloning, recurrent behavior cloning and a conditional diffusion action policy on
 robomimic proficient-human demonstrations, and evaluated by closed-loop simulator rollouts
 from paired, held-out initial states.
 
-> **Status: Session 3 (research protocol and BC baselines) complete. Only short validation
-> pilots of BC-MLP and BC-RNN have been run; no held-out test exists yet.**
+> **Status: Session 4 (conditional diffusion policy and denoising instrumentation) complete.
+> Only short validation pilots of BC-MLP, BC-RNN, BC-MLP-chunk and the diffusion policy have
+> been run; no held-out test exists yet.**
 > Key findings: Results pending. Validation pilots are development numbers, not results. See
 > [docs/STATUS.md](docs/STATUS.md), [docs/RESEARCH_PROTOCOL.md](docs/RESEARCH_PROTOCOL.md),
 > [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) and
@@ -49,6 +50,13 @@ from paired, held-out initial states.
     action-chunking control, BC-MLP-chunk.
   - Validation-only closed-loop evaluation on the pinned container, with checkpoint
     hashes carried into every record (DECISIONS D-032–D-038).
+- Session 4: the conditional diffusion action policy.
+  - A 1D temporal U-Net (adapted from robomimic, 1.09 M parameters) denoises 16-step action
+    chunks (DDPM training, K = 100; DDIM-10 sampling), with EMA. It is bitwise equal to
+    diffusers 0.11.1 and robomimic `d309eae` on fixed arrays.
+  - Seeded stochastic evaluation: one noise seed per (policy seed, start, repeat).
+  - `scripts/export_denoising.py` exports the real intermediate action tensors of recorded
+    validation decisions, replayed bitwise and labeled as proposals (DECISIONS D-039–D-044).
 - Known issues that shape later sessions are listed in [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 
 ## Quick start
@@ -92,8 +100,9 @@ data/eval_states/    validation + final-test initial-state suites (final test lo
 src/roboforge/       data/ (fetch, specs, features, processed, split, normalization, sequence,
                      audit) · sim/ (env adapter, snapshots, eval suites, kinematics, render) ·
                      eval/ (policies, rollout recorder, learned policy, validation, selection)
-                     · models/ (BC-MLP, BC-RNN) · train/ (config, trainer, checkpoints, runs)
-                     · viz/ (three.js coordinates, clip) · compute/ (boundary; Session 5)
+                     · models/ (BC-MLP, BC-RNN, diffusion U-Net, schedulers, registry) ·
+                     train/ (config, trainer, EMA, checkpoints, runs) · viz/ (three.js
+                     coordinates, clip, denoising traces) · compute/ (boundary; Session 5)
 scripts/             reproducible CLIs used by the Makefile
 tests/               unit/ · simulator/ · integration/ · research_integrity/ · web_contract/
                      (pytest markers: sim, data, render, slow, web)
@@ -102,6 +111,7 @@ reports/feasibility/ Session 0 evidence (JSON reports, rendered frames)
 reports/data_audit*  Session 1 dataset audit (JSON + figures)
 reports/session2/    Session 2 evidence (replay, contract, determinism, sanity eval, clip)
 reports/session3/    Session 3 evidence (validation pilots, selection, equivalence, diagnostics)
+reports/session4/    Session 4 evidence (diffusion reference, pilot, equivalence, latency, denoising)
 runs/                training and evaluation runs (gitignored; manifests + checkpoints)
 docs/                status, handoff, decisions, known issues, research protocol
 ```

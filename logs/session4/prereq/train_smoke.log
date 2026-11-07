@@ -1,0 +1,16 @@
+uv run --frozen python scripts/overfit_check.py --task lift --out-dir logs/tmp/s4_smoke_clean
+bc_mlp        tiny_batch_32_windows        windows   32: MSE 0.2289 -> 0.000000 (x0.0000)
+bc_mlp        tiny_episodes_demo_1_demo_2  windows  115: MSE 0.2228 -> 0.002712 (x0.0122)
+bc_rnn        tiny_batch_32_windows        windows   32: MSE 0.2244 -> 0.000471 (x0.0021)
+bc_rnn        tiny_episodes_demo_1_demo_2  windows  115: MSE 0.2204 -> 0.000815 (x0.0037)
+bc_mlp_chunk  tiny_batch_32_windows        windows   32: MSE 0.2455 -> 0.000003 (x0.0000)
+bc_mlp_chunk  tiny_episodes_demo_1_demo_2  windows  115: MSE 0.2227 -> 0.003407 (x0.0153)
+-> logs/tmp/s4_smoke_clean/overfit_lift.json
+uv run --frozen python scripts/train_smoke.py --out-dir logs/tmp/s4_smoke_clean
+[robosuite WARNING] No private macro file found! (macros.py:53)
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+[robosuite WARNING] To setup, run: python /Users/zackaryholt/Projects/roboforge/.venv/lib/python3.11/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+[robosuite WARNING] Could not import robosuite_models. Some robots may not be available. If you want to use these robots, please install robosuite_models from source (https://github.com/ARISE-Initiative/robosuite_models) or through pip install. (__init__.py:30)
+[robosuite WARNING] Could not load the mink-based whole-body IK. Make sure you install related import properly, otherwise you will not be able to use the default IK controller setting for GR1 robot. (__init__.py:40)
+[smoke bc_mlp] 213 steps/s, valid MSE 0.0396, reload True; rollouts 2/2 (DEVELOPMENT ONLY: native platform, never pooled with canonical results), errors 0, audit True -> PASS
+[smoke bc_rnn] 31 steps/s, valid MSE 0.0556, reload True; rollouts 1/2 (DEVELOPMENT ONLY: native platform, never pooled with canonical results), errors 0, audit True -> PASS

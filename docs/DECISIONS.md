@@ -653,3 +653,152 @@ Diffusion items are TO FINALIZE (Session 4), by dated amendment only.
   `ROBOFORGE_EVIDENCE_SESSION=3`.
 - Training and evaluation records go under `runs/` (gitignored). Their manifests' summaries
   and hashes are committed in the reports.
+
+## Session 4 (2026-11-06)
+Evidence: `reports/session4/` and `logs/session4/` (D-044). Commits, in order:
+- `a01548d`: diffusion code, tests and tooling;
+- `22adb8b`: `benchmark_policies.py --max-decisions`;
+- `4c68ca1`: the container runner forwards `ROBOFORGE_EVIDENCE_SESSION`;
+- `3aed462`: the protocol amendment (RESEARCH_PROTOCOL §6.4, §13), committed **before** the
+  first reported diffusion run;
+- `183b56c`: diffusion-aware `scripts/diagnose_actions.py`.
+
+The pilot training ran from the clean `3aed462`. Every validation evaluation, the selection, the equivalence checks, latency, denoising
+exports and diagnostics ran from the clean `183b56c`. `git diff --stat 3aed462 183b56c`
+lists only `scripts/diagnose_actions.py`.
+
+### Research protocol amendment 2026-11-06 (FIXED for model development)
+Every diffusion item marked TO FINALIZE is filled in RESEARCH_PROTOCOL §6.4, with a dated
+§13 row, at `3aed462`. Before that commit, only development runs existed: smoke runs,
+overfit checks and a 200-step latency checkpoint. None was evaluated on the validation suite.
+The amendment fixes:
+- the architecture and its exact parameter count, **1,092,551**. The §6.1 capacity rule is
+  not triggered (≤ 2 × 1,077,255);
+- the schedule (`squaredcos_cap_v2`, K = 100), ε-prediction, the DDIM-10 sampler with η = 0
+  and `clip_sample`;
+- EMA as the evaluated network, and the horizons T_o 2 / T_p 16 / T_a 8;
+- the noise-seed rule, with policy_seed 0 and R = 1;
+- the pilot as diffusion's tuning trial 1 on Lift.
+
+### D-039 Evidence session from `ROBOFORGE_EVIDENCE_SESSION` (FIXED)
+- `roboforge.paths.evidence_session()` reads `$ROBOFORGE_EVIDENCE_SESSION`. It has **no
+  default** and raises if the variable is unset. `evidence_reports_dir(*parts)` returns
+  `reports/session<N>/…`.
+- Every evidence script derives its default output directory from it:
+  - `eval_policy`, `select_checkpoint`, `check_checkpoint_equivalence`, `diagnose_actions`;
+  - `benchmark_policies`, `compare_diffusion_reference`, `export_denoising`.
+- In the Makefile, `EVIDENCE_SESSION` defaults to `$ROBOFORGE_EVIDENCE_SESSION`, else 4. The
+  container targets use `RUN_S`/`IN_SIM_S`.
+- `infra/containers/run_sim_cpu.sh` forwards the variable into the container (`4c68ca1`).
+  Only `reports/session<N>`, `logs/session<N>` and `runs/` are mounted writable.
+- `check_checkpoint_equivalence.py` takes `--out-dir`. It reads the Session 2 sanity
+  reference from `<out-dir>/session2_sanity_reference.json`, which is copied unchanged from
+  Session 3's evidence.
+- **Why:** the Session 3 tooling hardcoded `reports/session3`. A Session 4 command could have
+  overwritten committed Session 3 evidence, or lost its report outside the mounted directory
+  (HANDOFF §9 of Session 3).
+
+### D-040 Diffusion policy family `diffusion_unet` (FIXED; RESEARCH_PROTOCOL §6.4)
+- **Code:**
+  - `src/roboforge/models/{diffusion,unet1d,noise_schedule}.py`;
+  - `src/roboforge/train/ema.py`;
+  - `configs/models/diffusion_unet.yaml`.
+- **Encoder:** no parameters. The normalized `T_o × 19` window is flattened into a 38-D
+  global condition, robomimic's low-dim path and BC-MLP-chunk's input.
+- **Noise-prediction network:** `ConditionalUnet1D`, adapted from robomimic `d309eae` (MIT,
+  `THIRD_PARTY_NOTICES.md`) with identical parameter names.
+  - Down widths (64, 128): stages 16 → 8 → mid → 16.
+  - Kernel 5, GroupNorm with 8 groups, Mish.
+  - FiLM on `[64-D timestep embedding ‖ condition]`.
+  - Parameters: step encoder 33,088, down 452,992, mid 381,952, up 203,392, final 21,127.
+    Total **1,092,551**.
+- **Schedule and samplers** (`noise_schedule.py`):
+  - our own implementation of the diffusers 0.11.1 equations; the betas are computed in
+    Python floats (`betas_for_alpha_bar`), then stored as float32;
+  - DDPM refuses a strided timestep set: diffusers 0.11.1 always steps to `t − 1`, so DDPM
+    is only correct when the inference steps equal the training steps;
+  - DDIM uses `steps_offset` 0 and `set_alpha_to_one`;
+  - every step returns a `StepRecord` with its coefficients.
+- **Loss:** masked MSE between ε̂ and ε over valid action steps. Per sample, the noise is
+  drawn first, then `t ~ U{0..K−1}`, from the run's own `torch.Generator`
+  (`SeedSequence([seed, 2])`). That order is robomimic's, so the same seed gives the same
+  draws (reference test).
+- **EMA:** diffusers 0.11.1 `EMAModel` semantics (power 0.75, inv_gamma 1, update_after_step 0).
+  - Update number s (0-based, one per optimizer step) uses decay 0 for s ≤ 1, which copies
+    the weights. After that, the decay is `min(1 − s^−0.75, 0.9999)`.
+  - Buffers are copied.
+  - The EMA network is the `inference_model`: offline metrics, checkpoint selection and
+    rollouts all use it.
+- **Equivalence with the pinned references:** bitwise on macOS and on the canonical
+  container (`reports/session4/reference/`). The checks:
+  - betas, ᾱ, `add_noise`;
+  - DDPM-100 and DDIM-10 steps;
+  - U-Net forward with robomimic weights at three widths;
+  - full DDIM-10 and DDPM-100 sampling against robomimic `_get_action_trajectory`;
+  - EMA against diffusers `EMAModel`.
+
+  The training loss agrees to |Δ| = 0.0 with `train_on_batch`.
+- **Deviation:** robomimic predicts `a[t−1 .. t+14]` and executes from index `T_o − 1`.
+  RoboForge keeps BC-MLP-chunk's window, `a[t .. t+15]`, executed from index 0. Both
+  execute `a[t]` first.
+- **Backend:** `unet_backend()` disables NNPACK around U-Net calls only (KI-026). The
+  results are bitwise unchanged (reference tests). The context is scoped, so BC code paths
+  are untouched.
+
+### D-041 Stochastic inference contract (FIXED)
+- `LearnedPolicy` is `stochastic` for the diffusion family.
+  - `reset_episode` creates a fresh `torch.Generator`, seeded by
+    `noise_seed(policy_seed, state_id, repeat)`: `SeedSequence([policy_seed,
+    uint64_le(sha256(state_id)[:8]), repeat]).generate_state(1, uint64)[0]`
+    (RESEARCH_PROTOCOL §6.4).
+  - Each decision calls `model.sample(x, v, generator)`. The global RNG is never read.
+- `run_episode` stores `policy.episode_info()` (seed triple, noise seed and rule) in each
+  record's meta as `policy_episode`. It is not part of the arrays or of `physics_sha256`.
+  The Session 2 sanity episodes still reproduce their recorded hashes (equivalence check E).
+- **Evaluation run ID:** a stochastic policy's ID ends in `__ps<policy_seed>r<repeat>`, so
+  repeats never share a directory. Each episode summary carries `noise_seed`, and the summary
+  carries `stochastic_policy`.
+- **Checkpoint equivalence** adds check F: two loads give bitwise-identical seeded samples.
+  The rollout seed equals the rule's value.
+- **BC policies are unchanged:** IDs, records and `physics_sha256` stay the same (the
+  Session 3 selected checkpoints pass checks A–E under the new code).
+
+### D-042 Model registry and optional checkpoint keys (FIXED)
+- `roboforge.models.registry` maps each family to its builder and loss kind:
+  - `bc_mlp`/`bc_rnn`/`bc_mlp_chunk`: `mse`;
+  - `diffusion_unet`: `denoising_mse`.
+
+  The config validator requires that loss kind. Adding a family does not change any Session 3
+  config hash or run ID (unit test).
+- Checkpoint `REQUIRED` keys are unchanged. Diffusion checkpoints add `noise_rng_state` and
+  `ema_state`, which resume restores. Resume is bitwise, including the noise generator and
+  the EMA (unit test).
+- `reload_check` compares the inference (EMA) network and the trained weights separately.
+  For a stochastic model it compares seeded samples (`RELOAD_SAMPLE_SEED = 0`) instead of a
+  deterministic forward pass.
+
+### D-043 Denoising export contract (FIXED)
+- `scripts/export_denoising.py` / `make export-denoising EVAL_RUN=runs/<eval_run_id>`
+  (`roboforge.viz.denoising`, schema `roboforge.denoising_trace/1`).
+- **Source:** it replays recorded validation episodes with their own noise seed, so every
+  decision consumes the generator as in the rollout. Every replayed chunk must equal the
+  recorded `raw_policy_action` **bitwise**; otherwise the export raises. So it runs on the
+  recording platform.
+- **Content per selected decision:** for every reverse step, `t_k`, `t_prev`, ᾱ values and
+  coefficients, plus these arrays in normalized and denormalized space:
+  - `A_{t_k}`, ε̂, x̂₀ before and after the clip, the injected noise and the step output.
+
+  It also stores the conditioning window (raw, float32 cast, normalized, mask), the noise
+  seed and the final decoded chunk.
+- **Labels:** every array is a **proposal**. Only the first `n_executed` actions were
+  executed.
+- **Selection, declared before export:** the first success and the first failure by sorted
+  `state_id`, and decisions first / middle / last. Plus 8 never-executed diversity samples
+  per decision (seeds `1,000,000 + i`).
+
+### D-044 Session 4 evidence location (FIXED)
+- Command outputs go under `logs/session4/` and `reports/session4/`, with
+  `ROBOFORGE_EVIDENCE_SESSION=4`.
+- Training and evaluation records go under `runs/` (gitignored). Their summaries and hashes
+  are committed in the reports.
+- Development-only artifacts are labeled `dev` or `pre_amendment`.

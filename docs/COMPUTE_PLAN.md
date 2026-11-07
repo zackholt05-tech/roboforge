@@ -9,8 +9,8 @@ https://modal.com/pricing on **2026-11-05** and **must be rechecked before any l
 | Workload | Bound by | Session 0 measurement / estimate |
 |---|---|---|
 | MuJoCo stepping (closed-loop eval) | CPU, single-threaded per env | **Measured:** Lift ≈ 195 control steps/s/core, Can ≈ 163 (macOS arm64). Linux aarch64 Docker VM on the same laptop: Lift 161, Can 71 (replay median). Not representative of Modal x86_64. |
-| Policy inference in rollouts | CPU or GPU | **Measured for BC (Session 3, 1 thread, median per decision):** canonical container BC-MLP 0.91 ms, BC-MLP-chunk 1.26 ms, BC-RNN 8.6 ms; macOS 0.07 / 0.075 / 0.66 ms (KI-023). A 50-start Lift validation evaluation took 43–101 s of wall time in the container. Those runs were not isolated: up to 3 containers and a training job ran at the same time. Diffusion with K denoising steps per replan × (400/T_a) replans is **unmeasured**; benchmark it in the container in Session 4 (DDPM-100 vs DDIM-10). |
-| Training state-based policies | GPU optional | **Measured for BC (Session 3, local M1 Pro CPU, 1 thread, 3 concurrent runs):** 30,000 steps × batch 100 take 146 s (BC-MLP, 205 steps/s), 983 s (BC-RNN, 30.5 steps/s) and 155 s (BC-MLP-chunk), including offline-loss evaluation and checkpoints. No GPU is needed for BC. Diffusion is unmeasured (Session 4). |
+| Policy inference in rollouts | CPU or GPU | **Measured for BC (Session 3, 1 thread, median per decision):** canonical container BC-MLP 0.91 ms, BC-MLP-chunk 1.26 ms, BC-RNN 8.6 ms; macOS 0.07 / 0.075 / 0.66 ms (KI-023). A 50-start Lift validation evaluation took 43–101 s of wall time in the container. Those runs were not isolated: up to 3 containers and a training job ran at the same time. **Measured for diffusion (Session 4, trained pilot checkpoint, 1 thread, median of 100 decisions):** container DDIM-10 (primary) 36.3 ms, DDPM-100 649 ms; macOS 9.9 / 99.5 ms (KI-023). A 50-start Lift validation evaluation of the diffusion pilot took 60–88 s of wall time in the container, run alone (6 evaluations in 7 min 04 s). |
+| Training state-based policies | GPU optional | **Measured for BC (Session 3, local M1 Pro CPU, 1 thread, 3 concurrent runs):** 30,000 steps × batch 100 take 146 s (BC-MLP, 205 steps/s), 983 s (BC-RNN, 30.5 steps/s) and 155 s (BC-MLP-chunk), including offline-loss evaluation and checkpoints. No GPU is needed for BC. **Diffusion (Session 4, same CPU, 1 thread, run alone except brief dev probes):** 30,000 steps × batch 100 took 3,428 s wall / 3,424 s CPU (8.75 steps/s) with offline metrics every 1,000 steps; 100k steps ≈ 3.2 h per run locally (estimate). NNPACK must stay disabled for the U-Net on macOS (KI-026). |
 | Rendering (RGB extraction, videos) | GPU (EGL) or CPU (OSMesa) | **Measured:** macOS CGL 7–25 ms per 256² frame; Linux OSMesa (CPU) 88–196 ms. At ~0.1–0.2 s/frame, 2 cameras over all demos is roughly 0.5–1 core-hour (Lift) and 1–2.5 core-hours (Can), an estimate. Not needed for state-based Level 1 eval. |
 | Storage | — | Raw datasets: 170 MB (Lift + Can). RGB 84×84 ×2 cameras: ~0.4 GB Lift, ~1 GB Can uncompressed (estimate). |
 
@@ -21,7 +21,7 @@ rollouts per task, each up to 400 steps):
 - Validation-based checkpoint selection multiplies this by the number of evaluated
   checkpoints.
 
-The simulation itself is cheap; diffusion inference is the unknown.
+The simulation itself is cheap. With DDIM-10, diffusion inference keeps a 50-start evaluation at 60–88 s in the container (Session 4); DDPM-100 would multiply the inference part by about 18×.
 
 ## 2. Recommended split (DEFAULT, D-015)
 - **GPU (Modal):** PyTorch training only, and only if local benchmarks show CPU/MPS is too

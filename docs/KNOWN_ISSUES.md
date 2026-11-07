@@ -27,8 +27,12 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-020 | LOW | MITIGATED (Session 2, D-017) | `uv sync`/`uv run` inside the pinned image would modify its environment |
 | KI-021 | MEDIUM | OPEN | BC-MLP compounds a missed grasp into out-of-workspace drift with saturated actions |
 | KI-022 | LOW | ACCEPTED | Gripper commands are clipped on 28–63 % of steps, harmlessly |
-| KI-023 | LOW | OPEN | Policy inference is 13–17× slower in the canonical container than natively |
+| KI-023 | LOW | OPEN | Policy inference is 13–17× slower in the canonical container than natively (diffusion DDIM-10: 3.7×) |
 | KI-024 | MEDIUM | OPEN | Offline validation MSE rises during training and does not track closed-loop success |
+| KI-025 | LOW | ACCEPTED | robomimic `d309eae` ignores `algo.unet.*` and always builds its 65.8 M U-Net |
+| KI-026 | LOW | MITIGATED (Session 4, D-040) | NNPACK makes the 1D U-Net about 3× slower on macOS arm64 |
+| KI-027 | LOW | ACCEPTED | Diffusion samples depend on batch size at float-rounding level |
+| KI-028 | MEDIUM | OPEN | All diffusion pilot failures are one start, under one noise seed (R = 1) |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 and EGL not
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -398,6 +402,23 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - Latency comparisons must use one platform; the canonical container is the reported one.
   - BC costs are small. Diffusion with K denoising steps per decision may dominate canonical
     evaluation time, so Session 4 must measure it there.
+- **Diffusion (Session 4)**, final pilot checkpoint, `183b56c`, 1 thread, median of 100
+  decisions:
+
+  | Sampler | macOS native | container | ratio |
+  |---|---|---|---|
+  | DDIM-10 (primary) | 9.88 ms | 36.29 ms | 3.7× |
+  | one U-Net forward | 0.97 ms | 3.47 ms | 3.6× |
+  | DDPM-100 | 99.50 ms | 649.19 ms | 6.5× |
+
+  Sources: `reports/session4/cost_latency/`. The pre-amendment measurement (untrained,
+  `22adb8b`, 60 decisions) gave 42.39 ms and 436.42 ms in the container. Container
+  run-to-run variance is therefore large for long sampler loops.
+- The slowdown is much smaller than BC's 13–17×. A plausible reason, not isolated, is that
+  the U-Net arithmetic outweighs the fixed per-call overhead that dominates the tiny BC
+  networks.
+- **Canonical evaluation cost:** a 50-start Lift validation evaluation of the diffusion pilot
+  took 60–88 s of wall time (E4-10). With DDIM-10 that is comparable to BC.
 
 ### KI-024 — Offline validation MSE rises during training and does not track closed-loop success
 - In all three Session 3 pilots the masked MSE on the 20 validation demos rises steadily from
@@ -411,4 +432,72 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   5k–15k with a rising validation MSE.
 - Offline loss therefore cannot select checkpoints. The protocol already forbids that
   (RESEARCH_PROTOCOL §7.4), and this confirms the rule empirically.
+- **Diffusion (Session 4)**, EMA network, 5k → 15k → 30k (E4-09):
+  - the validation noise-prediction MSE is lowest at 15k (0.066 → 0.058 → 0.068);
+  - the validation sampled-chunk MSE keeps falling (0.125 → 0.100 → 0.087);
+  - closed-loop success is flat (49–50/50).
 
+  The two offline metrics disagree with each other, as well as with the closed loop.
+
+### KI-025 — robomimic `d309eae` ignores `algo.unet.*` and always builds its 65.8 M U-Net
+- `robomimic/algo/diffusion_policy.py` (lines 74–77) constructs
+  `ConditionalUnet1D(input_dim, global_cond_dim)` with no other arguments. It therefore
+  always builds the default widths (256, 512, 1024) with a 256-D step embedding. That is
+  65.8 M parameters for Lift's 38-D condition, whatever `algo.unet.down_dims` or
+  `diffusion_step_embed_dim` say in the config.
+- **Impact:**
+  - A robomimic config with a smaller U-Net does not train a smaller network. Any
+    "robomimic-reproduced" diffusion number therefore uses the 65.8 M network.
+  - RoboForge's primary configuration (1,092,551 parameters, RESEARCH_PROTOCOL §6.4) is a
+    **deliberate deviation** in width, chosen for the capacity match. It does not reproduce
+    robomimic's default size.
+- **Mitigation in the reference comparison:**
+  - robomimic's own `ConditionalUnet1D` is compared with RoboForge's, with identical weights,
+    at three widths, including the default (256, 512, 1024);
+  - robomimic's sampler and training step are run with a U-Net of the primary widths
+    swapped into the algo, with its EMA rebuilt (`roboforge.models.reference.robomimic_algo`).
+
+### KI-026 — NNPACK makes the 1D U-Net about 3× slower on macOS arm64
+- Measured at `183b56c` on macOS arm64, 1 torch thread, with the primary config and batch
+  100. The median of 20 training steps was:
+  - 341.8 ms with torch's default backend (NNPACK enabled);
+  - 111.4 ms and 110.6 ms with NNPACK disabled.
+
+  Source: `logs/session4/dev/nnpack_timing.{py,log}`. A 30k-step training run was running
+  concurrently.
+- **Mitigation:** `roboforge.models.diffusion.unet_backend()` wraps every U-Net call in
+  `torch.backends.nnpack.flags(enabled=False)`. The scope is limited to U-Net calls, so BC
+  code paths are unaffected. Outputs are bitwise identical to the robomimic and diffusers
+  references with the context active (`tests/unit/test_diffusion_reference.py`).
+- **Not measured** inside the canonical container: there, the reference report and every
+  container run already use the context.
+
+### KI-027 — Diffusion samples depend on batch size at float-rounding level
+- Sampling one row alone and sampling it inside a batch of 8, from the same initial noise,
+  differ by up to 3.7e-6 in normalized units. This was measured with the primary config,
+  untrained, DDIM-10 on macOS (`logs/session4/dev/batch_size_sampling.log`). The unit test
+  bounds the difference at 1e-4. The convolution arithmetic depends on the batch shape.
+- **Impact:** none on the closed loop, which always samples exactly one row per decision.
+  The denoising export replays with batch 1 and is bitwise.
+- **Offline metrics** batch the windows, so they are not bitwise comparable with
+  per-decision samples. They are never used for selection (§7.4).
+- Cross-platform sample equality is **not** claimed. Physics already differs across
+  platforms (KI-013). The export is checked only on the recording platform.
+
+### KI-028 — All diffusion pilot failures are one start, under one noise seed (R = 1)
+- Four of the six pilot checkpoints fail exactly one episode: 5k, 20k, 25k and 30k. Each
+  time it is `lift_validation_0029`, truncated at 400 steps (`reports/session4/validation/`).
+  10k and 15k score 50/50.
+- In Session 3, the BC families lost `lift_validation_0029` in only 1 of 18 evaluations.
+- With R = 1 (RESEARCH_PROTOCOL §6.4), each (checkpoint, start) has a single noise seed. The
+  seed is the same for every checkpoint by design (common random numbers). The start's
+  difficulty and that seed's draw are therefore **confounded**: these records cannot tell
+  whether the start is hard for diffusion or the seed is unlucky.
+- The failure modes differ: missed grasp then drift at 5k and 25k; missed grasp, stayed near
+  at 20k and 30k (`reports/session4/diagnostics/actions.json`).
+- **Not a bug.** The denoising export of the 30k failure replays bitwise (E4-14).
+- **Options before the freeze**, each only by an amendment written before the evidence:
+  - repeats r ≥ 1 on the validation suite, to estimate per-start variance;
+  - a diagnostic-only multi-seed rerun of this start.
+
+  Neither may change selection retroactively.

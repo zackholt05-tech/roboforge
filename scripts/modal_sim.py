@@ -68,7 +68,11 @@ def materialize(root: Path, plan: dict[str, Any]) -> dict[str, Path]:
     for d in app["code_dirs"]:
         shutil.copytree(REPO_ROOT / d, app_dir / d,
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-    (app_dir / "runs").mkdir(parents=True)
+    # Like Modal, the runs Volume is mounted through a symlink: /app/runs ->
+    # /__modal/volumes/<id>. Manifests must still record runs/<run_id>/... paths.
+    vol = c / "__modal" / "volumes" / "vo-sim"
+    vol.mkdir(parents=True)
+    (app_dir / "runs").symlink_to(vol, target_is_directory=True)
     rel = plan["data"]["processed_relpath"]
     src = data_root() / rel
     dst = data_dir / rel

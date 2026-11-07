@@ -90,19 +90,25 @@ def _base(cfg: dict[str, Any], function: str, timeout_s: int) -> dict[str, Any]:
             "deadline_s": int(timeout_s - pol["deadline_margin_s"]),
             "policy": {"max_containers": pol["max_containers"], "retries": pol["retries"],
                        "scaledown_window_s": pol["scaledown_window_s"],
-                       "preemptible": True, "gpu_count": 1 if f["gpu"] else 0},
+                       "preemptible": True, "gpu_count": 1 if f["gpu"] else 0,
+                       "max_attempts_per_launch": pol["max_attempts_per_launch"]},
             "estimate": launch_upper_bound(cfg, function, timeout_s)}
 
 
 def train_plan(config: Path, *, task: str | None, seed: int | None, prefix: str,
                overrides: list[str], timeout_s: int | None, mode: str = "new",
                events: list[dict[str, Any]] | None = None,
-               simulate_preemption_s: int | None = None) -> dict[str, Any]:
+               simulate_preemption_s: int | None = None,
+               stop_at_step: int | None = None) -> dict[str, Any]:
     """Plan of one ``train_cpu`` job (CPU, 1 torch thread: RESEARCH_PROTOCOL §6.2).
 
-    ``simulate_preemption_s`` (engineering smoke only) makes the Modal job call
-    ``modal.exception.simulate_preemption`` after that many seconds: a real SIGINT to the
-    container process, then a second interrupt 30 s later, as in a preemption."""
+    Engineering smoke only:
+
+    * ``simulate_preemption_s`` arms :func:`roboforge.compute.remote.arm_preemption_drill`
+      on the launch's first attempt: a real SIGINT after that many seconds, SIGKILL 30 s
+      later, as in a Modal preemption. Restarts are not re-armed.
+    * ``stop_at_step`` stops the run cleanly at that step (resume checkpoint, status
+      ``interrupted``), so that a separate ``resume`` launch can be exercised."""
     from roboforge.data.pipeline import load_task_artifacts
     from roboforge.data.processed import processed_path, processed_relpath
     from roboforge.train.config import load_config, run_id
@@ -116,7 +122,7 @@ def train_plan(config: Path, *, task: str | None, seed: int | None, prefix: str,
     rel = Path(processed_relpath(rc.task, m["converter_version"])).as_posix()
     plan = _base(cfg, "train_cpu", timeout_s or cfg["functions"]["train_cpu"]["default_timeout_s"])
     plan.update(mode=mode, run_id=rid, prefix=prefix, config=rc.to_dict(),
-                simulate_preemption_s=simulate_preemption_s,
+                simulate_preemption_s=simulate_preemption_s, stop_at_step=stop_at_step,
                 config_sha256=rc.sha256(), config_path=Path(config).as_posix(), overrides=ov,
                 data={"task": rc.task, "processed_relpath": rel,
                       "processed_content_sha256": m["content_sha256"],
@@ -197,6 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     t.add_argument("--timeout-s", type=int)
     t.add_argument("--mode", choices=["new", "resume"], default="new")
     t.add_argument("--simulate-preemption-s", type=int)
+    t.add_argument("--stop-at-step", type=int)
     pr = sub.add_parser("probe")
     pr.add_argument("--timeout-s", type=int)
     pr.add_argument("--families", nargs="+",
@@ -234,7 +241,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd in ("train", "probe"):
         plan = (train_plan(args.config, task=args.task, seed=args.seed, prefix=args.prefix,
                            overrides=args.overrides, timeout_s=args.timeout_s, mode=args.mode,
-                           simulate_preemption_s=args.simulate_preemption_s)
+                           simulate_preemption_s=args.simulate_preemption_s,
+                           stop_at_step=args.stop_at_step)
                 if args.cmd == "train" else probe_plan(args.timeout_s, args.families,
                                                        args.steps))
         args.out.parent.mkdir(parents=True, exist_ok=True)

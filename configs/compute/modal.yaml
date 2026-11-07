@@ -47,7 +47,8 @@ app:
 # automatic retries, a 2 s scaledown window, preemptible, and an explicit timeout. The
 # training job stops itself deadline_margin_s before its timeout, writes a resume checkpoint
 # and returns, so the hard timeout is never the normal way a job ends.
-policy: {max_containers: 1, retries: 0, scaledown_window_s: 2, deadline_margin_s: 180}
+policy: {max_containers: 1, retries: 0, scaledown_window_s: 2, deadline_margin_s: 180,
+         max_attempts_per_launch: 4}
 functions:
   train_cpu: {gpu: null, cpu: 2.0, memory_mib: 4096, default_timeout_s: 1800,
               max_timeout_s: 21600}

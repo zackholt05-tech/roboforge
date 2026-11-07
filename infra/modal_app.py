@@ -93,23 +93,7 @@ def train_cpu(plan: dict[str, Any]) -> dict[str, Any]:
     from roboforge.compute.remote import train_job
 
     runs_vol.reload()  # see the latest committed state (a preemption restart resumes it)
-    sim = None
-    if plan.get("simulate_preemption_s"):  # engineering smoke of the preemption path only
-        sim = {"seconds": int(plan["simulate_preemption_s"])}
-        try:  # Modal's helper: SIGALRM -> SIGINT, a second interrupt 30 s later
-            from modal.exception import simulate_preemption
-
-            simulate_preemption(sim["seconds"])
-            sim["method"] = "modal.exception.simulate_preemption"
-        except ValueError:  # signal.signal needs the main thread: send a real SIGINT instead
-            import os
-            import signal
-            import threading
-
-            threading.Timer(sim["seconds"], os.kill, (os.getpid(), signal.SIGINT)).start()
-            sim["method"] = "threading.Timer -> os.kill(SIGINT) (not on the main thread)"
     res = train_job(plan, commit=runs_vol.commit)
-    res["simulated_preemption"] = sim
     res["modal"] = {"function": "train_cpu"}
     return res
 
@@ -233,6 +217,7 @@ def main(argv: list[str] | None = None) -> int:
     t.add_argument("--timeout-s")
     t.add_argument("--mode", choices=["new", "resume"], default="new")
     t.add_argument("--simulate-preemption-s")
+    t.add_argument("--stop-at-step")
     pr = sub.add_parser("probe")
     pr.add_argument("--timeout-s")
     pr.add_argument("--steps", default="300")
@@ -249,12 +234,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "fetch":
         return _fetch(args.run_id, args.staging)
     if args.cmd == "cancel":
-        return subprocess.run(["modal", "app", "stop", args.app_id]).returncode
+        return subprocess.run([sys.executable, "-m", "modal", "app", "stop", "--yes",
+                               args.app_id]).returncode
     stamp = time.strftime("%Y%m%dT%H%M%S")
     out = args.plan_dir / f"{args.cmd}_{stamp}.json"
     if args.cmd == "train":
         cmd = ["train", "--config", args.config, "--prefix", args.prefix, "--mode", args.mode]
-        for k in ("task", "seed", "timeout_s", "simulate_preemption_s"):
+        for k in ("task", "seed", "timeout_s", "simulate_preemption_s", "stop_at_step"):
             if getattr(args, k):
                 cmd += [f"--{k.replace('_', '-')}", str(getattr(args, k))]
         for o in args.overrides:

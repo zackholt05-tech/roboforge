@@ -69,6 +69,13 @@ def repo_relative(path: Path | str) -> str:
     stay portable (``reports/feasibility/frames/x.png``). An output directory outside it, such
     as ``/out`` mounted into a container, is recorded as an absolute path instead of failing.
     """
+    # Lexical first: a directory mounted through a symlink inside the repository (a Modal
+    # Volume at /app/runs links to /__modal/volumes/<id>) keeps its repository path.
+    lexical = Path(os.path.abspath(path))
+    try:
+        return lexical.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        pass
     resolved = Path(path).resolve()
     try:
         return resolved.relative_to(REPO_ROOT).as_posix()

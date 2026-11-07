@@ -171,12 +171,14 @@ modal-probe-dry-run:  ## Dry-run plan + estimate of the Gate A GPU probe
 	$(MODAL_PY) infra/modal_app.py probe
 
 SIM_ROOT ?= logs/tmp/s5_modal_sim
+SIM_PREFIX ?= s5sim
+SIM_REPORT ?= reports/session$(EVIDENCE_SESSION)/modal_sim/report.json
 modal-sim:  ## Local simulation of a Modal job: preemption, SIGKILL, deadline, duplicate, resume, retrieval
 	$(RUN_S) python scripts/modal_sim.py --root $(SIM_ROOT) \
-		--config configs/models/diffusion_unet.yaml --prefix s5sim \
+		--config configs/models/diffusion_unet.yaml --prefix $(SIM_PREFIX) \
 		--set train.max_steps=2000 --set train.ckpt_every=500 --set train.val_every=500 \
 		--set train.log_every=100 --sigint-at 650 --sigkill-at 1150 --deadline-s 30 \
-		--install --report reports/session$(EVIDENCE_SESSION)/modal_sim/report.json
+		--install --report $(SIM_REPORT)
 
 fetch-run:  ## Download RUN_ID from the Modal runs Volume and install it into runs/ (hash-checked)
 	$(MODAL_PY) infra/modal_app.py fetch --run-id $(RUN_ID)

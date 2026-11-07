@@ -221,6 +221,47 @@ choice are replicates, not trials. No Lift trial remains for any family. **Can: 
 every family. The engineering runs `s6dev_*` (E6-02) and `s6dev2_*` (E6-03) are not trials:
 they never entered selection.
 
+### Session 7 (2026-11-07 onward): Can main suite (validation only), robustness, ablations, freeze, test
+Every training run runs on local CPU (1 torch thread) and every reported evaluation on the
+canonical container, as Gate C requires (D-051). Can main-suite numbers are
+**validation-only development numbers**. No Modal resource is used. Lift selections are
+final (D-058).
+
+**Session 7 Can search space (predeclared; RESEARCH_PROTOCOL §6.3; D-061).** Written and
+committed before the first Can training run of any family. Plan
+`configs/experiments/level1_core_can.yaml` (SHA-256
+`881b4fb7fd72a33866ad4924db3b72cbe4270a212b03a8cc958efc6ba8a89e3c`), task `can`, prefix
+`s7`; resolved trial → run-ID table in `logs/session7/suite/level1_core_can/plan_resolved.json`.
+- **Budget, every run:** 100,000 steps, batch 100, checkpoints every 5,000 (K = 20), all 20
+  evaluated on the 50 Can validation starts (amendment 2026-11-07), exactly as on Lift.
+- **Trials, identical for every family and identical to Lift's** (D-055, D-061). Each changes
+  one setting of trial 1:
+
+  | Trial | Change from trial 1 | Reason |
+  |---|---|---|
+  | 1 | none: the pilot configuration (AdamW, lr 1e-4 constant, weight decay 0) at the main budget | required re-run (amendment 2026-11-07); no Can pilot exists |
+  | 2 | `optim.schedule=cosine`: lr 1e-4 annealed to 0 over the 100k steps (torch `CosineAnnealingLR`, no warm-up) | as on Lift (D-055) |
+  | 3 | `optim.lr=3.0e-4`, constant | as on Lift (D-055) |
+  | 4 | `optim.weight_decay=0.1` | as on Lift (D-055) |
+
+  Reusing the Lift space is the default named in HANDOFF; no Lift result changed it, and no
+  Can result existed when it was written.
+- **Run IDs (seed 0):**
+
+  | Family (params, 19-D Can input) | Trial 1 | Trial 2 | Trial 3 | Trial 4 |
+  |---|---|---|---|---|
+  | diffusion_unet (1,092,551) | `s7_diffusion_unet_can_seed0_b0cb87bb` | `s7_diffusion_unet_cos_can_seed0_99251da3` | `s7_diffusion_unet_lr3e4_can_seed0_a5e9939f` | `s7_diffusion_unet_wd1e1_can_seed0_0cb7d4f8` |
+  | bc_mlp (1,077,255) | `s7_bc_mlp_can_seed0_ad021ce7` | `s7_bc_mlp_cos_can_seed0_ae8152e3` | `s7_bc_mlp_lr3e4_can_seed0_d8ea4251` | `s7_bc_mlp_wd1e1_can_seed0_72e464be` |
+  | bc_mlp_chunk (1,204,336) | `s7_bc_mlp_chunk_can_seed0_e245ceb1` | `s7_bc_mlp_chunk_cos_can_seed0_7d7745e8` | `s7_bc_mlp_chunk_lr3e4_can_seed0_d4114f71` | `s7_bc_mlp_chunk_wd1e1_can_seed0_0c2f9d4b` |
+  | bc_rnn (1,080,703) | `s7_bc_rnn_can_seed0_9755b24b` | `s7_bc_rnn_cos_can_seed0_5ff5ce91` | `s7_bc_rnn_lr3e4_can_seed0_d59b2d0c` | `s7_bc_rnn_wd1e1_can_seed0_14e39a6c` |
+
+- **Choice** (`roboforge.eval.tuning`, D-054): unchanged from Session 6. The chosen trial of
+  each family is trained with seeds 1 and 2; no further Can trial exists for any family.
+
+| ID | Date | Session | Type | What | Outcome | Evidence | Cost |
+|---|---|---|---|---|---|---|---|
+| E7-01 | 2026-11-07 | 7 | engineering | Prerequisites at `3d712e4` (clean): `make setup`, `make download`, `make check-data`, `make build-data`, `make check-eval-states`, `git status --short data/`, `make lint`, `make test`, `make smoke-sim SMOKE_OUT=logs/session7/prereq`, `make train-smoke SMOKE_DIR=logs/tmp/s7_smoke`, container smoke Lift/Can (`ROBOFORGE_EVIDENCE_SESSION=7 make in-sim CMD="python scripts/smoke_sim.py --task <t> --out-dir logs/session7/prereq/container"`), image ID, the 12 Session 6 Lift test-configuration checkpoints, git identity | All PASS: 4/4 dataset SHA-256 verified; check-data, build-data, check-eval-states PASS (macOS vs container states within 4.4e-16, XML equal); `data/` clean; lint clean; **295 passed** (438.9 s); smoke macOS Lift 17/17, Can 16/16; overfit checks fall 0.002–0.06× for all 4 families; train-smoke BC-MLP, BC-RNN, diffusion PASS (dev-only 2-start native rollouts); container smoke Lift 17/17, Can 16/16; image `sha256:1f685638…` = `configs/eval/platform.yaml`; all 12 Lift runs exist, `complete`, clean at `6dce01b`, and each selected checkpoint's file SHA-256 equals the manifest, `reports/session6/lift_test_configuration.json` (SHA-256 `38ac3c29…`) and HANDOFF; identity Zackary Holt <zackholt05@gmail.com> (author and committer). Host shared with other sessions' processes (1-min load 21–47 during the checks; KI-035) | `logs/session7/prereq/` (`summary.txt`, per-step logs, `lift_checkpoints.log`, `container/`) | $0 |
+
 ## Owner approvals for paid compute
 Machine-read by `roboforge.compute.approval` (D-049): a paid Modal launch is refused unless a
 `granted` row below covers its function and the committed spend plus the launch's upper-bound

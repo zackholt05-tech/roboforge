@@ -1132,3 +1132,34 @@ commit; no tracked file was edited while runs were in flight.
 - Scheduling only: CPU training with 1 thread is deterministic, and evaluation physics does
   not depend on wall time. The trial-1 checkpoints and evaluations reproduce the pilots
   exactly (E6-07). No run was stopped, retried or relaunched.
+
+## Session 7 (2026-11-07 onward)
+Evidence: `reports/session7/` and `logs/session7/` (D-062). The Can plan and its predeclared
+search space (EXPERIMENT_LEDGER, Session 7) were committed before the first Can training run.
+Lift selections are final (D-058): no Lift run is retrained, retuned or reselected.
+
+### D-060 Makefile defaults bumped to Session 7 (FIXED)
+- `EVIDENCE_SESSION` now falls back to 7 and `PREFIX` to `s7` (as D-048 and D-053 did), so
+  no Session 7 command can write into `reports/session6` or reuse the `s6` prefix by
+  omission.
+- `SUITE_PLAN` defaults to `configs/experiments/level1_core_can.yaml`, and `SUITE_SUMMARY`
+  follows the plan's stem (`reports/session$(EVIDENCE_SESSION)/suite/<plan stem>.json`), so
+  `make figures` reads the summary of the plan it is given. The Session 6 figures are
+  reproduced with `make figures SUITE_PLAN=configs/experiments/level1_core_lift.yaml
+  EVIDENCE_SESSION=6`.
+
+### D-061 Can tuning search space: the Lift trials of D-055, unchanged (FIXED)
+- Can uses exactly the Session 6 trials for every family: trial 1 the pilot configuration
+  at the main budget, trial 2 cosine schedule, trial 3 lr 3e-4, trial 4 weight decay 0.1
+  (`configs/experiments/level1_core_can.yaml`, SHA-256 `881b4fb7…`).
+- **Why the default:** the reasons of D-055 hold on Can (an equalized, bounded search on
+  optimizer settings that apply to every family; widths, horizons, DDIM steps, EMA, dropout
+  and observation noise stay out for the same reasons). Reusing the same axes keeps the two
+  tasks comparable as a protocol, and choosing Can-specific trials before any Can policy
+  exists would have no evidence behind it. No Lift result was used to change the Can space.
+- Budget, seeds, the §7 rule and the §6.3 choice are those of Session 6; prefix `s7`.
+
+### D-062 Session 7 evidence location (FIXED)
+- `reports/session7/` and `logs/session7/` with `ROBOFORGE_EVIDENCE_SESSION=7`. Training and
+  evaluation records stay under `runs/` (gitignored), with summaries and hashes in the
+  reports, as in D-056.

@@ -103,11 +103,11 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 6 (DECISIONS D-053; Session 5: D-048) so that no Session 6 command
-# can write into Session 5 evidence or reuse the s5 run prefix by omission.
-PREFIX ?= s6
+# Defaults bumped to Session 7 (DECISIONS D-060; Session 6: D-053; Session 5: D-048) so that no
+# Session 7 command can write into Session 6 evidence or reuse the s6 run prefix by omission.
+PREFIX ?= s7
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),6)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),7)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -132,9 +132,10 @@ train-main:  ## One run at the main budget (100k steps, checkpoints every 5k); S
 	$(RUN) python scripts/train.py --config configs/models/$(MODEL).yaml --task $(TASK) \
 		--seed $(SEED) --prefix $(PREFIX) $(MAIN_BUDGET) $(SET_ARGS)
 
-# The main suite (Session 6: Lift): train every predeclared trial, evaluate every checkpoint on
-# the canonical container, select (§7), choose each family's configuration (§6.3), replicate.
-SUITE_PLAN ?= configs/experiments/level1_core_lift.yaml
+# The main suite (Session 6: Lift, Session 7: Can): train every predeclared trial, evaluate every
+# checkpoint on the canonical container, select (§7), choose each family's configuration (§6.3),
+# replicate. The default plan follows the current session (D-060).
+SUITE_PLAN ?= configs/experiments/level1_core_can.yaml
 CAFFEINATE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -i)
 suite-plan:  ## Resolve SUITE_PLAN and print trial -> run ID (launches nothing)
 	$(RUN_S) python scripts/run_suite.py --plan $(SUITE_PLAN) --dry-run
@@ -144,7 +145,7 @@ suite:  ## Run SUITE_PLAN end to end (Gate C limits: 8 training runs, 4 containe
 		--plan $(SUITE_PLAN)
 
 # Validation-only figures, table and episode montages from a finished suite (D-057).
-SUITE_SUMMARY ?= reports/session$(EVIDENCE_SESSION)/suite/level1_core_lift.json
+SUITE_SUMMARY ?= reports/session$(EVIDENCE_SESSION)/suite/$(basename $(notdir $(SUITE_PLAN))).json
 LATENCY ?=
 figures:  ## Validation-only figures, table and episode montages from SUITE_SUMMARY (LATENCY=<benchmark json>)
 	$(RUN_S) python scripts/plot_validation.py --summary $(SUITE_SUMMARY) $(if $(LATENCY),--latency $(LATENCY))

@@ -1,0 +1,56 @@
+# Level 1 core suite on Can (Session 7). Binding: RESEARCH_PROTOCOL §6.3, §7 and the
+# 2026-11-07 amendment (§13); compute per Gate C (DECISIONS D-051): local CPU only.
+# Validated and resolved by roboforge.train.suite.load_plan; executed by scripts/run_suite.py.
+#
+# The Session 6 Lift protocol unchanged, on robosuite PickPlaceCan (robomimic PH, 19-D input):
+# Budget: identical for every run of every family (100,000 steps, batch 100 from the base
+# configs, checkpoints every 5,000, K = 20, every checkpoint evaluated on all 50 Can
+# validation starts). The base configs carry the 30k pilot budget, so the budget is applied
+# here as --set overrides and recorded in every run's resolved config.
+#
+# Tuning (predeclared before any Can run; EXPERIMENT_LEDGER, Session 7 Can search space,
+# DECISIONS D-061): 4 configurations per family, seed 0, the same trials as on Lift (D-055).
+# Trial 1 is the pilot configuration unchanged at the main budget. Trials 2-4 change one
+# optimizer setting each, the same three changes for every family:
+#   2: cosine learning-rate schedule (1e-4 annealed to 0 over the 100k steps)
+#   3: constant learning rate 3e-4
+#   4: AdamW weight decay 0.1
+# Architecture, horizons, parameter counts, batch and budget never change (TRIAL_KEYS).
+# The chosen configuration (§6.3 ordering of the seed-0 runs' selected checkpoints) is then
+# trained with seeds 1 and 2. Launch order as on Lift: diffusion first (the critical path),
+# then the BC families fastest first, so that evaluation work starts early.
+schema: roboforge.suite_plan/1
+task: can
+prefix: s7
+budget: [train.max_steps=100000, train.ckpt_every=5000]
+tuning_seed: 0
+replicate_seeds: [1, 2]
+families:
+  - family: diffusion_unet
+    config: configs/models/diffusion_unet.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=diffusion_unet_cos, optim.schedule=cosine]}
+      - {trial: 3, overrides: [name=diffusion_unet_lr3e4, optim.lr=3.0e-4]}
+      - {trial: 4, overrides: [name=diffusion_unet_wd1e1, optim.weight_decay=0.1]}
+  - family: bc_mlp
+    config: configs/models/bc_mlp.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=bc_mlp_cos, optim.schedule=cosine]}
+      - {trial: 3, overrides: [name=bc_mlp_lr3e4, optim.lr=3.0e-4]}
+      - {trial: 4, overrides: [name=bc_mlp_wd1e1, optim.weight_decay=0.1]}
+  - family: bc_mlp_chunk
+    config: configs/models/bc_mlp_chunk.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=bc_mlp_chunk_cos, optim.schedule=cosine]}
+      - {trial: 3, overrides: [name=bc_mlp_chunk_lr3e4, optim.lr=3.0e-4]}
+      - {trial: 4, overrides: [name=bc_mlp_chunk_wd1e1, optim.weight_decay=0.1]}
+  - family: bc_rnn
+    config: configs/models/bc_rnn.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=bc_rnn_cos, optim.schedule=cosine]}
+      - {trial: 3, overrides: [name=bc_rnn_lr3e4, optim.lr=3.0e-4]}
+      - {trial: 4, overrides: [name=bc_rnn_wd1e1, optim.weight_decay=0.1]}

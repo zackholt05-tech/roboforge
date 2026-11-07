@@ -1,0 +1,5332 @@
+{
+ "schema": "roboforge.suite_projection/1",
+ "kind": "ESTIMATES from measured inputs and stated assumptions (not a bill)",
+ "pricing": {
+  "fetched_utc": "2026-11-06",
+  "source": "https://modal.com/pricing",
+  "monthly_credits_usd": 30.0
+ },
+ "gate_a_probe_upper_bound": {
+  "function": "gpu_probe",
+  "timeout_s": 900,
+  "attempts": 4,
+  "one_attempt": {
+   "gpu_usd": 0.200244,
+   "cpu_usd": 0.0472648,
+   "memory_usd": 0.03203904,
+   "total_usd": 0.27954784,
+   "multiplier": 1.0,
+   "resources": {
+    "seconds": 902.0,
+    "cpu": 4.0,
+    "memory_gib": 16.0,
+    "gpu": "L4",
+    "count": 1
+   },
+   "kind": "estimate (list price)"
+  },
+  "job": {
+   "gpu_usd": 0.800976,
+   "cpu_usd": 0.1890592,
+   "memory_usd": 0.12815616,
+   "total_usd": 1.11819136,
+   "attempts": 4,
+   "resources_per_attempt": {
+    "seconds": 902.0,
+    "cpu": 4.0,
+    "memory_gib": 16.0,
+    "gpu": "L4",
+    "count": 1
+   },
+   "kind": "estimate (list price)"
+  },
+  "build_allowance": {
+   "gpu_usd": 0.0,
+   "cpu_usd": 0.04716,
+   "memory_usd": 0.031967999999999996,
+   "total_usd": 0.079128,
+   "multiplier": 1.0,
+   "resources": {
+    "seconds": 900.0,
+    "cpu": 4.0,
+    "memory_gib": 16.0,
+    "gpu": null,
+    "count": 1
+   },
+   "kind": "estimate (list price)"
+  },
+  "total_usd": 1.19731936,
+  "kind": "upper-bound estimate (list price; 4 attempts of the full timeout)",
+  "pricing_fetched_utc": "2026-11-06",
+  "pricing_source": "https://modal.com/pricing"
+ },
+ "assumptions": {
+  "can_steps_per_episode": {
+   "low": 160,
+   "high": 400,
+   "why": "no Can policy exists; low = most starts succeed near 1.4x the mean demo length (116), high = every episode runs to the 400-step horizon"
+  },
+  "modal_cpu_time_factor": {
+   "low": 0.8,
+   "high": 1.6,
+   "why": "fallback only, used if the Gate A probe's CPU profile or the Modal training smoke is missing: Modal x86_64 single-thread time relative to the M1 Pro"
+  },
+  "gpu_steps_per_s": {
+   "low": {
+    "diffusion_unet": 40,
+    "bc_rnn": 60,
+    "bc_mlp": 250,
+    "bc_mlp_chunk": 250
+   },
+   "high": {
+    "diffusion_unet": 150,
+    "bc_rnn": 250,
+    "bc_mlp": 800,
+    "bc_mlp_chunk": 800
+   },
+   "why": "kernel-launch-bound small networks at batch 100; unmeasured until the Gate A probe"
+  },
+  "failed_run_reserve": {
+   "value": 0.25,
+   "why": "25 % extra training and evaluation compute for failed or repeated runs"
+  },
+  "modal_start_overhead_s": {
+   "value": 120,
+   "why": "container start and data/code mount per launch (estimate)"
+  },
+  "render_clips": {
+   "value": 40,
+   "frames": 400,
+   "cameras": 2,
+   "why": "Session 10 website clips from selected rollouts (estimate)"
+  }
+ },
+ "inputs": {
+  "train": {
+   "bc_mlp": {
+    "steps_per_s": 204.9909513055141,
+    "wall_s_pilot": 146.34792320802808,
+    "max_steps": 30000,
+    "ckpt_bytes": 13014421
+   },
+   "bc_rnn": {
+    "steps_per_s": 30.51043588533262,
+    "wall_s_pilot": 983.2701215003617,
+    "max_steps": 30000,
+    "ckpt_bytes": 13060069
+   },
+   "bc_mlp_chunk": {
+    "steps_per_s": 193.21701285692373,
+    "wall_s_pilot": 155.2658306658268,
+    "max_steps": 30000,
+    "ckpt_bytes": 14539541
+   },
+   "diffusion_unet": {
+    "steps_per_s": 8.751346004646106,
+    "wall_s_pilot": 3428.0440956251696,
+    "max_steps": 30000,
+    "ckpt_bytes": 17732665
+   }
+  },
+  "lift_eval": {
+   "bc_mlp": [
+    {
+     "wall_s": 75.69579095200001,
+     "steps": 3572
+    },
+    {
+     "wall_s": 101.27973187999999,
+     "steps": 5552
+    },
+    {
+     "wall_s": 83.50078916400003,
+     "steps": 4107
+    },
+    {
+     "wall_s": 97.53346071200002,
+     "steps": 5812
+    },
+    {
+     "wall_s": 85.37786328899995,
+     "steps": 5702
+    },
+    {
+     "wall_s": 84.71916091399999,
+     "steps": 5416
+    }
+   ],
+   "bc_rnn": [
+    {
+     "wall_s": 73.33873678300006,
+     "steps": 2206
+    },
+    {
+     "wall_s": 72.31517653299989,
+     "steps": 2375
+    },
+    {
+     "wall_s": 50.345987439000055,
+     "steps": 2161
+    },
+    {
+     "wall_s": 97.624157169,
+     "steps": 3088
+    },
+    {
+     "wall_s": 93.22326991799991,
+     "steps": 2647
+    },
+    {
+     "wall_s": 58.504604526000094,
+     "steps": 2667
+    }
+   ],
+   "bc_mlp_chunk": [
+    {
+     "wall_s": 54.31226540100002,
+     "steps": 2563
+    },
+    {
+     "wall_s": 43.29897343599998,
+     "steps": 2282
+    },
+    {
+     "wall_s": 49.680183813999975,
+     "steps": 2571
+    },
+    {
+     "wall_s": 52.69567877500003,
+     "steps": 3042
+    },
+    {
+     "wall_s": 53.561212775,
+     "steps": 2976
+    },
+    {
+     "wall_s": 61.27368023700001,
+     "steps": 3692
+    }
+   ],
+   "diffusion_unet": [
+    {
+     "wall_s": 88.43381512299999,
+     "steps": 4423
+    },
+    {
+     "wall_s": 71.42760132499998,
+     "steps": 3113
+    },
+    {
+     "wall_s": 60.166525361,
+     "steps": 2564
+    },
+    {
+     "wall_s": 63.90636315400002,
+     "steps": 2781
+    },
+    {
+     "wall_s": 63.68035611200003,
+     "steps": 2784
+    },
+    {
+     "wall_s": 65.86139823799999,
+     "steps": 2774
+    }
+   ]
+  },
+  "latency_ms_per_decision": {
+   "bc_mlp": 0.9120830000028946,
+   "bc_rnn": 8.626333000165687,
+   "bc_mlp_chunk": 1.2592919999860896,
+   "diffusion_unet": 36.29297899993844
+  },
+  "rollout_profile": {
+   "schema": "roboforge.parallel_rollout_profile/1",
+   "kind": "engineering profile on validation starts (not a result)",
+   "docker_vm": {
+    "ncpu": 10,
+    "mem_bytes": 8319438848,
+    "server_version": "29.9.2"
+   },
+   "levels": [
+    {
+     "P": 1,
+     "job": "lift_diffusion",
+     "wall_s": 76.97315774997696,
+     "n_ok": 1,
+     "evaluations_per_hour": 46.76955064898682,
+     "aggregate_steps_per_s": 33.31031329555617,
+     "mean_eval_wall_s": 62.027348194000005,
+     "mean_process_wall_s": 76.97173170885071,
+     "physics_sha256_all_match": [
+      true
+     ],
+     "docker_stats_mid_run": [
+      {
+       "BlockIO": "1.61GB / 0B",
+       "CPUPerc": "272.51%",
+       "Container": "85ad1cda721e489d5325592a462c4b7c3973e61d64789acdde731decb65e4b09",
+       "ID": "85ad1cda721e",
+       "MemPerc": "32.21%",
+       "MemUsage": "2.496GiB / 7.748GiB",
+       "Name": "exciting_bardeen",
+       "NetIO": "1.75kB / 126B",
+       "PIDs": "37"
+      }
+     ],
+     "containers": [
+      {
+       "out": "reports/session5/rollout_profile/raw/P1_lift_diffusion_0.json",
+       "returncode": 0,
+       "process_wall_s": 76.97173170885071,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P1_lift_diffusion_0",
+        "task": "lift",
+        "policy": "s4_diffusion_unet_lift_seed0_336e15e9 step 15000",
+        "n_episodes": 50,
+        "n_steps": 2564,
+        "eval_wall_s": 62.027348194000005,
+        "process_wall_s": 69.937562281,
+        "steps_per_s": 41.336605137151736,
+        "timed_s": {
+         "physics": 21.451274711000032,
+         "features": 0.1427205330001602,
+         "success": 0.01283395200002957,
+         "inference": 21.96299481800026,
+         "recording": 0.06307047299963209,
+         "reset": 18.11809183700001
+        },
+        "untimed_s": 0.27636186999988155,
+        "per_step_ms": {
+         "physics": 8.366331790561635,
+         "features": 0.05566323439943845,
+         "success": 0.005005441497671439,
+         "inference": 8.56591061544472,
+         "recording": 0.02459846840859286,
+         "reset": 7.066338469968802
+        },
+        "share": {
+         "physics": 0.34583575367284597,
+         "features": 0.0023009291410263084,
+         "success": 0.00020690795872635768,
+         "inference": 0.3540856647507748,
+         "recording": 0.0010168171755847043,
+         "reset": 0.2920984430985653
+        },
+        "physics_sha256_all_match": true,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.044790417000001526,
+         "mean_s": 0.15362334589999876,
+         "first_s": 2.2506118759999936
+        },
+        "episodes": [
+         {
+          "state_id": "lift_validation_0000",
+          "steps": 48,
+          "wall_s": 4.974638793999999,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0001",
+          "steps": 39,
+          "wall_s": 1.1517994999999992,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0002",
+          "steps": 52,
+          "wall_s": 1.2237904590000017,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0003",
+          "steps": 45,
+          "wall_s": 1.044191584,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0004",
+          "steps": 45,
+          "wall_s": 1.0572301670000002,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0005",
+          "steps": 42,
+          "wall_s": 1.053717374999998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0006",
+          "steps": 61,
+          "wall_s": 1.2424325009999997,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0007",
+          "steps": 58,
+          "wall_s": 1.2536402090000003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0008",
+          "steps": 48,
+          "wall_s": 0.9753935419999991,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0009",
+          "steps": 58,
+          "wall_s": 1.1820980419999998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0010",
+          "steps": 44,
+          "wall_s": 1.0009290419999992,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0011",
+          "steps": 47,
+          "wall_s": 1.015648542000001,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0012",
+          "steps": 51,
+          "wall_s": 1.0344242510000008,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0013",
+          "steps": 90,
+          "wall_s": 1.7144489179999987,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0014",
+          "steps": 46,
+          "wall_s": 1.085034708000002,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0015",
+          "steps": 49,
+          "wall_s": 1.2666460840000013,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0016",
+          "steps": 48,
+          "wall_s": 1.155988624999999,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0017",
+          "steps": 40,
+          "wall_s": 0.9399925430000025,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0018",
+          "steps": 43,
+          "wall_s": 1.0731587080000011,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0019",
+          "steps": 41,
+          "wall_s": 0.9821474589999966,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0020",
+          "steps": 34,
+          "wall_s": 0.9066639169999959,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0021",
+          "steps": 47,
+          "wall_s": 1.2049609999999973,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0022",
+          "steps": 44,
+          "wall_s": 1.1497341669999983,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0023",
+          "steps": 40,
+          "wall_s": 0.9396065010000001,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0024",
+          "steps": 53,
+          "wall_s": 1.2125330000000005,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0025",
+          "steps": 51,
+          "wall_s": 1.1862989589999984,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0026",
+          "steps": 46,
+          "wall_s": 1.0734423330000027,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0027",
+          "steps": 43,
+          "wall_s": 1.0752096670000029,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0028",
+          "steps": 55,
+          "wall_s": 1.2048230429999975,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0029",
+          "steps": 48,
+          "wall_s": 1.0688192500000042,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0030",
+          "steps": 46,
+          "wall_s": 1.1188576670000003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0031",
+          "steps": 51,
+          "wall_s": 1.1605889579999982,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0032",
+          "steps": 51,
+          "wall_s": 1.438718000999998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0033",
+          "steps": 39,
+          "wall_s": 1.0887805839999984,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0034",
+          "steps": 44,
+          "wall_s": 1.0804481680000038,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0035",
+          "steps": 41,
+          "wall_s": 1.1212127089999981,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0036",
+          "steps": 41,
+          "wall_s": 0.9839972090000018,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0037",
+          "steps": 52,
+          "wall_s": 1.1695857090000032,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0038",
+          "steps": 46,
+          "wall_s": 1.009948376000004,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0039",
+          "steps": 132,
+          "wall_s": 2.356616375999998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0040",
+          "steps": 50,
+          "wall_s": 1.2102398330000028,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0041",
+          "steps": 46,
+          "wall_s": 1.176388916999997,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0042",
+          "steps": 42,
+          "wall_s": 1.0121874169999998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0043",
+          "steps": 72,
+          "wall_s": 1.429026001000004,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0044",
+          "steps": 53,
+          "wall_s": 1.1032756670000055,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0045",
+          "steps": 44,
+          "wall_s": 1.0089512090000028,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0046",
+          "steps": 53,
+          "wall_s": 1.0924011260000128,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0047",
+          "steps": 55,
+          "wall_s": 1.1357670419999977,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0048",
+          "steps": 102,
+          "wall_s": 1.8490126680000003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0049",
+          "steps": 48,
+          "wall_s": 1.01555350000001,
+          "physics_sha256_matches_reference": true
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0010168171755847043,",
+        "  \"reset\": 0.2920984430985653",
+        " },",
+        " \"physics_sha256_all_match\": true",
+        "}"
+       ]
+      }
+     ],
+     "speedup_vs_P1": 1.0
+    },
+    {
+     "P": 2,
+     "job": "lift_diffusion",
+     "wall_s": 107.62826258409768,
+     "n_ok": 2,
+     "evaluations_per_hour": 66.89692676562649,
+     "aggregate_steps_per_s": 47.645477840851754,
+     "mean_eval_wall_s": 95.5182519175,
+     "mean_process_wall_s": 107.62656889553182,
+     "physics_sha256_all_match": [
+      true,
+      true
+     ],
+     "docker_stats_mid_run": [
+      {
+       "BlockIO": "0B / 0B",
+       "CPUPerc": "219.35%",
+       "Container": "c192310cedda9c93a04f49cfaa9c69cbc9e590573231506fd9039943687fff3c",
+       "ID": "c192310cedda",
+       "MemPerc": "13.56%",
+       "MemUsage": "1.05GiB / 7.748GiB",
+       "Name": "agitated_burnell",
+       "NetIO": "1.3kB / 126B",
+       "PIDs": "37"
+      },
+      {
+       "BlockIO": "0B / 0B",
+       "CPUPerc": "219.78%",
+       "Container": "e3599327e60442494f70774cfd9914b6b161de9d960d33488b838823b39836e7",
+       "ID": "e3599327e604",
+       "MemPerc": "13.46%",
+       "MemUsage": "1.043GiB / 7.748GiB",
+       "Name": "zen_engelbart",
+       "NetIO": "1.26kB / 126B",
+       "PIDs": "37"
+      }
+     ],
+     "containers": [
+      {
+       "out": "reports/session5/rollout_profile/raw/P2_lift_diffusion_0.json",
+       "returncode": 0,
+       "process_wall_s": 107.62756004091352,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P2_lift_diffusion_0",
+        "task": "lift",
+        "policy": "s4_diffusion_unet_lift_seed0_336e15e9 step 15000",
+        "n_episodes": 50,
+        "n_steps": 2564,
+        "eval_wall_s": 95.52184925099999,
+        "process_wall_s": 103.34043833799998,
+        "steps_per_s": 26.842026406572717,
+        "timed_s": {
+         "physics": 23.673171521999464,
+         "features": 0.19344704599984652,
+         "success": 0.013855738999879463,
+         "inference": 45.94206340000038,
+         "recording": 0.13821023299989577,
+         "reset": 25.195699341999855
+        },
+        "untimed_s": 0.365401969000672,
+        "per_step_ms": {
+         "physics": 9.232906209828185,
+         "features": 0.07544736583457352,
+         "success": 0.005403954368127716,
+         "inference": 17.91812145085818,
+         "recording": 0.05390414703584078,
+         "reset": 9.826715812012424
+        },
+        "share": {
+         "physics": 0.24782991229361734,
+         "features": 0.0020251601860379748,
+         "success": 0.00014505308584919813,
+         "inference": 0.48095868914011236,
+         "recording": 0.0014468965381598167,
+         "reset": 0.26376896531592314
+        },
+        "physics_sha256_all_match": true,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.050809479999998075,
+         "mean_s": 0.1697945897000011,
+         "first_s": 2.4750543760000028
+        },
+        "episodes": [
+         {
+          "state_id": "lift_validation_0000",
+          "steps": 48,
+          "wall_s": 6.302815545000001,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0001",
+          "steps": 39,
+          "wall_s": 1.8461582920000126,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0002",
+          "steps": 52,
+          "wall_s": 1.8964581669999916,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0003",
+          "steps": 45,
+          "wall_s": 1.7429722510000119,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0004",
+          "steps": 45,
+          "wall_s": 1.5884049589999876,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0005",
+          "steps": 42,
+          "wall_s": 1.622098833999999,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0006",
+          "steps": 61,
+          "wall_s": 1.9311868340000018,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0007",
+          "steps": 58,
+          "wall_s": 2.0927271670000067,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0008",
+          "steps": 48,
+          "wall_s": 1.8100584600000076,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0009",
+          "steps": 58,
+          "wall_s": 2.0858303340000077,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0010",
+          "steps": 44,
+          "wall_s": 1.6234878759999987,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0011",
+          "steps": 47,
+          "wall_s": 1.510917667000001,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0012",
+          "steps": 51,
+          "wall_s": 1.664181291999995,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0013",
+          "steps": 90,
+          "wall_s": 2.731142835,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0014",
+          "steps": 46,
+          "wall_s": 1.6971218340000007,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0015",
+          "steps": 49,
+          "wall_s": 1.6997743759999935,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0016",
+          "steps": 48,
+          "wall_s": 1.5522034180000048,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0017",
+          "steps": 40,
+          "wall_s": 1.3776841250000018,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0018",
+          "steps": 43,
+          "wall_s": 1.5681739579999885,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0019",
+          "steps": 41,
+          "wall_s": 1.8949680010000094,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0020",
+          "steps": 34,
+          "wall_s": 1.6942250839999957,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0021",
+          "steps": 47,
+          "wall_s": 1.6238999589999992,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0022",
+          "steps": 44,
+          "wall_s": 1.6068145010000023,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0023",
+          "steps": 40,
+          "wall_s": 1.2759104170000057,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0024",
+          "steps": 53,
+          "wall_s": 1.6495610419999878,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0025",
+          "steps": 51,
+          "wall_s": 1.7476179589999958,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0026",
+          "steps": 46,
+          "wall_s": 1.5133506669999974,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0027",
+          "steps": 43,
+          "wall_s": 1.8490302919999806,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0028",
+          "steps": 55,
+          "wall_s": 1.718852250999987,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0029",
+          "steps": 48,
+          "wall_s": 1.558231376000009,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0030",
+          "steps": 46,
+          "wall_s": 1.469145501000014,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0031",
+          "steps": 51,
+          "wall_s": 1.6680921669999975,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0032",
+          "steps": 51,
+          "wall_s": 1.7024380850000114,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0033",
+          "steps": 39,
+          "wall_s": 1.3386090009999805,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0034",
+          "steps": 44,
+          "wall_s": 1.516960126000015,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0035",
+          "steps": 41,
+          "wall_s": 2.1868112509999946,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0036",
+          "steps": 41,
+          "wall_s": 2.625304875000012,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0037",
+          "steps": 52,
+          "wall_s": 1.9736610010000106,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0038",
+          "steps": 46,
+          "wall_s": 2.0339422929999955,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0039",
+          "steps": 132,
+          "wall_s": 3.593167127000015,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0040",
+          "steps": 50,
+          "wall_s": 1.6382698760000096,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0041",
+          "steps": 46,
+          "wall_s": 1.5078525010000021,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0042",
+          "steps": 42,
+          "wall_s": 1.525149166999995,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0043",
+          "steps": 72,
+          "wall_s": 2.159477126000013,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0044",
+          "steps": 53,
+          "wall_s": 2.0349479590000215,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0045",
+          "steps": 44,
+          "wall_s": 1.807027833999996,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0046",
+          "steps": 53,
+          "wall_s": 1.9345722509999916,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0047",
+          "steps": 55,
+          "wall_s": 1.83388420899999,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0048",
+          "steps": 102,
+          "wall_s": 2.8871542509999983,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0049",
+          "steps": 48,
+          "wall_s": 1.5870150850000186,
+          "physics_sha256_matches_reference": true
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0014468965381598167,",
+        "  \"reset\": 0.26376896531592314",
+        " },",
+        " \"physics_sha256_all_match\": true",
+        "}"
+       ]
+      },
+      {
+       "out": "reports/session5/rollout_profile/raw/P2_lift_diffusion_1.json",
+       "returncode": 0,
+       "process_wall_s": 107.62557775015011,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P2_lift_diffusion_1",
+        "task": "lift",
+        "policy": "s4_diffusion_unet_lift_seed0_336e15e9 step 15000",
+        "n_episodes": 50,
+        "n_steps": 2564,
+        "eval_wall_s": 95.514654584,
+        "process_wall_s": 103.27089817100001,
+        "steps_per_s": 26.844048289418247,
+        "timed_s": {
+         "physics": 23.889403113999066,
+         "features": 0.20500597599901482,
+         "success": 0.014469592999247993,
+         "inference": 45.90223813299964,
+         "recording": 0.07542828400005419,
+         "reset": 25.090371219000076
+        },
+        "untimed_s": 0.3377382650028977,
+        "per_step_ms": {
+         "physics": 9.317239904055798,
+         "features": 0.07995552886077022,
+         "success": 0.005643367004386893,
+         "inference": 17.902588975428877,
+         "recording": 0.029418207488320667,
+         "reset": 9.785636200858065
+        },
+        "share": {
+         "physics": 0.25011243790856846,
+         "features": 0.0021463300777444898,
+         "success": 0.00015149081638067135,
+         "inference": 0.48057796296201954,
+         "recording": 0.0007897037824046055,
+         "reset": 0.2626860907185132
+        },
+        "physics_sha256_all_match": true,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.04864222949998975,
+         "mean_s": 0.16951201459999793,
+         "first_s": 2.470454000999979
+        },
+        "episodes": [
+         {
+          "state_id": "lift_validation_0000",
+          "steps": 48,
+          "wall_s": 6.33751183599999,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0001",
+          "steps": 39,
+          "wall_s": 1.8415695000000056,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0002",
+          "steps": 52,
+          "wall_s": 1.8826072089999997,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0003",
+          "steps": 45,
+          "wall_s": 1.7271373760000017,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0004",
+          "steps": 45,
+          "wall_s": 1.590397834000001,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0005",
+          "steps": 42,
+          "wall_s": 1.6200906250000031,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0006",
+          "steps": 61,
+          "wall_s": 1.9528762510000064,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0007",
+          "steps": 58,
+          "wall_s": 2.0686674589999967,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0008",
+          "steps": 48,
+          "wall_s": 1.8210473759999957,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0009",
+          "steps": 58,
+          "wall_s": 2.0775615430000016,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0010",
+          "steps": 44,
+          "wall_s": 1.6179473760000036,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0011",
+          "steps": 47,
+          "wall_s": 1.4976544590000032,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0012",
+          "steps": 51,
+          "wall_s": 1.6724302090000123,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0013",
+          "steps": 90,
+          "wall_s": 2.7605171679999927,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0014",
+          "steps": 46,
+          "wall_s": 1.6903106669999914,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0015",
+          "steps": 49,
+          "wall_s": 1.6960671260000026,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0016",
+          "steps": 48,
+          "wall_s": 1.542969835000008,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0017",
+          "steps": 40,
+          "wall_s": 1.3900845000000004,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0018",
+          "steps": 43,
+          "wall_s": 1.556149750000003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0019",
+          "steps": 41,
+          "wall_s": 1.8954827090000066,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0020",
+          "steps": 34,
+          "wall_s": 1.6964612510000023,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0021",
+          "steps": 47,
+          "wall_s": 1.6139477920000047,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0022",
+          "steps": 44,
+          "wall_s": 1.5816861670000009,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0023",
+          "steps": 40,
+          "wall_s": 1.2895951250000053,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0024",
+          "steps": 53,
+          "wall_s": 1.62558095899999,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0025",
+          "steps": 51,
+          "wall_s": 1.7728031249999958,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0026",
+          "steps": 46,
+          "wall_s": 1.5411714180000047,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0027",
+          "steps": 43,
+          "wall_s": 1.838135833999985,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0028",
+          "steps": 55,
+          "wall_s": 1.7081320009999956,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0029",
+          "steps": 48,
+          "wall_s": 1.544553417000003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0030",
+          "steps": 46,
+          "wall_s": 1.4528266670000107,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0031",
+          "steps": 51,
+          "wall_s": 1.7093432089999965,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0032",
+          "steps": 51,
+          "wall_s": 1.6898267100000055,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0033",
+          "steps": 39,
+          "wall_s": 1.3513534999999877,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0034",
+          "steps": 44,
+          "wall_s": 1.5477284179999913,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0035",
+          "steps": 41,
+          "wall_s": 2.2217169169999806,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0036",
+          "steps": 41,
+          "wall_s": 2.558295625999989,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0037",
+          "steps": 52,
+          "wall_s": 1.9752165419999983,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0038",
+          "steps": 46,
+          "wall_s": 2.031604583999979,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0039",
+          "steps": 132,
+          "wall_s": 3.599743167999975,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0040",
+          "steps": 50,
+          "wall_s": 1.6394020839999826,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0041",
+          "steps": 46,
+          "wall_s": 1.5155626259999906,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0042",
+          "steps": 42,
+          "wall_s": 1.5172067510000034,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0043",
+          "steps": 72,
+          "wall_s": 2.1645744600000114,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0044",
+          "steps": 53,
+          "wall_s": 2.0162675009999873,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0045",
+          "steps": 44,
+          "wall_s": 1.8186507089999964,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0046",
+          "steps": 53,
+          "wall_s": 1.9072199590000025,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0047",
+          "steps": 55,
+          "wall_s": 1.8412971260000006,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0048",
+          "steps": 102,
+          "wall_s": 2.8909569599999827,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0049",
+          "steps": 48,
+          "wall_s": 1.5901552930000094,
+          "physics_sha256_matches_reference": true
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0007897037824046055,",
+        "  \"reset\": 0.2626860907185132",
+        " },",
+        " \"physics_sha256_all_match\": true",
+        "}"
+       ]
+      }
+     ],
+     "speedup_vs_P1": 1.4303521380331177
+    },
+    {
+     "P": 4,
+     "job": "lift_diffusion",
+     "wall_s": 172.81818537507206,
+     "n_ok": 4,
+     "evaluations_per_hour": 83.32456430292497,
+     "aggregate_steps_per_s": 59.34560635352767,
+     "mean_eval_wall_s": 154.50766897699998,
+     "mean_process_wall_s": 172.78094725031406,
+     "physics_sha256_all_match": [
+      true,
+      true,
+      true,
+      true
+     ],
+     "docker_stats_mid_run": [
+      {
+       "BlockIO": "209kB / 12.7MB",
+       "CPUPerc": "168.68%",
+       "Container": "99e4323e9570cf4e078d7f02f03f75fbf304bd8403d19ad5ac5efa93912dc688",
+       "ID": "99e4323e9570",
+       "MemPerc": "13.36%",
+       "MemUsage": "1.035GiB / 7.748GiB",
+       "Name": "gracious_knuth",
+       "NetIO": "1.36kB / 126B",
+       "PIDs": "37"
+      },
+      {
+       "BlockIO": "0B / 13.4MB",
+       "CPUPerc": "170.83%",
+       "Container": "0d1bf98442a4c219d984e3f1c4282eb24e593a41cf35275c4f1f87e90f15cfe7",
+       "ID": "0d1bf98442a4",
+       "MemPerc": "12.75%",
+       "MemUsage": "1012MiB / 7.748GiB",
+       "Name": "pedantic_booth",
+       "NetIO": "1.32kB / 126B",
+       "PIDs": "37"
+      },
+      {
+       "BlockIO": "77.8kB / 11.3MB",
+       "CPUPerc": "173.45%",
+       "Container": "9a3832d956695317989432800f14813004ff7dbb4efcb83101dfd46e6f82e484",
+       "ID": "9a3832d95669",
+       "MemPerc": "12.85%",
+       "MemUsage": "1019MiB / 7.748GiB",
+       "Name": "trusting_lamarr",
+       "NetIO": "1.27kB / 126B",
+       "PIDs": "37"
+      },
+      {
+       "BlockIO": "4.1kB / 12.6MB",
+       "CPUPerc": "174.85%",
+       "Container": "1748c5914572990b37cdf2a6b1e1328d9656b3014a789adc2161e5f46d6207ca",
+       "ID": "1748c5914572",
+       "MemPerc": "12.05%",
+       "MemUsage": "956.1MiB / 7.748GiB",
+       "Name": "zealous_saha",
+       "NetIO": "1.55kB / 126B",
+       "PIDs": "38"
+      }
+     ],
+     "containers": [
+      {
+       "out": "reports/session5/rollout_profile/raw/P4_lift_diffusion_0.json",
+       "returncode": 0,
+       "process_wall_s": 172.7758756247349,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P4_lift_diffusion_0",
+        "task": "lift",
+        "policy": "s4_diffusion_unet_lift_seed0_336e15e9 step 15000",
+        "n_episodes": 50,
+        "n_steps": 2564,
+        "eval_wall_s": 158.61085661399997,
+        "process_wall_s": 167.618045077,
+        "steps_per_s": 16.165349930867755,
+        "timed_s": {
+         "physics": 30.763303160998618,
+         "features": 0.3509517770010291,
+         "success": 0.02312518600027147,
+         "inference": 83.27076487699898,
+         "recording": 0.14855741400106126,
+         "reset": 43.10392014699997
+        },
+        "untimed_s": 0.9502340520000416,
+        "per_step_ms": {
+         "physics": 11.998168159515842,
+         "features": 0.13687666809712523,
+         "success": 0.00901918330743817,
+         "inference": 32.476897377924715,
+         "recording": 0.05793970904877584,
+         "reset": 16.811201305382202
+        },
+        "share": {
+         "physics": 0.19395458682796912,
+         "features": 0.002212659237161272,
+         "success": 0.00014579825425537924,
+         "inference": 0.5250004107830346,
+         "recording": 0.0009366156716661265,
+         "reset": 0.2717589518597641
+        },
+        "physics_sha256_all_match": true,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.04780808300000672,
+         "mean_s": 0.1719758874499945,
+         "first_s": 2.485096958999975
+        },
+        "episodes": [
+         {
+          "state_id": "lift_validation_0000",
+          "steps": 48,
+          "wall_s": 9.333515588000012,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0001",
+          "steps": 39,
+          "wall_s": 5.662097502999984,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0002",
+          "steps": 52,
+          "wall_s": 3.2223233349999987,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0003",
+          "steps": 45,
+          "wall_s": 3.09680241800001,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0004",
+          "steps": 45,
+          "wall_s": 2.9271478759999923,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0005",
+          "steps": 42,
+          "wall_s": 2.591356960000013,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0006",
+          "steps": 61,
+          "wall_s": 2.9881294179999998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0007",
+          "steps": 58,
+          "wall_s": 3.287092085000012,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0008",
+          "steps": 48,
+          "wall_s": 2.5837844169999755,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0009",
+          "steps": 58,
+          "wall_s": 3.387666376999988,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0010",
+          "steps": 44,
+          "wall_s": 2.9712775430000136,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0011",
+          "steps": 47,
+          "wall_s": 2.7147479180000005,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0012",
+          "steps": 51,
+          "wall_s": 3.102211127000004,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0013",
+          "steps": 90,
+          "wall_s": 5.556415001999994,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0014",
+          "steps": 46,
+          "wall_s": 2.9911336680000034,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0015",
+          "steps": 49,
+          "wall_s": 2.8111170850000065,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0016",
+          "steps": 48,
+          "wall_s": 2.6723580839999954,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0017",
+          "steps": 40,
+          "wall_s": 2.5004636270000162,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0018",
+          "steps": 43,
+          "wall_s": 2.389647835000005,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0019",
+          "steps": 41,
+          "wall_s": 2.361971417999996,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0020",
+          "steps": 34,
+          "wall_s": 2.581693500999961,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0021",
+          "steps": 47,
+          "wall_s": 3.05700712700002,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0022",
+          "steps": 44,
+          "wall_s": 2.613658251000004,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0023",
+          "steps": 40,
+          "wall_s": 2.5960927510000147,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0024",
+          "steps": 53,
+          "wall_s": 2.9592027929999745,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0025",
+          "steps": 51,
+          "wall_s": 2.8923630020000246,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0026",
+          "steps": 46,
+          "wall_s": 3.086025543000005,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0027",
+          "steps": 43,
+          "wall_s": 2.81304666799997,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0028",
+          "steps": 55,
+          "wall_s": 4.259265544000016,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0029",
+          "steps": 48,
+          "wall_s": 3.2758261680000373,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0030",
+          "steps": 46,
+          "wall_s": 3.1755002099999956,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0031",
+          "steps": 51,
+          "wall_s": 3.6271962100000223,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0032",
+          "steps": 51,
+          "wall_s": 2.6714262089999465,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0033",
+          "steps": 39,
+          "wall_s": 2.23926429200003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0034",
+          "steps": 44,
+          "wall_s": 2.4422561270000074,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0035",
+          "steps": 41,
+          "wall_s": 2.5220894180000073,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0036",
+          "steps": 41,
+          "wall_s": 2.4533205010000074,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0037",
+          "steps": 52,
+          "wall_s": 2.4679195429999936,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0038",
+          "steps": 46,
+          "wall_s": 2.360476334999987,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0039",
+          "steps": 132,
+          "wall_s": 5.855921586000022,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0040",
+          "steps": 50,
+          "wall_s": 2.912939626000025,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0041",
+          "steps": 46,
+          "wall_s": 2.310904167999979,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0042",
+          "steps": 42,
+          "wall_s": 2.813967751000007,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0043",
+          "steps": 72,
+          "wall_s": 3.7162448349999977,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0044",
+          "steps": 53,
+          "wall_s": 3.1633196269999644,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0045",
+          "steps": 44,
+          "wall_s": 2.6667652510000153,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0046",
+          "steps": 53,
+          "wall_s": 2.5928901679999967,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0047",
+          "steps": 55,
+          "wall_s": 2.7459782929999506,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0048",
+          "steps": 102,
+          "wall_s": 4.464113834999978,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0049",
+          "steps": 48,
+          "wall_s": 2.092576584000028,
+          "physics_sha256_matches_reference": true
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0009366156716661265,",
+        "  \"reset\": 0.2717589518597641",
+        " },",
+        " \"physics_sha256_all_match\": true",
+        "}"
+       ]
+      },
+      {
+       "out": "reports/session5/rollout_profile/raw/P4_lift_diffusion_1.json",
+       "returncode": 0,
+       "process_wall_s": 172.7729474999942,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P4_lift_diffusion_1",
+        "task": "lift",
+        "policy": "s4_diffusion_unet_lift_seed0_336e15e9 step 15000",
+        "n_episodes": 50,
+        "n_steps": 2564,
+        "eval_wall_s": 150.852551111,
+        "process_wall_s": 160.731858157,
+        "steps_per_s": 16.996729462754416,
+        "timed_s": {
+         "physics": 28.552427729000925,
+         "features": 0.3525189160005766,
+         "success": 0.01905845299896214,
+         "inference": 77.16979020200185,
+         "recording": 0.12243200900053353,
+         "reset": 43.87646239399993
+        },
+        "untimed_s": 0.7598614079972208,
+        "per_step_ms": {
+         "physics": 11.135892250000362,
+         "features": 0.13748787675529509,
+         "success": 0.007433093993354969,
+         "inference": 30.097422075663747,
+         "recording": 0.04775039352594911,
+         "reset": 17.112504833853325
+        },
+        "share": {
+         "physics": 0.1892737478996397,
+         "features": 0.002336844245618272,
+         "success": 0.00012633828767627926,
+         "inference": 0.5115577405463891,
+         "recording": 0.000811600520500617,
+         "reset": 0.2908566150910822
+        },
+        "physics_sha256_all_match": true,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.058004687500016416,
+         "mean_s": 0.19519427920000396,
+         "first_s": 2.820396168000002
+        },
+        "episodes": [
+         {
+          "state_id": "lift_validation_0000",
+          "steps": 48,
+          "wall_s": 9.303642378999996,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0001",
+          "steps": 39,
+          "wall_s": 5.414153126999992,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0002",
+          "steps": 52,
+          "wall_s": 3.3908727099999965,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0003",
+          "steps": 45,
+          "wall_s": 2.9540800839999974,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0004",
+          "steps": 45,
+          "wall_s": 2.4685156669999913,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0005",
+          "steps": 42,
+          "wall_s": 2.5376958770000044,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0006",
+          "steps": 61,
+          "wall_s": 2.947473835000011,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0007",
+          "steps": 58,
+          "wall_s": 2.9061799179999923,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0008",
+          "steps": 48,
+          "wall_s": 2.6103388760000144,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0009",
+          "steps": 58,
+          "wall_s": 3.006725877000008,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0010",
+          "steps": 44,
+          "wall_s": 2.329400210000017,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0011",
+          "steps": 47,
+          "wall_s": 2.741056501999992,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0012",
+          "steps": 51,
+          "wall_s": 2.7894752519999884,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0013",
+          "steps": 90,
+          "wall_s": 4.596454001000012,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0014",
+          "steps": 46,
+          "wall_s": 2.6134292509999852,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0015",
+          "steps": 49,
+          "wall_s": 3.3594490849999943,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0016",
+          "steps": 48,
+          "wall_s": 2.296523000999997,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0017",
+          "steps": 40,
+          "wall_s": 1.9780395429999942,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0018",
+          "steps": 43,
+          "wall_s": 2.714854293000002,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0019",
+          "steps": 41,
+          "wall_s": 2.384398917999988,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0020",
+          "steps": 34,
+          "wall_s": 1.8893567509999798,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0021",
+          "steps": 47,
+          "wall_s": 2.21858608499997,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0022",
+          "steps": 44,
+          "wall_s": 3.2743350850000184,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0023",
+          "steps": 40,
+          "wall_s": 2.6854971679999835,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0024",
+          "steps": 53,
+          "wall_s": 2.854893208999954,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0025",
+          "steps": 51,
+          "wall_s": 3.032735000999992,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0026",
+          "steps": 46,
+          "wall_s": 2.5657915009999783,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0027",
+          "steps": 43,
+          "wall_s": 2.497385084999962,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0028",
+          "steps": 55,
+          "wall_s": 3.0244931679999922,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0029",
+          "steps": 48,
+          "wall_s": 3.236783334999984,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0030",
+          "steps": 46,
+          "wall_s": 3.217269084999998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0031",
+          "steps": 51,
+          "wall_s": 3.290701210000009,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0032",
+          "steps": 51,
+          "wall_s": 3.3786947100000475,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0033",
+          "steps": 39,
+          "wall_s": 2.7544072929999857,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0034",
+          "steps": 44,
+          "wall_s": 2.0936354589999837,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0035",
+          "steps": 41,
+          "wall_s": 2.1869136249999883,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0036",
+          "steps": 41,
+          "wall_s": 2.268544251000037,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0037",
+          "steps": 52,
+          "wall_s": 2.52682500100002,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0038",
+          "steps": 46,
+          "wall_s": 2.5317703339999866,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0039",
+          "steps": 132,
+          "wall_s": 5.260680294000053,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0040",
+          "steps": 50,
+          "wall_s": 2.8299597089999793,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0041",
+          "steps": 46,
+          "wall_s": 2.3130946260000087,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0042",
+          "steps": 42,
+          "wall_s": 2.1831855010000254,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0043",
+          "steps": 72,
+          "wall_s": 3.2027192090000085,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0044",
+          "steps": 53,
+          "wall_s": 2.923439710000025,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0045",
+          "steps": 44,
+          "wall_s": 2.83715700099998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0046",
+          "steps": 53,
+          "wall_s": 2.7297640849999993,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0047",
+          "steps": 55,
+          "wall_s": 2.902748501000019,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0048",
+          "steps": 102,
+          "wall_s": 4.343529543999978,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0049",
+          "steps": 48,
+          "wall_s": 2.4276589170000307,
+          "physics_sha256_matches_reference": true
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.000811600520500617,",
+        "  \"reset\": 0.2908566150910822",
+        " },",
+        " \"physics_sha256_all_match\": true",
+        "}"
+       ]
+      },
+      {
+       "out": "reports/session5/rollout_profile/raw/P4_lift_diffusion_2.json",
+       "returncode": 0,
+       "process_wall_s": 172.77218258427456,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P4_lift_diffusion_2",
+        "task": "lift",
+        "policy": "s4_diffusion_unet_lift_seed0_336e15e9 step 15000",
+        "n_episodes": 50,
+        "n_steps": 2564,
+        "eval_wall_s": 150.301583444,
+        "process_wall_s": 160.05589499,
+        "steps_per_s": 17.059035182788385,
+        "timed_s": {
+         "physics": 28.624893123000504,
+         "features": 0.36592089100057024,
+         "success": 0.020354795000343984,
+         "inference": 77.64675793699837,
+         "recording": 0.12889933700009237,
+         "reset": 42.77872168999997
+        },
+        "untimed_s": 0.7360356710001383,
+        "per_step_ms": {
+         "physics": 11.164154884165564,
+         "features": 0.14271485608446577,
+         "success": 0.007938687597638059,
+         "inference": 30.2834469333067,
+         "recording": 0.05027275234012963,
+         "reset": 16.68436883385334
+        },
+        "share": {
+         "physics": 0.19044971095507912,
+         "features": 0.0024345777510514826,
+         "success": 0.00013542635103327345,
+         "inference": 0.5166063866913839,
+         "recording": 0.0008576046509058784,
+         "reset": 0.2846192349393222
+        },
+        "physics_sha256_all_match": true,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.05286947900000882,
+         "mean_s": 0.20972748954999645,
+         "first_s": 3.1675704190000147
+        },
+        "episodes": [
+         {
+          "state_id": "lift_validation_0000",
+          "steps": 48,
+          "wall_s": 9.273928463000004,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0001",
+          "steps": 39,
+          "wall_s": 5.170023418999989,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0002",
+          "steps": 52,
+          "wall_s": 3.581867668000001,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0003",
+          "steps": 45,
+          "wall_s": 2.8807077090000064,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0004",
+          "steps": 45,
+          "wall_s": 2.4527168349999897,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0005",
+          "steps": 42,
+          "wall_s": 2.469342001000001,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0006",
+          "steps": 61,
+          "wall_s": 2.9349789190000024,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0007",
+          "steps": 58,
+          "wall_s": 2.848285250999993,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0008",
+          "steps": 48,
+          "wall_s": 2.6804225429999917,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0009",
+          "steps": 58,
+          "wall_s": 2.951946542999991,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0010",
+          "steps": 44,
+          "wall_s": 2.4415537920000077,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0011",
+          "steps": 47,
+          "wall_s": 2.8426535430000115,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0012",
+          "steps": 51,
+          "wall_s": 2.8371253770000067,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0013",
+          "steps": 90,
+          "wall_s": 4.372364334999986,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0014",
+          "steps": 46,
+          "wall_s": 2.802172251000002,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0015",
+          "steps": 49,
+          "wall_s": 3.352526167999997,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0016",
+          "steps": 48,
+          "wall_s": 2.345519084999978,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0017",
+          "steps": 40,
+          "wall_s": 2.044093583999995,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0018",
+          "steps": 43,
+          "wall_s": 2.7986145430000136,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0019",
+          "steps": 41,
+          "wall_s": 2.451373125999993,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0020",
+          "steps": 34,
+          "wall_s": 1.843237251000005,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0021",
+          "steps": 47,
+          "wall_s": 2.1959533340000235,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0022",
+          "steps": 44,
+          "wall_s": 3.288053209999987,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0023",
+          "steps": 40,
+          "wall_s": 2.5500721679999856,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0024",
+          "steps": 53,
+          "wall_s": 2.8324165839999864,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0025",
+          "steps": 51,
+          "wall_s": 3.06163254300003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0026",
+          "steps": 46,
+          "wall_s": 2.6099230429999807,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0027",
+          "steps": 43,
+          "wall_s": 2.49270900099998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0028",
+          "steps": 55,
+          "wall_s": 3.212486585000022,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0029",
+          "steps": 48,
+          "wall_s": 3.2288222100000326,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0030",
+          "steps": 46,
+          "wall_s": 3.1010740849999934,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0031",
+          "steps": 51,
+          "wall_s": 3.247415792999959,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0032",
+          "steps": 51,
+          "wall_s": 3.2784118769999964,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0033",
+          "steps": 39,
+          "wall_s": 2.7830162520000385,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0034",
+          "steps": 44,
+          "wall_s": 2.1861871680000036,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0035",
+          "steps": 41,
+          "wall_s": 2.232481333999999,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0036",
+          "steps": 41,
+          "wall_s": 2.2500047930000164,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0037",
+          "steps": 52,
+          "wall_s": 2.5338424589999704,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0038",
+          "steps": 46,
+          "wall_s": 2.4913967100000036,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0039",
+          "steps": 132,
+          "wall_s": 5.166074710999965,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0040",
+          "steps": 50,
+          "wall_s": 2.886370459000034,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0041",
+          "steps": 46,
+          "wall_s": 2.2761706679999634,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0042",
+          "steps": 42,
+          "wall_s": 2.153175126000008,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0043",
+          "steps": 72,
+          "wall_s": 3.181886125999995,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0044",
+          "steps": 53,
+          "wall_s": 2.8225529179999853,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0045",
+          "steps": 44,
+          "wall_s": 2.6973330430000146,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0046",
+          "steps": 53,
+          "wall_s": 2.697116250000022,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0047",
+          "steps": 55,
+          "wall_s": 2.8678238759999886,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0048",
+          "steps": 102,
+          "wall_s": 4.178123085999971,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0049",
+          "steps": 48,
+          "wall_s": 2.400337835000016,
+          "physics_sha256_matches_reference": true
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0008576046509058784,",
+        "  \"reset\": 0.2846192349393222",
+        " },",
+        " \"physics_sha256_all_match\": true",
+        "}"
+       ]
+      },
+      {
+       "out": "reports/session5/rollout_profile/raw/P4_lift_diffusion_3.json",
+       "returncode": 0,
+       "process_wall_s": 172.80278329225257,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P4_lift_diffusion_3",
+        "task": "lift",
+        "policy": "s4_diffusion_unet_lift_seed0_336e15e9 step 15000",
+        "n_episodes": 50,
+        "n_steps": 2564,
+        "eval_wall_s": 158.26568473900002,
+        "process_wall_s": 167.662041327,
+        "steps_per_s": 16.20060598877361,
+        "timed_s": {
+         "physics": 30.438849338999148,
+         "features": 0.6254459200002316,
+         "success": 0.023252813000027572,
+         "inference": 83.99947004500078,
+         "recording": 0.1504531970004166,
+         "reset": 42.422389854000045
+        },
+        "untimed_s": 0.6058235709993767,
+        "per_step_ms": {
+         "physics": 11.871626107253958,
+         "features": 0.24393366614673617,
+         "success": 0.009068959828403889,
+         "inference": 32.761103761700774,
+         "recording": 0.05867909399392223,
+         "reset": 16.54539385881437
+        },
+        "share": {
+         "physics": 0.19232753700965963,
+         "features": 0.003951873212640317,
+         "success": 0.00014692264490798735,
+         "inference": 0.5307497338006432,
+         "recording": 0.0009506368815737461,
+         "reset": 0.2680454068357262
+        },
+        "physics_sha256_all_match": true,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.051015917000000854,
+         "mean_s": 0.1707018668999865,
+         "first_s": 2.4580491259999917
+        },
+        "episodes": [
+         {
+          "state_id": "lift_validation_0000",
+          "steps": 48,
+          "wall_s": 9.295510338000014,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0001",
+          "steps": 39,
+          "wall_s": 5.213954169000004,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0002",
+          "steps": 52,
+          "wall_s": 3.5970519599999875,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0003",
+          "steps": 45,
+          "wall_s": 3.194712210000006,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0004",
+          "steps": 45,
+          "wall_s": 2.8411335850000228,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0005",
+          "steps": 42,
+          "wall_s": 2.5084784179999815,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0006",
+          "steps": 61,
+          "wall_s": 3.1376373770000043,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0007",
+          "steps": 58,
+          "wall_s": 3.2864374189999808,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0008",
+          "steps": 48,
+          "wall_s": 2.611872501000022,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0009",
+          "steps": 58,
+          "wall_s": 3.275823334999984,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0010",
+          "steps": 44,
+          "wall_s": 3.0919793759999834,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0011",
+          "steps": 47,
+          "wall_s": 2.7057844180000075,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0012",
+          "steps": 51,
+          "wall_s": 3.105207210000003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0013",
+          "steps": 90,
+          "wall_s": 5.549126169000004,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0014",
+          "steps": 46,
+          "wall_s": 2.9668397929999912,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0015",
+          "steps": 49,
+          "wall_s": 2.7444147930000042,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0016",
+          "steps": 48,
+          "wall_s": 2.6978946680000035,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0017",
+          "steps": 40,
+          "wall_s": 2.3544578339999873,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0018",
+          "steps": 43,
+          "wall_s": 2.4882223759999533,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0019",
+          "steps": 41,
+          "wall_s": 2.253988875999994,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0020",
+          "steps": 34,
+          "wall_s": 2.568110542999989,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0021",
+          "steps": 47,
+          "wall_s": 3.2342888759999937,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0022",
+          "steps": 44,
+          "wall_s": 2.656318709000004,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0023",
+          "steps": 40,
+          "wall_s": 2.445051835000015,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0024",
+          "steps": 53,
+          "wall_s": 2.91271075100002,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0025",
+          "steps": 51,
+          "wall_s": 2.8536611679999737,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0026",
+          "steps": 46,
+          "wall_s": 3.0768580430000156,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0027",
+          "steps": 43,
+          "wall_s": 2.6945047520000003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0028",
+          "steps": 55,
+          "wall_s": 3.892867544000012,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0029",
+          "steps": 48,
+          "wall_s": 2.915017584999987,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0030",
+          "steps": 46,
+          "wall_s": 2.7115536260000113,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0031",
+          "steps": 51,
+          "wall_s": 3.9123345849999964,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0032",
+          "steps": 51,
+          "wall_s": 2.7593585010000083,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0033",
+          "steps": 39,
+          "wall_s": 2.201078375999998,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0034",
+          "steps": 44,
+          "wall_s": 2.290058418000001,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0035",
+          "steps": 41,
+          "wall_s": 2.5122568350000165,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0036",
+          "steps": 41,
+          "wall_s": 2.692641834999961,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0037",
+          "steps": 52,
+          "wall_s": 2.6858880839999983,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0038",
+          "steps": 46,
+          "wall_s": 2.3034943339999927,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0039",
+          "steps": 132,
+          "wall_s": 5.907508253000003,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0040",
+          "steps": 50,
+          "wall_s": 2.914281001000006,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0041",
+          "steps": 46,
+          "wall_s": 2.500992585000006,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0042",
+          "steps": 42,
+          "wall_s": 2.8252653349999832,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0043",
+          "steps": 72,
+          "wall_s": 3.7361399170000027,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0044",
+          "steps": 53,
+          "wall_s": 3.0820945429999824,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0045",
+          "steps": 44,
+          "wall_s": 2.566608250999991,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0046",
+          "steps": 53,
+          "wall_s": 2.727784417999999,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0047",
+          "steps": 55,
+          "wall_s": 2.8898559590000445,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0048",
+          "steps": 102,
+          "wall_s": 4.5100499600000035,
+          "physics_sha256_matches_reference": true
+         },
+         {
+          "state_id": "lift_validation_0049",
+          "steps": 48,
+          "wall_s": 2.343603543000029,
+          "physics_sha256_matches_reference": true
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0009506368815737461,",
+        "  \"reset\": 0.2680454068357262",
+        " },",
+        " \"physics_sha256_all_match\": true",
+        "}"
+       ]
+      }
+     ],
+     "speedup_vs_P1": 1.7815985645936507
+    },
+    {
+     "P": 1,
+     "job": "can_random",
+     "wall_s": 84.90275437477976,
+     "n_ok": 1,
+     "evaluations_per_hour": 42.40145124278058,
+     "aggregate_steps_per_s": 47.11272360308954,
+     "mean_eval_wall_s": 73.06276374200002,
+     "mean_process_wall_s": 84.90170699963346,
+     "physics_sha256_all_match": [
+      null
+     ],
+     "docker_stats_mid_run": [
+      {
+       "BlockIO": "3.02MB / 0B",
+       "CPUPerc": "100.19%",
+       "Container": "3ef4d179a52ccb6276f6eb928753ea5ffc8cdba60f7fef1a35a104a5ac6058fb",
+       "ID": "3ef4d179a52c",
+       "MemPerc": "11.87%",
+       "MemUsage": "941.8MiB / 7.748GiB",
+       "Name": "hopeful_keldysh",
+       "NetIO": "1.17kB / 126B",
+       "PIDs": "28"
+      }
+     ],
+     "containers": [
+      {
+       "out": "reports/session5/rollout_profile/raw/P1_can_random_0.json",
+       "returncode": 0,
+       "process_wall_s": 84.90170699963346,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P1_can_random_0",
+        "task": "can",
+        "policy": "random",
+        "n_episodes": 10,
+        "n_steps": 4000,
+        "eval_wall_s": 73.06276374200002,
+        "process_wall_s": 80.11816328600003,
+        "steps_per_s": 54.74744993393408,
+        "timed_s": {
+         "physics": 65.65682549699898,
+         "features": 0.22593519200074752,
+         "success": 0.0899175999994668,
+         "inference": 0.1461521009995863,
+         "recording": 0.11016874200311122,
+         "reset": 6.4225072520000595
+        },
+        "untimed_s": 0.4112573579980676,
+        "per_step_ms": {
+         "physics": 16.414206374249744,
+         "features": 0.05648379800018688,
+         "success": 0.0224793999998667,
+         "inference": 0.03653802524989658,
+         "recording": 0.027542185500777805,
+         "reset": 1.6056268130000149
+        },
+        "share": {
+         "physics": 0.8986359416794995,
+         "features": 0.003092343903093677,
+         "success": 0.00123068982603758,
+         "inference": 0.0020003637080535323,
+         "recording": 0.001507864421774958,
+         "reset": 0.08790397355730045
+        },
+        "physics_sha256_all_match": null,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.05540508300001079,
+         "mean_s": 0.1590265021000022,
+         "first_s": 2.1240462100000173
+        },
+        "episodes": [
+         {
+          "state_id": "can_validation_0000",
+          "steps": 400,
+          "wall_s": 11.315627839000001,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0001",
+          "steps": 400,
+          "wall_s": 6.931982669999968,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0002",
+          "steps": 400,
+          "wall_s": 6.912813087000018,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0003",
+          "steps": 400,
+          "wall_s": 6.926503086000025,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0004",
+          "steps": 400,
+          "wall_s": 7.2511244199999965,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0005",
+          "steps": 400,
+          "wall_s": 7.101354794999963,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0006",
+          "steps": 400,
+          "wall_s": 6.7997964620000175,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0007",
+          "steps": 400,
+          "wall_s": 6.619640126999968,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0008",
+          "steps": 400,
+          "wall_s": 6.476094252999985,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0009",
+          "steps": 400,
+          "wall_s": 6.7220117120000396,
+          "physics_sha256_matches_reference": null
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.001507864421774958,",
+        "  \"reset\": 0.08790397355730045",
+        " },",
+        " \"physics_sha256_all_match\": null",
+        "}"
+       ]
+      }
+     ],
+     "speedup_vs_P1": 1.0
+    },
+    {
+     "P": 2,
+     "job": "can_random",
+     "wall_s": 86.40995187498629,
+     "n_ok": 2,
+     "evaluations_per_hour": 83.32373579395819,
+     "aggregate_steps_per_s": 92.58192865995355,
+     "mean_eval_wall_s": 74.17963782499999,
+     "mean_process_wall_s": 86.40748602058738,
+     "physics_sha256_all_match": [
+      null,
+      null
+     ],
+     "docker_stats_mid_run": [
+      {
+       "BlockIO": "0B / 0B",
+       "CPUPerc": "100.70%",
+       "Container": "a64a41d25e30ee09b77b0b020ee925f6b755cc2e756b823cc021f97b9a111376",
+       "ID": "a64a41d25e30",
+       "MemPerc": "11.70%",
+       "MemUsage": "928MiB / 7.748GiB",
+       "Name": "strange_robinson",
+       "NetIO": "1.11kB / 126B",
+       "PIDs": "28"
+      },
+      {
+       "BlockIO": "0B / 0B",
+       "CPUPerc": "100.29%",
+       "Container": "e2b54890a72e8bb8a09d1a8a8cf944252119bacaebe3dba16dd813d0eebfccf9",
+       "ID": "e2b54890a72e",
+       "MemPerc": "11.71%",
+       "MemUsage": "929.4MiB / 7.748GiB",
+       "Name": "happy_hoover",
+       "NetIO": "1.3kB / 126B",
+       "PIDs": "28"
+      }
+     ],
+     "containers": [
+      {
+       "out": "reports/session5/rollout_profile/raw/P2_can_random_0.json",
+       "returncode": 0,
+       "process_wall_s": 86.4088205001317,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P2_can_random_0",
+        "task": "can",
+        "policy": "random",
+        "n_episodes": 10,
+        "n_steps": 4000,
+        "eval_wall_s": 74.12875911700002,
+        "process_wall_s": 82.18095091299995,
+        "steps_per_s": 53.96016401254822,
+        "timed_s": {
+         "physics": 65.73881928900028,
+         "features": 0.22506106900038958,
+         "success": 0.09097143800062213,
+         "inference": 0.12698333900334546,
+         "recording": 0.11183287100033112,
+         "reset": 7.468386713000086
+        },
+        "untimed_s": 0.36670439799496535,
+        "per_step_ms": {
+         "physics": 16.434704822250065,
+         "features": 0.056265267250097395,
+         "success": 0.022742859500155532,
+         "inference": 0.031745834750836366,
+         "recording": 0.02795821775008278,
+         "reset": 1.8670966782500216
+        },
+        "share": {
+         "physics": 0.8868193677064309,
+         "features": 0.0030360830490251136,
+         "success": 0.001227208428742733,
+         "inference": 0.0017130104498703832,
+         "recording": 0.0015086300152930038,
+         "reset": 0.10074884298565513
+        },
+        "physics_sha256_all_match": null,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.057827625000015814,
+         "mean_s": 0.17791494360000115,
+         "first_s": 2.4519741679999925
+        },
+        "episodes": [
+         {
+          "state_id": "can_validation_0000",
+          "steps": 400,
+          "wall_s": 11.170405963000007,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0001",
+          "steps": 400,
+          "wall_s": 6.9261044200000015,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0002",
+          "steps": 400,
+          "wall_s": 7.255446003000031,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0003",
+          "steps": 400,
+          "wall_s": 7.109310295,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0004",
+          "steps": 400,
+          "wall_s": 6.88443550300002,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0005",
+          "steps": 400,
+          "wall_s": 6.963496878000001,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0006",
+          "steps": 400,
+          "wall_s": 7.453968669999995,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0007",
+          "steps": 400,
+          "wall_s": 6.7495321279999985,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0008",
+          "steps": 400,
+          "wall_s": 6.585966669000072,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0009",
+          "steps": 400,
+          "wall_s": 7.021041836999984,
+          "physics_sha256_matches_reference": null
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0015086300152930038,",
+        "  \"reset\": 0.10074884298565513",
+        " },",
+        " \"physics_sha256_all_match\": null",
+        "}"
+       ]
+      },
+      {
+       "out": "reports/session5/rollout_profile/raw/P2_can_random_1.json",
+       "returncode": 0,
+       "process_wall_s": 86.40615154104307,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P2_can_random_1",
+        "task": "can",
+        "policy": "random",
+        "n_episodes": 10,
+        "n_steps": 4000,
+        "eval_wall_s": 74.23051653299996,
+        "process_wall_s": 82.23177062100007,
+        "steps_per_s": 53.88619380308041,
+        "timed_s": {
+         "physics": 65.93229865100028,
+         "features": 0.2226470779996248,
+         "success": 0.09072406700221336,
+         "inference": 0.1303325959983681,
+         "recording": 0.112268289005101,
+         "reset": 7.3558122530000105
+        },
+        "untimed_s": 0.38643359899435836,
+        "per_step_ms": {
+         "physics": 16.48307466275007,
+         "features": 0.0556617694999062,
+         "success": 0.02268101675055334,
+         "inference": 0.032583148999592026,
+         "recording": 0.02806707225127525,
+         "reset": 1.8389530632500029
+        },
+        "share": {
+         "physics": 0.8882101557475945,
+         "features": 0.0029994008986943357,
+         "success": 0.0012221936642712304,
+         "inference": 0.0017557818817066613,
+         "recording": 0.0015124276948172784,
+         "reset": 0.09909418116105802
+        },
+        "physics_sha256_all_match": null,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.0573681664999981,
+         "mean_s": 0.176684720850011,
+         "first_s": 2.410526293000089
+        },
+        "episodes": [
+         {
+          "state_id": "can_validation_0000",
+          "steps": 400,
+          "wall_s": 11.170661380000013,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0001",
+          "steps": 400,
+          "wall_s": 6.977064086999974,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0002",
+          "steps": 400,
+          "wall_s": 7.306836045000011,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0003",
+          "steps": 400,
+          "wall_s": 7.076536794999981,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0004",
+          "steps": 400,
+          "wall_s": 6.903846794000003,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0005",
+          "steps": 400,
+          "wall_s": 6.939534044999959,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0006",
+          "steps": 400,
+          "wall_s": 7.47455246200002,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0007",
+          "steps": 400,
+          "wall_s": 6.717616378999992,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0008",
+          "steps": 400,
+          "wall_s": 6.598519419000013,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0009",
+          "steps": 400,
+          "wall_s": 7.057715002999998,
+          "physics_sha256_matches_reference": null
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0015124276948172784,",
+        "  \"reset\": 0.09909418116105802",
+        " },",
+        " \"physics_sha256_all_match\": null",
+        "}"
+       ]
+      }
+     ],
+     "speedup_vs_P1": 1.965115187139855
+    },
+    {
+     "P": 4,
+     "job": "can_random",
+     "wall_s": 100.44640629226342,
+     "n_ok": 4,
+     "evaluations_per_hour": 143.36003179746527,
+     "aggregate_steps_per_s": 159.28892421940586,
+     "mean_eval_wall_s": 84.37905448675002,
+     "mean_process_wall_s": 100.08096198982093,
+     "physics_sha256_all_match": [
+      null,
+      null,
+      null,
+      null
+     ],
+     "docker_stats_mid_run": [
+      {
+       "BlockIO": "0B / 19.2MB",
+       "CPUPerc": "100.29%",
+       "Container": "43ddb25baa14cd05b5dbff25d0c0e5fd7b6f3c946ad50504cc5a70cf68c1cda2",
+       "ID": "43ddb25baa14",
+       "MemPerc": "11.13%",
+       "MemUsage": "883.3MiB / 7.748GiB",
+       "Name": "competent_beaver",
+       "NetIO": "1.27kB / 126B",
+       "PIDs": "28"
+      },
+      {
+       "BlockIO": "0B / 18MB",
+       "CPUPerc": "100.30%",
+       "Container": "09e6d766a7bc675cfe2e27ae045b78f1ad1de31d4a0d0e6e12e15218f3d02146",
+       "ID": "09e6d766a7bc",
+       "MemPerc": "11.17%",
+       "MemUsage": "886.5MiB / 7.748GiB",
+       "Name": "kind_clarke",
+       "NetIO": "1.32kB / 126B",
+       "PIDs": "28"
+      },
+      {
+       "BlockIO": "0B / 18.7MB",
+       "CPUPerc": "101.19%",
+       "Container": "570e690f0cd3b25eee2dc6838d8b53a0e6cebdc53b7bf90fa4afaa2666f38f33",
+       "ID": "570e690f0cd3",
+       "MemPerc": "11.13%",
+       "MemUsage": "883.1MiB / 7.748GiB",
+       "Name": "awesome_moore",
+       "NetIO": "1.36kB / 126B",
+       "PIDs": "28"
+      },
+      {
+       "BlockIO": "0B / 19.7MB",
+       "CPUPerc": "100.26%",
+       "Container": "4cb6ec543852a170887cf9746c345f40134cb6f936ee6c91cdcea71bc87e8187",
+       "ID": "4cb6ec543852",
+       "MemPerc": "11.16%",
+       "MemUsage": "885.2MiB / 7.748GiB",
+       "Name": "awesome_mayer",
+       "NetIO": "1.55kB / 126B",
+       "PIDs": "28"
+      }
+     ],
+     "containers": [
+      {
+       "out": "reports/session5/rollout_profile/raw/P4_can_random_0.json",
+       "returncode": 0,
+       "process_wall_s": 99.74247120786458,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P4_can_random_0",
+        "task": "can",
+        "policy": "random",
+        "n_episodes": 10,
+        "n_steps": 4000,
+        "eval_wall_s": 84.05293807999999,
+        "process_wall_s": 94.21754137700009,
+        "steps_per_s": 47.58905627061931,
+        "timed_s": {
+         "physics": 70.95709764500134,
+         "features": 0.289614409001274,
+         "success": 0.10807182400174042,
+         "inference": 0.14623172600079215,
+         "recording": 0.13111554099873501,
+         "reset": 11.98770462899995
+        },
+        "untimed_s": 0.43310230599615807,
+        "per_step_ms": {
+         "physics": 17.739274411250335,
+         "features": 0.0724036022503185,
+         "success": 0.027017956000435106,
+         "inference": 0.03655793150019804,
+         "recording": 0.032778885249683753,
+         "reset": 2.996926157249987
+        },
+        "share": {
+         "physics": 0.8441953281569494,
+         "features": 0.0034456191016859457,
+         "success": 0.0012857590284218229,
+         "inference": 0.0017397574593003705,
+         "recording": 0.0015599162146353734,
+         "reset": 0.14262088753626054
+        },
+        "physics_sha256_all_match": null,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.06944266700003254,
+         "mean_s": 0.2106933063000099,
+         "first_s": 2.8853274179999744
+        },
+        "episodes": [
+         {
+          "state_id": "can_validation_0000",
+          "steps": 400,
+          "wall_s": 13.849216339999998,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0001",
+          "steps": 400,
+          "wall_s": 8.315632879000077,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0002",
+          "steps": 400,
+          "wall_s": 8.197449171000017,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0003",
+          "steps": 400,
+          "wall_s": 7.676109919000055,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0004",
+          "steps": 400,
+          "wall_s": 7.809531128999993,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0005",
+          "steps": 400,
+          "wall_s": 7.957035545999929,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0006",
+          "steps": 400,
+          "wall_s": 7.387254253999913,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0007",
+          "steps": 400,
+          "wall_s": 7.59355946200003,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0008",
+          "steps": 400,
+          "wall_s": 7.407658420000075,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0009",
+          "steps": 400,
+          "wall_s": 7.83121383699995,
+          "physics_sha256_matches_reference": null
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0015599162146353734,",
+        "  \"reset\": 0.14262088753626054",
+        " },",
+        " \"physics_sha256_all_match\": null",
+        "}"
+       ]
+      },
+      {
+       "out": "reports/session5/rollout_profile/raw/P4_can_random_1.json",
+       "returncode": 0,
+       "process_wall_s": 99.79012616723776,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P4_can_random_1",
+        "task": "can",
+        "policy": "random",
+        "n_episodes": 10,
+        "n_steps": 4000,
+        "eval_wall_s": 84.44477724700005,
+        "process_wall_s": 94.58213620999993,
+        "steps_per_s": 47.36823437049332,
+        "timed_s": {
+         "physics": 71.06858995199536,
+         "features": 0.2707084669981441,
+         "success": 0.10469448199819453,
+         "inference": 0.14698656400400978,
+         "recording": 0.136884033008414,
+         "reset": 12.209405463999929
+        },
+        "untimed_s": 0.5075082849959927,
+        "per_step_ms": {
+         "physics": 17.76714748799884,
+         "features": 0.06767711674953603,
+         "success": 0.026173620499548633,
+         "inference": 0.036746641001002445,
+         "recording": 0.0342210082521035,
+         "reset": 3.052351365999982
+        },
+        "share": {
+         "physics": 0.8415984063066507,
+         "features": 0.0032057455277112617,
+         "success": 0.0012397981901469681,
+         "inference": 0.001740623503263863,
+         "recording": 0.0016209887392802246,
+         "reset": 0.1445844948857826
+        },
+        "physics_sha256_all_match": null,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.07022789549995423,
+         "mean_s": 0.20393459584998935,
+         "first_s": 2.7313450839999405
+        },
+        "episodes": [
+         {
+          "state_id": "can_validation_0000",
+          "steps": 400,
+          "wall_s": 13.917426881999972,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0001",
+          "steps": 400,
+          "wall_s": 8.366305962999945,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0002",
+          "steps": 400,
+          "wall_s": 8.271704170999897,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0003",
+          "steps": 400,
+          "wall_s": 7.597239876999993,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0004",
+          "steps": 400,
+          "wall_s": 7.926907295999968,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0005",
+          "steps": 400,
+          "wall_s": 7.949866004,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0006",
+          "steps": 400,
+          "wall_s": 7.423017544999993,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0007",
+          "steps": 400,
+          "wall_s": 7.58711283599996,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0008",
+          "steps": 400,
+          "wall_s": 7.500948004000065,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0009",
+          "steps": 400,
+          "wall_s": 7.881506337000019,
+          "physics_sha256_matches_reference": null
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0016209887392802246,",
+        "  \"reset\": 0.1445844948857826",
+        " },",
+        " \"physics_sha256_all_match\": null",
+        "}"
+       ]
+      },
+      {
+       "out": "reports/session5/rollout_profile/raw/P4_can_random_2.json",
+       "returncode": 0,
+       "process_wall_s": 100.35077066719532,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P4_can_random_2",
+        "task": "can",
+        "policy": "random",
+        "n_episodes": 10,
+        "n_steps": 4000,
+        "eval_wall_s": 84.34997208100003,
+        "process_wall_s": 95.27089700299996,
+        "steps_per_s": 47.42147390586993,
+        "timed_s": {
+         "physics": 71.33331186900273,
+         "features": 0.26707868300002247,
+         "success": 0.10888623500272843,
+         "inference": 0.16089554600364409,
+         "recording": 0.12990938899827142,
+         "reset": 11.75178058899985
+        },
+        "untimed_s": 0.5981097699927886,
+        "per_step_ms": {
+         "physics": 17.833327967250682,
+         "features": 0.06676967075000562,
+         "success": 0.027221558750682107,
+         "inference": 0.04022388650091102,
+         "recording": 0.032477347249567856,
+         "reset": 2.937945147249962
+        },
+        "share": {
+         "physics": 0.8456826968537986,
+         "features": 0.003166316199174918,
+         "success": 0.0012908864379725768,
+         "inference": 0.0019074759840956256,
+         "recording": 0.0015401236751272586,
+         "reset": 0.13932168913719128
+        },
+        "physics_sha256_all_match": null,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.0769837290000055,
+         "mean_s": 0.22777536239998994,
+         "first_s": 3.073304209000071
+        },
+        "episodes": [
+         {
+          "state_id": "can_validation_0000",
+          "steps": 400,
+          "wall_s": 13.963920756999983,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0001",
+          "steps": 400,
+          "wall_s": 8.448985338000057,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0002",
+          "steps": 400,
+          "wall_s": 8.122989004000033,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0003",
+          "steps": 400,
+          "wall_s": 7.610562920000007,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0004",
+          "steps": 400,
+          "wall_s": 7.941110669999944,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0005",
+          "steps": 400,
+          "wall_s": 7.855243170999984,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0006",
+          "steps": 400,
+          "wall_s": 7.563170171000024,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0007",
+          "steps": 400,
+          "wall_s": 7.49863458599998,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0008",
+          "steps": 400,
+          "wall_s": 7.436299254000005,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0009",
+          "steps": 400,
+          "wall_s": 7.889121087000035,
+          "physics_sha256_matches_reference": null
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.0015401236751272586,",
+        "  \"reset\": 0.13932168913719128",
+        " },",
+        " \"physics_sha256_all_match\": null",
+        "}"
+       ]
+      },
+      {
+       "out": "reports/session5/rollout_profile/raw/P4_can_random_3.json",
+       "returncode": 0,
+       "process_wall_s": 100.44047991698608,
+       "profile": {
+        "schema": "roboforge.rollout_profile/1",
+        "kind": "engineering profile on validation starts (not a result; not selection)",
+        "tag": "P4_can_random_3",
+        "task": "can",
+        "policy": "random",
+        "n_episodes": 10,
+        "n_steps": 4000,
+        "eval_wall_s": 84.66853053900002,
+        "process_wall_s": 95.405878669,
+        "steps_per_s": 47.24305446824213,
+        "timed_s": {
+         "physics": 72.06281938800441,
+         "features": 0.2534464560028482,
+         "success": 0.11162812600457528,
+         "inference": 0.16343933100188224,
+         "recording": 0.1336901979977938,
+         "reset": 11.306321047999973
+        },
+        "untimed_s": 0.637185991988531,
+        "per_step_ms": {
+         "physics": 18.015704847001103,
+         "features": 0.06336161400071205,
+         "success": 0.02790703150114382,
+         "inference": 0.04085983275047056,
+         "recording": 0.03342254949944845,
+         "reset": 2.826580261999993
+        },
+        "share": {
+         "physics": 0.8511169253706469,
+         "features": 0.0029933961814313727,
+         "success": 0.0013184134092554863,
+         "inference": 0.0019303433041937444,
+         "recording": 0.001578983326469962,
+         "reset": 0.13353628527652378
+        },
+        "physics_sha256_all_match": null,
+        "rendering": {
+         "backend": "osmesa",
+         "cameras": [
+          "agentview",
+          "frontview"
+         ],
+         "size": [
+          256,
+          256
+         ],
+         "n_frames": 20,
+         "median_s": 0.07327883300001758,
+         "mean_s": 0.21097574165001448,
+         "first_s": 2.805463709000037
+        },
+        "episodes": [
+         {
+          "state_id": "can_validation_0000",
+          "steps": 400,
+          "wall_s": 14.224336590000007,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0001",
+          "steps": 400,
+          "wall_s": 8.350491171000044,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0002",
+          "steps": 400,
+          "wall_s": 8.087113754000029,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0003",
+          "steps": 400,
+          "wall_s": 7.6647802530000035,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0004",
+          "steps": 400,
+          "wall_s": 7.912528629000008,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0005",
+          "steps": 400,
+          "wall_s": 7.860146712000073,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0006",
+          "steps": 400,
+          "wall_s": 7.458145046000027,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0007",
+          "steps": 400,
+          "wall_s": 7.5880601700000625,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0008",
+          "steps": 400,
+          "wall_s": 7.579253587000039,
+          "physics_sha256_matches_reference": null
+         },
+         {
+          "state_id": "can_validation_0009",
+          "steps": 400,
+          "wall_s": 7.927574253999978,
+          "physics_sha256_matches_reference": null
+         }
+        ],
+        "platform": {
+         "platform_id": "linux-aarch64-container-1f685638f28c",
+         "system": "Linux",
+         "machine": "aarch64",
+         "platform": "Linux-7.0.14-linuxkit-aarch64-with-glibc2.36",
+         "python": "3.11.18",
+         "cpu": "CPU part: 0x000",
+         "container_image": "roboforge-sim-cpu:session0",
+         "container_image_id": "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c",
+         "packages": {
+          "mujoco": "3.2.7",
+          "robosuite": "1.5.1",
+          "numpy": "2.4.6",
+          "torch": "2.15.0"
+         }
+        },
+        "git": {
+         "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+         "dirty": false,
+         "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+        },
+        "cpu_count": 10
+       },
+       "log_tail": [
+        "  \"recording\": 0.001578983326469962,",
+        "  \"reset\": 0.13353628527652378",
+        " },",
+        " \"physics_sha256_all_match\": null",
+        "}"
+       ]
+      }
+     ],
+     "speedup_vs_P1": 3.3810171019057806
+    }
+   ],
+   "git": {
+    "sha": "a2fe7064270bb7d190bac91c930884f1ca912300",
+    "dirty": false
+   }
+  },
+  "train_concurrency": {
+   "schema": "roboforge.train_concurrency/1",
+   "kind": "engineering profile (local CPU, 1 torch thread per process)",
+   "family": "diffusion_unet",
+   "steps": 300,
+   "levels": {
+    "1": {
+     "returncodes": [
+      0
+     ],
+     "median_step_s": 0.13374222931452096,
+     "per_process_steps_per_s": [
+      7.477069921186261
+     ],
+     "aggregate_steps_per_s": 7.477069921186261,
+     "raw": [
+      "reports/session5/cost/train_concurrency_raw/k1_0.json"
+     ]
+    },
+    "4": {
+     "returncodes": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "median_step_s": 0.13718539592809975,
+     "per_process_steps_per_s": [
+      7.289405648718688,
+      7.281777654320989,
+      7.317104407125031,
+      7.306734575481545
+     ],
+     "aggregate_steps_per_s": 29.195022285646257,
+     "raw": [
+      "reports/session5/cost/train_concurrency_raw/k4_0.json",
+      "reports/session5/cost/train_concurrency_raw/k4_1.json",
+      "reports/session5/cost/train_concurrency_raw/k4_2.json",
+      "reports/session5/cost/train_concurrency_raw/k4_3.json"
+     ]
+    },
+    "6": {
+     "returncodes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "median_step_s": 0.14486820832826197,
+     "per_process_steps_per_s": [
+      7.071621095632562,
+      7.0522037851454344,
+      6.855943072335868,
+      6.8844633415612835,
+      6.998741385324993,
+      6.902825758251009
+     ],
+     "aggregate_steps_per_s": 41.76579843825115,
+     "raw": [
+      "reports/session5/cost/train_concurrency_raw/k6_0.json",
+      "reports/session5/cost/train_concurrency_raw/k6_1.json",
+      "reports/session5/cost/train_concurrency_raw/k6_2.json",
+      "reports/session5/cost/train_concurrency_raw/k6_3.json",
+      "reports/session5/cost/train_concurrency_raw/k6_4.json",
+      "reports/session5/cost/train_concurrency_raw/k6_5.json"
+     ]
+    },
+    "8": {
+     "returncodes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "median_step_s": 0.16527158301323652,
+     "per_process_steps_per_s": [
+      6.050646951931903,
+      6.13185010359422,
+      6.080182400858583,
+      6.067684226142626,
+      6.034534873358547,
+      6.102973934347983,
+      6.043663205774689,
+      6.0151732900239425
+     ],
+     "aggregate_steps_per_s": 48.5267089860325,
+     "raw": [
+      "reports/session5/cost/train_concurrency_raw/k8_0.json",
+      "reports/session5/cost/train_concurrency_raw/k8_1.json",
+      "reports/session5/cost/train_concurrency_raw/k8_2.json",
+      "reports/session5/cost/train_concurrency_raw/k8_3.json",
+      "reports/session5/cost/train_concurrency_raw/k8_4.json",
+      "reports/session5/cost/train_concurrency_raw/k8_5.json",
+      "reports/session5/cost/train_concurrency_raw/k8_6.json",
+      "reports/session5/cost/train_concurrency_raw/k8_7.json"
+     ]
+    }
+   },
+   "slowdown_at_k": {
+    "1": 1.0,
+    "4": 1.0257447975200227,
+    "6": 1.0831897230273926,
+    "8": 1.235747182175109
+   },
+   "recommended_k": 8,
+   "git": {
+    "sha": "feef27e9a0595997126e97e77a4d8641108e32c8",
+    "dirty": false
+   },
+   "environment": {
+    "generated_at": "2026-11-07T05:31:27.039446+00:00",
+    "python": "3.11.15",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "cpu_count": 10,
+    "mujoco_gl": null,
+    "git": {
+     "sha": "feef27e9a0595997126e97e77a4d8641108e32c8",
+     "dirty": false
+    },
+    "packages": {
+     "mujoco": "3.2.7",
+     "robosuite": "1.5.1",
+     "robomimic": "0.5.0",
+     "torch": "2.15.0",
+     "torchvision": "0.29.2",
+     "numpy": "2.4.6",
+     "h5py": "3.16.0",
+     "diffusers": "0.11.1",
+     "transformers": "4.41.2",
+     "huggingface-hub": "0.23.4",
+     "numba": "0.68.1",
+     "scipy": "1.17.1"
+    }
+   }
+  },
+  "gpu_probe": {
+   "status": "partial",
+   "failed_sections": [
+    "render:egl",
+    "render:osmesa"
+   ],
+   "launch_id": "91a3a76972574cdfb9c874c51428c17e",
+   "host": {
+    "main_thread": true,
+    "executable": "/.uv/.venv/bin/python",
+    "machine": "x86_64",
+    "system": "Linux",
+    "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.41",
+    "python": "3.11.18",
+    "cpu": "model name: unknown",
+    "cpu_count": 20,
+    "modal_env": {
+     "MODAL_ENVIRONMENT": "main",
+     "MODAL_IMAGE_ID": "im-lvU8lSHf3hPqWuY9vZbZEt",
+     "MODAL_CLOUD_PROVIDER": "CLOUD_PROVIDER_AWS",
+     "MODAL_REGION": "eu-south",
+     "MODAL_SERVER_URL": "unix:/run/modal.sock",
+     "MODAL_CONTAINER_ARGUMENTS_PATH": "/__modal/.container-arguments/data.bin",
+     "MODAL_IS_REMOTE": "1",
+     "MODAL_TASK_ID": "ta-01M6T884807C00SPV50XCYR11R"
+    },
+    "packages": {
+     "torch": "2.15.0",
+     "mujoco": "3.2.7",
+     "robosuite": "1.5.1",
+     "numpy": "2.4.6"
+    }
+   },
+   "cuda": {
+    "ok": true,
+    "value": {
+     "available": true,
+     "torch": "2.15.0+cu132",
+     "torch_cuda": "13.2",
+     "device": "NVIDIA L4",
+     "nvidia_smi": "NVIDIA L4, 610.57.04, 23034 MiB"
+    },
+    "seconds": 0.31404833400000065
+   },
+   "render": {
+    "egl": {
+     "ok": false,
+     "error": "RuntimeError: smoke_sim with MUJOCO_GL=egl failed: {\"backend\": \"egl\", \"returncode\": 1, \"passed\": 0, \"failed\": 0, \"wall_s\": 20.110343342, \"tail\": [\"    init = load_suite(task, \\\"validation\\\")[0]\", \"           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/app/src/roboforge/sim/eval_states.py\\\", line 224, in load_suite\", \"    m = read_manifest(task, suite)\", \"        ^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/app/src/roboforge/sim/eval_states.py\\\", line 204, in read_manifest\", \"    m = json.loads(manifest_path(task, suite).read_text())\", \"                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/usr/local/lib/python3.11/pathlib.py\\\", line 1058, in read_text\", \"    with self.open(mode='r', encoding=encoding, errors=errors) as f:\", \"         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/usr/local/lib/python3.11/pathlib.py\\\", line 1044, in open\", \"    return io.open(self, mode, buffering, encoding, errors, newline)\", \"           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"FileNotFoundError: [Errno 2] No such file or directory: '/app/data/eval_states/lift/validation.json'\"]}",
+     "traceback": "Traceback (most recent call last):\n  File \"/app/src/roboforge/compute/remote.py\", line 223, in _section\n    rec = {\"ok\": True, \"value\": fn(), \"seconds\": time.perf_counter() - t}\n                                ^^^^\n  File \"/app/src/roboforge/compute/remote.py\", line 259, in <lambda>\n    render = {b: _section(f\"render:{b}\", lambda b=b: _smoke_checked(b, out_dir), failed)\n                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/src/roboforge/compute/remote.py\", line 212, in _smoke_checked\n    raise RuntimeError(f\"smoke_sim with MUJOCO_GL={backend} failed: {json.dumps(r)}\")\nRuntimeError: smoke_sim with MUJOCO_GL=egl failed: {\"backend\": \"egl\", \"returncode\": 1, \"passed\": 0, \"failed\": 0, \"wall_s\": 20.110343342, \"tail\": [\"    init = load_suite(task, \\\"validation\\\")[0]\", \"           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/app/src/roboforge/sim/eval_states.py\\\", line 224, in load_suite\", \"    m = read_manifest(task, suite)\", \"        ^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/app/src/roboforge/sim/eval_states.py\\\", line 204, in read_manifest\", \"    m = json.loads(manifest_path(task, suite).read_text())\", \"                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/usr/local/lib/python3.11/pathlib.py\\\", line 1058, in read_text\", \"    with self.open(mode='r', encoding=encoding, errors=errors) as f:\", \"         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/usr/local/lib/python3.11/pathlib.py\\\", line 1044, in open\", \"    return io.open(self, mode, buffering, encoding, errors, newline)\", \"           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"FileNotFoundError: [Errno 2] No such file or directory: '/app/data/eval_states/lift/validation.json'\"]}\n",
+     "seconds": 20.1110214
+    },
+    "osmesa": {
+     "ok": false,
+     "error": "RuntimeError: smoke_sim with MUJOCO_GL=osmesa failed: {\"backend\": \"osmesa\", \"returncode\": 1, \"passed\": 0, \"failed\": 0, \"wall_s\": 12.761008172, \"tail\": [\"    init = load_suite(task, \\\"validation\\\")[0]\", \"           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/app/src/roboforge/sim/eval_states.py\\\", line 224, in load_suite\", \"    m = read_manifest(task, suite)\", \"        ^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/app/src/roboforge/sim/eval_states.py\\\", line 204, in read_manifest\", \"    m = json.loads(manifest_path(task, suite).read_text())\", \"                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/usr/local/lib/python3.11/pathlib.py\\\", line 1058, in read_text\", \"    with self.open(mode='r', encoding=encoding, errors=errors) as f:\", \"         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/usr/local/lib/python3.11/pathlib.py\\\", line 1044, in open\", \"    return io.open(self, mode, buffering, encoding, errors, newline)\", \"           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"FileNotFoundError: [Errno 2] No such file or directory: '/app/data/eval_states/lift/validation.json'\"]}",
+     "traceback": "Traceback (most recent call last):\n  File \"/app/src/roboforge/compute/remote.py\", line 223, in _section\n    rec = {\"ok\": True, \"value\": fn(), \"seconds\": time.perf_counter() - t}\n                                ^^^^\n  File \"/app/src/roboforge/compute/remote.py\", line 259, in <lambda>\n    render = {b: _section(f\"render:{b}\", lambda b=b: _smoke_checked(b, out_dir), failed)\n                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/src/roboforge/compute/remote.py\", line 212, in _smoke_checked\n    raise RuntimeError(f\"smoke_sim with MUJOCO_GL={backend} failed: {json.dumps(r)}\")\nRuntimeError: smoke_sim with MUJOCO_GL=osmesa failed: {\"backend\": \"osmesa\", \"returncode\": 1, \"passed\": 0, \"failed\": 0, \"wall_s\": 12.761008172, \"tail\": [\"    init = load_suite(task, \\\"validation\\\")[0]\", \"           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/app/src/roboforge/sim/eval_states.py\\\", line 224, in load_suite\", \"    m = read_manifest(task, suite)\", \"        ^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/app/src/roboforge/sim/eval_states.py\\\", line 204, in read_manifest\", \"    m = json.loads(manifest_path(task, suite).read_text())\", \"                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/usr/local/lib/python3.11/pathlib.py\\\", line 1058, in read_text\", \"    with self.open(mode='r', encoding=encoding, errors=errors) as f:\", \"         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"  File \\\"/usr/local/lib/python3.11/pathlib.py\\\", line 1044, in open\", \"    return io.open(self, mode, buffering, encoding, errors, newline)\", \"           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\", \"FileNotFoundError: [Errno 2] No such file or directory: '/app/data/eval_states/lift/validation.json'\"]}\n",
+     "seconds": 12.761673890000004
+    }
+   },
+   "training_profile": {
+    "cpu": {
+     "bc_mlp": {
+      "ok": true,
+      "value": {
+       "family": "bc_mlp",
+       "task": "lift",
+       "device": "cpu",
+       "device_name": null,
+       "num_threads": 1,
+       "batch_size": 100,
+       "steps_timed": 300,
+       "warmup": 20,
+       "median_s": 0.016545003000000946,
+       "mean_s": 0.016667554833333376,
+       "p95_s": 0.018255330499995993,
+       "steps_per_s_median": 60.44120995323741,
+       "offline_metrics_once_s": 0.2418298589999992,
+       "param_count": 1077255,
+       "kind": "engineering profile (no run, no checkpoint)"
+      },
+      "seconds": 9.005896108000002
+     },
+     "bc_rnn": {
+      "ok": true,
+      "value": {
+       "family": "bc_rnn",
+       "task": "lift",
+       "device": "cpu",
+       "device_name": null,
+       "num_threads": 1,
+       "batch_size": 100,
+       "steps_timed": 300,
+       "warmup": 20,
+       "median_s": 0.08141487099999978,
+       "mean_s": 0.08148011664000035,
+       "p95_s": 0.08469059325000358,
+       "steps_per_s_median": 12.28276834093372,
+       "offline_metrics_once_s": 2.7206244659999896,
+       "param_count": 1080703,
+       "kind": "engineering profile (no run, no checkpoint)"
+      },
+      "seconds": 29.731229091000003
+     },
+     "bc_mlp_chunk": {
+      "ok": true,
+      "value": {
+       "family": "bc_mlp_chunk",
+       "task": "lift",
+       "device": "cpu",
+       "device_name": null,
+       "num_threads": 1,
+       "batch_size": 100,
+       "steps_timed": 300,
+       "warmup": 20,
+       "median_s": 0.011500688499999967,
+       "mean_s": 0.011654422526666887,
+       "p95_s": 0.012174634000003692,
+       "steps_per_s_median": 86.95131600164659,
+       "offline_metrics_once_s": 0.23957359900001052,
+       "param_count": 1204336,
+       "kind": "engineering profile (no run, no checkpoint)"
+      },
+      "seconds": 4.903470966
+     },
+     "diffusion_unet": {
+      "ok": true,
+      "value": {
+       "family": "diffusion_unet",
+       "task": "lift",
+       "device": "cpu",
+       "device_name": null,
+       "num_threads": 1,
+       "batch_size": 100,
+       "steps_timed": 300,
+       "warmup": 20,
+       "median_s": 0.11896210799999807,
+       "mean_s": 0.11912604349666675,
+       "p95_s": 0.12079033635000513,
+       "steps_per_s_median": 8.406037996569598,
+       "offline_metrics_once_s": 6.724235366000002,
+       "param_count": 1092551,
+       "kind": "engineering profile (no run, no checkpoint)"
+      },
+      "seconds": 45.76203241099999
+     }
+    },
+    "cuda": {
+     "bc_mlp": {
+      "ok": true,
+      "value": {
+       "family": "bc_mlp",
+       "task": "lift",
+       "device": "cuda",
+       "device_name": "NVIDIA L4",
+       "num_threads": 1,
+       "batch_size": 100,
+       "steps_timed": 300,
+       "warmup": 20,
+       "median_s": 0.0015193305000025248,
+       "mean_s": 0.0015648504000004475,
+       "p95_s": 0.0018251885500063737,
+       "steps_per_s_median": 658.1846411944855,
+       "offline_metrics_once_s": null,
+       "param_count": 1077255,
+       "kind": "engineering profile (no run, no checkpoint)"
+      },
+      "seconds": 2.3237532769999945
+     },
+     "bc_rnn": {
+      "ok": true,
+      "value": {
+       "family": "bc_rnn",
+       "task": "lift",
+       "device": "cuda",
+       "device_name": "NVIDIA L4",
+       "num_threads": 1,
+       "batch_size": 100,
+       "steps_timed": 300,
+       "warmup": 20,
+       "median_s": 0.0032551270000027444,
+       "mean_s": 0.0033507829833336208,
+       "p95_s": 0.0039455880500099735,
+       "steps_per_s_median": 307.20767576784465,
+       "offline_metrics_once_s": null,
+       "param_count": 1080703,
+       "kind": "engineering profile (no run, no checkpoint)"
+      },
+      "seconds": 3.771294001000001
+     },
+     "bc_mlp_chunk": {
+      "ok": true,
+      "value": {
+       "family": "bc_mlp_chunk",
+       "task": "lift",
+       "device": "cuda",
+       "device_name": "NVIDIA L4",
+       "num_threads": 1,
+       "batch_size": 100,
+       "steps_timed": 300,
+       "warmup": 20,
+       "median_s": 0.0015050649999892585,
+       "mean_s": 0.0015259287066659985,
+       "p95_s": 0.0016701030499916669,
+       "steps_per_s_median": 664.4231312316325,
+       "offline_metrics_once_s": null,
+       "param_count": 1204336,
+       "kind": "engineering profile (no run, no checkpoint)"
+      },
+      "seconds": 1.3848346750000076
+     },
+     "diffusion_unet": {
+      "ok": true,
+      "value": {
+       "family": "diffusion_unet",
+       "task": "lift",
+       "device": "cuda",
+       "device_name": "NVIDIA L4",
+       "num_threads": 1,
+       "batch_size": 100,
+       "steps_timed": 300,
+       "warmup": 20,
+       "median_s": 0.015341571500016471,
+       "mean_s": 0.015389651089999555,
+       "p95_s": 0.01609507809999968,
+       "steps_per_s_median": 65.1823706586334,
+       "offline_metrics_once_s": null,
+       "param_count": 1092551,
+       "kind": "engineering profile (no run, no checkpoint)"
+      },
+      "seconds": 7.244873728999977
+     }
+    }
+   },
+   "container_wall_s": 137.320178632,
+   "modal": {
+    "function": "gpu_probe",
+    "app_id": "ap-WKAnfgdtYEriXZDg6FtoCC",
+    "upload": {
+     "uploaded": "processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5",
+     "bytes": 1586020
+    }
+   },
+   "client_wall_s": 375.6895983219147,
+   "note": "Gate A probe retry (A-01 amended). Render sections failed before rendering: data/eval_states is not in the image (KNOWN_ISSUES KI-001, KI-033); EGL vs OSMesa remains PENDING."
+  },
+  "modal_smoke": {
+   "run_id": "s5modal2_diffusion_unet_lift_seed0_2fda84af",
+   "steps_per_s": 6.16467369480368,
+   "n_segments": 3,
+   "max_steps": 2000
+  }
+ },
+ "sources": [
+  {
+   "path": "runs/s3_bc_mlp_lift_seed0_dbf312cd/manifest.json",
+   "sha256": "6b417dea99dd58c955ca890a94344cdede2d728b0cd2590c4195566ba2c7601b"
+  },
+  {
+   "path": "runs/s3_bc_rnn_lift_seed0_2e7cffe3/manifest.json",
+   "sha256": "3cf1f4c2f67418811651d3727c7bf03043aed6ce1bc2d871be2d0b46dccc0a52"
+  },
+  {
+   "path": "runs/s3_bc_mlp_chunk_lift_seed0_bb8b4dd6/manifest.json",
+   "sha256": "210675e32a2d52312b5e52df651b42ad19024961755ab6e39a6065dd1aba1eae"
+  },
+  {
+   "path": "runs/s4_diffusion_unet_lift_seed0_336e15e9/manifest.json",
+   "sha256": "0b72d814093c1c831cfbd124fe8eaf8a9d042f912b655aab2662a2288509e9eb"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_chunk_lift_seed0_bb8b4dd6__val_step0005000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "5173afaeb6e4f466ef3b19808be5b7a14342c3b00b0ccea763c047a26313c6c1"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_chunk_lift_seed0_bb8b4dd6__val_step0010000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "cbdce1bb358bc8f2273dbdd62449a7bb313fd1f5e0fe91b11a40e7cc1d071ba9"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_chunk_lift_seed0_bb8b4dd6__val_step0015000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "bbc32a99a846d83bcbe9733fe08ff1f23b4b0d2ca1dbd9633e83ebebfbceb0c5"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_chunk_lift_seed0_bb8b4dd6__val_step0020000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "bbc7f1c6b1ae511928fcfa020c38633b3645e47954dfae1f0289f4a327b33088"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_chunk_lift_seed0_bb8b4dd6__val_step0025000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "dd98c5ae48986f95ec5643c09a75f145a30d7219a1b6ce0261c700482a3e44ab"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_chunk_lift_seed0_bb8b4dd6__val_step0030000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "a54fb0da5ba326c72a2b9b2bcfa3239e5d70e5ac98281dcb724b0602ec69b77a"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_lift_seed0_dbf312cd__val_step0005000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "b3d9be9ce02f427fdbd67f22750c5e75d6c40d904bb94033c498ee0cfd5454cc"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_lift_seed0_dbf312cd__val_step0010000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "f7554427926e9ed830d159f3a8aabfd376f6100c11af90aad4082bec433e0917"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_lift_seed0_dbf312cd__val_step0015000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "4de1bbcaf8369c5cc01921d933d35d83dce11b6ce8091ffb19c91a94dd3bbd2a"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_lift_seed0_dbf312cd__val_step0020000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "85fd55f099d4f2acfb408425223d6b40a02358abfebe11a73d63f9b7defcec95"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_lift_seed0_dbf312cd__val_step0025000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "73e5d9b4a639d0a715d1384430c5d3f9cf8378fd0c94d746c2457250e61e945f"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_mlp_lift_seed0_dbf312cd__val_step0030000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "1c6510f421e02d2b454665e881e6405cc1e056d0b445350d403a63b8b68690f2"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_rnn_lift_seed0_2e7cffe3__val_step0005000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "89bb49ccb25c3d45900dfa9b27e1d336e9593d92d202fdcfc688f8ca2132a419"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_rnn_lift_seed0_2e7cffe3__val_step0010000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "37201ea6307b28a4c5b52cc0feb802b96b084e6fc65c3e5dba3cdd47d952e30c"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_rnn_lift_seed0_2e7cffe3__val_step0015000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "e934c396ccd87e5603dd2ac74afb3e4d729769a24950c498bb9e4017596b4a1d"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_rnn_lift_seed0_2e7cffe3__val_step0020000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "60570420428cc192282e90f02d7c1bec667fda4e2d20cd93bae2e74b31943428"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_rnn_lift_seed0_2e7cffe3__val_step0025000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "32c88c950a6f9728b446b31d427a25db45440efb2e1fdc179389be4ad0d3d7f8"
+  },
+  {
+   "path": "reports/session3/validation/s3_bc_rnn_lift_seed0_2e7cffe3__val_step0030000__linux-aarch64-container-1f685638f28c.json",
+   "sha256": "f5e54a55f7e67c45232728a7d751ea06a847af6cd018e17711e5a7047a4f3f05"
+  },
+  {
+   "path": "reports/session4/validation/s4_diffusion_unet_lift_seed0_336e15e9__val_step0005000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "sha256": "b1f70555f22f3c90902a0f95ae44eb9790571fd936b9871ed0354862c9cbd59c"
+  },
+  {
+   "path": "reports/session4/validation/s4_diffusion_unet_lift_seed0_336e15e9__val_step0010000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "sha256": "d32da08b031b2684440833905035c09d80b01fe7e72801eb33e773843c73b72c"
+  },
+  {
+   "path": "reports/session4/validation/s4_diffusion_unet_lift_seed0_336e15e9__val_step0015000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "sha256": "f4238b25df6155bc42aba3c36f72ce462ec953d879f40a4c11fcbe7a5290b20d"
+  },
+  {
+   "path": "reports/session4/validation/s4_diffusion_unet_lift_seed0_336e15e9__val_step0020000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "sha256": "399654679d809bed8042234b90c70a6faca2cc2097d29a1a0c1917738de1df8e"
+  },
+  {
+   "path": "reports/session4/validation/s4_diffusion_unet_lift_seed0_336e15e9__val_step0025000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "sha256": "4026e69b88ff64bd7a3919c99fcc4f0540834fe01e2ed53ed2dc0b032421beff"
+  },
+  {
+   "path": "reports/session4/validation/s4_diffusion_unet_lift_seed0_336e15e9__val_step0030000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "sha256": "fdb4e647a2fe8e60c4ff2cbc98fcfdaf8d81d9d14155c86aaf34dbc4014316e3"
+  },
+  {
+   "path": "reports/session3/cost_latency/linux-aarch64-container-1f685638f28c.json",
+   "sha256": "cba4cc93898549483c97056db0b7427d32f4385de8bd599589198dcc1e460154"
+  },
+  {
+   "path": "reports/session4/cost_latency/linux-aarch64-container-1f685638f28c.json",
+   "sha256": "0ee9c38ce9d419d29da3c86d13bd9a1fd837a5488d94fff6800a704a8c7d7175"
+  },
+  {
+   "path": "reports/session5/rollout_profile/summary.json",
+   "sha256": "4fb29170459decee3eb465bf307417dea5033e4d76d56ccea540a764b00a0122"
+  },
+  {
+   "path": "reports/session5/cost/train_concurrency.json",
+   "sha256": "bf4fa1b1b2617855e757d988ca41910152575cbe55d855a68cd544a84e3985af"
+  },
+  {
+   "path": "reports/session5/modal/probe_result.json",
+   "sha256": "2405f894fba1a5bbc2e76ccd9658e70443606861502ffec693b238480937a9da"
+  },
+  {
+   "path": "runs/s5modal2_diffusion_unet_lift_seed0_2fda84af/manifest.json",
+   "sha256": "7aa6cd406f58174da51de7b097a5e420d8c12d631c9549e3bddecc81124f8746"
+  }
+ ],
+ "rendering": {
+  "frames": 32000,
+  "seconds_per_frame_measured": 0.044790417000001526,
+  "core_h": 0.39813704000001354,
+  "backend": "osmesa"
+ },
+ "scenarios": {
+  "main_100k_full_tuning": {
+   "local": {
+    "counts": {
+     "families": [
+      "bc_mlp",
+      "bc_rnn",
+      "bc_mlp_chunk",
+      "diffusion_unet"
+     ],
+     "tasks": [
+      "lift",
+      "can"
+     ],
+     "seeds": [
+      0,
+      1,
+      2
+     ],
+     "configs_per_family_task": 4,
+     "runs_per_family_task": 6,
+     "training_runs": 48,
+     "steps_per_run": 100000,
+     "checkpoints_per_run": 10,
+     "validation_evaluations": 480,
+     "test_evaluations": 24
+    },
+    "k_train": 8,
+    "train_slowdown_at_k": 1.235747182175109,
+    "p_eval": 4,
+    "eval_parallel_speedup": 1.7815985645936507,
+    "sim_ms_per_step": {
+     "lift": 15.625722845553723,
+     "can": 18.229152910250107
+    },
+    "low": {
+     "train_core_h": 65.45733293054703,
+     "train_wall_h": 10.111089340202682,
+     "eval_container_h": 20.464386541313296,
+     "eval_wall_h": 11.4865306629728,
+     "total_wall_h_sequential_phases": 21.597620003175482
+    },
+    "high": {
+     "train_core_h": 65.45733293054703,
+     "train_wall_h": 10.111089340202682,
+     "eval_container_h": 46.23566116601137,
+     "eval_wall_h": 25.951784024117046,
+     "total_wall_h_sequential_phases": 36.06287336431973
+    },
+    "train_core_h_by_family": {
+     "bc_mlp": 2.0326100445559456,
+     "bc_rnn": 13.656529465282802,
+     "bc_mlp_chunk": 2.1564698703587055,
+     "diffusion_unet": 47.61172355034958
+    }
+   },
+   "modal_cpu_training": {
+    "device": "cpu",
+    "low": {
+     "usd": 12.351304921709936,
+     "container_h": 97.17611270833281,
+     "sequential_wall_h_max_containers_1": 97.17611270833281
+    },
+    "high": {
+     "usd": 16.721415289449574,
+     "container_h": 131.78043273667782,
+     "sequential_wall_h_max_containers_1": 131.78043273667782
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "modal_gpu_training": {
+    "device": "cuda",
+    "low": {
+     "usd": 12.361766178725114,
+     "container_h": 11.00878916667125,
+     "sequential_wall_h_max_containers_1": 11.00878916667125
+    },
+    "high": {
+     "usd": 16.01620658626648,
+     "container_h": 14.284222618620648,
+     "sequential_wall_h_max_containers_1": 14.284222618620648
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "storage": {
+    "checkpoint_gib": 6.520751416683197,
+    "records_gib": {
+     "low": 3.5757304716988956,
+     "high": 7.476527349915872
+    },
+    "total_gib": {
+     "low": 10.096481888382092,
+     "high": 13.99727876659907
+    },
+    "modal_volume_usd_per_month": 0.0,
+    "record_bytes_per_step_measured": 1385.0690327613104
+   }
+  },
+  "main_100k_ckpt5k_full_tuning": {
+   "local": {
+    "counts": {
+     "families": [
+      "bc_mlp",
+      "bc_rnn",
+      "bc_mlp_chunk",
+      "diffusion_unet"
+     ],
+     "tasks": [
+      "lift",
+      "can"
+     ],
+     "seeds": [
+      0,
+      1,
+      2
+     ],
+     "configs_per_family_task": 4,
+     "runs_per_family_task": 6,
+     "training_runs": 48,
+     "steps_per_run": 100000,
+     "checkpoints_per_run": 20,
+     "validation_evaluations": 960,
+     "test_evaluations": 24
+    },
+    "k_train": 8,
+    "train_slowdown_at_k": 1.235747182175109,
+    "p_eval": 4,
+    "eval_parallel_speedup": 1.7815985645936507,
+    "sim_ms_per_step": {
+     "lift": 15.625722845553723,
+     "can": 18.229152910250107
+    },
+    "low": {
+     "train_core_h": 65.45733293054703,
+     "train_wall_h": 10.111089340202682,
+     "eval_container_h": 39.9542784854212,
+     "eval_wall_h": 22.42608367532785,
+     "total_wall_h_sequential_phases": 32.53717301553053
+    },
+    "high": {
+     "train_core_h": 65.45733293054703,
+     "train_wall_h": 10.111089340202682,
+     "eval_container_h": 90.26962418126028,
+     "eval_wall_h": 50.66776880899042,
+     "total_wall_h_sequential_phases": 60.7788581491931
+    },
+    "train_core_h_by_family": {
+     "bc_mlp": 2.0326100445559456,
+     "bc_rnn": 13.656529465282802,
+     "bc_mlp_chunk": 2.1564698703587055,
+     "diffusion_unet": 47.61172355034958
+    }
+   },
+   "modal_cpu_training": {
+    "device": "cpu",
+    "low": {
+     "usd": 12.351304921709936,
+     "container_h": 97.17611270833281,
+     "sequential_wall_h_max_containers_1": 97.17611270833281
+    },
+    "high": {
+     "usd": 16.721415289449574,
+     "container_h": 131.78043273667782,
+     "sequential_wall_h_max_containers_1": 131.78043273667782
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "modal_gpu_training": {
+    "device": "cuda",
+    "low": {
+     "usd": 12.361766178725114,
+     "container_h": 11.00878916667125,
+     "sequential_wall_h_max_containers_1": 11.00878916667125
+    },
+    "high": {
+     "usd": 16.01620658626648,
+     "container_h": 14.284222618620648,
+     "sequential_wall_h_max_containers_1": 14.284222618620648
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "storage": {
+    "checkpoint_gib": 13.041502833366394,
+    "records_gib": {
+     "low": 6.981188063793081,
+     "high": 14.59702958793099
+    },
+    "total_gib": {
+     "low": 20.022690897159475,
+     "high": 27.638532421297384
+    },
+    "modal_volume_usd_per_month": 0.0,
+    "record_bytes_per_step_measured": 1385.0690327613104
+   }
+  },
+  "main_50k_ckpt5k_full_tuning": {
+   "local": {
+    "counts": {
+     "families": [
+      "bc_mlp",
+      "bc_rnn",
+      "bc_mlp_chunk",
+      "diffusion_unet"
+     ],
+     "tasks": [
+      "lift",
+      "can"
+     ],
+     "seeds": [
+      0,
+      1,
+      2
+     ],
+     "configs_per_family_task": 4,
+     "runs_per_family_task": 6,
+     "training_runs": 48,
+     "steps_per_run": 50000,
+     "checkpoints_per_run": 10,
+     "validation_evaluations": 480,
+     "test_evaluations": 24
+    },
+    "k_train": 8,
+    "train_slowdown_at_k": 1.235747182175109,
+    "p_eval": 4,
+    "eval_parallel_speedup": 1.7815985645936507,
+    "sim_ms_per_step": {
+     "lift": 15.625722845553723,
+     "can": 18.229152910250107
+    },
+    "low": {
+     "train_core_h": 32.72866646527351,
+     "train_wall_h": 5.055544670101341,
+     "eval_container_h": 20.464386541313296,
+     "eval_wall_h": 11.4865306629728,
+     "total_wall_h_sequential_phases": 16.54207533307414
+    },
+    "high": {
+     "train_core_h": 32.72866646527351,
+     "train_wall_h": 5.055544670101341,
+     "eval_container_h": 46.23566116601137,
+     "eval_wall_h": 25.951784024117046,
+     "total_wall_h_sequential_phases": 31.007328694218387
+    },
+    "train_core_h_by_family": {
+     "bc_mlp": 1.0163050222779728,
+     "bc_rnn": 6.828264732641401,
+     "bc_mlp_chunk": 1.0782349351793528,
+     "diffusion_unet": 23.80586177517479
+    }
+   },
+   "modal_cpu_training": {
+    "device": "cpu",
+    "low": {
+     "usd": 6.341504460854966,
+     "container_h": 49.5880563541664,
+     "sequential_wall_h_max_containers_1": 49.5880563541664
+    },
+    "high": {
+     "usd": 8.526559644724786,
+     "container_h": 66.89021636833891,
+     "sequential_wall_h_max_containers_1": 66.89021636833891
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "modal_gpu_training": {
+    "device": "cuda",
+    "low": {
+     "usd": 7.336159089362556,
+     "container_h": 6.504394583335625,
+     "sequential_wall_h_max_containers_1": 6.504394583335625
+    },
+    "high": {
+     "usd": 9.163379293133241,
+     "container_h": 8.142111309310323,
+     "sequential_wall_h_max_containers_1": 8.142111309310323
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "storage": {
+    "checkpoint_gib": 6.520751416683197,
+    "records_gib": {
+     "low": 3.5757304716988956,
+     "high": 7.476527349915872
+    },
+    "total_gib": {
+     "low": 10.096481888382092,
+     "high": 13.99727876659907
+    },
+    "modal_volume_usd_per_month": 0.0,
+    "record_bytes_per_step_measured": 1385.0690327613104
+   }
+  },
+  "main_100k_no_further_tuning": {
+   "local": {
+    "counts": {
+     "families": [
+      "bc_mlp",
+      "bc_rnn",
+      "bc_mlp_chunk",
+      "diffusion_unet"
+     ],
+     "tasks": [
+      "lift",
+      "can"
+     ],
+     "seeds": [
+      0,
+      1,
+      2
+     ],
+     "configs_per_family_task": 1,
+     "runs_per_family_task": 3,
+     "training_runs": 24,
+     "steps_per_run": 100000,
+     "checkpoints_per_run": 10,
+     "validation_evaluations": 240,
+     "test_evaluations": 24
+    },
+    "k_train": 8,
+    "train_slowdown_at_k": 1.235747182175109,
+    "p_eval": 4,
+    "eval_parallel_speedup": 1.7815985645936507,
+    "sim_ms_per_step": {
+     "lift": 15.625722845553723,
+     "can": 18.229152910250107
+    },
+    "low": {
+     "train_core_h": 32.72866646527351,
+     "train_wall_h": 5.055544670101341,
+     "eval_container_h": 10.719440569259346,
+     "eval_wall_h": 6.016754156795277,
+     "total_wall_h_sequential_phases": 11.072298826896617
+    },
+    "high": {
+     "train_core_h": 32.72866646527351,
+     "train_wall_h": 5.055544670101341,
+     "eval_container_h": 24.218679658386904,
+     "eval_wall_h": 13.593791631680356,
+     "total_wall_h_sequential_phases": 18.649336301781695
+    },
+    "train_core_h_by_family": {
+     "bc_mlp": 1.0163050222779728,
+     "bc_rnn": 6.828264732641401,
+     "bc_mlp_chunk": 1.0782349351793528,
+     "diffusion_unet": 23.80586177517479
+    }
+   },
+   "modal_cpu_training": {
+    "device": "cpu",
+    "low": {
+     "usd": 6.215216460854967,
+     "container_h": 48.588056354166405,
+     "sequential_wall_h_max_containers_1": 48.588056354166405
+    },
+    "high": {
+     "usd": 8.400271644724787,
+     "container_h": 65.89021636833891,
+     "sequential_wall_h_max_containers_1": 65.89021636833891
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "modal_gpu_training": {
+    "device": "cuda",
+    "low": {
+     "usd": 6.2204470893625565,
+     "container_h": 5.504394583335625,
+     "sequential_wall_h_max_containers_1": 5.504394583335625
+    },
+    "high": {
+     "usd": 8.047667293133241,
+     "container_h": 7.142111309310324,
+     "sequential_wall_h_max_containers_1": 7.142111309310324
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "storage": {
+    "checkpoint_gib": 3.2603757083415985,
+    "records_gib": {
+     "low": 1.8730016756518024,
+     "high": 3.916276230908314
+    },
+    "total_gib": {
+     "low": 5.133377383993401,
+     "high": 7.176651939249913
+    },
+    "modal_volume_usd_per_month": 0.0,
+    "record_bytes_per_step_measured": 1385.0690327613104
+   }
+  },
+  "reduced_50k_no_further_tuning": {
+   "local": {
+    "counts": {
+     "families": [
+      "bc_mlp",
+      "bc_rnn",
+      "bc_mlp_chunk",
+      "diffusion_unet"
+     ],
+     "tasks": [
+      "lift",
+      "can"
+     ],
+     "seeds": [
+      0,
+      1,
+      2
+     ],
+     "configs_per_family_task": 1,
+     "runs_per_family_task": 3,
+     "training_runs": 24,
+     "steps_per_run": 50000,
+     "checkpoints_per_run": 5,
+     "validation_evaluations": 120,
+     "test_evaluations": 24
+    },
+    "k_train": 8,
+    "train_slowdown_at_k": 1.235747182175109,
+    "p_eval": 4,
+    "eval_parallel_speedup": 1.7815985645936507,
+    "sim_ms_per_step": {
+     "lift": 15.625722845553723,
+     "can": 18.229152910250107
+    },
+    "low": {
+     "train_core_h": 16.364333232636756,
+     "train_wall_h": 2.5277723350506704,
+     "eval_container_h": 5.84696758323237,
+     "eval_wall_h": 3.2818659037065143,
+     "total_wall_h_sequential_phases": 5.809638238757184
+    },
+    "high": {
+     "train_core_h": 16.364333232636756,
+     "train_wall_h": 2.5277723350506704,
+     "eval_container_h": 13.210188904574675,
+     "eval_wall_h": 7.414795435462013,
+     "total_wall_h_sequential_phases": 9.942567770512683
+    },
+    "train_core_h_by_family": {
+     "bc_mlp": 0.5081525111389864,
+     "bc_rnn": 3.4141323663207004,
+     "bc_mlp_chunk": 0.5391174675896764,
+     "diffusion_unet": 11.902930887587395
+    }
+   },
+   "modal_cpu_training": {
+    "device": "cpu",
+    "low": {
+     "usd": 3.210316230427483,
+     "container_h": 24.7940281770832,
+     "sequential_wall_h_max_containers_1": 24.7940281770832
+    },
+    "high": {
+     "usd": 4.302843822362393,
+     "container_h": 33.445108184169456,
+     "sequential_wall_h_max_containers_1": 33.445108184169456
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "modal_gpu_training": {
+    "device": "cuda",
+    "low": {
+     "usd": 3.707643544681278,
+     "container_h": 3.2521972916678124,
+     "sequential_wall_h_max_containers_1": 3.2521972916678124
+    },
+    "high": {
+     "usd": 4.62125364656662,
+     "container_h": 4.0710556546551615,
+     "sequential_wall_h_max_containers_1": 4.0710556546551615
+    },
+    "full_run_ratio": 0.7333625778659826,
+    "rate_source": "measured on Modal (bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet): Gate A probe pure-step rate (low) and x 0.733 full-run ratio of the Modal training smoke (high)"
+   },
+   "storage": {
+    "checkpoint_gib": 1.6301878541707993,
+    "records_gib": {
+     "low": 1.0216372776282558,
+     "high": 2.136150671404535
+    },
+    "total_gib": {
+     "low": 2.651825131799055,
+     "high": 3.766338525575334
+    },
+    "modal_volume_usd_per_month": 0.0,
+    "record_bytes_per_step_measured": 1385.0690327613104
+   }
+  }
+ },
+ "git": {
+  "sha": "db10a1b42501ab6bc8f1adeb8c5ff926475bde7c",
+  "dirty": false
+ }
+}

@@ -1,0 +1,181 @@
+{
+ "app": "roboforge",
+ "blocking": [],
+ "config": {
+  "family": "diffusion_unet",
+  "horizons": {
+   "exec": 8,
+   "obs": 2,
+   "pred": 16
+  },
+  "loss": {
+   "kind": "denoising_mse"
+  },
+  "model": {
+   "beta_schedule": "squaredcos_cap_v2",
+   "clip_sample": true,
+   "ddim_eta": 0.0,
+   "down_dims": [
+    64,
+    128
+   ],
+   "ema": true,
+   "ema_max_decay": 0.9999,
+   "ema_power": 0.75,
+   "inference_steps": 10,
+   "kernel_size": 5,
+   "n_groups": 8,
+   "num_train_timesteps": 100,
+   "prediction_type": "epsilon",
+   "sampler": "ddim",
+   "step_embed_dim": 64
+  },
+  "name": "diffusion_unet",
+  "optim": {
+   "betas": [
+    0.9,
+    0.999
+   ],
+   "lr": 0.0001,
+   "name": "adamw",
+   "schedule": "constant",
+   "weight_decay": 0.0
+  },
+  "schema": "roboforge.train_config/1",
+  "seed": 0,
+  "task": "lift",
+  "train": {
+   "batch_size": 100,
+   "ckpt_every": 500,
+   "grad_clip": null,
+   "log_every": 100,
+   "max_steps": 2000,
+   "num_threads": 1,
+   "val_every": 500
+  }
+ },
+ "config_path": "configs/models/diffusion_unet.yaml",
+ "config_sha256": "2fda84af7627058dc07559f548c5d1839103a17f177cbeefa57f633613ff0047",
+ "created_utc": "2026-11-07T05:00:48.091630+00:00",
+ "data": {
+  "processed_content_sha256": "74e70119993830798c8b4ed87f202f64d8d2c9d573c0f376d54c4130e52d63c8",
+  "processed_file_sha256": "bd98a626810b82d1cc1fd8d56ceabd092f08a03af404d442fe1bc6947b7460cf",
+  "processed_relpath": "processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5",
+  "task": "lift"
+ },
+ "deadline_s": 720,
+ "estimate": {
+  "build_allowance": {
+   "cpu_usd": 0.04716,
+   "gpu_usd": 0.0,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.031967999999999996,
+   "multiplier": 1.0,
+   "resources": {
+    "count": 1,
+    "cpu": 4.0,
+    "gpu": null,
+    "memory_gib": 16.0,
+    "seconds": 900.0
+   },
+   "total_usd": 0.079128
+  },
+  "function": "train_cpu",
+  "job": {
+   "cpu_usd": 0.0236324,
+   "gpu_usd": 0.0,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.00800976,
+   "multiplier": 1.0,
+   "resources": {
+    "count": 1,
+    "cpu": 2.0,
+    "gpu": null,
+    "memory_gib": 4.0,
+    "seconds": 902.0
+   },
+   "total_usd": 0.03164216
+  },
+  "kind": "upper-bound estimate (list price; excludes preemption restarts)",
+  "pricing_fetched_utc": "2026-11-06",
+  "pricing_source": "https://modal.com/pricing",
+  "timeout_s": 900,
+  "total_usd": 0.11077016
+ },
+ "function": "train_cpu",
+ "git": {
+  "dirty": false,
+  "sha": "a2fe7064270bb7d190bac91c930884f1ca912300"
+ },
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ },
+ "launch_id": "b6a917d72a45411ca7a02e24ebaafc1e",
+ "mode": "new",
+ "overrides": [
+  "train.max_steps=2000",
+  "train.ckpt_every=500",
+  "train.val_every=500",
+  "train.log_every=100",
+  "task=lift",
+  "seed=0"
+ ],
+ "policy": {
+  "gpu_count": 0,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "prefix": "s5modal",
+ "resources": {
+  "count": 1,
+  "cpu": 2.0,
+  "gpu": null,
+  "memory_gib": 4.0,
+  "seconds": 900.0
+ },
+ "run_id": "s5modal_diffusion_unet_lift_seed0_2fda84af",
+ "schema": "roboforge.modal_plan/1",
+ "simulate_preemption_s": 90,
+ "timeout_s": 900,
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ }
+}

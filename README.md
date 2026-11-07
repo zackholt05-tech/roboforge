@@ -102,16 +102,20 @@ src/roboforge/       data/ (fetch, specs, features, processed, split, normalizat
                      eval/ (policies, rollout recorder, learned policy, validation, selection)
                      · models/ (BC-MLP, BC-RNN, diffusion U-Net, schedulers, registry) ·
                      train/ (config, trainer, EMA, checkpoints, runs) · viz/ (three.js
-                     coordinates, clip, denoising traces) · compute/ (boundary; Session 5)
+                     coordinates, clip, denoising traces) · compute/ (Modal plans,
+                     approval gate, cost ledger, retrieval, remote jobs, profiles, estimates)
 scripts/             reproducible CLIs used by the Makefile
 tests/               unit/ · simulator/ · integration/ · research_integrity/ · web_contract/
                      (pytest markers: sim, data, render, slow, web)
 infra/containers/    headless Linux simulation image + run_sim_cpu.sh (canonical platform)
+infra/modal_app.py   Modal entrypoint (dry run by default; paid launches need an approval row)
 reports/feasibility/ Session 0 evidence (JSON reports, rendered frames)
 reports/data_audit*  Session 1 dataset audit (JSON + figures)
 reports/session2/    Session 2 evidence (replay, contract, determinism, sanity eval, clip)
 reports/session3/    Session 3 evidence (validation pilots, selection, equivalence, diagnostics)
 reports/session4/    Session 4 evidence (diffusion reference, pilot, equivalence, latency, denoising)
+reports/session5/    Session 5 evidence (Modal probe, simulations, profiles, cost projection)
+reports/compute/     cumulative paid-compute cost ledger (launch, result and billing events)
 runs/                training and evaluation runs (gitignored; manifests + checkpoints)
 docs/                status, handoff, decisions, known issues, research protocol
 ```

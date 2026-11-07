@@ -1,0 +1,120 @@
+{
+ "app": "roboforge",
+ "blocking": [],
+ "created_utc": "2026-11-07T04:36:45.914507+00:00",
+ "deadline_s": 720,
+ "estimate": {
+  "build_allowance": {
+   "cpu_usd": 0.04716,
+   "gpu_usd": 0.0,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.031967999999999996,
+   "multiplier": 1.0,
+   "resources": {
+    "count": 1,
+    "cpu": 4.0,
+    "gpu": null,
+    "memory_gib": 16.0,
+    "seconds": 900.0
+   },
+   "total_usd": 0.079128
+  },
+  "function": "gpu_probe",
+  "job": {
+   "cpu_usd": 0.0472648,
+   "gpu_usd": 0.200244,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.03203904,
+   "multiplier": 1.0,
+   "resources": {
+    "count": 1,
+    "cpu": 4.0,
+    "gpu": "L4",
+    "memory_gib": 16.0,
+    "seconds": 902.0
+   },
+   "total_usd": 0.27954784
+  },
+  "kind": "upper-bound estimate (list price; excludes preemption restarts)",
+  "pricing_fetched_utc": "2026-11-06",
+  "pricing_source": "https://modal.com/pricing",
+  "timeout_s": 900,
+  "total_usd": 0.35867583999999997
+ },
+ "function": "gpu_probe",
+ "git": {
+  "dirty": false,
+  "sha": "c7f043fe140dc139462b38b00b68be2c3cc5c187"
+ },
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ },
+ "launch_id": "5688db17063a49a191f4306946f14063",
+ "mode": "probe",
+ "policy": {
+  "gpu_count": 1,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "probe": {
+  "families": [
+   "bc_mlp",
+   "bc_rnn",
+   "bc_mlp_chunk",
+   "diffusion_unet"
+  ],
+  "steps": 300,
+  "task": "lift"
+ },
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 900.0
+ },
+ "run_id": null,
+ "schema": "roboforge.modal_plan/1",
+ "timeout_s": 900,
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ }
+}

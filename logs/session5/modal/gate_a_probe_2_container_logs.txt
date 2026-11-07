@@ -1,0 +1,71 @@
+
+ + transformers==4.41.2
+ + triton==3.9.0
+ + typing-extensions==4.16.0
+ + tzdata==2026.6
+ + urllib3==2.8.0
+ + werkzeug==3.1.9
+ + zipp==4.1.2
+
+=> Step 5: ENV PATH=/.uv/.venv/bin:$PATH
+Saving image...
+Image saved, took 11.43s
+
+Built image im-IreUfJ7xvsbC36YojUN2Jj in 78.62s
+
+
+Building image im-lvU8lSHf3hPqWuY9vZbZEt
+
+=> Step 0: FROM base
+
+=> Step 1: ENV MUJOCO_GL=egl
+
+=> Step 2: ENV PYOPENGL_PLATFORM=egl
+
+=> Step 3: ENV PYTHONPATH=/app/src
+
+=> Step 4: ENV ROBOFORGE_DATA_ROOT=/data
+Saving image...
+Image saved, took 1.41s
+
+Built image im-lvU8lSHf3hPqWuY9vZbZEt in 3.34s
+
+
+Function 'gpu_probe' (fu-nlFf93Shy7fWi18aB5TCD2) is waiting to be scheduled on a GPU_L4 worker. We are actively working on acquiring more capacity for your workload.
+Traceback (most recent call last):
+  File "/pkg/modal/_runtime/container_io_manager.py", line 987, in handle_input_exception
+    yield
+  File "/pkg/modal/_container_entrypoint.py", line 189, in run_input_sync
+    values = io_context.call_function_sync()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_runtime/container_io_manager.py", line 266, in call_function_sync
+    expected_value_or_values = self.finalized_function.callable(*args, **kwargs)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/modal_app.py", line 112, in gpu_probe
+    res = probe_job(plan, out_dir=Path("/tmp/roboforge_probe"))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/roboforge/compute/remote.py", line 150, in probe_job
+    prof["cuda"] = [profile_training(f, p["task"], "cuda", p["steps"])
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/roboforge/compute/remote.py", line 150, in <listcomp>
+    prof["cuda"] = [profile_training(f, p["task"], "cuda", p["steps"])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/roboforge/compute/profile.py", line 77, in profile_training
+    step()
+  File "/app/src/roboforge/compute/profile.py", line 66, in step
+    loss = masked_mse(tr.model(b["obs_history"], b["obs_valid"]),
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/.uv/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1787, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/.uv/.venv/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1798, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/roboforge/models/bc.py", line 133, in forward
+    return self.head(self.encode(obs_history, obs_valid)).view(b, self.pred_horizon,
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/src/roboforge/models/bc.py", line 122, in encode
+    idx = (torch.arange(horizon).unsqueeze(0) + shift) % horizon
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+Stopping app - uncaught exception raised in remote container: RuntimeError('Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!').

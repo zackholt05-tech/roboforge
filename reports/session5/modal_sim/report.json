@@ -1,0 +1,464 @@
+{
+ "schema": "roboforge.modal_sim/1",
+ "kind": "local simulation (no Modal resource)",
+ "run_id": "s5sim_diffusion_unet_lift_seed0_2fda84af",
+ "plan": {
+  "function": "train_cpu",
+  "timeout_s": 1800,
+  "deadline_s": 1620,
+  "policy": {
+   "max_containers": 1,
+   "retries": 0,
+   "scaledown_window_s": 2,
+   "preemptible": true,
+   "gpu_count": 0
+  },
+  "resources": {
+   "seconds": 1800.0,
+   "cpu": 2.0,
+   "memory_gib": 4.0,
+   "gpu": null,
+   "count": 1
+  },
+  "image": {
+   "base": "modal.Image.debian_slim(python_version='3.11')",
+   "apt": [
+    "git",
+    "cmake",
+    "build-essential",
+    "libegl-dev",
+    "libegl1",
+    "libosmesa6",
+    "libgl1",
+    "libglib2.0-0"
+   ],
+   "uv_version": "0.11.11",
+   "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+   "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+   "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+   "code_dirs": [
+    "src",
+    "scripts",
+    "configs",
+    "data/manifests",
+    "data/splits",
+    "data/normalization"
+   ],
+   "repo_root": "/app",
+   "env": {
+    "MUJOCO_GL": "egl",
+    "PYOPENGL_PLATFORM": "egl",
+    "PYTHONPATH": "/app/src",
+    "ROBOFORGE_DATA_ROOT": "/data"
+   }
+  },
+  "volumes": {
+   "data": {
+    "name": "roboforge-data",
+    "mount": "/data"
+   },
+   "runs": {
+    "name": "roboforge-runs",
+    "mount": "/app/runs"
+   }
+  },
+  "estimate": {
+   "function": "train_cpu",
+   "timeout_s": 1800,
+   "job": {
+    "gpu_usd": 0.0,
+    "cpu_usd": 0.0472124,
+    "memory_usd": 0.01600176,
+    "total_usd": 0.06321416,
+    "multiplier": 1.0,
+    "resources": {
+     "seconds": 1802.0,
+     "cpu": 2.0,
+     "memory_gib": 4.0,
+     "gpu": null,
+     "count": 1
+    },
+    "kind": "estimate (list price)"
+   },
+   "build_allowance": {
+    "gpu_usd": 0.0,
+    "cpu_usd": 0.04716,
+    "memory_usd": 0.031967999999999996,
+    "total_usd": 0.079128,
+    "multiplier": 1.0,
+    "resources": {
+     "seconds": 900.0,
+     "cpu": 4.0,
+     "memory_gib": 16.0,
+     "gpu": null,
+     "count": 1
+    },
+    "kind": "estimate (list price)"
+   },
+   "total_usd": 0.14234216,
+   "kind": "upper-bound estimate (list price; excludes preemption restarts)",
+   "pricing_fetched_utc": "2026-11-06",
+   "pricing_source": "https://modal.com/pricing"
+  }
+ },
+ "segments": {
+  "reference": {
+   "tag": "reference",
+   "launch_id": "sim-ref-ebb1eea5",
+   "mode": "new",
+   "deadline_s": 1620,
+   "returncode": 0,
+   "signal": null,
+   "wall_s": 283.5163373337127,
+   "result": {
+    "status": "complete",
+    "run_id": "s5sim_diffusion_unet_lift_seed0_2fda84af",
+    "launch_id": "sim-ref-ebb1eea5",
+    "container_wall_s": 280.60900654131547,
+    "signals_installed": true,
+    "host": {
+     "machine": "arm64",
+     "system": "Darwin",
+     "platform": "macOS-26.6.2-arm64-arm-64bit",
+     "python": "3.11.15",
+     "cpu": "Apple M1 Pro",
+     "cpu_count": 10,
+     "modal_env": {},
+     "packages": {
+      "torch": "2.15.0",
+      "mujoco": "3.2.7",
+      "robosuite": "1.5.1",
+      "numpy": "2.4.6"
+     }
+    },
+    "detail": {
+     "checkpoints": [
+      {
+       "step": 500,
+       "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0000500.pt",
+       "sha256": "adbaf3cb24e39ad98f3300866e28bd929f5b6f654723e28a6d9f5f3f31db8e17"
+      },
+      {
+       "step": 1000,
+       "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0001000.pt",
+       "sha256": "4f8a49a4045f74dcf357508d1e11145a71cb9425c597c8984273fd333038b95a"
+      },
+      {
+       "step": 1500,
+       "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0001500.pt",
+       "sha256": "392d929a64e0b3594af962a5fd128bbd2c7853cea9db640e2e7ccd3bc9b0e966"
+      },
+      {
+       "step": 2000,
+       "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0002000.pt",
+       "sha256": "49b31214f71039106356f971c1c9a3963f232d0b7edc3c62ec7768ee28d6e54d"
+      }
+     ],
+     "timing": {
+      "wall_s": 265.8970754998736,
+      "cpu_s": 262.842683,
+      "steps_per_s": 7.521707398398786,
+      "n_segments": 1
+     }
+    }
+   },
+   "output_tail": []
+  },
+  "chain": [
+   {
+    "tag": "1_preempt_sigint",
+    "launch_id": "sim-L1-37a48175",
+    "mode": "new",
+    "deadline_s": 1620,
+    "returncode": 130,
+    "signal": {
+     "signal": "SIGINT",
+     "heartbeat_step": 700,
+     "after_s": 94.79311958281323
+    },
+    "wall_s": 95.51210916694254,
+    "result": {
+     "status": "interrupted_reraised",
+     "detail": "stopped by signal SIGINT at step 701; resume checkpoint written"
+    },
+    "output_tail": []
+   },
+   {
+    "tag": "2_restart_sigkill",
+    "launch_id": "sim-L1-37a48175",
+    "mode": "new",
+    "deadline_s": 1620,
+    "returncode": -9,
+    "signal": {
+     "signal": "SIGKILL",
+     "heartbeat_step": 1200,
+     "after_s": 67.74789462517947
+    },
+    "wall_s": 67.76710566692054,
+    "result": null,
+    "output_tail": []
+   },
+   {
+    "tag": "3_restart_deadline",
+    "launch_id": "sim-L1-37a48175",
+    "mode": "new",
+    "deadline_s": 30.0,
+    "returncode": 3,
+    "signal": null,
+    "wall_s": 31.613334082998335,
+    "result": {
+     "status": "interrupted",
+     "run_id": "s5sim_diffusion_unet_lift_seed0_2fda84af",
+     "launch_id": "sim-L1-37a48175",
+     "container_wall_s": 30.207445417065173,
+     "signals_installed": true,
+     "host": {
+      "machine": "arm64",
+      "system": "Darwin",
+      "platform": "macOS-26.6.2-arm64-arm-64bit",
+      "python": "3.11.15",
+      "cpu": "Apple M1 Pro",
+      "cpu_count": 10,
+      "modal_env": {},
+      "packages": {
+       "torch": "2.15.0",
+       "mujoco": "3.2.7",
+       "robosuite": "1.5.1",
+       "numpy": "2.4.6"
+      }
+     },
+     "detail": {
+      "step": 1249,
+      "reason": "deadline 30 s",
+      "segment": 2
+     }
+    },
+    "output_tail": []
+   },
+   {
+    "tag": "4_duplicate_new_refused",
+    "launch_id": "sim-L3-35bf10d6",
+    "mode": "new",
+    "deadline_s": 1620,
+    "returncode": 1,
+    "signal": null,
+    "wall_s": 1.1585810421966016,
+    "result": null,
+    "output_tail": [
+     "  File \"/Users/zackaryholt/Projects/roboforge/logs/tmp/s5_modal_sim/chain/container/app/src/roboforge/compute/remote.py\", line 96, in train_job",
+     "    out = train_run(cfg, REPO_ROOT / \"runs\", plan[\"prefix\"],",
+     "          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+     "  File \"/Users/zackaryholt/Projects/roboforge/logs/tmp/s5_modal_sim/chain/container/app/src/roboforge/train/run.py\", line 191, in train_run",
+     "    raise RunExistsError(f\"{run_dir} exists and belongs to launch \"",
+     "roboforge.train.journal.RunExistsError: /Users/zackaryholt/Projects/roboforge/logs/tmp/s5_modal_sim/chain/container/app/runs/s5sim_diffusion_unet_lift_seed0_2fda84af exists and belongs to launch sim-L1-37a48175; refusing a duplicate launch"
+    ]
+   },
+   {
+    "tag": "5_resume_launch",
+    "launch_id": "sim-L2-bdbf28a6",
+    "mode": "resume",
+    "deadline_s": 1620,
+    "returncode": 0,
+    "signal": null,
+    "wall_s": 120.4342940421775,
+    "result": {
+     "status": "complete",
+     "run_id": "s5sim_diffusion_unet_lift_seed0_2fda84af",
+     "launch_id": "sim-L2-bdbf28a6",
+     "container_wall_s": 119.33042883267626,
+     "signals_installed": true,
+     "host": {
+      "machine": "arm64",
+      "system": "Darwin",
+      "platform": "macOS-26.6.2-arm64-arm-64bit",
+      "python": "3.11.15",
+      "cpu": "Apple M1 Pro",
+      "cpu_count": 10,
+      "modal_env": {},
+      "packages": {
+       "torch": "2.15.0",
+       "mujoco": "3.2.7",
+       "robosuite": "1.5.1",
+       "numpy": "2.4.6"
+      }
+     },
+     "detail": {
+      "checkpoints": [
+       {
+        "step": 500,
+        "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0000500.pt",
+        "sha256": "adbaf3cb24e39ad98f3300866e28bd929f5b6f654723e28a6d9f5f3f31db8e17"
+       },
+       {
+        "step": 1000,
+        "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0001000.pt",
+        "sha256": "b3a8219aa5974ac9ffc75257e59449a0dbb147ed14f7ffb12da60114c4840524"
+       },
+       {
+        "step": 1500,
+        "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0001500.pt",
+        "sha256": "1785d23b67d54a9c495e0d17abd4c5ebe95d9aa045dc77d95fdbbe4368c54c4c"
+       },
+       {
+        "step": 2000,
+        "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0002000.pt",
+        "sha256": "d6df25267baae46e3495d5f67f51805645e4045000e7465bfa2b3c974e33d5a3"
+       }
+      ],
+      "timing": {
+       "wall_s": 291.12991149909794,
+       "cpu_s": 287.67346599999996,
+       "steps_per_s": 6.869785346691169,
+       "n_segments": 4
+      }
+     }
+    },
+    "output_tail": []
+   },
+   {
+    "tag": "6_duplicate_after_complete_refused",
+    "launch_id": "sim-L4-187acdbf",
+    "mode": "new",
+    "deadline_s": 1620,
+    "returncode": 1,
+    "signal": null,
+    "wall_s": 1.1570019158534706,
+    "result": null,
+    "output_tail": [
+     "  File \"/Users/zackaryholt/Projects/roboforge/logs/tmp/s5_modal_sim/chain/container/app/src/roboforge/compute/remote.py\", line 96, in train_job",
+     "    out = train_run(cfg, REPO_ROOT / \"runs\", plan[\"prefix\"],",
+     "          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+     "  File \"/Users/zackaryholt/Projects/roboforge/logs/tmp/s5_modal_sim/chain/container/app/src/roboforge/train/run.py\", line 191, in train_run",
+     "    raise RunExistsError(f\"{run_dir} exists and belongs to launch \"",
+     "roboforge.train.journal.RunExistsError: /Users/zackaryholt/Projects/roboforge/logs/tmp/s5_modal_sim/chain/container/app/runs/s5sim_diffusion_unet_lift_seed0_2fda84af exists and belongs to launch sim-L1-37a48175; refusing a duplicate launch"
+    ]
+   }
+  ]
+ },
+ "checkpoint_differences": {
+  "500": [],
+  "1000": [],
+  "1500": [],
+  "2000": []
+ },
+ "retrieval": {
+  "installed": "/Users/zackaryholt/Projects/roboforge/runs/s5sim_diffusion_unet_lift_seed0_2fda84af",
+  "verified_staged": {
+   "run_id": "s5sim_diffusion_unet_lift_seed0_2fda84af",
+   "manifest_sha256": "54cd4725a5abd02ac8517e461820b4c32d0395d9ea23f776cbeff88fbf2b0bdc",
+   "files": {
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0000500.pt": "adbaf3cb24e39ad98f3300866e28bd929f5b6f654723e28a6d9f5f3f31db8e17",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0001000.pt": "b3a8219aa5974ac9ffc75257e59449a0dbb147ed14f7ffb12da60114c4840524",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0001500.pt": "1785d23b67d54a9c495e0d17abd4c5ebe95d9aa045dc77d95fdbbe4368c54c4c",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0002000.pt": "d6df25267baae46e3495d5f67f51805645e4045000e7465bfa2b3c974e33d5a3",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/resume/step_0000701.pt": "ca6701aa72e40d5bdc42fa86f74f3b36abd6b70cd6de111b6472d6eb7705d503",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/resume/step_0001249.pt": "84be45f7d688497e7bef24b9d9af3476e1dc7c7678d5c040bb4d10dc652ce516"
+   },
+   "metrics_sha256": "66267496e7c54cc3a87bbb4455b6cab60ecd47779d5270a1cf5691be7d3fb35c",
+   "n_checkpoints": 4,
+   "n_resume_checkpoints": 2
+  },
+  "verified_installed": {
+   "run_id": "s5sim_diffusion_unet_lift_seed0_2fda84af",
+   "manifest_sha256": "54cd4725a5abd02ac8517e461820b4c32d0395d9ea23f776cbeff88fbf2b0bdc",
+   "files": {
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0000500.pt": "adbaf3cb24e39ad98f3300866e28bd929f5b6f654723e28a6d9f5f3f31db8e17",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0001000.pt": "b3a8219aa5974ac9ffc75257e59449a0dbb147ed14f7ffb12da60114c4840524",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0001500.pt": "1785d23b67d54a9c495e0d17abd4c5ebe95d9aa045dc77d95fdbbe4368c54c4c",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/checkpoints/step_0002000.pt": "d6df25267baae46e3495d5f67f51805645e4045000e7465bfa2b3c974e33d5a3",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/resume/step_0000701.pt": "ca6701aa72e40d5bdc42fa86f74f3b36abd6b70cd6de111b6472d6eb7705d503",
+    "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/resume/step_0001249.pt": "84be45f7d688497e7bef24b9d9af3476e1dc7c7678d5c040bb4d10dc652ce516"
+   },
+   "metrics_sha256": "66267496e7c54cc3a87bbb4455b6cab60ecd47779d5270a1cf5691be7d3fb35c",
+   "n_checkpoints": 4,
+   "n_resume_checkpoints": 2
+  },
+  "status": "PASS"
+ },
+ "chain_manifest_timing": {
+  "cpu_s": 287.67346599999996,
+  "n_segments": 4,
+  "steps_per_s": 6.869785346691169,
+  "wall_s": 291.12991149909794
+ },
+ "reference_timing": {
+  "cpu_s": 262.842683,
+  "n_segments": 1,
+  "steps_per_s": 7.521707398398786,
+  "wall_s": 265.8970754998736
+ },
+ "resume_checkpoints": [
+  {
+   "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/resume/step_0000701.pt",
+   "segment": 0,
+   "sha256": "ca6701aa72e40d5bdc42fa86f74f3b36abd6b70cd6de111b6472d6eb7705d503",
+   "step": 701
+  },
+  {
+   "path": "runs/s5sim_diffusion_unet_lift_seed0_2fda84af/resume/step_0001249.pt",
+   "segment": 2,
+   "sha256": "84be45f7d688497e7bef24b9d9af3476e1dc7c7678d5c040bb4d10dc652ce516",
+   "step": 1249
+  }
+ ],
+ "checks": {
+  "chain_returncodes_as_expected": true,
+  "duplicates_refused_with_RunExistsError": true,
+  "reference_complete": true,
+  "cadence_checkpoints_content_identical": true,
+  "metrics_rows_equal_except_wall_s": true,
+  "final_offline_equal": true,
+  "manifest_paths_repo_relative": true,
+  "retrieval_hash_verified": true,
+  "segments_recorded": [
+   "start:",
+   "end:interrupted",
+   "start:",
+   "lost:",
+   "start:",
+   "end:interrupted",
+   "start:",
+   "end:complete"
+  ]
+ },
+ "returncode_checks": {
+  "1_preempt_sigint": true,
+  "2_restart_sigkill": true,
+  "3_restart_deadline": true,
+  "4_duplicate_new_refused": true,
+  "5_resume_launch": true,
+  "6_duplicate_after_complete_refused": true
+ },
+ "passed": true,
+ "git": {
+  "sha": "2477312c518ab1105b28c56ea74aed549a8d29d3",
+  "dirty": true
+ },
+ "environment": {
+  "generated_at": "2026-11-07T04:42:05.301175+00:00",
+  "python": "3.11.15",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "cpu_count": 10,
+  "mujoco_gl": null,
+  "git": {
+   "sha": "2477312c518ab1105b28c56ea74aed549a8d29d3",
+   "dirty": true
+  },
+  "packages": {
+   "mujoco": "3.2.7",
+   "robosuite": "1.5.1",
+   "robomimic": "0.5.0",
+   "torch": "2.15.0",
+   "torchvision": "0.29.2",
+   "numpy": "2.4.6",
+   "h5py": "3.16.0",
+   "diffusers": "0.11.1",
+   "transformers": "4.41.2",
+   "huggingface-hub": "0.23.4",
+   "numba": "0.68.1",
+   "scipy": "1.17.1"
+  }
+ },
+ "root": "logs/tmp/s5_modal_sim"
+}

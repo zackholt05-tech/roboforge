@@ -1,0 +1,117 @@
+{
+ "function": "gpu_probe",
+ "mode": "probe",
+ "run_id": null,
+ "launch_id": "5688db17063a49a191f4306946f14063",
+ "timeout_s": 900,
+ "deadline_s": 720,
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 900.0
+ },
+ "policy": {
+  "gpu_count": 1,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ },
+ "git": {
+  "dirty": false,
+  "sha": "c7f043fe140dc139462b38b00b68be2c3cc5c187"
+ },
+ "blocking": []
+}
+{
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ }
+}
+UPPER-BOUND ESTIMATE $0.3587 (list prices fetched 2026-11-06; job $0.2795 + build/start allowance $0.0791; excludes preemption restarts; not a cap)
+{
+ "approval_id": "A-01",
+ "gate": "Gate A",
+ "cap_usd": 2.0,
+ "committed_before_usd": 0.0,
+ "estimate_upper_usd": 0.35867583999999997,
+ "remaining_after_usd": 1.64132416
+}
+ 
+✓ Initialized. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-LyuJSmb9OLUAKPQ0oGZMQt
+Stopping app - uncaught exception raised locally: NotFoundError("Volume 'roboforge-data' not found in environment 'main'").
+Building image im-UuxQcANW50bCGwXesBF3V7
+
+=> Step 0: FROM base
+
+=> Step 1: RUN apt-get update
+Hit:1 http://deb.debian.org/debian trixie InRelease
+Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+Get:4 http://deb.debian.org/debian trixie-updates/main amd64 Packages.diff/Index [8361 B]
+Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages T-2026-11-05-1401.10-F-2026-10-30-1402.07.pdiff [251 B]
+Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages T-2026-11-05-1401.10-F-2026-10-30-1402.07.pdiff [251 B]
+Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [298 kB]
+Get:7 http://deb.debian.org/debian trixie-updates/main amd64 Packages [1108 B]
+Fetched 399 kB in 3s (124 kB/s)
+Reading package lists...
+{
+ "schema": "roboforge.cost_event/1",
+ "event": "result",
+ "utc": "2026-11-07T04:36:51.156540+00:00",
+ "launch_id": "5688db17063a49a191f4306946f14063",
+ "run_id": null,
+ "status": "error",
+ "container_wall_s": null,
+ "measured_cost_usd": null,
+ "measured_cost_kind": "estimate: measured container time x list price (excludes image build and start-up)",
+ "modal": {
+  "app_id": "ap-LyuJSmb9OLUAKPQ0oGZMQt"
+ },
+ "detail": "NotFoundError: Volume 'roboforge-data' not found in environment 'main'"
+}
+ 
+result: logs/session5/modal/plans/probe_20261106T233645.result.json
+exit=1

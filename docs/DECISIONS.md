@@ -1163,3 +1163,30 @@ Lift selections are final (D-058): no Lift run is retrained, retuned or reselect
 - `reports/session7/` and `logs/session7/` with `ROBOFORGE_EVIDENCE_SESSION=7`. Training and
   evaluation records stay under `runs/` (gitignored), with summaries and hashes in the
   reports, as in D-056.
+
+### D-063 Session 7 robustness starts: a fresh base set and OOD sets derived from it (FIXED)
+- `roboforge.sim.robustness`, config `configs/eval/robustness.yaml`, CLI
+  `scripts/generate_robustness_states.py` (`make robustness-states` on the canonical
+  container, `make check-robustness-states`). Definitions: RESEARCH_PROTOCOL §14.1–14.2.
+- **Separate from the evaluation suites:** the robustness suites are not in
+  `configs/eval/suites.yaml`, so `partitions.json`, the validation and held-out manifests and
+  their checks are unchanged. They use the same file format and load with
+  `eval_states.load_suite`. New partition `eval_robustness` (`snapshot.PARTITIONS`) and a
+  reserved seed block [300000, 400000) that `check_seed_allowed` maps to it.
+- **Why a fresh base set:** the validation starts selected every checkpoint and
+  configuration, so a robustness drop measured against them would include the selection
+  bias. Base state `i` and OOD state `i` are paired.
+- **Validity** is checked on scratch environments only (KI-019). The development dry run
+  corrected two checks before any canonical generation (second amendment of 2026-11-07).
+
+### D-064 Evaluator extensions for robustness suites and inference variants (FIXED)
+- `evaluate_checkpoint(..., suite=, variant=)` and `scripts/eval_policy.py --suite --variant`.
+  `check_suite_allowed` accepts only `validation` and the task's robustness suites; the
+  held-out suites have their own entry point after the freeze.
+- Variants (`roboforge.eval.learned.VARIANTS`, §14.4): `trained-weights` (A1: the non-EMA
+  weights stored in the same checkpoint) and `ddpm100` (A2: DDPM with all 100 timesteps;
+  the U-Net weights are unchanged and load strictly). Diffusion checkpoints only.
+- Validation evaluation IDs, summaries and selection eligibility are unchanged. A robustness or
+  variant evaluation has ID `<train>__<suite>_step<N>__<platform>[__ps0r0][__var-<variant>]`,
+  schema `roboforge.robustness_eval/1`, `eligible_for_selection: false`, and its summary goes
+  to `reports/session7/robustness/evals/`.

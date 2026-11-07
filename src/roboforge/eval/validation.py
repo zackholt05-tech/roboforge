@@ -1,7 +1,11 @@
 """Closed-loop validation evaluation of trained checkpoints (RESEARCH_PROTOCOL §5, §7).
 
-This module only ever evaluates on the **validation** suite (``eval_validation``). There is
-no suite argument, so it cannot reach the locked held-out states. Before loading a
+This module evaluates on the **validation** suite (``eval_validation``) and, from Session 7,
+on the robustness suites (``eval_robustness``, RESEARCH_PROTOCOL §14) and under the
+preregistered inference variants of :data:`roboforge.eval.learned.VARIANTS`. The suite must be
+one of :func:`check_suite_allowed`'s, so this module cannot reach the locked held-out
+states (they have their own entry point, :mod:`roboforge.eval.heldout`). Only canonical,
+complete, primary-inference validation evaluations are eligible for selection. Before loading a
 checkpoint it checks the file's SHA-256 against the training run's immutable manifest, and
 that hash travels into every rollout record through ``PolicyInfo.params``.
 
@@ -43,6 +47,19 @@ from roboforge.train.run import write_manifest
 
 VALIDATION = "validation"
 SCHEMA = "roboforge.validation_eval/1"
+# Session 7 robustness and ablation evaluations (RESEARCH_PROTOCOL §14, D-064): the same
+# evaluator on a robustness suite and/or under an inference variant. Never eligible for
+# selection. The held-out suites are not reachable from here (roboforge.eval.heldout).
+ROBUSTNESS_SCHEMA = "roboforge.robustness_eval/1"
+
+
+def check_suite_allowed(task: str, suite: str) -> None:
+    """Raise unless ``suite`` is the validation suite or a robustness suite of ``task``."""
+    from roboforge.sim.robustness import sets_for
+
+    if suite != VALIDATION and suite not in sets_for(task):
+        raise ValueError(f"suite {suite!r} is not evaluable here for {task}: only "
+                         f"{[VALIDATION, *sets_for(task)]}")
 
 
 def canonical_platform_id() -> str:
@@ -113,43 +130,21 @@ def _summarize(episodes: list[dict[str, Any]], dim: int) -> dict[str, Any]:
 
 
 def eval_run_id(train_run_id: str, step: int, platform_id: str, *, stochastic: bool,
-                policy_seed: int = 0, repeat: int = 0, n_partial: int | None = None) -> str:
-    """Evaluation run ID of one checkpoint on the validation suite."""
-    rid = f"{train_run_id}__val_step{step:07d}__{platform_id}"
+                policy_seed: int = 0, repeat: int = 0, n_partial: int | None = None,
+                suite: str = VALIDATION, variant: str | None = None) -> str:
+    """Evaluation run ID of one checkpoint on ``suite`` (validation IDs are unchanged)."""
+    tag = "val" if suite == VALIDATION else suite
+    rid = f"{train_run_id}__{tag}_step{step:07d}__{platform_id}"
     if stochastic:
         rid += f"__ps{int(policy_seed)}r{int(repeat)}"
+    if variant is not None:
+        rid += f"__var-{variant}"
     return rid + (f"__first{n_partial}" if n_partial is not None else "")
 
 
-def evaluate_checkpoint(train_run_dir: Path, step: int, *, runs_dir: Path,
-                        n_states: int | None = None, n_verify: int = 3,
-                        num_threads: int = 1, policy_seed: int = 0,
-                        repeat: int = 0) -> dict[str, Any]:
-    """Evaluate one checkpoint of a completed training run on the validation suite.
-    ``policy_seed`` and ``repeat`` only affect stochastic policies."""
-    train_run_dir = Path(train_run_dir)
-    tm = read_train_manifest(train_run_dir)
-    if tm["status"] != "complete":
-        raise ValueError(f"{tm['run_id']}: training status is {tm['status']!r}")
-    ck = {c["step"]: c for c in tm["checkpoints"]}
-    if step not in ck:
-        raise KeyError(f"{tm['run_id']} has no checkpoint at step {step}: {sorted(ck)}")
-    ckpt_path = REPO_ROOT / ck[step]["path"] if not Path(ck[step]["path"]).is_absolute() \
-        else Path(ck[step]["path"])
-    policy = LearnedPolicy.from_checkpoint(ckpt_path, expected_sha256=ck[step]["sha256"],
-                                           num_threads=num_threads, policy_seed=policy_seed,
-                                           repeat=repeat)
-    task = tm["config"]["task"]
-    platform = evaluation_platform()
-    canonical = platform["platform_id"] == canonical_platform_id()
-    states = load_suite(task, VALIDATION)
-    partial = n_states is not None and n_states < len(states)
-    states = states[:n_states] if partial else states
-    eval_id = eval_run_id(tm["run_id"], step, platform["platform_id"],
-                          stochastic=policy.stochastic, policy_seed=policy_seed, repeat=repeat,
-                          n_partial=len(states) if partial else None)
-    out_dir = Path(runs_dir) / eval_id
-    out_dir.mkdir(parents=True, exist_ok=False)
+def run_states(policy: LearnedPolicy, states: list[Any], eval_id: str, out_dir: Path,
+               task: str, n_verify: int) -> dict[str, Any]:
+    """Run, record and audit one episode per state (the shared core of every evaluation)."""
     env = RoboForgeEnv(task)
     codec = policy.codec(env.action_spec)
     episodes, verified = [], []
@@ -165,26 +160,72 @@ def evaluate_checkpoint(train_run_dir: Path, step: int, *, runs_dir: Path,
                              **({"noise_seed": rec.meta["policy_episode"]["noise_seed"]}
                                 if policy.stochastic else {}),
                              **episode_stats(rec, codec)})
+        rules = {"horizon": env.horizon, "termination": env.termination,
+                 "hold_steps": env.hold_steps}
+        dim = env.action_dim
     finally:
         env.close()
-    wall = time.perf_counter() - t0
+    return {"episodes": episodes, "verified": verified, "wall_s": time.perf_counter() - t0,
+            "episode_rules": rules, "action_dim": dim}
+
+
+def evaluate_checkpoint(train_run_dir: Path, step: int, *, runs_dir: Path,
+                        n_states: int | None = None, n_verify: int = 3,
+                        num_threads: int = 1, policy_seed: int = 0,
+                        repeat: int = 0, suite: str = VALIDATION,
+                        variant: str | None = None) -> dict[str, Any]:
+    """Evaluate one checkpoint of a completed training run on the validation suite, or on a
+    Session 7 robustness suite and/or under a preregistered inference variant (§14).
+    ``policy_seed`` and ``repeat`` only affect stochastic policies."""
+    train_run_dir = Path(train_run_dir)
+    tm = read_train_manifest(train_run_dir)
+    if tm["status"] != "complete":
+        raise ValueError(f"{tm['run_id']}: training status is {tm['status']!r}")
+    ck = {c["step"]: c for c in tm["checkpoints"]}
+    if step not in ck:
+        raise KeyError(f"{tm['run_id']} has no checkpoint at step {step}: {sorted(ck)}")
+    ckpt_path = REPO_ROOT / ck[step]["path"] if not Path(ck[step]["path"]).is_absolute() \
+        else Path(ck[step]["path"])
+    task = tm["config"]["task"]
+    check_suite_allowed(task, suite)
+    policy = LearnedPolicy.from_checkpoint(ckpt_path, expected_sha256=ck[step]["sha256"],
+                                           num_threads=num_threads, policy_seed=policy_seed,
+                                           repeat=repeat, variant=variant)
+    platform = evaluation_platform()
+    canonical = platform["platform_id"] == canonical_platform_id()
+    states = load_suite(task, suite)
+    partial = n_states is not None and n_states < len(states)
+    states = states[:n_states] if partial else states
+    eval_id = eval_run_id(tm["run_id"], step, platform["platform_id"],
+                          stochastic=policy.stochastic, policy_seed=policy_seed, repeat=repeat,
+                          n_partial=len(states) if partial else None, suite=suite,
+                          variant=variant)
+    out_dir = Path(runs_dir) / eval_id
+    out_dir.mkdir(parents=True, exist_ok=False)
+    run = run_states(policy, states, eval_id, out_dir, task, n_verify)
+    episodes, verified, wall = run["episodes"], run["verified"], run["wall_s"]
+    selectable = suite == VALIDATION and variant is None
+    manifest = read_manifest(task, suite)
     summary = {
-        "schema": SCHEMA, "eval_run_id": eval_id, "kind": "closed-loop validation evaluation",
+        "schema": SCHEMA if selectable else ROBUSTNESS_SCHEMA, "eval_run_id": eval_id,
+        "kind": ("closed-loop validation evaluation" if selectable else
+                 "closed-loop robustness/ablation evaluation (validation regime, "
+                 "RESEARCH_PROTOCOL §14; never selects)"),
         "created_utc": datetime.now(tz=UTC).isoformat(),
         "train_run_id": tm["run_id"], "checkpoint": {"step": step, **ck[step]},
-        "policy": policy.info.to_dict(), "task": task, "suite": VALIDATION,
+        "policy": policy.info.to_dict(), "task": task, "suite": suite,
+        **({} if variant is None else {"inference_variant": variant}),
         "stochastic_policy": ({"policy_seed": policy_seed, "repeat": repeat,
                                "samples_per_decision": 1} if policy.stochastic else None),
-        "partition": "eval_validation",
-        "suite_manifest_content_sha256": read_manifest(task, VALIDATION)["content_sha256"],
+        "partition": manifest["partition"],
+        "suite_manifest_content_sha256": manifest["content_sha256"],
         "platform": platform, "canonical_platform": canonical,
         "label": ("canonical platform (D-017)" if canonical
                   else "DEVELOPMENT ONLY: native platform, never pooled with canonical results"),
-        "eligible_for_selection": bool(canonical and not partial),
+        "eligible_for_selection": bool(canonical and not partial and selectable),
         "partial": partial, "git": git_revision(), "environment": environment_snapshot(),
-        "episode_rules": {"horizon": env.horizon, "termination": env.termination,
-                          "hold_steps": env.hold_steps},
-        **_summarize(episodes, env.action_dim),
+        "episode_rules": run["episode_rules"],
+        **_summarize(episodes, run["action_dim"]),
         "throughput_control_steps_per_s": sum(e["steps"] for e in episodes) / wall,
         "wall_s": wall, "verify_record": verified,
         "verify_passed": all(v["passed"] for v in verified),

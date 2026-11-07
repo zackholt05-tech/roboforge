@@ -3,7 +3,11 @@
     infra/containers/run_sim_cpu.sh python scripts/eval_policy.py --train-run runs/<id>
 
 Evaluates the chosen checkpoints (default: all) of a completed training run on the 50
-validation starts of its task. There is deliberately no suite option. Each checkpoint's
+validation starts of its task. From Session 7, ``--suite`` may also name a robustness suite
+of the task (``robustness_base``, ``ood_*``; RESEARCH_PROTOCOL §14) and ``--variant`` a
+preregistered inference variant (``trained-weights``, ``ddpm100``); those evaluations never
+select and their summaries go to ``<reports-dir>/robustness/evals/``. The held-out test
+suites are not accepted (``scripts/eval_heldout.py``, after the freeze). Each checkpoint's
 SHA-256 is verified against the training manifest before loading. Every episode is recorded
 under ``runs/<eval_run_id>/``. The summary goes to ``<reports-dir>/validation/`` on the
 canonical platform (D-017), or to ``<reports-dir>/dev/`` labeled DEVELOPMENT ONLY anywhere
@@ -43,6 +47,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="default: reports/session$ROBOFORGE_EVIDENCE_SESSION")
     p.add_argument("--policy-seed", type=int, default=0)
     p.add_argument("--repeat", type=int, default=0)
+    p.add_argument("--suite", default="validation",
+                   help="validation (default) or a robustness suite of the task (§14)")
+    p.add_argument("--variant", default=None, help="inference variant (§14.4), diffusion only")
     args = p.parse_args(argv)
     args.reports_dir = args.reports_dir or evidence_reports_dir()
     tm = read_manifest(args.train_run)
@@ -53,13 +60,18 @@ def main(argv: list[str] | None = None) -> int:
         s = evaluate_checkpoint(args.train_run, step, runs_dir=args.runs_dir,
                                 n_states=args.n_states, n_verify=args.verify,
                                 num_threads=args.num_threads, policy_seed=args.policy_seed,
-                                repeat=args.repeat)
-        sub = "validation" if s["canonical_platform"] else "dev"
+                                repeat=args.repeat, suite=args.suite, variant=args.variant)
+        if not s["canonical_platform"]:
+            sub = "dev"
+        else:
+            primary = s["suite"] == "validation" and "inference_variant" not in s
+            sub = "validation" if primary else "robustness/evals"
         out = args.reports_dir / sub / f"{s['eval_run_id']}.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(s, indent=1, allow_nan=False) + "\n")
         ok &= s["verify_passed"]
-        print(f"[{s['task']} {tm['config']['name']} step {step}] success "
+        print(f"[{s['task']} {tm['config']['name']} step {step} {s['suite']}"
+              f"{' ' + s['inference_variant'] if 'inference_variant' in s else ''}] success "
               f"{s['successes']}/{s['n_episodes']} (Wilson95 {s['wilson95'][0]:.2f}-"
               f"{s['wilson95'][1]:.2f}); first success mean {s['first_success_step']['mean']}; "
               f"stop {s['stop_reasons']}; errors {s['n_errors']}; clip/dim "

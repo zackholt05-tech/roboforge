@@ -31,6 +31,7 @@ one platform. The checkpoint must match the evaluation task's committed contract
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
 
 import numpy as np
@@ -46,6 +47,14 @@ from roboforge.provenance import sha256_file
 from roboforge.train.checkpoint import CheckpointError, load_checkpoint
 
 CONTRACT_HASHES = ("observation_spec_sha256", "action_spec_sha256", "task_spec_sha256")
+# Preregistered inference variants of a diffusion checkpoint (RESEARCH_PROTOCOL §14.4, D-064).
+# Each changes exactly one thing; the primary inference (EMA weights, DDIM-10) has no name.
+#   trained-weights: A1, the trained (non-EMA) weights stored in the same checkpoint
+#   ddpm100:         A2, the DDPM sampler with all K = 100 training timesteps
+VARIANTS: dict[str, dict[str, Any]] = {
+    "trained-weights": {"weights": "trained"},
+    "ddpm100": {"model": {"sampler": "ddpm", "inference_steps": 100}},
+}
 
 
 NOISE_SEED_RULE = ("torch.Generator().manual_seed(SeedSequence([policy_seed, "
@@ -95,12 +104,28 @@ def check_committed_contract(task: str, hashes: dict[str, str]) -> None:
         raise CheckpointError(f"checkpoint does not match the committed {task} contract: {bad}")
 
 
+def variant_model(payload: dict[str, Any], variant: str | None) -> torch.nn.Module:
+    """The inference network of a checkpoint under a preregistered variant (None = primary)."""
+    if variant is None:
+        return model_from_payload(payload)
+    if variant not in VARIANTS:
+        raise ValueError(f"unknown inference variant {variant!r}; known: {sorted(VARIANTS)}")
+    if not payload["config"]["model"].get("ema"):
+        raise ValueError(f"variant {variant!r} applies to diffusion (EMA) checkpoints only")
+    v = VARIANTS[variant]
+    if v.get("weights") == "trained":
+        return trained_model_from_payload(payload)
+    mod = {**payload, "config": {**payload["config"],
+                                 "model": {**payload["config"]["model"], **v["model"]}}}
+    return model_from_payload(mod)
+
+
 class LearnedPolicy:
     """A trained network as a closed-loop policy in the normalized action space."""
 
     def __init__(self, model: torch.nn.Module, meta: dict[str, Any], *, checkpoint_sha256: str,
                  checkpoint_path: str | None = None, num_threads: int = 1,
-                 policy_seed: int = 0, repeat: int = 0) -> None:
+                 policy_seed: int = 0, repeat: int = 0, variant: str | None = None) -> None:
         torch.set_num_threads(int(num_threads))
         self.model = model.eval()
         self.stochastic = is_stochastic(self.model)
@@ -128,11 +153,18 @@ class LearnedPolicy:
                                  "exec": self.exec_horizon},
                     "num_threads": torch.get_num_threads(), "device": "cpu",
                     "torch_version": str(torch.__version__)})
+        self.variant = variant
         if self.stochastic:
+            ema = meta["config"]["model"]["ema"] and VARIANTS.get(variant or "", {}).get(
+                "weights") != "trained"
             self.info.params.update(
                 policy_seed=self.policy_seed, repeat=self.repeat, noise_seed_rule=NOISE_SEED_RULE,
-                inference_network="ema" if meta["config"]["model"]["ema"] else "trained",
+                inference_network="ema" if ema else "trained",
                 diffusion=self.model.describe())
+        if variant is not None:
+            self.info.params["inference_variant"] = {"name": variant, **VARIANTS[variant]}
+            self.info = replace(self.info, label=f"{self.info.label}; inference variant "
+                                f"{variant} (ablation, RESEARCH_PROTOCOL §14.4)")
         self._hist: list[np.ndarray] = []
         self.n_decisions = 0
         self._gen: torch.Generator | None = None
@@ -141,16 +173,17 @@ class LearnedPolicy:
     @classmethod
     def from_checkpoint(cls, path: Any, expected_sha256: str | None = None,
                         num_threads: int = 1, policy_seed: int = 0,
-                        repeat: int = 0) -> LearnedPolicy:
+                        repeat: int = 0, variant: str | None = None) -> LearnedPolicy:
         """Load a checkpoint file (hash-verified when ``expected_sha256`` is given).
-        ``policy_seed`` and ``repeat`` only affect stochastic networks."""
+        ``policy_seed`` and ``repeat`` only affect stochastic networks; ``variant`` selects a
+        preregistered inference variant (:data:`VARIANTS`) of a diffusion checkpoint."""
         sha = sha256_file(path)
         if expected_sha256 is not None and sha != expected_sha256:
             raise CheckpointError(f"{path}: SHA-256 {sha} != expected {expected_sha256}")
         payload = load_checkpoint(path, expected_sha256=sha)
-        return cls(model_from_payload(payload), payload, checkpoint_sha256=sha,
+        return cls(variant_model(payload, variant), payload, checkpoint_sha256=sha,
                    checkpoint_path=str(path), num_threads=num_threads,
-                   policy_seed=policy_seed, repeat=repeat)
+                   policy_seed=policy_seed, repeat=repeat, variant=variant)
 
     def codec(self, action_spec: ActionSpec) -> ActionCodec:
         """Decoder from normalized model actions to clipped simulator actions."""

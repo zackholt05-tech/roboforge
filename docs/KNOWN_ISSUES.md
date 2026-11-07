@@ -402,8 +402,11 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - **BC-RNN:** 146 failures, mostly `missed_grasp_stayed_near` (97); motion clipping ≤ 4 %.
     **Diffusion:** 18 failures, 16 of them stayed near; no clipping (its actions stay within
     [−1, 1]).
-  - Weight decay 0.1 was BC-MLP's best trial (49/50 at seed 0; 48 and 49 at seeds 1–2), so
-    the tested regularization reduced the drift but did not remove it. BC-MLP stays below
+  - Weight decay 0.1 was BC-MLP's chosen trial (49/50 at its selected checkpoint, seed 0;
+    48 and 49 at seeds 1–2), but it did **not** remove the mode or measurably reduce it.
+    Over all 20 checkpoints, trial 4 (seeds 0–2) fails 439 of 3,000 episodes (14.6 %) and
+    trials 1–3 (seed 0) fail 445 of 3,000 (14.8 %). The 49 vs 47–48 at the selected
+    checkpoints is a maximum over 20 checkpoints, within episode noise. BC-MLP stays below
     50/50 in every trial and seed (47–49/50).
 
 ### KI-022 — Gripper commands are clipped on 19–73 % of steps (BC), harmlessly

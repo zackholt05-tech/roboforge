@@ -4,7 +4,7 @@ CURRENT_SESSION: 4
 SESSION_STATUS: PASS            # protocol amended first; diffusion implemented, reference-equal, trained, reloaded, rolled out on Lift
 NEXT_SESSION: 5
 BLOCKERS: none for Session 5    # open items carried forward: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028
-LAST_VERIFIED_COMMIT: 183b56c   # lint clean, 257 tests; docs-only commits after it
+LAST_VERIFIED_COMMIT: 183b56c   # lint clean, 257 tests; later commits are docs/evidence only
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462}   # amendment before any reported diffusion run
 EVIDENCE_COMMITS: {diffusion_training: 3aed462, validation_selection_equivalence_latency_export_diagnostics: 183b56c}   # all dirty=false
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml

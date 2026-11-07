@@ -70,17 +70,25 @@ def function_resources(cfg: dict[str, Any], function: str, seconds: float) -> Re
 
 
 def launch_upper_bound(cfg: dict[str, Any], function: str, timeout_s: float) -> dict[str, Any]:
-    """Worst case of one launch: the function held for its full timeout plus the billed
-    keep-alive, plus the build/start allowance. Preemption restarts can add more."""
+    """Worst case of one launch: every allowed attempt held for its full timeout plus the
+    billed keep-alive, plus the build/start allowance.
+
+    Modal reschedules an interrupted input even with ``retries=0`` and gives each attempt its
+    own timeout (KNOWN_ISSUES KI-031). The job caps attempts per launch
+    (``policy.max_attempts_per_launch``), so the bound covers that many attempts."""
     pricing, pol = cfg["pricing"], cfg["policy"]
-    job = cost_usd(function_resources(cfg, function, timeout_s + pol["scaledown_window_s"]),
+    attempts = int(pol["max_attempts_per_launch"])
+    one = cost_usd(function_resources(cfg, function, timeout_s + pol["scaledown_window_s"]),
                    pricing)
+    job = {k: one[k] * attempts for k in ("gpu_usd", "cpu_usd", "memory_usd", "total_usd")}
+    job.update(attempts=attempts, resources_per_attempt=one["resources"], kind=one["kind"])
     b = cfg["build_allowance"]
     build = cost_usd(Resources(float(b["seconds"]), float(b["cpu"]), float(b["memory_gib"])),
                      pricing)
-    return {"function": function, "timeout_s": timeout_s, "job": job, "build_allowance": build,
+    return {"function": function, "timeout_s": timeout_s, "attempts": attempts,
+            "one_attempt": one, "job": job, "build_allowance": build,
             "total_usd": job["total_usd"] + build["total_usd"],
-            "kind": "upper-bound estimate (list price; excludes preemption restarts)",
+            "kind": f"upper-bound estimate (list price; {attempts} attempts of the full timeout)",
             "pricing_fetched_utc": pricing["fetched_utc"], "pricing_source": pricing["source"]}
 
 

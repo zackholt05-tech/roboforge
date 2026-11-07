@@ -130,9 +130,9 @@ def _print_plan(plan: dict[str, Any]) -> None:
     print(json.dumps({"image": plan["image"]}, indent=1))
     est = plan["estimate"]
     print(f"UPPER-BOUND ESTIMATE ${est['total_usd']:.4f} (list prices fetched "
-          f"{est['pricing_fetched_utc']}; job ${est['job']['total_usd']:.4f} + build/start "
-          f"allowance ${est['build_allowance']['total_usd']:.4f}; excludes preemption "
-          f"restarts; not a cap)")
+          f"{est['pricing_fetched_utc']}; job ${est['job']['total_usd']:.4f} = "
+          f"{est['attempts']} attempts x ${est['one_attempt']['total_usd']:.4f} + build/start "
+          f"allowance ${est['build_allowance']['total_usd']:.4f}; not a cap)")
 
 
 def _upload_data(plan: dict[str, Any]) -> dict[str, Any]:

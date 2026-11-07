@@ -297,7 +297,11 @@ def suite(out: Path) -> dict[str, Any]:
                   if r["job"] == "lift_diffusion"),
                  key=lambda p: _profile_row(inp["rollout_profile"], "lift_diffusion",
                                             p)["evaluations_per_hour"])
+    # (tuning, steps, checkpoint cadence). The 5k-cadence variants exist because the BC-MLP
+    # pilot peaked at its 5k checkpoint, which a 10k cadence never evaluates.
     variants = {"main_100k_full_tuning": ("max", 100_000, 10_000),
+                "main_100k_ckpt5k_full_tuning": ("max", 100_000, 5_000),
+                "main_50k_ckpt5k_full_tuning": ("max", 50_000, 5_000),
                 "main_100k_no_further_tuning": ("none", 100_000, 10_000),
                 "reduced_50k_no_further_tuning": ("none", 50_000, 10_000)}
     scen = {}

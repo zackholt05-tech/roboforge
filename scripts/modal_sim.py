@@ -224,7 +224,10 @@ def main(argv: list[str] | None = None) -> int:
               "segments": procs, "checkpoint_differences": diffs, "retrieval": retrieval,
               "chain_manifest_timing": ch_m["timing"], "reference_timing": ref_m["timing"],
               "resume_checkpoints": ch_m["resume_checkpoints"], "checks": checks,
-              "returncode_checks": rc_ok, "passed": passed, "git": git_revision(),
+              "returncode_checks": rc_ok, "passed": passed,
+              # the code that ran is the plan's (materialized at the start); HEAD may have
+              # moved on by the time the report is written
+              "git": base["git"], "git_at_report": git_revision(),
               "environment": environment_snapshot(), "root": repo_relative(args.root)}
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=1, default=str) + "\n")

@@ -58,8 +58,12 @@ def test_upper_bound_covers_timeout_keepalive_and_build() -> None:
     f = CFG["functions"]["gpu_probe"]
     held = 900 + CFG["policy"]["scaledown_window_s"]
     job = cost_usd(Resources(held, f["cpu"], f["memory_mib"] / 1024, f["gpu"]), PRICING)
-    assert ub["job"]["total_usd"] == pytest.approx(job["total_usd"])
-    assert ub["total_usd"] == pytest.approx(job["total_usd"] + ub["build_allowance"]["total_usd"])
+    n = CFG["policy"]["max_attempts_per_launch"]
+    assert ub["attempts"] == n == 4
+    assert ub["one_attempt"]["total_usd"] == pytest.approx(job["total_usd"])
+    assert ub["job"]["total_usd"] == pytest.approx(n * job["total_usd"])
+    assert ub["total_usd"] == pytest.approx(n * job["total_usd"]
+                                           + ub["build_allowance"]["total_usd"])
     assert "estimate" in ub["kind"]
 
 

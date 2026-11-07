@@ -103,3 +103,15 @@ def test_model_config_is_strict() -> None:
         model_config("bc_rnn", {k: v for k, v in RNN.items() if k != "layers"})
     with pytest.raises(ValueError):
         model_config("diffusion", {})
+
+
+@pytest.mark.skipif(not torch.backends.mps.is_available(), reason="needs a non-CPU device")
+def test_rnn_runs_on_a_non_cpu_device() -> None:
+    """Gate A found ``encode`` building an index on the CPU for CUDA inputs (Session 5)."""
+    torch.manual_seed(0)
+    net = build_model("bc_rnn", RNN, 19, 7, 10, 1)
+    x, valid = _window(4, 10, [10, 3, 1, 7])
+    ref = net(x, valid)
+    out = net.to("mps")(x.to("mps"), valid.to("mps"))
+    assert out.device.type == "mps"
+    torch.testing.assert_close(out.cpu(), ref, rtol=1e-4, atol=1e-5)

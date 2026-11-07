@@ -119,7 +119,7 @@ class BCRNN(nn.Module):
         # Move the valid suffix to the front, then pack: each sequence runs over its own
         # valid steps only, from a zero state.
         shift = (horizon - n_valid).unsqueeze(1)
-        idx = (torch.arange(horizon).unsqueeze(0) + shift) % horizon
+        idx = (torch.arange(horizon, device=obs_valid.device).unsqueeze(0) + shift) % horizon
         aligned = torch.gather(obs_history, 1, idx.unsqueeze(-1).expand(-1, -1, self.obs_dim))
         packed = nn.utils.rnn.pack_padded_sequence(aligned, n_valid.cpu(), batch_first=True,
                                                    enforce_sorted=False)

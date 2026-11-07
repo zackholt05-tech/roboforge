@@ -143,6 +143,50 @@ engineering runs, not trials: they never entered selection. Under the 2026-11-07
 trial 1 of each family is re-trained at the main budget (100k / 5k) with seed 0 in Session 6;
 that re-run is not an extra trial.
 
+### Session 6 (2026-11-07): Lift main suite, validation only
+Every training run ran on local CPU (1 torch thread) and every evaluation on the canonical
+container, as Gate C requires (D-051). All numbers are **validation-only development
+numbers**: checkpoints and configurations were selected on the same 50 Lift validation
+starts. No held-out test state was loaded, named or reset to. No Modal resource was used.
+
+**Session 6 search space (predeclared; RESEARCH_PROTOCOL §6.3).** Written and committed
+before the first main-budget run of any family. Plan `configs/experiments/level1_core_lift.yaml`
+(SHA-256 `d3de6cbcb14bcda15023a6526c6e3ba8cafb0b37d8692c5f8b6fcba871cfad3f`), resolved trial →
+run-ID table in `logs/session6/suite/level1_core_lift/plan_resolved.json`.
+- **Budget, every run:** 100,000 steps, batch 100, checkpoints every 5,000 (K = 20), all 20
+  evaluated on the 50 Lift validation starts (amendment 2026-11-07).
+- **Trials, identical for every family** (D-055). Each changes one setting of trial 1:
+
+  | Trial | Change from trial 1 | Reason |
+  |---|---|---|
+  | 1 | none: the pilot configuration (AdamW, lr 1e-4 constant, weight decay 0) at the main budget | required re-run (amendment 2026-11-07) |
+  | 2 | `optim.schedule=cosine`: lr 1e-4 annealed to 0 over the 100k steps (torch `CosineAnnealingLR`, no warm-up) | the Diffusion Policy recipe decays the learning rate; tests whether late checkpoints improve when it anneals |
+  | 3 | `optim.lr=3.0e-4`, constant | half a decade above the default; tests faster convergence within the budget |
+  | 4 | `optim.weight_decay=0.1` | regularization against BC-MLP's out-of-workspace drift (KI-021). torch's AdamW default 0.01 would shrink the weights by at most exp(−lr·wd·steps) = exp(−0.1) over 100k steps at lr 1e-4, too little to be a distinct configuration; 0.1 gives exp(−1) |
+
+- **Run IDs (seed 0):**
+
+  | Family (params) | Trial 1 | Trial 2 | Trial 3 | Trial 4 |
+  |---|---|---|---|---|
+  | diffusion_unet (1,092,551) | `s6_diffusion_unet_lift_seed0_ceccbfad` | `s6_diffusion_unet_cos_lift_seed0_3a557a42` | `s6_diffusion_unet_lr3e4_lift_seed0_2f635398` | `s6_diffusion_unet_wd1e1_lift_seed0_fd14640b` |
+  | bc_mlp (1,077,255) | `s6_bc_mlp_lift_seed0_337a72b5` | `s6_bc_mlp_cos_lift_seed0_185bdb5d` | `s6_bc_mlp_lr3e4_lift_seed0_3c89715f` | `s6_bc_mlp_wd1e1_lift_seed0_c39e4980` |
+  | bc_mlp_chunk (1,204,336) | `s6_bc_mlp_chunk_lift_seed0_cb94bc32` | `s6_bc_mlp_chunk_cos_lift_seed0_445dbbb5` | `s6_bc_mlp_chunk_lr3e4_lift_seed0_42a0d392` | `s6_bc_mlp_chunk_wd1e1_lift_seed0_c81510dd` |
+  | bc_rnn (1,080,703) | `s6_bc_rnn_lift_seed0_f2cca182` | `s6_bc_rnn_cos_lift_seed0_2cc2f1b2` | `s6_bc_rnn_lr3e4_lift_seed0_f8a7d931` | `s6_bc_rnn_wd1e1_lift_seed0_166e9b0a` |
+
+- **Not searched**, and why: widths (the §6.1 capacity rule), horizons (H2-c matching and the
+  H3 ablation), DDIM steps and EMA (Session 7 ablations, §6.4), dropout (BC only, so the
+  search would differ between families) and observation noise (not implemented).
+- **Choice** (`roboforge.eval.tuning`, D-054): the trial whose §7-selected checkpoint has the
+  highest success count, then the lower mean first-success step, then the lower trial
+  number. A failed run counts as a trial, is not retried and ranks last. The chosen trial is
+  trained with seeds 1 and 2; no further Lift trial exists for any family.
+
+| ID | Date | Session | Type | What | Outcome | Evidence | Cost |
+|---|---|---|---|---|---|---|---|
+| E6-01 | 2026-11-07 | 6 | engineering | Prerequisites at `273f86a` (clean): setup, download, check-data, build-data, check-eval-states, `git status --short data/`, `make lint`, `make test`, `make smoke-sim SMOKE_OUT=logs/session6/prereq`, `make train-smoke SMOKE_DIR=logs/tmp/s6_smoke`, container smoke Lift/Can (`ROBOFORGE_EVIDENCE_SESSION=6 make in-sim ...`), image ID, the 4 pilot checkpoints, git identity | All PASS: 4/4 dataset SHA-256 verified; check-data, build-data, check-eval-states PASS; `data/` clean; lint clean; **281 passed** (419 s); smoke macOS Lift 17/17, Can 16/16; train-smoke BC-MLP, BC-RNN, diffusion PASS (dev-only 2-start native rollouts); container smoke Lift 17/17, Can 16/16; image `sha256:1f685638…` = `configs/eval/platform.yaml`; the 4 pilot runs exist and their selected checkpoints match the manifest and HANDOFF hashes; identity Zackary Holt <zackholt05@gmail.com> (author and committer) | `logs/session6/prereq/` | $0 |
+| E6-02 | 2026-11-07 | 6 | development | Orchestrator rehearsal (`scripts/run_suite.py --allow-dirty`, uncommitted code on `273f86a`): plan `logs/session6/rehearsal_plan.yaml`, prefix `s6dev`, diffusion and BC-MLP × 2 trials, 200 steps, K = 1, replicate seed 1; reports to `logs/session6/rehearsal/` | Pipeline PASS end to end: 6 runs trained (run IDs equal the dry-run table), 6 canonical 50-start evaluations, 6 selections, 2 choices, replicates launched by the rule; a restart retrains nothing and recomputes both choices identically (exit 0). Found and fixed before the commit: an argument-name clash in the event logger (crashed at the first launch; the one orphaned 200-step run completed and was reused) and a restart check that compared full records instead of the decision fields. **Development only, never trials** | `logs/session6/rehearsal/` | $0 |
+| E6-03 | 2026-11-07 | 6 | development | Stop/resume drill (`logs/session6/rehearsal_stop_plan.yaml`, prefix `s6dev2`, BC-RNN 2,000 steps): SIGINT to the orchestrator during training, `--resume-interrupted`, then SIGINT during evaluation | Training wrote a resume checkpoint at step 863; the resumed run completed in 2 segments. SIGINT during evaluation waited for both containers (exit 0, no container left). Found and fixed: the stop signal was forwarded twice, and the second one killed the child after its resume checkpoint (exit −2); it is now sent once, a run with `resume.jsonl` is labelled `interrupted`, and a stopped suite exits 3. **Development only** | `logs/session6/rehearsal_stop/` | $0 |
+
 ## Owner approvals for paid compute
 Machine-read by `roboforge.compute.approval` (D-049): a paid Modal launch is refused unless a
 `granted` row below covers its function and the committed spend plus the launch's upper-bound

@@ -20,7 +20,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	train-smoke train eval select param-counts overfit-check benchmark-policies \
 	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
 	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
-	cost-estimate
+	cost-estimate train-main suite suite-plan
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -103,11 +103,11 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 5 (DECISIONS D-048) so that no Session 5 command can write into
-# Session 4 evidence or reuse the s4 run prefix by omission.
-PREFIX ?= s5
+# Defaults bumped to Session 6 (DECISIONS D-053; Session 5: D-048) so that no Session 6 command
+# can write into Session 5 evidence or reuse the s5 run prefix by omission.
+PREFIX ?= s6
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),5)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),6)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -116,9 +116,32 @@ train-smoke:  ## CPU miniature: overfit checks + 200-step BC-MLP/BC-RNN/diffusio
 	$(RUN) python scripts/overfit_check.py --task lift --out-dir $(SMOKE_DIR)
 	$(RUN) python scripts/train_smoke.py --out-dir $(SMOKE_DIR)
 
+# SET="section.key=value ..." passes recorded --set overrides to scripts/train.py.
+SET ?=
+SET_ARGS = $(foreach s,$(SET),--set $(s))
+# Main-suite budget (RESEARCH_PROTOCOL §6.3, §13 2026-11-07): the model configs still carry
+# the 30k pilot budget, so main runs get it as recorded overrides (D-053).
+MAIN_BUDGET := --set train.max_steps=100000 --set train.ckpt_every=5000
+
 train:  ## Train one run on local CPU: make train MODEL=bc_mlp|bc_rnn|bc_mlp_chunk|diffusion_unet TASK=lift SEED=0
 	$(RUN) python scripts/train.py --config configs/models/$(MODEL).yaml --task $(TASK) \
-		--seed $(SEED) --prefix $(PREFIX)
+		--seed $(SEED) --prefix $(PREFIX) $(SET_ARGS)
+
+train-main:  ## One run at the main budget (100k steps, checkpoints every 5k); SET may not touch train.*
+	@case "$(SET)" in *train.*) echo "SET may not change the main budget (train.*)" >&2; exit 2;; esac
+	$(RUN) python scripts/train.py --config configs/models/$(MODEL).yaml --task $(TASK) \
+		--seed $(SEED) --prefix $(PREFIX) $(MAIN_BUDGET) $(SET_ARGS)
+
+# The main suite (Session 6: Lift): train every predeclared trial, evaluate every checkpoint on
+# the canonical container, select (§7), choose each family's configuration (§6.3), replicate.
+SUITE_PLAN ?= configs/experiments/level1_core_lift.yaml
+CAFFEINATE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -i)
+suite-plan:  ## Resolve SUITE_PLAN and print trial -> run ID (launches nothing)
+	$(RUN_S) python scripts/run_suite.py --plan $(SUITE_PLAN) --dry-run
+
+suite:  ## Run SUITE_PLAN end to end (Gate C limits: 8 training runs, 4 containers, 10 in all)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/run_suite.py \
+		--plan $(SUITE_PLAN)
 
 eval:  ## Closed-loop validation of every checkpoint of TRAIN_RUN=runs/<id> on the canonical container
 	@if [ "$(EVAL_SET)" != "validation" ]; then \

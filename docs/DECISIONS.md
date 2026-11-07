@@ -996,3 +996,78 @@ explicitly, plus the cumulative `reports/compute/cost_ledger.jsonl`. The fetched
 Modal-trained run (`runs/s5modal2_*`) and the simulated runs (`runs/s5sim*`) are gitignored
 like every run. Their manifests, hashes and retrieval reports are in `logs/session5/modal/`
 and `reports/session5/modal_sim/`.
+
+## Session 6 (2026-11-07)
+Evidence: `reports/session6/` and `logs/session6/` (D-056). The suite code, the plan and the
+predeclared search space (EXPERIMENT_LEDGER, Session 6) were committed before the first
+main-budget run. Every reported run was launched by `scripts/run_suite.py` from that clean
+commit; no tracked file was edited while runs were in flight.
+
+### D-053 Makefile defaults bumped to Session 6; recorded overrides for `make train` (FIXED)
+- `EVIDENCE_SESSION` now falls back to 6 and `PREFIX` to `s6` (as D-048 did for Session 5),
+  so no Session 6 command can write into `reports/session5` or reuse the `s5` prefix by
+  omission.
+- `make train ... SET="section.key=value ..."` passes recorded `--set` overrides.
+- `make train-main` adds the main budget (`MAIN_BUDGET`: `train.max_steps=100000`,
+  `train.ckpt_every=5000`) and refuses any `SET` that touches `train.*`, so a single run can
+  never change the budget.
+- `make suite-plan` / `make suite` resolve and run a suite plan (D-054).
+- The model configs keep the 30k pilot budget: they are the record of the pilot
+  configuration. The main budget is applied as overrides, which every run stores in its
+  resolved config and manifest.
+
+### D-054 Main-suite plan, orchestrator and the §6.3 choice rule (FIXED)
+- **Plan** (`configs/experiments/level1_core_lift.yaml`, `roboforge.train.suite`,
+  schema `roboforge.suite_plan/1`): task, prefix, the budget (exactly `train.max_steps` and
+  `train.ckpt_every`, applied to every run), the tuning seed 0, the replicate seeds 1 and 2,
+  and per family the base config and its trials.
+  - Trial 1 must be the base config unchanged. Trials 2–4 may change only `name`,
+    `optim.lr`, `optim.schedule` and `optim.weight_decay` (`TRIAL_KEYS`). Architecture,
+    horizons, parameter count, batch, loss and budget therefore cannot differ between
+    trials, and the loader also checks that the resolved configs agree on them.
+  - At most 4 trials per family; no two trials may resolve to the same configuration.
+  - `load_plan` resolves every run's config and run ID with the same functions as
+    `scripts/train.py` (unit test), so the trial → run-ID table is fixed in advance
+    (`logs/session6/suite/level1_core_lift/plan_resolved.json`).
+- **Choice rule** (`roboforge.eval.tuning.choose_configuration`): among a family's seed-0
+  trials, the one whose §7-selected checkpoint has the highest validation success count,
+  then the lower mean first-success step, then the lower trial number. A trial whose run
+  failed with a manifest (`status: failed`) counts against the budget, is never retried and
+  ranks last; if every trial failed the rule raises. Missing trials, other seeds, other
+  tasks or differing budgets raise. Output: `reports/session6/tuning/<family>_lift.json`.
+- **Orchestrator** (`scripts/run_suite.py`): a dependency graph, not manual steps:
+  train every trial (seed 0) → evaluate each checkpoint in its own canonical container
+  (`eval_policy.py --steps N`, all 50 validation starts) → `select_checkpoint.py` (§7) →
+  choice rule (§6.3) → train the chosen trial with seeds 1 and 2 → evaluate → select.
+  - Limits (Gate C, D-051): ≤ 8 training processes, ≤ 4 containers, ≤ 10 processes in all
+    on the 10-core host. Priority: the first family's training (diffusion, the critical
+    path), then evaluations, then other training.
+  - Every launch checks that code, configs and docs are committed (`git_revision`), except
+    with `--allow-dirty`, which only the rehearsal used.
+  - Failures are recorded, never retried. An evaluation directory without an eligible
+    summary stops the suite for a manual decision. A restart never retrains a finished run
+    and recomputes each tuning choice, refusing one that differs from the recorded file.
+  - SIGINT/SIGTERM stop new launches and ask training runs for a resume checkpoint;
+    `--resume-interrupted` continues them (D-046).
+  - Events: `logs/session6/suite/<plan>/events.jsonl`; per-job logs beside it; summary
+    `reports/session6/suite/<plan>.json`.
+
+### D-055 Session 6 tuning search space: the same three optimizer changes for every family (FIXED)
+- Trial 2: cosine learning-rate schedule (1e-4 annealed to 0 over the 100k steps); trial 3:
+  constant learning rate 3e-4; trial 4: AdamW weight decay 0.1. Each changes one setting of
+  trial 1, identically for BC-MLP, BC-MLP-chunk, BC-RNN and diffusion. Values and reasons:
+  EXPERIMENT_LEDGER, Session 6 search space.
+- **Why identical optimizer axes:** the protocol requires an equalized, bounded search
+  (MASTER_SPEC §5.7, RESEARCH_PROTOCOL §6.3). Optimizer settings are DEFAULT in §6.2 and
+  apply to every family, whereas the alternatives would break a fixed part of the protocol:
+  widths (capacity rule §6.1), horizons (H2-c matching and the H3 ablation), DDIM steps and
+  EMA (Session 7 ablations, §6.4), dropout (absent from the diffusion U-Net, so the search
+  would differ between families) and observation noise (not implemented).
+
+### D-056 Session 6 evidence location (FIXED)
+- `reports/session6/{validation,selection,tuning,suite,figures,diagnostics,cost_latency}/`
+  and `logs/session6/{prereq,suite,rehearsal}/`, with `ROBOFORGE_EVIDENCE_SESSION=6`.
+- Training and evaluation records stay under `runs/` (gitignored); their summaries and hashes
+  are committed in the reports.
+- The orchestrator rehearsal (`s6dev_*`, 200 steps) wrote to `logs/session6/rehearsal/`. It
+  is development only: never a trial, never in `reports/session6/validation/`.

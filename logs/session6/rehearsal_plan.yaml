@@ -1,0 +1,18 @@
+# Session 6 orchestrator rehearsal (development only; never a trial; prefix s6dev).
+schema: roboforge.suite_plan/1
+task: lift
+prefix: s6dev
+budget: [train.max_steps=200, train.ckpt_every=200]
+tuning_seed: 0
+replicate_seeds: [1]
+families:
+  - family: diffusion_unet
+    config: configs/models/diffusion_unet.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=diffusion_unet_lr3e4, optim.lr=3.0e-4]}
+  - family: bc_mlp
+    config: configs/models/bc_mlp.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=bc_mlp_lr3e4, optim.lr=3.0e-4]}

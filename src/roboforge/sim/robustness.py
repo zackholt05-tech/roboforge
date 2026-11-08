@@ -343,6 +343,12 @@ def generate_task(task: str, env: Any | None = None,
             env.close()
 
 
+def same_manifest(committed: dict[str, Any], regenerated: dict[str, Any]) -> bool:
+    """Bitwise manifest equality as stored: the regenerated manifest goes through the same JSON
+    encoding as the committed file, so a tuple (e.g. a contact pair) equals its stored list."""
+    return committed == json.loads(json.dumps(regenerated))
+
+
 def check_task(task: str) -> tuple[list[str], dict[str, Any]]:
     """Regenerate every robustness suite in memory and compare with the committed one.
 
@@ -364,7 +370,7 @@ def check_task(task: str) -> tuple[list[str], dict[str, Any]]:
         same = committed.get("generated_on") == here
         xml_equal = [s["model_xml_sha256"] for s in committed["states"]] == [
             s["model_xml_sha256"] for s in art.manifest["states"]]
-        exact = committed == art.manifest
+        exact = same_manifest(committed, art.manifest)
         raw = lzma.decompress(es.data_path(task, name).read_bytes()).decode("utf-8")
         stored = {r["state_id"]: np.asarray(r["state"]) for r in map(json.loads, raw.splitlines())
                   if "state" in r}

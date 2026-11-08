@@ -779,3 +779,18 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   because no evaluations competed with them for CPU. Scheduling does not enter the
   deterministic training (KI-035).
 - **Fix:** D-070 (reader side only). Watchers now also check that the suite process is alive.
+
+### KI-037 — The robustness `--check` called equal Can manifests "not bitwise" (FIXED, Session 7)
+- **Observed:** the first container run of `generate_robustness_states.py --check` (2026-11-08,
+  on 5d9b8c0) failed `can/ood_arm_offset` as "not bitwise reproducible on its own platform".
+  Its states were identical (max |Δ| 0.0), the model XML equal and the data file intact;
+  every Lift set and `can/robustness_base` were bitwise equal.
+- **Cause:** a comparison bug, not a reproducibility one. `check_task` compared the committed
+  manifest (read from JSON, so lists) with the in-memory one, where each validity record's
+  `contact_pairs` entries are tuples. A tuple never equals a list. Only Can's arm-offset
+  states record contact pairs (the can resting on `bin1`), so only that set failed. The field
+  diff is in `logs/session7/robustness/diff_manifest_can.log`: 50 differences, every one a
+  tuple-versus-list `contact_pairs` entry.
+- **Fix:** `robustness.same_manifest` compares after the same JSON encoding as the stored file,
+  and a unit test covers the tuple case. The committed sets were not regenerated or changed.
+- **Impact:** none on any state or result. No robustness evaluation had started.

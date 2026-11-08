@@ -39,6 +39,15 @@ def test_reserved_seed_block(seed: int, partition: str) -> None:
     assert es.check_seed_allowed("lift", seed) == partition
 
 
+def test_manifest_comparison_is_on_the_stored_json() -> None:
+    """A tuple in the regenerated manifest equals the list JSON stores (Can contact pairs made
+    the first container check of 2026-11-08 report equal manifests as not bitwise)."""
+    regenerated = {"states": [{"validity": {"contact_pairs": [("Can_main", "bin1")]}}]}
+    stored = {"states": [{"validity": {"contact_pairs": [["Can_main", "bin1"]]}}]}
+    assert regenerated != stored and rb.same_manifest(stored, regenerated)
+    assert not rb.same_manifest(stored, {"states": [{"validity": {"contact_pairs": []}}]})
+
+
 def test_draws_are_deterministic_and_distinct() -> None:
     a, b = rb._draw(2, 7, 0).random(4), rb._draw(2, 7, 0).random(4)
     assert np.array_equal(a, b)

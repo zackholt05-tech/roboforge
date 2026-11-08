@@ -1,15 +1,21 @@
-"""The final-test initial states are saved and hashed but locked (MASTER_SPEC §3.2, Session 2).
+"""The final-test initial states are saved and hashed, and locked until the committed freeze
+(MASTER_SPEC §3.2, Session 2; RESEARCH_PROTOCOL §10; D-067).
 
-These tests need no simulator: they read only the committed open manifests and the code.
+From Session 7 the freeze ``docs/FINAL_TEST_FREEZE.md`` is committed: the lock opens exactly
+when that file is committed unmodified and names the suite's manifest hash, and stays shut in
+every other case (tested by pointing the lock at a missing or uncommitted freeze). These
+tests need no simulator: they read only the committed open manifests and the code.
 """
 
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 
 import pytest
 
+from roboforge.eval import freeze as fz
 from roboforge.paths import REPO_ROOT
 from roboforge.sim import eval_states as es
 
@@ -19,20 +25,43 @@ ALLOWED = {"src/roboforge/sim/eval_states.py", "src/roboforge/sim/snapshot.py",
            "scripts/generate_eval_states.py"}
 
 
-def test_freeze_file_does_not_exist_yet() -> None:
-    assert not (REPO_ROOT / "docs" / "FINAL_TEST_FREEZE.md").exists()
+def _lock_points_at(monkeypatch: pytest.MonkeyPatch, rel: str) -> None:
+    cfg = copy.deepcopy(es.suites_config())
+    cfg["suites"][es.LOCKED_SUITE]["locked_until"] = rel
+    monkeypatch.setattr(es, "suites_config", lambda: cfg)
 
 
 @pytest.mark.parametrize("task", TASKS)
-def test_loading_final_test_states_is_refused(task: str) -> None:
-    unlocked, why = es.lock_status(task)
-    assert not unlocked and "FINAL_TEST_FREEZE" in why
-    with pytest.raises(es.FinalTestLockedError):
-        es.load_suite(task, es.LOCKED_SUITE)
+def test_the_committed_freeze_names_the_locked_manifests_and_opens_the_lock(task: str) -> None:
+    frozen = fz.load_freeze()  # refuses a freeze that is not committed unmodified
+    m = es.read_manifest(task, es.LOCKED_SUITE)
+    assert frozen["tasks"][task]["heldout_manifest_sha256"] == m["content_sha256"]
+    assert es.lock_status(task) == (True, "unlocked")
+
+
+@pytest.mark.parametrize("task", TASKS)
+def test_loading_final_test_states_is_refused_without_the_committed_freeze(
+        task: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    with monkeypatch.context() as mp:
+        _lock_points_at(mp, "docs/NO_SUCH_FREEZE.md")
+        unlocked, why = es.lock_status(task)
+        assert not unlocked and "does not exist" in why
+        with pytest.raises(es.FinalTestLockedError):
+            es.load_suite(task, es.LOCKED_SUITE)
+    with monkeypatch.context() as mp:  # the real freeze, but reported as uncommitted/edited
+        mp.setattr(es, "tracked_and_unmodified", lambda rel: (False, f"{rel} has changes"))
+        with pytest.raises(es.FinalTestLockedError, match="has changes"):
+            es.load_suite(task, es.LOCKED_SUITE)
+    with monkeypatch.context() as mp:  # a freeze that does not name this task's manifest
+        _lock_points_at(mp, "README.md")
+        unlocked, why = es.lock_status(task)
+        assert not unlocked and "does not name" in why
 
 
 @pytest.mark.parametrize("seed", [900000, 900049, 950000, 999999])
-def test_resetting_to_a_final_test_seed_is_refused(seed: int) -> None:
+def test_resetting_to_a_final_test_seed_is_refused_without_the_freeze(
+        seed: int, monkeypatch: pytest.MonkeyPatch) -> None:
+    _lock_points_at(monkeypatch, "docs/NO_SUCH_FREEZE.md")
     with pytest.raises(es.FinalTestLockedError):
         es.check_seed_allowed("lift", seed)
 

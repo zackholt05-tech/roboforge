@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+
 import numpy as np
 import pytest
 
@@ -9,6 +11,7 @@ from roboforge.data.features import FeatureExtractor
 from roboforge.data.pipeline import load_specs
 from roboforge.eval.policies import NoOpPolicy, RandomPolicy
 from roboforge.eval.rollout import run_episode
+from roboforge.sim import eval_states as es
 from roboforge.sim.env_adapter import EpisodeDoneError, InvalidActionError, RoboForgeEnv
 from roboforge.sim.eval_states import FinalTestLockedError, load_suite
 from roboforge.sim.replay_compare import bare_replay
@@ -65,12 +68,20 @@ def test_reset_restores_the_snapshot_exactly(task_env) -> None:
     assert env.serialize_initial_state()["state_sha256"] == init.state_sha256
 
 
-def test_seed_resets_and_the_final_test_seed_lock(task_env) -> None:
+def test_seed_resets_and_the_final_test_seed_lock(task_env, monkeypatch) -> None:
     task, env = task_env
     _, meta = env.reset(100003)
     stored = load_suite(task, "validation")[3]
     assert meta.initial_state["model_xml_sha256"] == stored.model_xml_sha256
     assert meta.initial_state["partition"] == "eval_validation"
+    # The lock points at a freeze that does not exist, so the refusal is tested whatever the real
+    # lock state is: once docs/FINAL_TEST_FREEZE.md is committed the real lock is open, and no
+    # test may build a held-out start (only scripts/eval_heldout.py reads them, D-067).
+    cfg = copy.deepcopy(es.suites_config())
+    cfg["suites"][es.LOCKED_SUITE]["locked_until"] = "docs/NO_SUCH_FREEZE.md"
+    monkeypatch.setattr(es, "suites_config", lambda: cfg)
+    unlocked, why = es.lock_status(task)
+    assert not unlocked and "does not exist" in why
     with pytest.raises(FinalTestLockedError):
         env.reset(900003)
 

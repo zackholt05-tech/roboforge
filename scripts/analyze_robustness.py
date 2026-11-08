@@ -59,7 +59,8 @@ class Evals:
         self.by_key: dict[tuple, tuple[dict[str, Any], Path]] = {}
         for p in sorted(directory.glob("*.json")):
             s = json.loads(p.read_text())
-            key = (s["train_run_id"], int(s["step"]), s["suite"], s.get("inference_variant"))
+            key = (s["train_run_id"], int(s["checkpoint"]["step"]), s["suite"],
+                   s.get("inference_variant"))
             if key in self.by_key:
                 raise ValueError(f"two summaries for {key}")
             if not s["canonical_platform"]:

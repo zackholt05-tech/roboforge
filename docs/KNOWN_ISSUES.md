@@ -794,3 +794,20 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Fix:** `robustness.same_manifest` compares after the same JSON encoding as the stored file,
   and a unit test covers the tuple case. The committed sets were not regenerated or changed.
 - **Impact:** none on any state or result. No robustness evaluation had started.
+
+### KI-038 — `analyze_robustness.py` read the checkpoint step from the wrong field (FIXED, Session 7)
+
+- **Observed (2026-11-08 ~19:20 UTC):** after the robustness, A1 and A2 evaluations ended,
+  `scripts/analyze_robustness.py` stopped at its first summary with `KeyError: 'step'`.
+  Nothing was written.
+- **Cause:** the loader keyed each summary on `s["step"]`. The writer
+  (`roboforge.eval.validation`) stores the step as `checkpoint.step`. The script had no test,
+  so the mismatch first showed on real summaries.
+- **Fix:** read `s["checkpoint"]["step"]`. A unit test (`tests/unit/test_analyze_robustness.py`)
+  builds summaries in the writer's layout and checks the keys, the duplicate check and the
+  canonical check. It fails on the old line and passes on the fix. The A3 suite was still
+  running, so the tracked file stayed unchanged until it exited. The fixed copy was first run
+  from the scratchpad to check that the analysis completes, and those outputs were then
+  replaced by the run from the committed fix.
+- **Impact:** none on any evaluation or state. The analysis reads summaries and never rolls
+  out, and the script is not part of the frozen held-out code.

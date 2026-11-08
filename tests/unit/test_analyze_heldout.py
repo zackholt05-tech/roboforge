@@ -65,3 +65,26 @@ def test_example_rule() -> None:
     assert out["by_category"]["no_grasp_near"]["family"] == "bc_mlp"
     assert out["by_category"]["timeout_holding"] is None
     assert out["by_family"]["diffusion_unet"] == {"first_success": None, "first_failure": None}
+
+
+def test_an_unavailable_family_is_left_out_and_its_comparisons_not_computed() -> None:
+    import numpy as np
+    frozen = {"analysis": {"bootstrap": {"B": 200, "seed": 20261106, "draw_order": [
+        "states", *fz.FAMILY_ORDER, fz.BASELINE]}, "comparisons": {
+        "H1": [[f, fz.BASELINE] for f in fz.FAMILY_ORDER],
+        "H2": [["diffusion_unet", "bc_mlp"], ["diffusion_unet", "bc_rnn"]],
+        "H2c": [["diffusion_unet", "bc_mlp_chunk"]], "H3": [["bc_rnn", "bc_mlp"]]}}}
+    avail = [f for f in (*fz.FAMILY_ORDER, fz.BASELINE) if f != "bc_rnn"]
+    mats = {f: np.ones((1 if f == fz.BASELINE else 3, 10)) for f in avail}
+    r = ah._bootstrap(frozen, mats, ["H1", "H2", "H2c", "H3"], avail)
+    assert r["draw_order"] == ["states", "bc_mlp", "bc_mlp_chunk", "diffusion_unet",
+                               fz.BASELINE]
+    assert {(d["a"], d["b"]) for d in r["not_computed"]} == {
+        ("bc_rnn", fz.BASELINE), ("diffusion_unet", "bc_rnn"), ("bc_rnn", "bc_mlp")}
+    assert len(r["differences"]) == 5 and all("hypothesis" in d for d in r["differences"])
+
+
+def test_structural_issues_make_a_family_unavailable() -> None:
+    loaded = [_summary("bc_mlp", [True] * 50), _summary("bc_rnn", [True] * 49)]
+    eng = ah._engineering(loaded, 50, False)
+    assert eng["unavailable_families"] == ["bc_rnn"] and not eng["complete"]

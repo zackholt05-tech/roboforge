@@ -37,6 +37,7 @@ from roboforge.eval.validation import eval_run_id
 from roboforge.paths import REPO_ROOT, evidence_reports_dir, evidence_session, repo_relative
 from roboforge.provenance import git_revision
 from roboforge.sim import robustness as rb
+from roboforge.slots import ContainerSlots, disk_ok, free_gb
 
 PLATFORM = "linux-aarch64-container-1f685638f28c"
 DIFFUSION = "diffusion_unet"
@@ -140,13 +141,21 @@ def main(argv: list[str] | None = None) -> int:
     event("start", batches=a.batches, n=len(pending), git=git_revision(),
           configs={k: repo_relative(v) for k, v in configs.items()},
           a3_summary=repo_relative(a.a3_summary) if a.a3_summary else None)
-    running: list[tuple[subprocess.Popen, dict[str, Any], float]] = []
+    running: list[tuple[subprocess.Popen, dict[str, Any], float, Path]] = []
     failed = []
+    pool, stop = ContainerSlots(), False
     while pending or running:
-        while pending and len(running) < a.max_eval:
-            j = pending.pop(0)
+        while pending and len(running) < a.max_eval and not stop:
             if git_revision()["dirty"]:
                 raise SystemExit("working tree became dirty: refusing to launch more")
+            if not disk_ok():
+                event("low_disk", free_gb=round(free_gb(), 2))
+                stop = True
+                break
+            slot = pool.acquire(pending[0]["eval_run_id"])
+            if slot is None:
+                break  # every host-wide container slot is taken (D-069)
+            j = pending.pop(0)
             cmd = ["infra/containers/run_sim_cpu.sh", "python", "scripts/eval_policy.py",
                    "--train-run", f"runs/{j['train_run_id']}", "--steps", str(j["step"]),
                    "--suite", j["suite"], "--reports-dir",
@@ -159,23 +168,27 @@ def main(argv: list[str] | None = None) -> int:
                                     stderr=subprocess.STDOUT,
                                     env={**os.environ,
                                          "ROBOFORGE_EVIDENCE_SESSION": str(evidence_session())})
-            running.append((proc, j, time.time()))
+            pool.attach(slot, proc.pid)
+            running.append((proc, j, time.time(), slot))
             event("launch", pid=proc.pid, log=repo_relative(log), argv=cmd[1:],
                   **{k: j[k] for k in ("batch", "task", "family", "seed", "suite", "variant",
                                        "eval_run_id")})
         time.sleep(a.poll_s)
         for item in list(running):
-            proc, j, t0 = item
+            proc, j, t0, slot = item
             if proc.poll() is None:
                 continue
             running.remove(item)
+            pool.release(slot)
             ok = proc.returncode == 0 and (reports / f"{j['eval_run_id']}.json").exists()
             event("finished", eval_run_id=j["eval_run_id"], returncode=proc.returncode,
                   wall_s=round(time.time() - t0, 1), ok=ok)
             if not ok:
                 failed.append(j["eval_run_id"])
-    event("end", failed=failed)
-    return 1 if failed else 0
+        if stop and not running:
+            break
+    event("end", failed=failed, not_launched=[j["eval_run_id"] for j in pending])
+    return 1 if failed or pending else 0
 
 
 if __name__ == "__main__":

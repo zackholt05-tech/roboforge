@@ -44,7 +44,7 @@ EVAL_MODE=ro
 if [[ "${ROBOFORGE_WRITE_EVAL_STATES:-0}" == "1" ]]; then EVAL_MODE=rw; fi
 # shellcheck disable=SC2046
 exec docker run --rm \
-  $(ro src) $(ro scripts) $(ro configs) $(ro tests) $(ro docs) \
+  $(ro src) $(ro scripts) $(ro configs) $(ro tests) $(ro docs) $(ro infra) \
   $(ro data/manifests) $(ro data/splits) $(ro data/normalization) \
   -v "$PWD/data/eval_states:/app/data/eval_states:$EVAL_MODE" \
   $(ro data/raw) $(ro data/processed) \

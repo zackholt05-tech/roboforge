@@ -46,6 +46,7 @@ from typing import Any
 from roboforge.eval.tuning import choose_configuration
 from roboforge.paths import REPO_ROOT, evidence_reports_dir, evidence_session, repo_relative
 from roboforge.provenance import git_revision, sha256_file
+from roboforge.slots import ContainerSlots, disk_ok, free_gb
 from roboforge.train.suite import RunSpec, SuitePlan, load_plan, plan_table
 
 IN_SIM = "infra/containers/run_sim_cpu.sh"
@@ -66,6 +67,7 @@ class Job:
     log: Path
     started: float = field(default_factory=time.time)
     signalled: bool = False
+    slot: Path | None = None  # host-wide container slot of an evaluation (D-069)
 
 
 def _now() -> str:
@@ -90,6 +92,7 @@ class Suite:
         self.failed: list[dict[str, Any]] = []
         self.stopping = False
         self.env = {**os.environ, "ROBOFORGE_EVIDENCE_SESSION": str(evidence_session())}
+        self.slots = ContainerSlots()
         for spec in list(self.pending_train):  # a restart never retrains a finished run
             m = self.manifest(spec.run_id)
             if m is not None:
@@ -127,14 +130,21 @@ class Suite:
         return [j for j in self.jobs if kind is None or j.kind == kind]
 
     # ------------------------------------------------------------------ launching
-    def _launch(self, kind: str, key: str, argv: list[str], log: Path) -> None:
+    def _launch(self, kind: str, key: str, argv: list[str], log: Path,
+                slot: Path | None = None) -> None:
         if not self.a.allow_dirty and git_revision()["dirty"]:
+            self.slots.release(slot)
             raise SuiteError("working tree is dirty (code/configs/docs): refusing to launch")
+        if not disk_ok():
+            self.slots.release(slot)
+            raise SuiteError(f"only {free_gb():.1f} GiB free: refusing to launch")
         log.parent.mkdir(parents=True, exist_ok=True)
         fh = log.open("a")
         proc = subprocess.Popen(argv, cwd=REPO_ROOT, stdout=fh, stderr=subprocess.STDOUT,
                                 env=self.env, start_new_session=True)
-        self.jobs.append(Job(kind, key, proc, log))
+        if slot is not None:
+            self.slots.attach(slot, proc.pid)
+        self.jobs.append(Job(kind, key, proc, log, slot=slot))
         self.event("launch", kind=kind, key=key, argv=argv, pid=proc.pid,
                    log=repo_relative(log))
 
@@ -148,14 +158,19 @@ class Suite:
             argv.append("--resume")
         self._launch("train", spec.run_id, argv, self.logs / "train" / f"{spec.run_id}.log")
 
-    def launch_eval(self, rid: str, step: int) -> None:
+    def launch_eval(self, rid: str, step: int) -> bool:
+        """Launch one evaluation if a host-wide container slot is free (D-069)."""
         if list((REPO_ROOT / "runs").glob(f"{rid}__val_step{step:07d}__*")):
             raise SuiteError(f"{rid} step {step}: an evaluation directory exists without an "
                              "eligible summary (partial or failed evaluation)")
+        slot = self.slots.acquire(f"{rid}@{step}")
+        if slot is None:
+            return False
         argv = [IN_SIM, "python", "scripts/eval_policy.py", "--train-run", f"runs/{rid}",
                 "--steps", str(step), "--reports-dir", repo_relative(self.reports)]
         self._launch("eval", f"{rid}@{step}", argv,
-                     self.logs / "eval" / f"{rid}_step{step:07d}.log")
+                     self.logs / "eval" / f"{rid}_step{step:07d}.log", slot=slot)
+        return True
 
     def select(self, rid: str) -> None:
         log = self.logs / "select" / f"{rid}.log"
@@ -179,6 +194,7 @@ class Suite:
             if rc is None:
                 continue
             self.jobs.remove(j)
+            self.slots.release(j.slot)
             info = {"kind": j.kind, "key": j.key, "returncode": rc,
                     "wall_s": round(time.time() - j.started, 1)}
             if j.kind == "train":
@@ -232,8 +248,8 @@ class Suite:
                 self.pending_train.remove(spec)
                 self.launch_train(spec)
         for _, _, rid, step in evals:
-            if self._room("eval"):
-                self.launch_eval(rid, step)
+            if self._room("eval") and not self.launch_eval(rid, step):
+                break  # every host-wide container slot is taken
         for spec in [s for s in trains if s.family != critical]:
             if self._room("train"):
                 self.pending_train.remove(spec)

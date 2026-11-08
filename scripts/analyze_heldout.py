@@ -60,10 +60,13 @@ def _load(frozen: dict, task: str, sdir: Path, rehearsal: bool) -> list[tuple[di
 
 
 def _engineering(loaded: list, n_states: int, rehearsal: bool) -> dict[str, Any]:
+    """Engineering status: missing summaries and structural issues (short run, failed audit,
+    non-canonical platform) make a family unavailable; in-episode errors are outcomes."""
     missing = [repo_relative(p) for _e, s, p in loaded if s is None]
-    bad = []
-    for _e, s, p in loaded:
+    bad, unavailable = [], set()
+    for e, s, p in loaded:
         if s is None:
+            unavailable.add(e["family"])
             continue
         why = [w for w, cond in (("n_episodes", s["n_episodes"] != n_states),
                                  ("verify_record", not s["verify_passed"]),
@@ -71,18 +74,23 @@ def _engineering(loaded: list, n_states: int, rehearsal: bool) -> dict[str, Any]
                                  ("episode errors", s["n_errors"] > 0)) if cond]
         if why:
             bad.append({"summary": repo_relative(p), "issues": why})
-    return {"complete": not missing and not any(b["issues"] != ["episode errors"]
-                                               for b in bad),
+        if set(why) - {"episode errors"}:
+            unavailable.add(e["family"])
+    return {"complete": not unavailable, "unavailable_families": sorted(unavailable),
             "missing_summaries": missing, "issues": bad,
             "engineering_reruns": [s["engineering_rerun"] for _, s, _ in loaded
                                    if s and s.get("engineering_rerun")]}
 
 
-def _matrices(loaded: list, horizon: int) -> tuple[dict, dict, list[str]]:
+def _matrices(loaded: list, horizon: int,
+              families: list[str] | None = None) -> tuple[dict, dict, list[str]]:
+    families = ORDER if families is None else families
     states = None
-    succ: dict[str, list] = {f: [] for f in ORDER}
-    length: dict[str, list] = {f: [] for f in ORDER}
+    succ: dict[str, list] = {f: [] for f in families}
+    length: dict[str, list] = {f: [] for f in families}
     for e, s, _ in loaded:
+        if e["family"] not in families:
+            continue
         eps = sorted(s["episodes"], key=lambda r: r["state_id"])
         ids = [r["state_id"] for r in eps]
         if states is None:
@@ -150,6 +158,23 @@ def _cost(frozen: dict, task: str, loaded: list, latency: Path | None) -> dict[s
     return out
 
 
+def _bootstrap(frozen: dict, mats: dict, hyps: list[str], avail: list[str]) -> dict[str, Any]:
+    """The frozen bootstrap over the available families; comparisons with an unavailable
+    family are listed as not computed (freeze §4, engineering-incomplete)."""
+    b, comps = frozen["analysis"]["bootstrap"], frozen["analysis"]["comparisons"]
+    pairs = [(tuple(c), k) for k in hyps for c in comps[k]]
+    ok = [c for c, _ in pairs if c[0] in avail and c[1] in avail]
+    order = [f for f in b["draw_order"][1:] if f in avail]
+    boot = hierarchical_paired_bootstrap({f: mats[f] for f in order}, ok, b=int(b["B"]),
+                                         seed=int(b["seed"]), order=order)
+    for d in boot["differences"]:
+        d["hypothesis"] = next(k for c, k in pairs if c == (d["a"], d["b"]))
+    boot["not_computed"] = [{"hypothesis": k, "a": c[0], "b": c[1],
+                             "status": "ENGINEERING-INCOMPLETE"} for c, k in pairs
+                            if c not in ok]
+    return boot
+
+
 def analyze_task(frozen: dict, task: str, sdir: Path, rehearsal: bool,
                  latency: Path | None) -> tuple[dict, dict]:
     """Everything the freeze prescribes for one task; also returns the taxonomy labels."""
@@ -157,25 +182,22 @@ def analyze_task(frozen: dict, task: str, sdir: Path, rehearsal: bool,
     horizon = int(frozen["rollouts"]["horizon"])
     loaded = _load(frozen, task, sdir, rehearsal)
     eng = _engineering(loaded, int(t["n_states"]), rehearsal)
-    if eng["missing_summaries"]:
-        return {"engineering": eng, "status": "ENGINEERING-INCOMPLETE: missing evaluations"}, {}
-    succ, length, states = _matrices(loaded, horizon)
-    b = frozen["analysis"]["bootstrap"]
-    comps = frozen["analysis"]["comparisons"]
-    pairs = [tuple(c) for k in ("H1", "H2", "H2c", "H3") for c in comps[k]]
-    sec_pairs = [tuple(c) for k in frozen["analysis"]["secondary"]["comparisons"]
-                 for c in comps[k]]
-    boot = hierarchical_paired_bootstrap(succ, pairs, b=int(b["B"]), seed=int(b["seed"]),
-                                         order=list(b["draw_order"][1:]))
-    boot_len = hierarchical_paired_bootstrap(length, sec_pairs, b=int(b["B"]),
-                                             seed=int(b["seed"]), order=list(b["draw_order"][1:]))
-    for d in boot["differences"]:
-        d["hypothesis"] = next(k for k in ("H1", "H2", "H2c", "H3")
-                               if [d["a"], d["b"]] in comps[k])
-    for d in boot_len["differences"]:
-        d["hypothesis"] = next(k for k in ("H2", "H2c", "H3") if [d["a"], d["b"]] in comps[k])
+    avail = [f for f in ORDER if f not in eng["unavailable_families"]]
+    res: dict[str, Any] = {
+        "status": "complete" if eng["complete"] else
+        f"ENGINEERING-INCOMPLETE ({', '.join(eng['unavailable_families'])})",
+        "heldout_manifest_sha256": t["heldout_manifest_sha256"], "engineering": eng,
+        "available_families": avail}
+    if avail:
+        succ, length, states = _matrices(loaded, horizon, avail)
+        res["n_states"] = len(states)
+        res["success"] = _bootstrap(frozen, succ, ["H1", "H2", "H2c", "H3"], avail)
+        res["censored_episode_length"] = _bootstrap(
+            frozen, length, list(frozen["analysis"]["secondary"]["comparisons"]), avail)
     per_ckpt, labels_all = [], {}
     for e, s, p in loaded:
+        if s is None:
+            continue
         labs = tx.classify_records(REPO_ROOT / s["records_dir"])
         if sum(x["category"] == "success" for x in labs) != s["successes"]:
             raise ValueError(f"{p}: taxonomy and summary disagree on successes")
@@ -192,15 +214,12 @@ def analyze_task(frozen: dict, task: str, sdir: Path, rehearsal: bool,
                          "motion_clip_fraction": float(np.mean(s["clip_fraction_per_dim"][:-1])),
                          "gripper_clip_fraction": float(s["clip_fraction_per_dim"][-1]),
                          "wall_s": s["wall_s"], "taxonomy": tx.counts(labs)})
-    tax_family = {f: {c: sum(r["taxonomy"][c] for r in per_ckpt if r["family"] == f)
-                      for c in tx.taxonomy_config()["categories"]} for f in ORDER}
-    res = {"status": "complete" if eng["complete"] else "ENGINEERING-INCOMPLETE",
-           "n_states": len(states), "heldout_manifest_sha256": t["heldout_manifest_sha256"],
-           "engineering": eng, "per_checkpoint": per_ckpt,
-           "success": boot, "censored_episode_length": boot_len,
-           "taxonomy_by_family": tax_family,
-           "examples": _examples(labels_all, tx.taxonomy_config()["categories"]),
-           "cost_latency": _cost(frozen, task, loaded, latency)}
+    res["per_checkpoint"] = per_ckpt
+    res["taxonomy_by_family"] = {
+        f: {c: sum(r["taxonomy"][c] for r in per_ckpt if r["family"] == f)
+            for c in tx.taxonomy_config()["categories"]} for f in ORDER}
+    res["examples"] = _examples(labels_all, tx.taxonomy_config()["categories"])
+    res["cost_latency"] = _cost(frozen, task, loaded, latency)
     return res, labels_all
 
 
@@ -218,6 +237,9 @@ def tables(results: dict, label: str) -> str:
         out += [f"## {task}", "", f"Status: **{r['status']}**", ""]
         if "success" not in r:
             continue
+        for d in r["success"]["not_computed"]:
+            out.append(f"- {d['hypothesis']} {d['a']} − {d['b']}: not computed "
+                       f"({d['status']})")
         out += ["### Success per checkpoint (held-out, n = 50 per checkpoint)", "",
                 "| Family | Seed | Step | Successes | Wilson 95 % | Mean first-success step | "
                 "Errors |", "|---|---|---|---|---|---|---|"]
@@ -278,8 +300,12 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"frozen code changed: {fz.code_problems(frozen)}")
     sdir = a.rehearsal_dir if rehearsal else evidence_reports_dir("heldout")
     out_dir = (a.rehearsal_dir / "results") if rehearsal else evidence_reports_dir("results")
-    out_dir.mkdir(parents=True, exist_ok=rehearsal)
+    if not rehearsal and out_dir.exists():
+        raise SystemExit(f"{repo_relative(out_dir)} exists: the held-out analysis runs once")
     lat = {k: REPO_ROOT / v for k, v in (x.split("=", 1) for x in a.latency)}
+    missing_lat = [repo_relative(v) for v in lat.values() if not v.exists()]
+    if missing_lat:
+        raise SystemExit(f"latency reports missing: {missing_lat}")
     freeze_path = a.draft_freeze if rehearsal else REPO_ROOT / fz.FREEZE_REL
     label = ("REHEARSAL on a non-locked suite: NOT test results" if rehearsal
              else "HELD-OUT TEST RESULTS (frozen protocol, run once)")
@@ -293,14 +319,15 @@ def main(argv: list[str] | None = None) -> int:
         results["tasks"][task] = r
         tax[task] = [{"family": k[0], "seed": k[1], "eval_run_id": k[2], "labels": v}
                      for k, v in labs.items()]
-    mode = "w" if rehearsal else "x"
-    with (out_dir / "results.json").open(mode) as f:
-        f.write(json.dumps(results, indent=1, allow_nan=False) + "\n")
-    with (out_dir / "tables.md").open(mode) as f:
-        f.write(tables(results, label))
-    with (out_dir / "taxonomy.json").open(mode) as f:
-        f.write(json.dumps({"taxonomy_sha256": tx.taxonomy_sha256(), "tasks": tax},
-                           indent=1, allow_nan=False) + "\n")
+    # Everything is computed before anything is written: a failure leaves no partial output.
+    texts = {"results.json": json.dumps(results, indent=1, allow_nan=False) + "\n",
+             "tables.md": tables(results, label),
+             "taxonomy.json": json.dumps({"taxonomy_sha256": tx.taxonomy_sha256(), "tasks": tax},
+                                         indent=1, allow_nan=False) + "\n"}
+    out_dir.mkdir(parents=True, exist_ok=rehearsal)
+    for name, text in texts.items():
+        with (out_dir / name).open("w" if rehearsal else "x") as f:
+            f.write(text)
     for task, r in results["tasks"].items():
         print(task, r["status"])
     print(f"-> {repo_relative(out_dir)}")

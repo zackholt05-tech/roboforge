@@ -26,6 +26,7 @@ from roboforge.eval import freeze as fz
 from roboforge.eval.heldout import eval_id
 from roboforge.paths import REPO_ROOT, evidence_reports_dir, evidence_session, repo_relative
 from roboforge.provenance import git_revision
+from roboforge.slots import ContainerSlots, disk_ok, free_gb
 
 PLATFORM = "linux-aarch64-container-1f685638f28c"
 
@@ -73,13 +74,21 @@ def main(argv: list[str] | None = None) -> int:
             todo.append((task, i, eid))
     event("start", n=len(todo), rehearsal=rehearsal, git=git_revision(),
           freeze=repo_relative(a.draft_freeze) if rehearsal else fz.FREEZE_REL)
-    running: list[tuple[subprocess.Popen, str, int, str, float]] = []
+    running: list[tuple[subprocess.Popen, str, int, str, float, Path]] = []
     failed = []
+    pool, stop = ContainerSlots(), False
     while todo or running:
-        while todo and len(running) < a.max_eval:
-            task, i, eid = todo.pop(0)
+        while todo and len(running) < a.max_eval and not stop:
             if git_revision()["dirty"]:
                 raise SystemExit("working tree became dirty: refusing to launch more")
+            if not disk_ok():
+                event("low_disk", free_gb=round(free_gb(), 2))
+                stop = True
+                break
+            slot = pool.acquire(todo[0][2])
+            if slot is None:
+                break  # every host-wide container slot is taken (D-069)
+            task, i, eid = todo.pop(0)
             cmd = ["infra/containers/run_sim_cpu.sh", "python", "scripts/eval_heldout.py",
                    "--task", task, "--index", str(i)]
             if rehearsal:
@@ -91,22 +100,26 @@ def main(argv: list[str] | None = None) -> int:
                                     stderr=subprocess.STDOUT,
                                     env={**os.environ,
                                          "ROBOFORGE_EVIDENCE_SESSION": str(sess)})
-            running.append((proc, task, i, eid, time.time()))
+            pool.attach(slot, proc.pid)
+            running.append((proc, task, i, eid, time.time(), slot))
             event("launch", task=task, index=i, eval_run_id=eid, pid=proc.pid,
                   log=repo_relative(log))
         time.sleep(a.poll_s)
         for job in list(running):
-            proc, task, i, eid, t0 = job
+            proc, task, i, eid, t0, slot = job
             if proc.poll() is None:
                 continue
             running.remove(job)
+            pool.release(slot)
             ok = proc.returncode == 0 and (reports / f"{eid}.json").exists()
             event("finished", task=task, index=i, eval_run_id=eid,
                   returncode=proc.returncode, wall_s=round(time.time() - t0, 1), ok=ok)
             if not ok:
                 failed.append(eid)
-    event("end", failed=failed)
-    return 1 if failed else 0
+        if stop and not running:
+            break
+    event("end", failed=failed, not_launched=[t[2] for t in todo])
+    return 1 if failed or todo else 0
 
 
 if __name__ == "__main__":

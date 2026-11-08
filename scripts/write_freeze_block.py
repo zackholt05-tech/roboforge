@@ -28,19 +28,20 @@ from roboforge.eval.taxonomy import taxonomy_sha256
 from roboforge.paths import REPO_ROOT, repo_relative
 from roboforge.provenance import sha256_file
 
-CODE = [
-    "src/roboforge/eval/heldout.py", "src/roboforge/eval/freeze.py",
-    "src/roboforge/eval/validation.py", "src/roboforge/eval/learned.py",
-    "src/roboforge/eval/rollout.py", "src/roboforge/eval/policies.py",
-    "src/roboforge/eval/statistics.py", "src/roboforge/eval/taxonomy.py",
-    "src/roboforge/sim/env_adapter.py", "src/roboforge/sim/eval_states.py",
-    "src/roboforge/sim/snapshot.py", "src/roboforge/sim/state_replay.py",
-    "src/roboforge/data/features.py", "src/roboforge/data/normalization.py",
-    "src/roboforge/provenance.py", "scripts/eval_heldout.py", "scripts/run_heldout.py",
-    "scripts/analyze_heldout.py", "infra/containers/run_sim_cpu.sh",
-    "configs/eval/platform.yaml", "configs/eval/suites.yaml",
-    "configs/eval/failure_taxonomy.yaml",
-]
+# Every file that runs or analyses the test: the whole package (the test path imports
+# models, training-manifest, data and simulator code), the three held-out scripts, the
+# container wrapper and the evaluation configs. All are mounted in the container.
+CODE_SCRIPTS = ["scripts/eval_heldout.py", "scripts/run_heldout.py", "scripts/analyze_heldout.py",
+                "infra/containers/run_sim_cpu.sh"]
+
+
+def code_files() -> list[str]:
+    """Repo-relative paths of every frozen code/config file (sorted, deterministic)."""
+    pkg = sorted(p.relative_to(REPO_ROOT).as_posix()
+                 for p in (REPO_ROOT / "src" / "roboforge").rglob("*.py"))
+    cfg = sorted(p.relative_to(REPO_ROOT).as_posix()
+                 for p in (REPO_ROOT / "configs" / "eval").glob("*.yaml"))
+    return [*pkg, *CODE_SCRIPTS, *cfg]
 COMPARISONS = {
     "H1": [[f, fz.BASELINE] for f in fz.FAMILY_ORDER],
     "H2": [["diffusion_unet", "bc_mlp"], ["diffusion_unet", "bc_rnn"]],
@@ -105,7 +106,7 @@ def block(configs: dict[str, Path]) -> dict:
                         "seed that has one; plus, per failure category, the first episode in "
                         "(family order, seed, state_id). Rendered only from recorded states, "
                         "labelled illustration",
-        "code_sha256": {p: sha256_file(REPO_ROOT / p) for p in CODE},
+        "code_sha256": {p: sha256_file(REPO_ROOT / p) for p in code_files()},
     }
 
 
@@ -194,6 +195,11 @@ def document(data: dict, configs: dict[str, Path], frozen_on: str) -> str:
               "failure*: an episode that reached the horizon without success, labelled by the "
               "taxonomy. *Statistical uncertainty*: a declared difference whose interval "
               "contains 0 (not separated).",
+              "- **If an evaluation is still incomplete after its one rerun:** its family is "
+              "reported ENGINEERING-INCOMPLETE on that task. Its complete evaluations are "
+              "listed per checkpoint; the family is left out of that task's bootstrap (the "
+              "draw order skips it); every declared comparison involving it is reported as not "
+              "computed; the other declared comparisons are computed as frozen.",
               f"- **Failure taxonomy:** `{data['taxonomy']['config']}` (SHA-256 "
               f"`{data['taxonomy']['sha256']}`), RESEARCH_PROTOCOL §14.5, applied to every "
               "held-out episode.",

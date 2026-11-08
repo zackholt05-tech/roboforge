@@ -1280,3 +1280,31 @@ Lift selections are final (D-058): no Lift run is retrained, retuned or reselect
   `replicates_with_tuning: true` (allowed only when every family has exactly one trial)
   trains seeds 0–2 together; §7 selection per run is unchanged. A 200-step native smoke run
   on Can trained and reloaded (1,063,367 parameters at T_o = 1; 1,092,551 at T_o = 2).
+
+### D-069 Pre-freeze fixes to the held-out path; one host-wide container pool (FIXED)
+Found by review before any freeze, rehearsal or held-out run:
+- **The container could not see `infra/`.** `code_problems` runs inside the container for
+  real held-out runs and the frozen files include `infra/containers/run_sim_cpu.sh`, which
+  the wrapper did not mount: every held-out evaluation would have refused itself. The
+  wrapper now mounts `infra/` read-only.
+- **Frozen code is the whole package.** The held-out path imports models, training-manifest,
+  data and simulator code, so `code_sha256` covers every `src/roboforge/**/*.py`, the three
+  held-out scripts, the wrapper and `configs/eval/*.yaml` (all mounted in the container).
+- **The analysis writes last.** `analyze_heldout.py` computes everything (and checks the
+  latency reports exist) before it creates `reports/session<N>/results/`, so a failure
+  leaves nothing that would block the single run.
+- **An evaluation still incomplete after its one rerun** makes its family
+  ENGINEERING-INCOMPLETE on that task: listed per checkpoint, left out of that task's
+  bootstrap (the draw order skips it), its declared comparisons reported as not computed,
+  the others computed as frozen. Declared in the freeze.
+- **One host-wide container pool.** Each orchestrator's `--max-eval` alone would let two
+  orchestrators exceed Gate C's 4 containers together. `roboforge.slots.ContainerSlots`
+  is a pool of 4 slot files (`logs/container_slots/`, created with `O_EXCL`, reclaimed when
+  their PIDs are dead) that `run_suite.py`, `run_evals.py` and `run_heldout.py` all draw
+  from. Containers started directly by Make targets (state generation, latency) are run
+  only when no orchestrator runs.
+- **Free-disk check** (≥ 4 GiB) before every launch in the three orchestrators: below it
+  they stop launching and report what was not launched.
+- `scripts/test_configuration_record.py` reproduces the committed Lift record
+  (`reports/session6/lift_test_configuration.json`) exactly, apart from its `status`
+  wording and `note`, `git` and `generated_utc`.

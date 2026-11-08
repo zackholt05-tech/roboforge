@@ -131,3 +131,22 @@ def test_failed_trial_counts_ranks_last_and_cannot_be_chosen() -> None:
     other["manifest"]["status"], other["selection"] = "failed", None
     with pytest.raises(ValueError, match="every trial failed"):
         choose_configuration("bc_mlp", "lift", [failed, other], [1, 2])
+
+
+def test_replicates_with_tuning_needs_a_single_trial(tmp_path: Path) -> None:
+    raw = yaml.safe_load(PLAN.read_text())
+    raw["replicates_with_tuning"] = True
+    p = tmp_path / "plan.yaml"
+    p.write_text(yaml.safe_dump(raw))
+    with pytest.raises(ValueError, match="exactly one trial"):
+        load_plan(p)
+    raw["families"] = [{**raw["families"][0], "trials": [{"trial": 1, "overrides": []}]}]
+    p.write_text(yaml.safe_dump(raw))
+    plan = load_plan(p)
+    assert plan.replicates_with_tuning
+    assert [s.seed for s in plan.replicate_runs(plan.families[0].name, 1)] == [1, 2]
+    raw["replicates_with_tuning"] = "yes"
+    p.write_text(yaml.safe_dump(raw))
+    with pytest.raises(ValueError, match="true or false"):
+        load_plan(p)
+    assert not load_plan(PLAN).replicates_with_tuning

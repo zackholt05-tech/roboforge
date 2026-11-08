@@ -83,3 +83,41 @@ def test_separation_and_wilson() -> None:
     assert separation([0.0, 0.2]) == "not separated"
     lo, hi = wilson_interval(50, 50)
     assert round(lo, 3) == 0.929 and hi == 1.0
+
+
+def test_default_groups_reproduce_the_ungrouped_draws() -> None:
+    rng = np.random.default_rng(3)
+    o = {"a": (rng.random((3, 50)) < 0.7).astype(float),
+         "b": (rng.random((3, 50)) < 0.4).astype(float)}
+    r1 = _boot(o, [("a", "b")])
+    r2 = _boot(o, [("a", "b")], groups={"a": "a", "b": "b"})
+    assert r1["differences"] == r2["differences"] and r1["families"] == r2["families"]
+    assert "seed_groups" not in r1 and r2["seed_groups"] == {"a": "a", "b": "b"}
+
+
+def test_a_shared_seed_group_keeps_the_drop_paired_by_seed() -> None:
+    # One family on two sets with identical outcomes and strong seed variation: with a shared
+    # seed draw the drop is exactly 0 on every replicate; with independent draws it is not.
+    a = np.stack([np.zeros(50), np.r_[np.ones(25), np.zeros(25)], np.ones(50)])
+    o = {"f:base": a, "f:ood": a.copy()}
+    shared = _boot(o, [("f:base", "f:ood")], groups={"f:base": "f", "f:ood": "f"})
+    indep = _boot(o, [("f:base", "f:ood")])
+    assert shared["differences"][0]["ci95"] == [0.0, 0.0]
+    assert indep["differences"][0]["ci95"][0] < 0 < indep["differences"][0]["ci95"][1]
+    assert shared["draw_order"] == ["states", "f"]
+
+
+def test_contrasts_match_differences_and_combine_drops() -> None:
+    rng = np.random.default_rng(4)
+    o = {k: (rng.random((3, 50)) < p).astype(float)
+         for k, p in (("x:base", 0.9), ("x:ood", 0.5), ("y:base", 0.9), ("y:ood", 0.8))}
+    g = {k: k.split(":")[0] for k in o}
+    r = _boot(o, [("x:base", "x:ood")], groups=g,
+              contrasts=[("drop x", {"x:base": 1, "x:ood": -1}),
+                         ("drop x - drop y", {"x:base": 1, "x:ood": -1,
+                                              "y:base": -1, "y:ood": 1})])
+    assert r["contrasts"][0]["ci95"] == r["differences"][0]["ci95"]
+    want = (o["x:base"].mean() - o["x:ood"].mean()) - (o["y:base"].mean() - o["y:ood"].mean())
+    assert r["contrasts"][1]["estimate"] == pytest.approx(want)
+    with pytest.raises(ValueError, match="same n_seeds"):
+        _boot({"p": np.zeros((3, 5)), "q": np.zeros((2, 5))}, [], groups={"p": "g", "q": "g"})

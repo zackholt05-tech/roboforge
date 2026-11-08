@@ -1256,3 +1256,27 @@ Lift selections are final (D-058): no Lift run is retrained, retuned or reselect
   status (missing summaries, short runs, failed audits kept apart from in-episode errors,
   which count as outcomes); taxonomy counts; the frozen examples; cost and latency.
 - Tests: `tests/unit/test_freeze.py`, `tests/unit/test_analyze_heldout.py`.
+
+### D-068 Running and analysing the §14 robustness and ablation evaluations (FIXED)
+- `scripts/run_evals.py` runs every preregistered robustness/ablation evaluation from the
+  committed test-configuration records (12 selected checkpoints per task) in its own
+  canonical container, ≤ 4 at a time: batch `robustness` (each checkpoint on every set of
+  `robustness.sets_for(task)`; Lift 36, Can 24), `a1` (diffusion, `robustness_base`,
+  `--variant trained-weights`), `a2` (`--variant ddpm100`), `a3` (the A3 suite's selected
+  checkpoints on `robustness_base`). Existing summaries are skipped, failures not relaunched,
+  clean tree at every launch; events in `logs/session<N>/robustness/events.jsonl`.
+- `scripts/analyze_robustness.py` writes `reports/session<N>/robustness/` (analysis.json,
+  generated tables.md, taxonomy.json). H4: one §9 bootstrap per task over the keys
+  family:set; the base index is drawn once for every family and set, and each family's seed
+  draw is shared by its sets (**seed groups**, `hierarchical_paired_bootstrap(groups=...)`)
+  so the drop base − OOD is paired by seed and state; between-family differences in OOD
+  success and (as **contrasts**) in drop for the H2, H2-c and H3 pairs. A1/A2: primary −
+  variant, one seed group. A3: T_o = 2 − T_o = 1, independent seed draws (different runs).
+  Without `groups` the bootstrap's draws are unchanged (tested), so the held-out analysis
+  is unaffected.
+- **A3 training.** The arm is the Can-chosen diffusion configuration with `horizons.obs = 1`,
+  written as its own base config (horizons cannot change in a tuning trial, TRIAL_KEYS) and
+  run as a one-trial plan. With one trial there is nothing to choose, so the plan key
+  `replicates_with_tuning: true` (allowed only when every family has exactly one trial)
+  trains seeds 0–2 together; §7 selection per run is unchanged. A 200-step native smoke run
+  on Can trained and reloaded (1,063,367 parameters at T_o = 1; 1,092,551 at T_o = 2).

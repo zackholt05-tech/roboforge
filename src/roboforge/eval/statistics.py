@@ -62,14 +62,29 @@ def separation(interval: list[float]) -> str:
 def hierarchical_paired_bootstrap(outcomes: dict[str, np.ndarray],
                                   comparisons: list[tuple[str, str]], *,
                                   b: int = B_DEFAULT, seed: int = BOOTSTRAP_SEED,
-                                  order: list[str] | None = None) -> dict[str, Any]:
+                                  order: list[str] | None = None,
+                                  groups: dict[str, str] | None = None,
+                                  contrasts: list[tuple[str, dict[str, float]]] | None = None,
+                                  ) -> dict[str, Any]:
     """Family means and paired differences ``a - b`` with 95 % percentile intervals.
 
     ``outcomes[f]`` is ``(n_seeds_f, n_states)``; every family has the same ``n_states``.
-    ``order`` fixes the per-family draw order (default: insertion order of ``outcomes``)."""
+    ``order`` fixes the per-family draw order (default: insertion order of ``outcomes``).
+
+    ``groups`` (robustness analysis, §14.3) maps outcome keys to seed groups: keys of one
+    group (one family on several sets) share their seed draw, so a base − OOD drop stays
+    paired by seed as well as by state; the groups draw in order of first appearance. Without
+    ``groups`` every key is its own group and the draws are exactly those described above.
+    ``contrasts`` adds linear combinations ``sum_k w_k * mean_k`` (``(name, {key: w})``), e.g.
+    a difference of drops, on the same replicates."""
     order = list(outcomes) if order is None else list(order)
     if sorted(order) != sorted(outcomes):
         raise ValueError("order must list every family exactly once")
+    grouped = groups is not None
+    groups = {f: f for f in order} if groups is None else dict(groups)
+    if sorted(groups) != sorted(order):
+        raise ValueError("groups must map every family exactly once")
+    group_order = list(dict.fromkeys(groups[f] for f in order))
     mats = {f: np.asarray(outcomes[f], dtype=np.float64) for f in order}
     n_states = {m.shape[1] for m in mats.values()}
     if len(n_states) != 1 or any(m.ndim != 2 or m.shape[0] < 1 for m in mats.values()):
@@ -77,14 +92,19 @@ def hierarchical_paired_bootstrap(outcomes: dict[str, np.ndarray],
     if any(not np.all(np.isfinite(m)) for m in mats.values()):
         raise ValueError("outcomes must be finite")
     (t,) = n_states
+    sizes = {g: {mats[f].shape[0] for f in order if groups[f] == g} for g in group_order}
+    if any(len(v) != 1 for v in sizes.values()):
+        raise ValueError("keys of one seed group must have the same n_seeds")
     rng = np.random.default_rng(seed)
     st = rng.integers(0, t, size=(b, t))
+    sd = {}
+    for g in group_order:
+        (n,) = sizes[g]
+        sd[g] = rng.integers(0, n, size=(b, n))
     reps = {}
     for f in order:
-        m = mats[f]
-        sd = rng.integers(0, m.shape[0], size=(b, m.shape[0]))
-        per_seed = m[:, st].mean(axis=2)  # (n_seeds, B): each seed's mean over resampled states
-        reps[f] = np.take_along_axis(per_seed.T, sd, axis=1).mean(axis=1)
+        per_seed = mats[f][:, st].mean(axis=2)  # (n_seeds, B): each seed's resampled-state mean
+        reps[f] = np.take_along_axis(per_seed.T, sd[groups[f]], axis=1).mean(axis=1)
     fam = {f: {"estimate": float(mats[f].mean()), "per_seed": mats[f].mean(axis=1).tolist(),
                "n_seeds": int(mats[f].shape[0]), "n_states": t,
                "ci95": _interval(reps[f])} for f in order}
@@ -94,7 +114,21 @@ def hierarchical_paired_bootstrap(outcomes: dict[str, np.ndarray],
         ci = _interval(d)
         diffs.append({"a": a, "b": c, "difference": float(mats[a].mean() - mats[c].mean()),
                       "ci95": ci, "separation": separation(ci)})
-    return {"method": "hierarchical paired bootstrap (RESEARCH_PROTOCOL §9)", "B": b,
-            "seed": seed, "level": LEVEL, "draw_order": ["states", *order],
-            "interval": "percentile, numpy linear interpolation", "families": fam,
-            "differences": diffs}
+    out = {"method": "hierarchical paired bootstrap (RESEARCH_PROTOCOL §9)", "B": b,
+           "seed": seed, "level": LEVEL, "draw_order": ["states", *group_order],
+           "interval": "percentile, numpy linear interpolation", "families": fam,
+           "differences": diffs}
+    if grouped:
+        out["seed_groups"] = groups
+    if contrasts is not None:
+        out["contrasts"] = []
+        for name, w in contrasts:
+            if not set(w) <= set(order):
+                raise ValueError(f"contrast {name}: unknown keys {set(w) - set(order)}")
+            v = sum(wk * reps[k] for k, wk in w.items())
+            ci = _interval(v)
+            out["contrasts"].append({"name": name, "weights": dict(w),
+                                     "estimate": float(sum(wk * mats[k].mean()
+                                                           for k, wk in w.items())),
+                                     "ci95": ci, "separation": separation(ci)})
+    return out

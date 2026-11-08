@@ -81,6 +81,9 @@ class Suite:
         self.logs = args.log_dir
         self.order = {f.name: i for i, f in enumerate(plan.families)}
         self.pending_train: list[RunSpec] = plan.tuning_runs()
+        if plan.replicates_with_tuning:  # one trial per family: nothing to choose (D-068)
+            self.pending_train += [s for f in plan.families
+                                   for s in plan.replicate_runs(f.name, 1)]
         self.runs: dict[str, RunSpec] = {s.run_id: s for s in self.pending_train}
         self.chosen: dict[str, int] = {}
         self.jobs: list[Job] = []
@@ -282,7 +285,7 @@ class Suite:
         for spec in reps:
             self.runs[spec.run_id] = spec
             if self.manifest(spec.run_id) is None and spec.run_id not in {
-                    j.key for j in self.jobs}:
+                    j.key for j in self.jobs} and spec not in self.pending_train:
                 self.pending_train.append(spec)
         self.event("chosen", family=family, trial=trial, record=repo_relative(out),
                    replicates=[s.run_id for s in reps])

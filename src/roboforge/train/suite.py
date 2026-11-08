@@ -9,6 +9,9 @@ before any run of the suite, everything RESEARCH_PROTOCOL §6.3 requires to be d
   (the pilot configuration at the main budget). Trials 2..n change only allow-listed
   optimizer keys, so architecture, horizons, parameter count, batch and budget stay fixed;
 * the tuning seed (0) and the replicate seeds that train the chosen configuration.
+  ``replicates_with_tuning: true`` (optional; only when every family has exactly one trial,
+  so there is nothing to choose: an ablation arm such as A3, RESEARCH_PROTOCOL §14.4, D-068)
+  trains the replicate seeds alongside the tuning seed instead of after the choice.
 
 :func:`load_plan` validates the plan and resolves every run's full config and run ID exactly
 as ``scripts/train.py`` does, so the trial -> run-ID mapping is known (and recorded) before
@@ -77,6 +80,7 @@ class SuitePlan:
     tuning_seed: int
     replicate_seeds: tuple[int, ...]
     families: tuple[Family, ...]
+    replicates_with_tuning: bool = False
 
     def spec(self, family: str, trial: int, seed: int) -> RunSpec:
         """Resolve the run of ``family``'s ``trial`` with ``seed``."""
@@ -112,8 +116,9 @@ def load_plan(path: Path) -> SuitePlan:
     """Read and validate a suite plan; every run's config is resolved and checked."""
     raw = yaml.safe_load(Path(path).read_text())
     keys = {"schema", "task", "prefix", "budget", "tuning_seed", "replicate_seeds", "families"}
-    if set(raw) != keys:
-        raise ValueError(f"suite plan keys {sorted(raw)} != {sorted(keys)}")
+    if not keys <= set(raw) <= keys | {"replicates_with_tuning"}:
+        raise ValueError(f"suite plan keys {sorted(raw)} != {sorted(keys)} "
+                         "(+ optional replicates_with_tuning)")
     if raw["schema"] != SCHEMA:
         raise ValueError(f"schema {raw['schema']!r} != {SCHEMA!r}")
     budget = tuple(raw["budget"])
@@ -139,8 +144,14 @@ def load_plan(path: Path) -> SuitePlan:
         fams.append(Family(str(f["family"]), str(f["config"]), trials))
     if len({f.name for f in fams}) != len(fams):
         raise ValueError("duplicate family")
+    together = raw.get("replicates_with_tuning", False)
+    if not isinstance(together, bool):
+        raise ValueError("replicates_with_tuning must be true or false")
+    if together and any(len(f.trials) != 1 for f in fams):
+        raise ValueError("replicates_with_tuning needs exactly one trial per family "
+                         "(nothing to choose)")
     plan = SuitePlan(str(path), str(raw["task"]), str(raw["prefix"]), budget,
-                     int(raw["tuning_seed"]), seeds, tuple(fams))
+                     int(raw["tuning_seed"]), seeds, tuple(fams), together)
     _validate_resolved(plan)
     return plan
 

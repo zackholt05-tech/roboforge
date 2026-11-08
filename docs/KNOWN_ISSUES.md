@@ -757,3 +757,25 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   Session 6 manifests (and repeated in `reports/session6/cost_latency/`) are contended
   numbers, not a clean throughput profile. COMPUTE_PLAN projections for Session 7 should use
   the Session 5 profiles, scaled by the factors above if the host is shared again.
+
+### KI-036 — The Can suite orchestrator crashed on a half-written evaluation summary (FIXED, D-070)
+- **Observed:** `scripts/run_suite.py` exited at 2026-11-08 02:14:19 UTC with a
+  `JSONDecodeError` in `eval_summary`. It had read an empty summary of one of the four
+  BC-MLP trial-3 (`lr3e4`) evaluations, which the containers wrote at 02:14:18–02:16:17 UTC.
+  `eval_policy.py` writes the summary with a plain `write_text`, and the container writes it
+  through the bind mount, so a poll can see the file before its content.
+- **Why it went unnoticed for about 3 h:** only `SuiteError` was caught, so neither
+  `suite_error` nor `end` was written, and the watcher waited for those events. The disk
+  guard and the renice loop stop when the suite process exits, and both stopped.
+- **What ran unsupervised:** the jobs were started in their own sessions and kept running.
+  - The six training runs finished with manifest status `complete`: BC-RNN trials 3–4 at
+    02:58:59 and 02:59:31 UTC, the four diffusion trials at 04:15:08–04:15:44 UTC.
+  - The four `lr3e4` evaluations (steps 5k–20k) finished with audit PASS and 50 episodes each.
+  - These 10 jobs have no `finished` event. Their manifests and summaries are the record.
+  - Nothing was relaunched or lost. All 44 evaluation summaries parse, and each
+    `runs/*__val_*` directory has its summary.
+- **Impact:** about 3 h of idle evaluation capacity (02:14 UTC to the restart). No result is
+  affected. Without the renice loop, the diffusion runs finished sooner than projected
+  because no evaluations competed with them for CPU. Scheduling does not enter the
+  deterministic training (KI-035).
+- **Fix:** D-070 (reader side only). Watchers now also check that the suite process is alive.

@@ -1308,3 +1308,24 @@ Found by review before any freeze, rehearsal or held-out run:
 - `scripts/test_configuration_record.py` reproduces the committed Lift record
   (`reports/session6/lift_test_configuration.json`) exactly, apart from its `status`
   wording and `note`, `git` and `generated_utc`.
+
+### D-070 The suite orchestrator tolerates files that running jobs are still writing (FIXED)
+- **Why:** the Can main suite (started 2026-11-07 23:26:38 UTC at 96aa972) died at
+  2026-11-08 02:14:19 UTC on a `JSONDecodeError`, reading an empty validation summary that a
+  running evaluation container was writing (KNOWN_ISSUES KI-036).
+- **Change (`scripts/run_suite.py` only):**
+  - `tick` does not read the summary of a step whose evaluation is running;
+  - a summary or manifest that does not parse is "not there yet" while its job runs, and a
+    `SuiteError` (manual decision) otherwise;
+  - any unexpected exception now writes `suite_error` (with the traceback), waits for the
+    running jobs, and still writes `end`.
+- **Not changed:** the training and evaluation code. `git diff 96aa972` for the restart
+  commit lists only `scripts/run_suite.py`, its unit test (`tests/unit/test_run_suite_reads.py`)
+  and these docs, so the evaluations and replicate runs after the restart use the same
+  `src/`, `scripts/train.py` and `scripts/eval_policy.py` as the first 44 evaluations and the 16
+  tuning runs. The writers stay non-atomic until the suite is done.
+- **Restart:** same plan (sha256 881b4fb7…), same limits, no `--resume-interrupted` (no run
+  was interrupted). The first run's `plan_resolved.json`, `status.json` and stdout are kept as
+  `*.run1.*` under `logs/session7/suite/`.
+- **Merge with the s7-dev tooling (D-069):** the drain fallback after a `reap_error` also
+  releases the host-wide container slot of every job it drops.

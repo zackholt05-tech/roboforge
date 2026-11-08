@@ -240,7 +240,7 @@ def tables(results: dict, label: str) -> str:
         for d in r["success"]["not_computed"]:
             out.append(f"- {d['hypothesis']} {d['a']} − {d['b']}: not computed "
                        f"({d['status']})")
-        out += ["### Success per checkpoint (held-out, n = 50 per checkpoint)", "",
+        out += ["### Success per checkpoint (one rollout per start)", "",
                 "| Family | Seed | Step | Successes | Wilson 95 % | Mean first-success step | "
                 "Errors |", "|---|---|---|---|---|---|---|"]
         for c in r["per_checkpoint"]:

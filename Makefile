@@ -16,7 +16,8 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 
 .PHONY: help setup test test-fast lint smoke-sim download verify-data probe-obs build-data \
 	check-data audit-data eval-states check-eval-states robustness-states \
-	check-robustness-states replay-demos check-sim-contract \
+	check-robustness-states test-config freeze-block \
+	freeze-check eval-final analyze-final replay-demos check-sim-contract \
 	check-determinism sanity-eval sanity-eval-canonical export-clip web-contract in-sim \
 	train-smoke train eval select param-counts overfit-check benchmark-policies \
 	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
@@ -76,6 +77,30 @@ robustness-states:  ## Session 7 robustness starts ON THE CANONICAL CONTAINER (R
 check-robustness-states:  ## Regenerate the robustness starts in memory and compare (bitwise on their platform)
 	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN) python scripts/generate_robustness_states.py \
 		--tasks $(TASKS) --check
+
+# Held-out test (RESEARCH_PROTOCOL §10, D-067). Nothing below reads a held-out state before
+# docs/FINAL_TEST_FREEZE.md is committed; eval-final runs every frozen evaluation once.
+TEST_TASK ?= can
+test-config:  ## Write reports/session<N>/<TEST_TASK>_test_configuration.json from the suite selections
+	$(RUN_S) python scripts/test_configuration_record.py --task $(TEST_TASK) --session $(EVIDENCE_SESSION)
+
+FREEZE_CONFIGS ?= lift=reports/session6/lift_test_configuration.json can=reports/session7/can_test_configuration.json
+FREEZE_BLOCK_OUT ?= logs/session$(EVIDENCE_SESSION)/freeze_block.md
+freeze-block:  ## Generate the machine-readable freeze block from FREEZE_CONFIGS into FREEZE_BLOCK_OUT
+	$(RUN_S) python scripts/write_freeze_block.py $(foreach c,$(FREEZE_CONFIGS),--config $(c)) --out $(FREEZE_BLOCK_OUT)
+
+freeze-check:  ## The committed freeze parses and every frozen code file is unchanged
+	$(RUN_S) python -c "from roboforge.eval import freeze as f; d = f.load_freeze(); \
+	  bad = f.code_problems(d); print('\n'.join(bad) or 'freeze committed; frozen code unchanged'); \
+	  raise SystemExit(1 if bad else 0)"
+
+eval-final:  ## Run every frozen held-out evaluation ONCE on the canonical container (<= 4 at a time)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/run_heldout.py
+
+LATENCY_ARGS ?= --latency lift=reports/session6/cost_latency/linux-aarch64-container-1f685638f28c.json \
+	--latency can=reports/session7/cost_latency/linux-aarch64-container-1f685638f28c.json
+analyze-final:  ## Frozen analysis of the held-out summaries into reports/session<N>/results/ (once)
+	$(RUN_S) python scripts/analyze_heldout.py $(LATENCY_ARGS)
 
 replay-demos:  ## Replay >= 10 sampled demos/task through RoboForgeEnv; divergence, montage, video
 	$(RUN) python scripts/replay_demos.py --tasks $(TASKS) --video --out-dir $(S2_OUT)/replay

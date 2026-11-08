@@ -87,7 +87,8 @@ def episode_stats(rec: RolloutRecord, codec: Any) -> dict[str, Any]:
     raw = a["raw_policy_action"]
     ex = a["executed_action"]
     if len(ex):
-        decoded = codec.normalizer.unnormalize(raw)
+        # Policies in the env action space (the random baseline) have no codec.
+        decoded = raw if codec is None else codec.normalizer.unnormalize(raw)
         grip = np.sign(ex[:, -1])
         lat = a["planning_latency_ms"][np.isfinite(a["planning_latency_ms"])]
         out.update(
@@ -142,11 +143,13 @@ def eval_run_id(train_run_id: str, step: int, platform_id: str, *, stochastic: b
     return rid + (f"__first{n_partial}" if n_partial is not None else "")
 
 
-def run_states(policy: LearnedPolicy, states: list[Any], eval_id: str, out_dir: Path,
+def run_states(policy: Any, states: list[Any], eval_id: str, out_dir: Path,
                task: str, n_verify: int) -> dict[str, Any]:
-    """Run, record and audit one episode per state (the shared core of every evaluation)."""
+    """Run, record and audit one episode per state (the shared core of every evaluation).
+    ``policy`` is a :class:`LearnedPolicy` or a non-learned baseline in the env space."""
     env = RoboForgeEnv(task)
-    codec = policy.codec(env.action_spec)
+    codec = policy.codec(env.action_spec) if hasattr(policy, "codec") else None
+    stochastic = bool(getattr(policy, "stochastic", False))
     episodes, verified = [], []
     t0 = time.perf_counter()
     try:
@@ -158,7 +161,7 @@ def run_states(policy: LearnedPolicy, states: list[Any], eval_id: str, out_dir: 
             episodes.append({"state_id": init.state_id,
                              "physics_sha256": rec.meta["physics_sha256"],
                              **({"noise_seed": rec.meta["policy_episode"]["noise_seed"]}
-                                if policy.stochastic else {}),
+                                if stochastic else {}),
                              **episode_stats(rec, codec)})
         rules = {"horizon": env.horizon, "termination": env.termination,
                  "hold_steps": env.hold_steps}

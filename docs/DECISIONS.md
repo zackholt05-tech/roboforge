@@ -1220,3 +1220,39 @@ Lift selections are final (D-058): no Lift run is retrained, retuned or reselect
 - Unit tests on synthetic controls: identical families not separated, certain differences
   exact, one shared state draw (paired difference exactly 0 under identical outcomes), seed
   resampling per family, reproducibility, a binomial sanity interval, input validation.
+
+### D-067 The held-out freeze, the one-shot evaluator and the container attestation (FIXED)
+- **Freeze format.** `docs/FINAL_TEST_FREEZE.md` holds prose plus exactly one machine-readable
+  YAML block (schema `roboforge.heldout_freeze/1`) between `<!-- roboforge:freeze:begin -->`
+  and `<!-- roboforge:freeze:end -->`, written by `scripts/write_freeze_block.py` from the
+  committed test-configuration records (`scripts/test_configuration_record.py`). Per task: the
+  held-out manifest content hash, and per family (order bc_mlp, bc_rnn, bc_mlp_chunk,
+  diffusion_unet) the chosen trial and seeds 0–2 with run ID, selected step, checkpoint and
+  config SHA-256; the random baseline (policy seed 0); rollouts (R = 1, policy seed 0, 400
+  steps, first success); the analysis (bootstrap B, seed, draw order, comparisons, secondary
+  outcome, separation rule, aggregation per task); the taxonomy hash; the example rule; and
+  the SHA-256 of every file that runs or analyses the test (`code_sha256`).
+- **One-shot evaluator.** `roboforge.eval.heldout.evaluate_entry` (via
+  `scripts/eval_heldout.py`, orchestrated by `scripts/run_heldout.py`, ≤ 4 containers)
+  refuses unless the freeze is committed unmodified, the frozen code is unchanged, the entry is
+  in the freeze, the platform is canonical, the manifest hash equals the frozen one and the
+  checkpoint SHA-256 equals the frozen and training-manifest values. States load only through
+  `eval_states.load_suite` (lock check). An existing evaluation is never rerun; one
+  engineering rerun (§14.6) needs an explicit reason, keeps the incomplete attempt and records
+  the incident. Summaries are opened exclusively (`x`), never overwritten.
+- **Container attestation.** The container has no `.git`, so the lock check could not ask git
+  there. `provenance.tracked_and_unmodified` asks git on the host; inside the container it
+  accepts only `docs/FINAL_TEST_FREEZE.md`, only when the wrapper attests a clean host tree
+  (`ROBOFORGE_GIT_DIRTY=0`) and passes the host's committed blob ID
+  (`ROBOFORGE_FREEZE_BLOB = git rev-parse HEAD:docs/FINAL_TEST_FREEZE.md`) equal to the git
+  blob hash of the mounted file. `eval_states.lock_status` uses it.
+- **Rehearsal.** The identical path runs on a non-locked suite with an uncommitted draft
+  freeze (`--rehearsal-suite`, `--draft-freeze`), never on the locked suite; output under
+  `logs/session<N>/rehearsal/`, labelled REHEARSAL, never reported as a test result.
+- **Analysis.** `scripts/analyze_heldout.py` reads only the frozen summaries and their
+  records and writes `reports/session<N>/results/` (results.json, generated tables.md,
+  taxonomy.json) once: per checkpoint k/n with Wilson intervals; the §9 bootstrap per task for
+  success (H1, H2, H2-c, H3) and the censored episode length (H2, H2-c, H3); engineering
+  status (missing summaries, short runs, failed audits kept apart from in-episode errors,
+  which count as outcomes); taxonomy counts; the frozen examples; cost and latency.
+- Tests: `tests/unit/test_freeze.py`, `tests/unit/test_analyze_heldout.py`.

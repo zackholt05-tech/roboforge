@@ -28,6 +28,9 @@ DIRTY=0
 if [[ -n "$(git status --porcelain -- . ':(exclude)reports' ':(exclude)logs' ':(exclude)runs')" ]]; then
   DIRTY=1
 fi
+# Host attestation of the committed freeze file for the final-test lock inside the container,
+# which has no .git (roboforge.provenance.tracked_and_unmodified; DECISIONS D-067).
+FREEZE_BLOB="$(git rev-parse --verify --quiet HEAD:docs/FINAL_TEST_FREEZE.md || true)"
 S="${ROBOFORGE_EVIDENCE_SESSION:-2}"
 if [[ ! "$S" =~ ^[0-9]+$ ]]; then
   echo "ROBOFORGE_EVIDENCE_SESSION must be a session number, got '$S'" >&2
@@ -50,6 +53,7 @@ exec docker run --rm \
   -v "$PWD/reports/feasibility:/app/reports/feasibility:ro" \
   -e ROBOFORGE_CONTAINER_IMAGE="$IMAGE" -e ROBOFORGE_CONTAINER_IMAGE_ID="$ACTUAL" \
   -e ROBOFORGE_GIT_SHA="$(git rev-parse HEAD)" -e ROBOFORGE_GIT_DIRTY="$DIRTY" \
+  -e ROBOFORGE_FREEZE_BLOB="$FREEZE_BLOB" \
   -e ROBOFORGE_EVIDENCE_SESSION="$S" \
   -e PYTHONPATH=/app/src -e PATH=/app/.venv/bin:/usr/local/bin:/usr/bin:/bin \
   "$IMAGE" "$@"

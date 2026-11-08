@@ -29,7 +29,6 @@ from __future__ import annotations
 
 import json
 import lzma
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -37,7 +36,13 @@ from typing import Any
 import numpy as np
 
 from roboforge.paths import REPO_ROOT, configs_dir, repo_relative
-from roboforge.provenance import evaluation_platform, package_versions, sha256_json, write_json
+from roboforge.provenance import (
+    evaluation_platform,
+    package_versions,
+    sha256_json,
+    tracked_and_unmodified,
+    write_json,
+)
 from roboforge.sim.snapshot import InitialState, generate, restore, sha256_text
 
 SUITE_SCHEMA = "roboforge.eval_suite/1"
@@ -86,13 +91,9 @@ def lock_status(task: str) -> tuple[bool, str]:
     if manifest["content_sha256"] not in freeze.read_text():
         return False, f"{cfg['locked_until']} does not name {task} final_test content_sha256"
     rel = freeze.relative_to(REPO_ROOT).as_posix()
-    try:
-        subprocess.run(["git", "ls-files", "--error-unmatch", rel], cwd=REPO_ROOT, check=True,
-                       capture_output=True)
-        subprocess.run(["git", "diff", "--quiet", "HEAD", "--", rel], cwd=REPO_ROOT, check=True,
-                       capture_output=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False, f"{rel} is not committed, or has uncommitted changes"
+    committed, why = tracked_and_unmodified(rel)
+    if not committed:
+        return False, why
     return True, "unlocked"
 
 

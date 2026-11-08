@@ -104,6 +104,41 @@ def git_revision(repo: Path = REPO_ROOT) -> dict[str, Any]:
         return {"sha": None, "dirty": None}
 
 
+def git_blob_sha1(data: bytes) -> str:
+    """Git's object ID of a file's bytes (``git hash-object``), computable without git."""
+    return hashlib.sha1(b"blob %d\0" % len(data) + data, usedforsecurity=False).hexdigest()
+
+
+def tracked_and_unmodified(rel: str, repo: Path = REPO_ROOT) -> tuple[bool, str]:
+    """Whether the repo file ``rel`` is committed at HEAD and has no uncommitted change.
+
+    On the host this asks git. Inside the evaluation container (no ``.git``), the wrapper
+    ``infra/containers/run_sim_cpu.sh`` attests the host state instead: the host tree must be
+    clean (``ROBOFORGE_GIT_DIRTY=0``) and ``ROBOFORGE_FREEZE_BLOB`` (the host's
+    ``git rev-parse HEAD:docs/FINAL_TEST_FREEZE.md``) must equal the git blob hash of the
+    mounted file. Only that file is attested this way."""
+    path = repo / rel
+    if not path.exists():
+        return False, f"{rel} does not exist"
+    if os.environ.get("ROBOFORGE_GIT_SHA") and not (repo / ".git").exists():
+        blob = os.environ.get("ROBOFORGE_FREEZE_BLOB", "")
+        if rel != "docs/FINAL_TEST_FREEZE.md":
+            return False, f"{rel}: only the freeze file is attested inside the container"
+        if os.environ.get("ROBOFORGE_GIT_DIRTY") != "0":
+            return False, "the host tree is dirty"
+        if not blob or blob != git_blob_sha1(path.read_bytes()):
+            return False, f"{rel} does not match the host's committed blob"
+        return True, "committed (attested by the container wrapper)"
+    try:
+        subprocess.run(["git", "ls-files", "--error-unmatch", rel], cwd=repo, check=True,
+                       capture_output=True)
+        subprocess.run(["git", "diff", "--quiet", "HEAD", "--", rel], cwd=repo, check=True,
+                       capture_output=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False, f"{rel} is not committed, or has uncommitted changes"
+    return True, "committed"
+
+
 def package_versions(packages: tuple[str, ...] = TRACKED_PACKAGES) -> dict[str, str | None]:
     """Return installed versions of the tracked packages (``None`` when not installed)."""
     versions: dict[str, str | None] = {}

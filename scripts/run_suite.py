@@ -38,6 +38,7 @@ import signal
 import subprocess
 import sys
 import time
+import traceback
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -104,15 +105,30 @@ class Suite:
             f.write(json.dumps(rec, sort_keys=True) + "\n")
         print(json.dumps(rec, sort_keys=True), flush=True)
 
+    def _read_json(self, p: Path, key: str) -> dict[str, Any] | None:
+        """``p`` parsed; ``None`` while the job ``key`` that writes it is still running.
+
+        The writers (``scripts/train.py``, ``scripts/eval_policy.py``) do not write
+        atomically, so a poll can see a half-written file (KNOWN_ISSUES KI-036). A file that
+        does not parse while no job is producing it needs a manual decision.
+        """
+        try:
+            return json.loads(p.read_text())
+        except ValueError as e:
+            if key in {j.key for j in self.jobs}:
+                return None
+            raise SuiteError(f"{repo_relative(p)} does not parse and no running job is "
+                             f"writing it: {e}") from e
+
     def manifest(self, rid: str) -> dict[str, Any] | None:
         p = REPO_ROOT / "runs" / rid / "manifest.json"
-        return json.loads(p.read_text()) if p.exists() else None
+        return self._read_json(p, rid) if p.exists() else None
 
     def eval_summary(self, rid: str, step: int) -> dict[str, Any] | None:
         hits = sorted((self.reports / "validation").glob(f"{rid}__val_step{step:07d}__*.json"))
-        good = [json.loads(h.read_text()) for h in hits]
-        good = [s for s in good if s["eligible_for_selection"] and not s["partial"]
-                and s["n_episodes"] == 50]
+        read = [self._read_json(h, f"{rid}@{step}") for h in hits]
+        good = [s for s in read if s is not None and s["eligible_for_selection"]
+                and not s["partial"] and s["n_episodes"] == 50]
         if len(good) > 1:
             raise SuiteError(f"{rid} step {step}: {len(good)} eligible evaluations")
         return good[0] if good else None
@@ -207,7 +223,8 @@ class Suite:
         eval_queue: list[tuple[int, int, str, int]] = []
         for i, (rid, m) in enumerate(complete.items()):
             steps = [c["step"] for c in m["checkpoints"]]
-            missing = [s for s in steps if self.eval_summary(rid, s) is None]
+            missing = [s for s in steps  # a running evaluation's summary is not read yet
+                       if f"{rid}@{s}" in busy or self.eval_summary(rid, s) is None]
             if missing:
                 fam = self.runs[rid].family
                 eval_queue += [(self.order[fam], i, rid, s) for s in missing
@@ -392,20 +409,28 @@ def main(argv: list[str] | None = None) -> int:
     try:
         while suite.tick():
             time.sleep(a.poll_s)
-    except SuiteError as e:
-        suite.event("suite_error", error=str(e))
+    except Exception as e:  # noqa: BLE001 - any error is recorded, never silent (KI-036)
+        expected = isinstance(e, SuiteError)
+        suite.event("suite_error", error=str(e) if expected else f"{type(e).__name__}: {e}",
+                    **({} if expected else {"traceback": traceback.format_exc()}))
         suite.stopping, code = True, 2
         while suite.jobs:  # never orphan running jobs
             time.sleep(a.poll_s)
-            suite.reap()
+            try:
+                suite.reap()
+            except Exception as e2:  # noqa: BLE001 - keep waiting for the rest
+                suite.event("reap_error", error=f"{type(e2).__name__}: {e2}")
+                suite.jobs = [j for j in suite.jobs if j.proc.poll() is None]
     suite.write_status(0)
     if any(f["fatal"] for f in suite.failed):
         code = code or 1
     if suite.stopping and not code:
         code = EXIT_INTERRUPTED  # stopped by a signal before the plan was done
-    summary = suite.summarize()
-    suite.event("end", failed=suite.failed, chosen=suite.chosen, exit=code,
-                summary=repo_relative(summary))
+    try:
+        summary: str | None = repo_relative(suite.summarize())
+    except Exception as e:  # noqa: BLE001 - the end event is written regardless
+        summary, code = f"not written: {type(e).__name__}: {e}", code or 2
+    suite.event("end", failed=suite.failed, chosen=suite.chosen, exit=code, summary=summary)
     return code
 
 

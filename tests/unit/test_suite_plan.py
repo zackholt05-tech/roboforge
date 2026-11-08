@@ -150,3 +150,19 @@ def test_replicates_with_tuning_needs_a_single_trial(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="true or false"):
         load_plan(p)
     assert not load_plan(PLAN).replicates_with_tuning
+
+
+def test_a3_plan_changes_only_the_observation_history_of_the_chosen_can_config() -> None:
+    """A3 (§14.4): the chosen Can diffusion trial (2, cosine) with horizons.obs = 1."""
+    a3 = load_plan(REPO_ROOT / "configs" / "experiments" / "ablation_a3_can.yaml")
+    main = load_plan(REPO_ROOT / "configs" / "experiments" / "level1_core_can.yaml")
+    assert a3.replicates_with_tuning and a3.task == main.task == "can"
+    assert [f.name for f in a3.families] == ["diffusion_unet_to1"]  # own tuning record
+    for seed in (0, 1, 2):
+        arm, ref = a3.spec("diffusion_unet_to1", 1, seed).config, main.spec(
+            "diffusion_unet", 2, seed).config
+        assert (arm.horizons.obs, ref.horizons.obs) == (1, 2)
+        same = lambda c: {**c.to_dict(), "name": None, "horizons": None}  # noqa: E731
+        assert same(arm) == same(ref)
+        assert vars(arm.horizons) | {"obs": 2} == vars(ref.horizons)
+    assert plan_table(a3)[0]["param_count"] == 1063367  # 19-D condition (§14.4)

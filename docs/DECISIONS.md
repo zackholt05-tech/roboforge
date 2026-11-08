@@ -1329,3 +1329,21 @@ Found by review before any freeze, rehearsal or held-out run:
   `*.run1.*` under `logs/session7/suite/`.
 - **Merge with the s7-dev tooling (D-069):** the drain fallback after a `reap_error` also
   releases the host-wide container slot of every job it drops.
+
+### D-071 A3 configuration and plan (FIXED; written after the Can diffusion choice)
+- **Arm T_o = 1:** `configs/models/diffusion_unet_to1_can.yaml` is the chosen Can diffusion
+  configuration (`reports/session7/tuning/diffusion_unet_can.json`, written 2026-11-08 07:37
+  UTC: trial 2, cosine schedule, run `s7_diffusion_unet_cos_can_seed0_99251da3`, selected step
+  65,000, 48/50; trials 1 and 4 also scored 48/50 and lost on the mean first-success step)
+  with `horizons.obs = 1`. `tests/unit/test_suite_plan.py` checks that the resolved configs
+  of seeds 0-2 differ from the chosen trial's only in `horizons.obs` and `name`.
+  1,063,367 parameters (19-D FiLM condition) vs 1,092,551.
+- **Arm T_o = 2:** the main suite's three chosen diffusion runs, unchanged.
+- **Plan:** `configs/experiments/ablation_a3_can.yaml`, one trial, `replicates_with_tuning:
+  true` (D-068), the main budget, the §7 selection on all 20 checkpoints. Its family label
+  `diffusion_unet_to1` gives it its own tuning record, so it can never overwrite or contradict
+  the main suite's `diffusion_unet_can.json`.
+- **Why written now:** §14.4 fixes A3 as "the chosen Can diffusion configuration retrained
+  with `horizons.obs = 1`", which is known only after the choice. Nothing else about A3 was
+  decided after any Can result: the arms, seeds, budget, evaluation suites and analysis are
+  those of §14.4.

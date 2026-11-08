@@ -1,0 +1,23 @@
+# Ablation A3 on Can (Session 7): observation history T_o = 1 vs 2. Binding: RESEARCH_PROTOCOL
+# §14.4 (preregistered 2026-11-07, before any robustness, ablation or test rollout).
+# One configuration, no tuning: the chosen Can diffusion configuration (§6.3 record
+# reports/session7/tuning/diffusion_unet_can.json, trial 2, cosine schedule) with
+# horizons.obs = 1 (configs/models/diffusion_unet_to1_can.yaml). Seeds 0, 1 and 2 train
+# together (replicates_with_tuning, D-068) at the main budget; all 20 checkpoints of every run
+# are evaluated on the 50 Can validation starts and selected by §7. The T_o = 2 arm is the main
+# suite's chosen diffusion runs. Arms are compared on robustness_base (scripts/run_evals.py
+# --batches a3); the validation numbers are development numbers.
+# The plan's family label differs from the main suite's so that the two tuning records
+# (reports/session7/tuning/<label>_can.json) never collide.
+schema: roboforge.suite_plan/1
+task: can
+prefix: s7
+budget: [train.max_steps=100000, train.ckpt_every=5000]
+tuning_seed: 0
+replicate_seeds: [1, 2]
+replicates_with_tuning: true
+families:
+  - family: diffusion_unet_to1
+    config: configs/models/diffusion_unet_to1_can.yaml
+    trials:
+      - {trial: 1, overrides: []}

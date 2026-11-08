@@ -1,0 +1,20 @@
+# Ablation A3 (RESEARCH_PROTOCOL §14.4): the chosen Can diffusion configuration (Can tuning
+# record reports/session7/tuning/diffusion_unet_can.json: trial 2, cosine learning-rate
+# schedule) with observation history T_o = 1 instead of 2. Everything else equals
+# configs/models/diffusion_unet.yaml with optim.schedule=cosine: the FiLM condition is the
+# 19-D current observation instead of the flattened 2 x 19 window. Budget and task come from
+# the plan (configs/experiments/ablation_a3_can.yaml).
+schema: roboforge.train_config/1
+name: diffusion_unet_cos_to1
+family: diffusion_unet
+task: lift
+seed: 0
+horizons: {obs: 1, pred: 16, exec: 8}
+model: {down_dims: [64, 128], step_embed_dim: 64, kernel_size: 5, n_groups: 8,
+        num_train_timesteps: 100, beta_schedule: squaredcos_cap_v2, prediction_type: epsilon,
+        clip_sample: true, sampler: ddim, inference_steps: 10, ddim_eta: 0.0,
+        ema: true, ema_power: 0.75, ema_max_decay: 0.9999}
+loss: {kind: denoising_mse}
+optim: {name: adamw, lr: 1.0e-4, betas: [0.9, 0.999], weight_decay: 0.0, schedule: cosine}
+train: {max_steps: 30000, batch_size: 100, ckpt_every: 5000, val_every: 1000, log_every: 100,
+        num_threads: 1, grad_clip: null}

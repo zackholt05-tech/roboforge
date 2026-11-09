@@ -15,7 +15,9 @@ Checks (MASTER_SPEC §2.3 items 3, 5, 7; Session 0 objective C):
    actions produce matching trajectories (max abs state difference reported);
 9. the Session 2 ``RoboForgeEnv`` adapter: exact reset from the first validation start,
    a valid dynamic-dimension action, rejection of wrong-dimension and NaN actions, no success
-   at the start, a shadow render, and the reserved test-seed lock.
+   at the start, a shadow render, and the reserved test-seed lock. The lock is checked with
+   ``suites.yaml`` pointed at a missing freeze, so no held-out start is ever built, whatever
+   the real lock state (KI-040).
 
 Writes ``reports/feasibility/smoke_sim_<task>.json``. Exit code 1 on any failed check.
 """
@@ -23,10 +25,13 @@ Writes ``reports/feasibility/smoke_sim_<task>.json``. Exit code 1 on any failed 
 from __future__ import annotations
 
 import argparse
+import contextlib
+import copy
 import json
 import subprocess
 import sys
 import time
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +43,7 @@ import numpy as np  # noqa: E402
 
 from roboforge.paths import feasibility_reports_dir, repo_relative  # noqa: E402
 from roboforge.provenance import environment_snapshot  # noqa: E402
+from roboforge.sim import eval_states as es  # noqa: E402
 from roboforge.sim.factory import load_sim_config, make_env, task_kwargs  # noqa: E402
 from roboforge.sim.renderer import render_rgb  # noqa: E402
 from roboforge.sim.state_replay import is_success, reset_to_state, state_layout  # noqa: E402
@@ -234,16 +240,46 @@ def adapter_smoke(task: str) -> tuple[dict[str, Any], dict[str, bool]]:
     checks["adapter_no_success_at_start"] = not meta.initial_success and not info["success"]
     frame = env.render("agentview", 64, 64)
     checks["adapter_render"] = frame.shape == (64, 64, 3) and float(frame.std()) > 5.0
-    try:
-        env.reset(900000)
+    real_unlocked, _ = es.lock_status(task)
+    # The refusal is tested with the lock pointed at a freeze that does not exist, so a held-out
+    # start is never built whatever the real lock state (KI-040, the KI-039 rule): since the
+    # Level 1 freeze was committed the real lock is open, and only scripts/eval_heldout.py may
+    # read held-out starts (D-067). The reset is attempted only after the lock is seen shut.
+    with lock_pointed_at_missing_freeze() as shut_why:
         locked = False
-    except FinalTestLockedError:
-        locked = True
+        if shut_why is not None:
+            try:
+                env.reset(900000)
+            except FinalTestLockedError:
+                locked = True
     checks["adapter_reserved_test_seed_locked"] = locked
     env.close()
     return {"state_id": init.state_id, "action_dim": env.action_dim,
             "obs_dim": int(obs.vector.shape[0]), "partition": meta.initial_state["partition"],
-            "horizon": env.horizon, "termination": env.termination}, checks
+            "horizon": env.horizon, "termination": env.termination,
+            "real_heldout_lock_open": bool(real_unlocked),
+            "seed_lock_checked_against": MISSING_FREEZE}, checks
+
+
+MISSING_FREEZE = "docs/NO_SUCH_FREEZE.md"
+
+
+@contextlib.contextmanager
+def lock_pointed_at_missing_freeze() -> Iterator[str | None]:
+    """Point the final-test lock at :data:`MISSING_FREEZE` for the duration of the block.
+
+    Yields the lock's refusal reason, or ``None`` if the lock is (unexpectedly) still open, in
+    which case the caller must not attempt any held-out reset.
+    """
+    cfg = copy.deepcopy(es.suites_config())
+    cfg["suites"][es.LOCKED_SUITE]["locked_until"] = MISSING_FREEZE
+    original = es.suites_config
+    es.suites_config = lambda: cfg
+    try:
+        unlocked, why = es.lock_status("lift")
+        yield None if unlocked else why
+    finally:
+        es.suites_config = original
 
 
 def main(argv: list[str] | None = None) -> int:

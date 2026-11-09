@@ -40,6 +40,11 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-033 | LOW | OPEN | The Modal image carries no evaluation suite; EGL vs OSMesa pending |
 | KI-034 | MEDIUM | OPEN | Lift validation is saturated: most §7 choices are decided by the first-success tiebreak |
 | KI-035 | LOW | ACCEPTED | Host contention during the Session 6 suite inflated wall times (results unaffected) |
+| KI-036 | MEDIUM | RESOLVED (Session 7, D-070) | The Can suite orchestrator crashed on a half-written evaluation summary |
+| KI-037 | LOW | RESOLVED (Session 7) | The robustness `--check` called equal Can manifests "not bitwise" |
+| KI-038 | LOW | RESOLVED (Session 7) | `analyze_robustness.py` read the checkpoint step from the wrong field |
+| KI-039 | MEDIUM | RESOLVED (Session 7, D-072) | A simulator test would have built a held-out start once the lock opened |
+| KI-040 | MEDIUM | RESOLVED (Session 8) | `make smoke-sim` built Lift held-out start 0 in memory once the lock had opened |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -829,3 +834,39 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   missing freezes, or only check suite names.
 - **Impact:** none. The test was changed before the lock opened, and `make test` at `bf0a0fa`
   (372 passed) built no held-out start.
+
+### KI-040 — `make smoke-sim` built Lift held-out start 0 in memory once the lock had opened (FIXED, Session 8)
+- **Observed (2026-11-09 00:48 UTC, Session 8 prerequisites):** the native `make smoke-sim
+  SMOKE_OUT=logs/session8/prereq` failed one check, `adapter_reserved_test_seed_locked`
+  (`logs/session8/prereq/code_checks.log`, `logs/session8/prereq/smoke_sim_lift.json`).
+- **Cause:** `scripts/smoke_sim.py` (Session 2) asserted the seed lock by calling
+  `env.reset(900000)` and expecting `FinalTestLockedError`. Since the Level 1 freeze was
+  committed (`bf0a0fa`) the real lock is open on a host with a clean freeze file, so the call
+  succeeded: `RoboForgeEnv.reset` generated the snapshot of seed 900000 (Lift held-out start 0,
+  `random.seed`/`np.random.seed` then `env.reset()`) and restored it into the simulator. This is
+  the KI-039 defect in a script instead of a test; the Session 7 STOP did not re-run
+  `make smoke-sim` after the freeze, so it was not caught there.
+- **What happened and what did not:**
+  - Native, Lift only: the state existed in memory for the rest of `adapter_smoke`, which then
+    closed the env. No policy acted, no step, render, feature, hash or value of that state was
+    computed or written; the report records only the boolean check (`false`). The Can native
+    run never started (the Make loop stops at the first failure).
+  - Container, Lift and Can: the check passed only because the working tree was dirty
+    (untracked Session 8 files), so the wrapper attested `ROBOFORGE_GIT_DIRTY=1` and the lock
+    stayed shut inside the container. With a clean tree the container would have built the
+    held-out starts too.
+  - No Level 1 result, selection, label or finding depends on this; the held-out evaluations
+    ran in Session 7 from the frozen path only. Nothing of the held-out start entered any
+    Session 8 artifact.
+- **Fix (Session 8):** the check now points `suites.yaml`'s lock at a missing freeze
+  (`docs/NO_SUCH_FREEZE.md`) for the duration of the call and resets only after seeing the lock
+  shut, the same rule as the KI-039 test; it also records whether the real lock is open
+  (`real_heldout_lock_open`). `tests/simulator/test_smoke_sim_lock.py` replaces the env's
+  snapshot generator with one that raises on any held-out seed and asserts the smoke check passes
+  without generating anything; the pre-fix script fails that guard (verified on a copy of
+  `HEAD:scripts/smoke_sim.py`). A sweep of `scripts/`, `src/` and `tests/` for the held-out
+  seed block and suite name found no other caller outside the frozen held-out path, the suite
+  module and the tests that point the lock at temporary or missing freezes.
+- **Rule for later sessions:** with the Level 1 lock open, no tool may test the lock against the
+  real freeze. The lock is re-gated on `docs/RGB_EXPERIMENT_FREEZE.md` (HANDOFF) before any RGB
+  held-out work.

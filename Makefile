@@ -22,7 +22,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	train-smoke train eval select param-counts overfit-check benchmark-policies \
 	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
 	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
-	cost-estimate train-main suite suite-plan figures
+	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -137,11 +137,12 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 7 (DECISIONS D-060; Session 6: D-053; Session 5: D-048) so that no
-# Session 7 command can write into Session 6 evidence or reuse the s6 run prefix by omission.
-PREFIX ?= s7
+# Defaults bumped to Session 8 (DECISIONS D-073; Session 7: D-060; Session 6: D-053; Session 5:
+# D-048) so that no Session 8 command can write into Session 6-7 evidence or reuse the s7 run
+# prefix by omission.
+PREFIX ?= s8
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),7)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),8)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -220,6 +221,16 @@ diffusion-reference:  ## Diffusion schedulers/U-Net/sampling/EMA vs diffusers 0.
 export-denoising:  ## Real denoising traces of EVAL_RUN=runs/<eval_run_id> (canonical container)
 	@test -n "$(EVAL_RUN)" || (echo "set EVAL_RUN=runs/<eval_run_id>" >&2; exit 2)
 	$(IN_SIM_S) python scripts/export_denoising.py --eval-run $(EVAL_RUN)
+
+# ---------------------------------------------------------------- Session 8: RGB feasibility
+# Frames of recorded demo states: alignment, projection, invariants, clip, cost (no training,
+# no dataset; MASTER_SPEC §7.2). Canonical evidence comes from the container (OSMesa); the
+# native run (CGL) is development-only and goes to its own platform directory.
+rgb-feasibility:  ## RGB alignment/cost evidence on the canonical container (reports/session<N>/rgb_feasibility)
+	$(IN_SIM_S) python scripts/rgb_feasibility.py
+
+rgb-feasibility-native:  ## The same on this host (development only; its own platform_id directory)
+	$(RUN_S) python scripts/rgb_feasibility.py
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

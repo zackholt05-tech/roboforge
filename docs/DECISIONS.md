@@ -1382,3 +1382,53 @@ Found by review before any freeze, rehearsal or held-out run:
   (218 MB). Both are `.gitignore`d. The rehearsal summaries, check and analysis are committed.
 - **Boundary (MASTER_SPEC Session 7 STOP):** from here on, nothing may change the Level 1 test
   configuration, the labels or the findings. That includes later RGB or point-cloud results.
+
+## Session 8 (2026-11-08 onward)
+Level 1 is frozen (`docs/LEVEL1_COMPLETE.md`). Nothing below changes a Level 1 configuration,
+label or finding; RGB work is a separately labelled observation-modality study (MASTER_SPEC
+§3.2 item 5).
+
+### D-073 Makefile defaults bumped to Session 8 (FIXED)
+- `EVIDENCE_SESSION` falls back to 8 and `PREFIX` to `s8` (as D-048, D-053 and D-060 did), so
+  no Session 8 command can write into `reports/session6`–`7` or reuse the `s7` prefix by
+  omission. `SUITE_PLAN`, `FREEZE_CONFIGS`, `TEST_TASK` and `LATENCY_ARGS` keep their Session 7
+  values; the held-out targets (`eval-final`, `analyze-final`) are never run again (Session 7
+  STOP boundary).
+- New targets: `make rgb-feasibility` (canonical container) and `make rgb-feasibility-native`
+  (development only), both writing `reports/session<N>/rgb_feasibility/<platform_id>/`.
+
+### D-074 RGB frames are rendered from recorded states through the RoboForge render path (FIXED for the feasibility pilot; binding for any RGB dataset unless a later decision changes it)
+`src/roboforge/data/rgb.py`, `src/roboforge/data/rgb_checks.py`, `scripts/rgb_feasibility.py`.
+- **Source:** the raw files `data/raw/robomimic_v1.5/<task>/ph/demo_v15.hdf5` (SHA-256 checked
+  against the manifest) hold per demo the states `[time, qpos, qvel]` and `model_file`, no
+  images. Frame `t` is rendered from `states[t]`; it shares the index with `obs[t]` and
+  `actions[t]` of the committed processed dataset. The raw file's XML, states and actions are
+  checked bitwise against the low-dim file the processed dataset was built from, and the
+  features of the raw states against the processed observations, for every demo.
+- **Path:** the demo's `model_file` is compiled by `reset_to_state` (robosuite's reset toggles
+  every visualization site off) and rendered by `ShadowRenderer` on scratch `MjData` (geom
+  groups `(0, 1, 1, 0, 0, 0)`, the robosuite offscreen convention), never on live data
+  (KI-019). Closed-loop evaluation renders through the same class (`RoboForgeEnv.render`).
+  No robosuite transform helper is used (KI-018): projections use MuJoCo's `cam_xpos`,
+  `cam_xmat` and `cam_fovy` in float64.
+- **Warm-up:** the first render of a fresh GL context can differ from every later render of the
+  same state by a few pixels (measured natively with CGL: up to 6 px on Can). Every kept frame
+  is a steady-state frame: each new context first renders once and discards it
+  (`WARM_UP_RENDERS = 1`). Any RGB policy's closed-loop observation path must do the same.
+- **Cameras:** `agentview` and `robot0_eye_in_hand`, square, the robomimic image setup
+  (`generate_paper_configs.py` at `d309eae`: these two cameras at 84 × 84 with
+  `robot0_eef_pos`, `robot0_eef_quat`, `robot0_gripper_qpos`). Sizes 84 and 128 are both
+  measured; the choice belongs to the RGB experiment freeze.
+- **Alignment record** per frame (schema `roboforge.rgb_frame/1`): task, demo, step index,
+  state SHA-256 (as `sha256_state`), model XML SHA-256, camera name with pinhole intrinsics and
+  world extrinsics, `MUJOCO_GL` backend and frame SHA-256.
+- **Platform:** frames that train or evaluate a reported RGB policy are rendered on the
+  canonical container (OSMesa), like every reported rollout (D-017). Native CGL frames are
+  development-only.
+- **Nothing here reads a held-out state:** inputs are demonstration states and, for the
+  evaluation-model parity check and the step cost, validation start 0.
+
+### D-075 Session 8 evidence location (FIXED)
+- `reports/session8/` and `logs/session8/` with `ROBOFORGE_EVIDENCE_SESSION=8`, as D-062.
+  RGB feasibility evidence: `reports/session8/rgb_feasibility/<platform_id>/`.
+

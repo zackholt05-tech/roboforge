@@ -719,6 +719,12 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - Any change of R (KI-028), or any added validation statistic, needs an amendment written
     before the freeze. It may not change Session 6 selections retroactively.
 
+- **Session 8 (RGB study):** the RGB arms saturate Lift too.
+  - Every RGB run reaches 50/50 on validation.
+  - Selection falls to the first-success tiebreak (two BC runs select step 5000).
+  - Held-out success is 99.3–100 %. The diffusion − BC interval [+0.0, +4.0] is "not
+    separated" (E8-15).
+
 ### KI-035 — Host contention during the Session 6 suite inflated wall times (results unaffected)
 - **Observed:** the suite itself ran up to 10 jobs at once (peak from its event log; limits
   8 training runs, 4 evaluation containers and 10 jobs in total, D-054) on an M1 Pro with 8 performance and 2
@@ -924,3 +930,18 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - the build resumed on its own;
   - from now on the full suite never runs alongside a container job or a large data build.
 
+### KI-044 A Modal preemption restarted one RGB resume launch (LOW, MITIGATED; Session 8)
+- **Observed:** Modal preempted diffusion s2's resume launch at about 11:44 UTC on 2026-11-09
+  (`Container terminated due to preemption`, `logs/session8/rgb_train/s8_rgb_diffusion_resnet18_lift_seed2_ec213b6a_launch1.log`
+  line 98). The functions are `preemptible: true` and cheaper that way.
+- **Handled by design:**
+  - The function retried as attempt 1 of the same launch. Attempt 0 wrote no status, and its
+    `segments.jsonl` line was committed before any work.
+  - Attempt 1 resumed from the atomic `resume/latest.pt` at step 45,000 and finished.
+  - No cadence checkpoint was orphaned.
+  - Resume equals uninterrupted is a tested property (`tests/unit/test_rgb_train.py`).
+- **Consequence:** the run has 3 segments instead of 2, and the minutes lost between 45,000
+  and the preemption were billed and are included in the $8.06. E8-10 originally said every
+  run had 2 segments; the correction is in E8-10.
+- **Rule:** long GPU jobs keep the per-attempt marker before any work and an atomic resume
+  file. Reports must count segments from `segments.jsonl`, not from launches.

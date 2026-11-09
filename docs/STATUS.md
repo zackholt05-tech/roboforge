@@ -1,22 +1,22 @@
 <!-- parsable status header -->
 ```yaml
 CURRENT_SESSION: 8
-SESSION_STATUS: IN_PROGRESS     # RGB study: 6/6 runs trained ($8.06 billed, A-03 closed), 72 validations done, 6 selections committed; remaining: lock re-gate decision + test, held-out test once, analysis, STOP
-NEXT_SESSION: 8 (continuation)  # docs/HANDOFF.md §10; Session 9 only after the RGB study's held-out test and STOP
-BLOCKERS: none                  # open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042
-LAST_VERIFIED_COMMIT: d9c6217   # lint clean, 416 tests (415 + the A-02 test fixed), freeze-check OK (logs/session8/prereq/code_checks_before_rgb_freeze.log)
+SESSION_STATUS: PASS            # Session 8 acceptance (A): RGB data verified; visual BC-chunk and visual diffusion trained, validated, selected and held-out tested once (Lift); diffusion − BC +0.7 pp [+0.0, +4.0], not separated
+NEXT_SESSION: 9                 # Level 2 GO/NO-GO (owner intent GO, needs a new capped approval); docs/HANDOFF.md §10, fresh context
+BLOCKERS: none                  # open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; KI-044 mitigated
+LAST_VERIFIED_COMMIT: ec77929   # code; lint clean, 427 tests (run alone), freeze-check OK, RGB gate open on host and container; the STOP commit adds docs only
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11}
-EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_feasibility: 058cd7e, rgb_probe: cab481b, rgb_dataset_builder: f17db86, rgb_trainer: 6ca5c77, rgb_freeze: d9c6217}
+EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_feasibility: 058cd7e, rgb_probe: cab481b, rgb_dataset_builder: f17db86, rgb_trainer: 6ca5c77, rgb_freeze: d9c6217, rgb_selections: 163d0f3, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, rgb_videos: ec77929}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study: held-out access forbidden until all 6 selections + a lock re-gate decision + test are committed (RGB freeze §9)"
+FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (bc054bc; analysis 3b23255; never rerun). Any later held-out access is exploratory or replication"
 RESOURCE_SPEND: {usd_billed_total: 8.24, session8_usd_billed: 8.09, notes: "A-01 $0.148 (Session 5); A-02 probe $0.0317; A-03 RGB training $8.06 (12 launches); all three approvals closed"}
 APPROVED_LIMIT: {A-02: "closed, $0.0317 of $1", A-03: "closed, $8.06 of $15", open: none, local: "$0"}
-UPDATED: 2026-11-08
+UPDATED: 2026-11-09
 ```
 
 # RoboForge Status
 
-## Session 8: RGB observation-modality study (in progress)
+## Session 8: RGB observation-modality study (PASS)
 | Step (Session 8 prompt) | Status | Evidence |
 |---|---|---|
 | Prerequisites; KI-040 (smoke-sim built a held-out start) fixed | DONE | LEDGER E8-01, E8-02 |
@@ -27,7 +27,8 @@ UPDATED: 2026-11-08
 | 3. `docs/RGB_EXPERIMENT_FREEZE.md` before the first RGB training run | DONE: `d9c6217`; §10 hashes checked against the commit | D-080 |
 | 4a. Train the 6 frozen runs (visual BC-chunk vs visual diffusion, seeds 0–2) | DONE: 6/6 at 60k, 12 launches, **$8.06 billed**, 0 failures | E8-10 |
 | 4b. Validate 12 checkpoints per run; select per §7 | DONE: 72/72 canonical; all runs reach 50/50 (ceiling); selections below | E8-11, `reports/session8/rgb_selection/` |
-| 4c. Lock re-gate decision + test; held-out test once; analysis | TODO (freeze §9) | — |
+| 4c. Lock re-gate decision + test; held-out test once; analysis | DONE: D-081 gate and test (`378ea43`); rehearsal bitwise equal to validation; 6 held-out evaluations once (`bc054bc`); frozen analysis once (`3b23255`) | E8-12–E8-15 |
+| Failure videos (MASTER_SPEC S8) | DONE: 5 rule-selected MP4s from recorded states | E8-16, `reports/session8/rgb_videos/` |
 
 **RGB selections (development numbers; the held-out test is the unbiased estimate):**
 
@@ -39,6 +40,35 @@ UPDATED: 2026-11-08
 | rgb_diffusion | 0 | `s8_rgb_diffusion_resnet18_lift_seed0_dddc7f1c` | 55000 | 50/50 | 44.06 | `6d919dfb989c…` |
 | rgb_diffusion | 1 | `s8_rgb_diffusion_resnet18_lift_seed1_51deeb3e` | 55000 | 50/50 | 43.22 | `5a14e1510f4b…` |
 | rgb_diffusion | 2 | `s8_rgb_diffusion_resnet18_lift_seed2_ec213b6a` | 60000 | 50/50 | 43.90 | `048031b33f05…` |
+
+**RGB held-out results (Lift, 3 seeds × 50 held-out starts, run once; `reports/session8/rgb_results/tables.md`):**
+
+| Family | Success | 95 % bootstrap CI | Per seed | Median `act` latency |
+|---|---|---|---|---|
+| Visual diffusion (ResNet-18, DDIM-10) | **100.0 %** | [100.0, 100.0] | 100, 100, 100 | 166–187 ms |
+| Visual BC-chunk (ResNet-18) | **99.3 %** | [96.0, 100.0] | 98, 100, 100 | 63–66 ms |
+
+- **Diffusion − BC = +0.7 points, 95 % interval [+0.0, +4.0]: not separated.**
+- With 3 seeds the seed-level resampling is coarse.
+- The one failure is BC s0 on start 49, `no_grasp_near`.
+- The three kinds of negative result stay apart:
+  - engineering: none, and engineering is complete;
+  - validation: no family failed it;
+  - held-out: the difference is not separated.
+- Context only, not a declared comparison: Level 1's low-dim policies on the same starts scored
+  BC-MLP-chunk 98.0 % and diffusion 97.3 %. Visual control from two 84² cameras plus 9-D
+  proprioception matches them on Lift. Lift saturates for every arm (KI-034), so it cannot
+  rank visual BC against visual diffusion.
+
+## Session 8 acceptance (MASTER_SPEC Session 8)
+| Criterion | Status | Evidence |
+|---|---|---|
+| Raw snapshots, renderer, RGB extraction, time-step alignment, camera metadata, storage; a small aligned clip with ground-truth actions | DONE | E8-03–E8-05, E8-08, D-074, D-079 |
+| Owner budget approval and an RGB experiment freeze (fair visual BC vs visual diffusion, Lift) | DONE: A-02, A-03; freeze `d9c6217` | D-076, D-078, D-080 |
+| Image-encoder policies with a consistent backbone, frozen input keys, camera settings, identical evaluation states | DONE: shared ResNet-18 GN initialization per seed, identical augmentation and budget, deterministic CUDA | E8-10, freeze §3–§6 |
+| Actual RGB closed-loop results and representative failure videos | DONE: 72 validation and 6 held-out evaluations with full traces; 5 videos | E8-11, E8-14–E8-16 |
+| Level 1 metrics unchanged | DONE: freeze-check OK; no Level 1 file edited; `heldout.evaluate_entry` refuses all 26 Level 1 entries (test) | E8-12 |
+| Costs recorded | DONE: $8.09 billed in Session 8; evaluation local, $0 | COMPUTE_PLAN §7.5 |
 
 ## Session 7 acceptance criteria (MASTER_SPEC Session 7)
 | Criterion | Status | Evidence |
@@ -73,7 +103,8 @@ Family success, % of 3 seeds × 50 held-out starts, with the §9 bootstrap 95 % 
 Interpretation and robustness: `docs/LEVEL1_COMPLETE.md`.
 
 ## Owner decisions pending
-1. None blocks the RGB study now. A-03 covers its training. Evaluation is local.
+1. **Session 9 (Level 2):** the owner's intent is GO (HANDOFF §9). A new capped approval row is
+   needed before any GPU training; it is put to the owner at the start of Session 9.
 2. Optional: set a Modal **workspace budget** (the only hard spending cap).
 3. Optional: prune the Docker build cache (KI-008). 24 GB is free (2026-11-09).
 4. Later: Can for the RGB study needs about 100k steps for diffusion, about $15 more

@@ -983,6 +983,14 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - the queue's next launch is a `resume` from it, which A-04 covers;
   - the 16:00 UTC hour was billed at $0.329 and recorded against the launch, because a
     launch without a measured result counts at its $4.54 upper bound.
+- **Second loss:** the resume launch that followed queued for an L4 from 17:00 UTC. Its
+  container started at 17:22:49 and resumed from step 25,000. About 20 s later the client lost
+  its connection (`StreamTerminatedError`), and the app stopped before any step was saved
+  ($0.0043 billed).
+- **Third launch:** resumed again from the same step-25,000 file and completed 60,000 steps
+  (42.2 ms/step). The run therefore has 3 segments; two of them have no end record.
+- **Fix:** D-085 makes launches detached and single-flight, so a client loss no longer stops
+  the job.
 - **Side effect:** the restarted queue numbers launches from 0 again, so it overwrote the
   first launch's streamed log (`*_launch0.log`). Its plan, result, ledger events and the run
   manifest survive. Before any restart, copy the launch logs aside.

@@ -6,6 +6,32 @@
 (`85eeb2e`). The experiment is fixed by `docs/LEVEL2_EXPERIMENT_FREEZE.md` and RESEARCH_PROTOCOL
 §15. Every number below is measured, unless it is marked *estimate*.
 
+## Outcome (executed 2026-11-09; `reports/session9/level2_results/`, analysed once at `8c728f4`)
+- **Executed:**
+  - 3 DP3-inspired point-cloud runs on the L4 under A-04, **$2.37 billed** of the $9 cap;
+  - 36 validation evaluations, then the §7 selections (steps 30k, 40k, 60k, all 50/50);
+  - the 12 preregistered placement evaluations, both arms;
+  - the held-out test, 3 evaluations through the D-086 gate;
+  - the frozen analysis.
+- **H5 (primary): separated (−).** On `ood_cube_shift`, success was point cloud **56.7 %**
+  (64, 56, 50 per seed) against RGB **98.0 %** (100, 98, 96).
+  - pc − rgb = **−41.3 points, 95 % CI [−54.0, −28.0]**.
+  - Both arms scored 100 % on `robustness_base`.
+  - The point-cloud arm's drop was +43.3 points [+30.0, +56.7]; the RGB arm's was +2.0
+    [+0.0, +6.7], not separated.
+  - Failures of the point-cloud arm under the shift: 45 `no_grasp_near`, 16 `dropped`,
+    4 `no_grasp_drift`.
+- **Held-out (secondary):**
+  - success: 150/150 for both arms, not separated;
+  - censored length: 45.4 against 44.3 steps, +1.1 [−1.4, +3.4], not separated.
+- **Reading.** Under this matched protocol, on Lift, this DP3-inspired point-cloud policy
+  generalised *worse* to cube placements outside the demonstrations' square than the RGB
+  policy. That is a negative result for H5, and it is reported as one.
+  - It is one task, one encoder configuration and 3 seeds.
+  - It is not a test of the official DP3 method, and not evidence that depth is uninformative.
+  - The RGB arm's random-crop augmentation, and the point arm's world-frame coordinates with no
+    augmentation, are part of what was compared.
+
 MASTER_SPEC §7.3 requires items (a)–(f) below. If any of them is missing, the answer is
 `NOT EXECUTED`. Level 1 (`docs/LEVEL1_COMPLETE.md`) and the RGB study
 (`docs/RGB_EXPERIMENT_FREEZE.md`) are frozen, and nothing here changes them.

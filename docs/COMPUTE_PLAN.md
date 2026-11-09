@@ -1,4 +1,4 @@
-# Compute and Modal Plan (Session 5: implemented, tested on Modal, Gate C decided; Sessions 6–7: Level 1 ran locally at $0; Session 8: Gate D proposal, §6)
+# Compute and Modal Plan (Session 5: implemented, tested on Modal, Gate C decided; Sessions 6–7: Level 1 ran locally at $0; Session 8: RGB study, §6–§7; Session 9: Level 2, §8)
 
 **Status (2026-11-07):**
 - **Built and tested:** the Modal integration (D-045–D-050).
@@ -402,3 +402,37 @@ the probe's day. About $24.5 of the $30 credit remains. L60 uses about 40 % of i
 - **Evaluation:** validation (72 evaluations), the held-out test (6) and rehearsal all ran on the
   local canonical container at $0.
 - **Session 8 total: $8.09 billed** ($0.0317 probe + $8.06 training). No approval is open.
+
+## 8. Session 9: Level 2 point clouds (A-04, executed 2026-11-09)
+### 8.1 Proposal and decision
+- `docs/LEVEL2_GO_NO_GO.md` (`85eeb2e`) proposed 3 runs on the L4.
+  - The step time was estimated at ≤ 51 ms/step from the Session 8 probe's compact-CNN
+    diffusion step (45.8 ms × 1.12 for determinism).
+  - That gave about 2.9 L4-hours and about $3.2 at list price (estimate).
+  - Proposed cap: $9.
+- The owner chose **GO, L4, $9 cap** (A-04).
+- The local CPU alternative was measured at 0.191 s/step with 3 processes, about 3.2 h of wall
+  time (E9-05). It was not used.
+
+### 8.2 Actual vs estimate
+| Item | Estimate | Actual |
+|---|---|---|
+| Step time on the L4 (deterministic) | ≤ 51.3 ms | **41.6–42.5 ms** (22 % under the bound) |
+| Training wall time per run | ≈ 51 min | ≈ 42 min (seed 1: 2,504 s; seed 2: 2,553 s) |
+| Launches | 3 (1 per run) | **5**: seed 0 needed 3, because 2 were cut by the host's DNS losses (KI-047) |
+| Billed | ≈ $3.2 | **$2.37** (seed 0 $0.797, seed 1 $0.781, seed 2 $0.796) |
+| L4 queue wait | not modelled | 15–40 min per launch, unbilled |
+
+- **Network:** the host lost DNS 3 times during training.
+  - Two of those losses stopped ephemeral apps.
+  - After D-085 (detached, single-flight launches that re-attach by call ID), the third loss
+    cost nothing: seed 2 kept training and the client re-attached.
+- **Evaluation:** 51 evaluations on the local canonical container, at $0.
+  - 36 validation: 1.84 container-hours;
+  - 12 placement: 1.26 container-hours;
+  - 3 held-out: 0.15 container-hours.
+  - Each point-cloud evaluation took 157–650 s. Failing OOD episodes run to the 400-step
+    horizon.
+- **Credit:** Modal month-to-date usage is **$15.89** (`modal billing report --for "this month"`, 2026-11-09), so about $14.11 of the $30 monthly
+  credit remains. No approval is open.
+

@@ -996,3 +996,27 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   manifest survive. Before any restart, copy the launch logs aside.
 - **Rule:** keep the host online for the whole of a launch. A launch that ends `error` on the
   client is checked on the Volume (status, checkpoints, resume step) before any resume.
+
+### KI-048 The Level 2 gate could not see Session 8 evidence inside the container (LOW, FIXED; Session 9)
+- **Observed:** the first 3 `make pc-heldout` attempts (from `4ebebc1`, clean) were refused by
+  the D-086 gate inside the container. They stopped before any held-out state was read and
+  wrote nothing (`logs/session9/pc_heldout/`).
+- **Cause:** the frozen wrapper `infra/containers/run_sim_cpu.sh` mounts only
+  `reports/session<N>`, here 9. The gate's Session 8 checks therefore could not pass in a
+  Session 9 container: the RGB gate (D-081) and the 3 reused RGB held-out reports.
+- **Fix (D-086 amendment, `08c3aa8`):**
+  - those checks run on the host, where git also verifies the files;
+  - `make pc-heldout` runs the full gate on the host first;
+  - the container gate checks everything else;
+  - a test pins the split and the order.
+- **Rule:** a gate that pins an earlier session's evidence must check it where that evidence
+  is mounted.
+
+### KI-049 One generated training row of the Level 2 analysis was miscomputed (LOW, DOCUMENTED; Session 9)
+- **Observed:** `reports/session9/level2_results/` shows seed 0 at 24.62 ms/step and 0.41 h.
+  `_training` read the resume step from the wrong key and counted two unfinished segments
+  (KI-047).
+- **Correct values:** 42.2 ms/step and 0.70 h (`reports/session9/level2_results/ERRATA.md`).
+  No success, interval, separation or taxonomy count is affected.
+- **Handling:** the analysis is never rerun or overwritten. The erratum sits beside it, and
+  the script is fixed for the record.

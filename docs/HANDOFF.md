@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 8 STOP, updated 2026-11-09) -->
+<!-- parsable handoff header (real values; Session 9 STOP, updated 2026-11-09) -->
 ```yaml
 project: roboforge-3d
-current_session: 8
-session_status: PASS          # Session 8: RGB study complete (acceptance A); see the Session 8 handoff below
-next_session: 9               # Level 2 GO/NO-GO; Session 8 handoff §10, fresh context
-last_verified_commit: ec77929   # Session 8 code: lint clean, 427 tests (alone), freeze-check OK; the STOP commit adds docs only
+current_session: 9
+session_status: PASS          # Session 9: Level 2 GO path complete (H5 separated (-)); see the Session 9 handoff below
+next_session: 10              # RoboForge Observatory; Session 9 handoff §10, fresh context
+last_verified_commit: 620c541   # Session 9 code: lint clean, 478 tests (alone), freeze-check OK, RGB + Level 2 gates open; the STOP commit adds docs only
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -73,11 +73,209 @@ ablation_a3_runs: [s7_diffusion_unet_cos_to1_can_seed0_4b9d434e, s7_diffusion_un
 heldout_results:                      # family success %, 3 seeds x 50 held-out starts (reports/session7/results/tables.md)
   lift: {bc_mlp: 90.7, bc_rnn: 100.0, bc_mlp_chunk: 98.0, diffusion_unet: 97.3, random_uniform: 0.0}
   can:  {bc_mlp: 76.7, bc_rnn: 96.0, bc_mlp_chunk: 96.0, diffusion_unet: 95.3, random_uniform: 0.0}
-modal: {gate_a: done, A-01: "closed, $0.148", A-02: "Gate D RGB probe, closed, $0.0317", A-03: "Gate D2 L60, closed, $8.06 (12 launches; one preemption, KI-044)", open_approvals: none, egl_vs_osmesa: "PENDING (KI-001, KI-033)"}
-final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081 gate, bc054bc). Both locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1 or RGB configuration, ever. Level 2 needs its own recorded re-gate decision + test"
-disk: "20 GB free at the end of Session 8; runs/ 37 GB (KI-008: Docker build cache prune is an owner decision; the Modal runs Volume keeps every RGB checkpoint)"
-next_required_owner_approval: "Session 9: a new capped approval row (A-04) before any Level 2 GPU training; Level 2 GO/NO-GO is the owner's call (intent GO)"
+modal: {gate_a: done, A-01: "closed, $0.148", A-02: "closed, $0.0317", A-03: "closed, $8.06", A-04: "Level 2, closed, $2.37 (5 launches; KI-047; detached launches since D-085)", open_approvals: none, month_to_date: "$15.89 of $30 (2026-11-09)", egl_vs_osmesa: "PENDING (KI-001, KI-033)"}
+final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081); Level 2 TESTED ONCE (Session 9, D-086 gate, a031e88; analysis 620c541). All three locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1, RGB or Level 2 configuration, ever"
+disk: "about 17 GB free at the end of Session 9 (KI-008); Level 2 runs are small (about 0.13 GB each); the Modal runs Volume keeps every checkpoint"
+next_required_owner_approval: "none for Session 10 unless hosting or paid compute is proposed (needs a new approval row); frontend dependencies need a recorded decision"
+level2_study: {freeze: "docs/LEVEL2_EXPERIMENT_FREEZE.md @ b93c50c (sha256 ffe5a03e...)", gate: "D-086 @ b1f4da2, amended 08c3aa8", runs: [s9_pc_diffusion_dp3_lift_seed0_8fd35613, s9_pc_diffusion_dp3_lift_seed1_a66a2758, s9_pc_diffusion_dp3_lift_seed2_402a1f24], selections: "30000 / 40000 / 60000 (reports/session9/pc_selection/)", placement: "reports/session9/level2_placement/ @ 4ebebc1", heldout: "reports/session9/pc_heldout/ @ a031e88", results: "reports/session9/level2_results/ @ 620c541 (+ ERRATA.md)", h5: "pc - rgb on ood_cube_shift -41.3 pp [-54.0, -28.0], separated (-)", heldout_success: {pc_diffusion: 100.0, rgb_diffusion: 100.0}, label: DP3-inspired, privilege: sensor-like}
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 378ea43", selections: reports/session8/rgb_selection/, heldout: "reports/session8/rgb_heldout/ @ bc054bc", results: "reports/session8/rgb_results/ @ 3b23255", success: {rgb_diffusion: 100.0, rgb_bc_chunk: 99.3}, diffusion_minus_bc: "+0.7 pp [+0.0, +4.0], not separated", videos: reports/session8/rgb_videos/}
+```
+
+# Session 9 Handoff
+
+Do not trust this file blindly: re-run the checks in "Exact starting instructions".
+
+## 1. Session completed
+Session 9 (MASTER_SPEC §7.3 and Session 9: Level 2, explicit 3D perception, DP3-inspired).
+Status **PASS, GO path**.
+- **Feasibility:** depth from the RGB arm's two cameras, calibrated to metric world-frame
+  points, verified numerically and visually on the canonical container.
+- **Decision:** the owner chose GO on the L4 (A-04, $9 cap) and made the placement test (H5)
+  primary.
+- **Training:** a DP3-inspired point-cloud diffusion policy, 3 seeds, under a committed freeze
+  (`b93c50c`). **$2.37 billed.**
+- **Evaluation:** validated and selected by §7; the 12 preregistered placement evaluations
+  for both arms; the held-out test once behind a new gate (D-086); the analysis once.
+- **Level 1 and the RGB study:** frozen and untouched.
+
+**Result (Lift):**
+- `ood_cube_shift`: point cloud **56.7 %** against RGB **98.0 %**. **H5: −41.3 points
+  [−54.0, −28.0], separated (−).**
+- Base and held-out: 100 % for both arms, not separated.
+- A negative result for H5, reported as such.
+
+## 2. Completed work
+- **D-082:** Makefile defaults for Session 9 (`PREFIX ?= s9`, evidence session 9).
+- **D-083:** the depth and point-cloud path (`src/roboforge/data/pointcloud.py`):
+  - sites hidden;
+  - reversed-Z conversion;
+  - pixel-centre back-projection;
+  - fixed box crop;
+  - FPS to 512 points;
+  - sensor-like privilege.
+- **Feasibility:** `scripts/pc_feasibility.py`, with diagnostics in `pc_checks`:
+  - calibration, invariants, coverage, cost and overlays;
+  - the superseded `a20bfe3` run disclosed (planarity condition added).
+- **D-084:** the point-cloud dataset (9,666 frames, 56.3 MB), built on the container and
+  installed.
+- **Arm:**
+  - `models/point_encoder.py` (DP3-inspired);
+  - `train/pointcloud.py` (`PCTrainer` subclasses the frozen `RGBTrainer`);
+  - the config matched to the RGB diffusion arm.
+- **Compute:**
+  - `compute/pc_train.py`, `train_gpu_pc` (L4) and `scripts/pc_train_queue.py`, with a
+    step-time stop rule;
+  - **D-085:** detached, single-flight launches that re-attach by call ID
+    (`compute/launch_wait.py`).
+- **Evaluation:**
+  - `eval/pointcloud.py` and `scripts/eval_pc.py` (validate, select, placement);
+  - **D-086:** `eval/pc_heldout.py`, `scripts/run_pc_heldout.py` and the guarded test.
+- **Analysis:** `scripts/analyze_level2.py`, run once; erratum KI-049.
+- **Protocol:** RESEARCH_PROTOCOL §2 (H5), §13 amendment, §15; `docs/LEVEL2_EXPERIMENT_FREEZE.md`.
+
+## 3. Files created or changed (Session 9)
+- **Docs:**
+  - new: `docs/LEVEL2_GO_NO_GO.md`, `docs/LEVEL2_EXPERIMENT_FREEZE.md`;
+  - updated: `docs/{STATUS,HANDOFF,DECISIONS,KNOWN_ISSUES,EXPERIMENT_LEDGER,COMPUTE_PLAN,RESEARCH_PROTOCOL}.md`
+    and `THIRD_PARTY_NOTICES.md` (DP3 citation).
+- **Code:**
+  - `src/roboforge/data/{pointcloud,pc_checks,pc_dataset}.py`
+  - `src/roboforge/models/point_encoder.py`
+  - `src/roboforge/train/pointcloud.py`
+  - `src/roboforge/compute/{pc_train,launch_wait}.py`
+  - `src/roboforge/eval/{pointcloud,pc_heldout}.py`
+  - `scripts/{pc_feasibility,build_pc_dataset,benchmark_pc_training,pc_train_queue,eval_pc,run_pc_heldout,analyze_level2}.py`
+  - `infra/modal_app.py`
+  - `configs/models/pointcloud/diffusion_dp3_lift.yaml`
+  - `configs/experiments/level2_pointcloud.yaml`
+  - `configs/compute/modal.yaml`
+  - `Makefile`
+- **Tests:**
+  - `tests/unit/test_{pointcloud,pc_train,level2_plan,launch_wait}.py`
+  - `tests/simulator/test_{pointcloud_alignment,pc_closed_loop}.py`
+  - `tests/research_integrity/test_pc_heldout_gate.py`
+- **Data:** `data/manifests/pointcloud/lift_pc512_v1.json` (committed). The HDF5 file is
+  gitignored.
+- **Evidence:** `reports/session9/{pc_feasibility,pc_benchmark,pc_validation,pc_selection,level2_placement,pc_heldout,pc_heldout_rehearsal,level2_results}/`
+  and `logs/session9/`.
+
+## 4. Executed commands and results
+| Command | Result |
+|---|---|
+| `make pc-feasibility` (container, `b16b692`) | PASS: interior depth error max 3.6 µm (0 pixels over 1 mm); known point within its footprint; invariants bitwise |
+| `make pc-dataset` / `make pc-dataset-install` | 200 demos, 9,666 frames, content `39fa3e52…` |
+| `scripts/pc_train_queue.py --budget-approved A-04` | 3/3 runs complete at 41.6–42.5 ms/step; 5 launches; $2.37 billed |
+| `make pc-validate` × 3 runs, then `eval_pc.py select` | 36/36 clean; selected 30k, 40k, 60k (all 50/50) |
+| `make pc-placement` × 12 | 12/12 clean. OOD: pc 32/28/25, rgb 50/49/48 of 50 |
+| `make pc-heldout` × 3 (after the rehearsal) | 150/150 |
+| `make level2-analyze` | H5 separated (−); results in `reports/session9/level2_results/` |
+| `make lint`; full `pytest` alone; `make freeze-check`; both gates | clean; 478 passed; OK; open |
+
+## 5. Key findings (validation numbers are development numbers)
+- **H5 is separated (−):**
+  - the point-cloud arm loses 43.3 points when the cube moves 5–7 cm outside the training
+    square;
+  - the RGB arm loses 2.0 points.
+  - The point-cloud failures are mostly `no_grasp_near`: the gripper reaches the cube's
+    region but misses the grasp.
+- **In distribution the arms are equal:** 100 % on base and held-out, so Lift's ceiling holds
+  (KI-034).
+- **Interpretation limits:**
+  - one encoder configuration, with no point-cloud augmentation, against an RGB arm trained
+    with random crops;
+  - world-frame coordinates are part of the treatment;
+  - one task, 3 seeds;
+  - not a DP3 reproduction.
+- **Latency:** 146–147 ms per decision (point cloud) against 166–187 ms (RGB), on the
+  container.
+
+## 6. Decisions and issues
+- **Decisions:** D-082–D-086 (D-086 amended in `08c3aa8`).
+- **Issues:**
+  - KI-045 (native CGL depth precision, mitigated);
+  - KI-046 (hidden sites wrote depth, fixed);
+  - KI-047 (client network loss stopped launches, mitigated by D-085);
+  - KI-048 (the gate's Session 8 checks inside the container, fixed);
+  - KI-049 (analysis training-row erratum, documented).
+
+## 7. Budget
+- **Session 9:** $2.37 billed (A-04, closed), against an estimate of about $3.2.
+- **Project:** $10.61 billed in total. Modal month-to-date is $15.89 of $30.
+- No approval is open. Evaluation was local, at $0.
+
+## 8. Outstanding items (none blocks Session 10)
+- Optional owner items: a Modal workspace budget; Docker cache pruning (KI-008); fixing the
+  host's DNS (KI-047).
+- Open from earlier sessions: KI-001 and KI-033 (EGL vs OSMesa), KI-034 (Lift ceiling).
+
+## 9. What Session 10 can use
+Frozen evidence for the Observatory:
+- Level 1 (`reports/session7/`), the RGB study (`reports/session8/`) and Level 2
+  (`reports/session9/`). Each has run manifests, checkpoint hashes and per-episode records
+  under `runs/`.
+- Calibrated point-cloud overlays (`reports/session9/pc_feasibility/…/lift_overlay_*.png`).
+- The Level 2 results and erratum, for panel G "Beyond Pixels": Level 2 *was* executed, so
+  real results may be shown, labelled DP3-inspired and negative for H5.
+
+## 10. Exact starting instructions for Session 10
+Paste into a fresh Claude Code session:
+
+```text
+Implement RoboForge 3D SESSION 10 ONLY from MASTER_SPEC.md (RoboForge Observatory: interactive
+3D scientific storytelling). Begin by reading all of MASTER_SPEC.md (especially §8 and the
+Session 10 section), docs/STATUS.md, docs/HANDOFF.md "# Session 9 Handoff", docs/DECISIONS.md
+(D-082–D-086), docs/KNOWN_ISSUES.md (KI-034, KI-045–KI-049), docs/EXPERIMENT_LEDGER.md
+(Sessions 7–9 and the approvals table: no approval is open), docs/LEVEL1_COMPLETE.md,
+docs/RGB_EXPERIMENT_FREEZE.md, docs/LEVEL2_EXPERIMENT_FREEZE.md, docs/LEVEL2_GO_NO_GO.md,
+reports/session7/results/tables.md, reports/session8/rgb_results/tables.md and
+reports/session9/level2_results/{tables.md,ERRATA.md}.
+
+Inspect the real state first:
+- git log --format=fuller -n 8; git status;
+- make lint; make freeze-check;
+- `uv run --frozen python scripts/run_rgb_heldout.py gate` and
+  `uv run --frozen python scripts/run_pc_heldout.py gate` (both must print open);
+- never run the full test suite alongside a container job (KI-043).
+
+1. Record a decision for the Session 10 Makefile defaults (PREFIX ?= s10, evidence session 10;
+   the D-082 pattern) and one for the web stack before adding any frontend dependency:
+   - React Three Fiber / three.js per MASTER_SPEC §8.3;
+   - a separate web/ package with its own lockfile;
+   - uv.lock and pyproject unchanged.
+2. Export authentic artifacts for the site from frozen evidence only:
+   - recorded rollouts (link and object transforms re-derived from the saved simulator states on
+     the canonical container), with model, seed, state and physics provenance;
+   - actual diffusion denoising traces. If they need new policy calls, run them only on
+     validation-regime starts (validation or the robustness sets), labelled as an export,
+     never on held-out starts, and never as a new reported result.
+   Verify the 3D viewer against at least 3 simulator reference frames and report every visual
+   approximation.
+3. Build the site sections of MASTER_SPEC §8.2 A–H:
+   - findings with denominators and intervals from the frozen results files;
+   - panel G shows the real Level 2 results (DP3-inspired, H5 separated (−), the KI-049
+     erratum) and the calibrated overlays;
+   - nothing illustrative is presented as a measured result.
+4. Accessibility, keyboard, reduced motion, mobile layouts, loading states and asset budgets.
+   `npm run build` (or equivalent) and E2E/UI sanity checks must pass. Hosting only if the
+   owner authorizes it: ask, and record the answer.
+5. STOP:
+   - update STATUS, HANDOFF, DECISIONS, KNOWN_ISSUES and EXPERIMENT_LEDGER;
+   - run lint, the full test suite (alone), freeze-check and both gates;
+   - commit verified code as Zackary Holt <zackholt05@gmail.com>, with no AI co-author trailers;
+   - inspect git log --format=fuller -n 5;
+   - write the exact Session 11 prompt, then STOP.
+
+Boundaries (binding):
+- Level 1, the RGB study and Level 2 are frozen. Never rerun make eval-final, make
+  analyze-final, make rgb-heldout, scripts/analyze_rgb_heldout.py, make pc-heldout, make
+  pc-placement or make level2-analyze. Never edit reports/session6-9 results, the freezes,
+  LEVEL1_COMPLETE or LEVEL2_GO_NO_GO's executed outcome. Never prune or move frozen runs.
+- No training. No paid or remote compute (including hosting) without an approval row.
+- No changes to data, eval suites, uv.lock or Python dependencies without a decision.
+- Never uv sync or uv run inside the image.
+- Use EVIDENCE_SESSION=10. Every rollout export runs on the canonical container via
+  run_sim_cpu.sh with ROBOFORGE_EVIDENCE_SESSION=10, from a clean tree.
+- Label every estimate as an estimate.
 ```
 
 # Session 8 Handoff

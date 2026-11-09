@@ -77,8 +77,9 @@ verified only within one container on one L4, at 20 steps. Whether runs are bitw
 across different L4 hosts or drivers is **not** verified.
 
 ## Cost
-- Measured container time × list price: **$0.0293** (`reports/compute/cost_ledger.jsonl`,
-  `result` event).
-- Modal's daily report already shows **$0.0317** for `roboforge` on 2026-11-09.
-- The billed amount per launch is recorded from the hourly report once its hour has closed
-  (`billing` event).
+**$0.0317 billed.** Source: Modal's hourly report for 02:00 UTC
+(`logs/session8/modal/billing_20261109_h.json`), recorded as the `billing` event in
+`reports/compute/cost_ledger.jsonl`. Measured container time × list price was $0.0293; the
+difference is start-up.
+
+The A-02 cap was $1.00. The approval is now closed (`exhausted`).

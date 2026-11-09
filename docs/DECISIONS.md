@@ -1479,3 +1479,25 @@ label or finding; RGB work is a separately labelled observation-modality study (
     on the CPU.
 - **Not covered:** Can, tuning trials, and any run outside the freeze.
 
+
+### D-079 The Lift RGB dataset: an image-only file paired with the low-dim dataset (FIXED)
+`src/roboforge/data/rgb_dataset.py`, `scripts/build_rgb_dataset.py`, `make rgb-dataset` and
+`make rgb-dataset-install`.
+- **New data, added by decision.** Nothing existing in `data/` changes. The new pieces are:
+  - `data/processed/robomimic_v1.5_ph/lift/rgb84_v1.hdf5`, gitignored like every processed
+    file;
+  - its committed manifest, `data/manifests/rgb/lift_rgb84_v1.json`.
+- **Content:**
+  - both cameras at 84², `uint8`, of every frame of all 200 demos, rendered under D-074 on
+    the canonical container;
+  - the per-step state SHA-256;
+  - schema `roboforge.rgb_dataset/1`.
+- **What it does not hold:** proprioception, actions and the split. These come from the
+  committed low-dim dataset. The file pins that dataset's content hash
+  (`processed_content_sha256`), and the builder checks every demo's raw-state features
+  against it bitwise before rendering.
+- **Build and install:**
+  - the container mounts `data/` read-only, so the build writes `runs/rgb_data/lift/`;
+  - the install step re-verifies the file and content hashes on the host before copying;
+  - it never overwrites an installed file;
+  - it refuses a partial (`--limit`) build.

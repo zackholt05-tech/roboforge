@@ -22,7 +22,8 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	train-smoke train eval select param-counts overfit-check benchmark-policies \
 	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
 	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
-	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native
+	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native \
+	rgb-dataset rgb-dataset-install
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -231,6 +232,14 @@ rgb-feasibility:  ## RGB alignment/cost evidence on the canonical container (rep
 
 rgb-feasibility-native:  ## The same on this host (development only; its own platform_id directory)
 	$(RUN_S) python scripts/rgb_feasibility.py
+
+RGB_TASK ?= lift
+RGB_SIZE ?= 84
+rgb-dataset:  ## RGB demo frames on the canonical container -> runs/rgb_data/<task>/ (D-079)
+	$(IN_SIM_S) python scripts/build_rgb_dataset.py --task $(RGB_TASK) --size $(RGB_SIZE)
+
+rgb-dataset-install:  ## Host: verify and install the staged build into data/ (+ committed manifest)
+	$(RUN) python scripts/build_rgb_dataset.py --install runs/rgb_data/$(RGB_TASK)/rgb$(RGB_SIZE)_v1.manifest.json
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

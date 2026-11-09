@@ -47,6 +47,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-040 | MEDIUM | RESOLVED (Session 8) | `make smoke-sim` built Lift held-out start 0 in memory once the lock had opened |
 | KI-041 | LOW | MITIGATED (Session 8, D-074) | The first render of a fresh CGL context differs from later renders by a few pixels (macOS only) |
 | KI-042 | LOW | OPEN (Session 8) | Frozen `DiffusionPolicy.sample` draws its initial noise on the CPU, so diffusion inference cannot run on CUDA |
+| KI-043 | LOW | MITIGATED (Session 8) | The container dataset build and the full test suite run together exhausted the 16 GB host's memory and stalled both |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -906,4 +907,20 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - Any GPU-side offline metric that samples, such as validation action MSE, must move the
     model to the CPU first, or use a new, non-frozen sampler wrapper. Level 1's file stays
     unchanged.
+
+### KI-043 Concurrent container build and full test suite stall the 16 GB host (LOW, MITIGATED; Session 8)
+- **Observed 2026-11-09, 03:10–03:52 UTC.** `make rgb-dataset` (Docker VM up to 7.7 GiB) and
+  the full `pytest` suite ran natively at the same time.
+- **Effect:**
+  - host memory was exhausted: 131 MB free, 6.7 GB in the compressor, heavy swapping, load
+    average 35;
+  - the build stopped progressing for about 40 min, at 120 of 200 demos. It took 73 min of wall
+    time, while the container's monotonic clock counted only 26 min, so the VM was starved;
+  - the suite ran 33 min instead of about 7.5.
+- **No result was affected.** Rendering is a pure function of the state, and the build
+  re-reads and hash-checks its output.
+- **Handling:**
+  - the test-suite run was stopped (not counted as a test result);
+  - the build resumed on its own;
+  - from now on the full suite never runs alongside a container job or a large data build.
 

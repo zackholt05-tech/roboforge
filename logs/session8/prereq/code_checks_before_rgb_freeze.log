@@ -1,0 +1,93 @@
+== make lint
+uv run --frozen ruff check src scripts tests infra
+All checks passed!
+rc=0
+== make test
+uv run --frozen pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.2.0, pluggy-1.7.0
+rootdir: /Users/zackaryholt/Projects/roboforge
+configfile: pyproject.toml
+testpaths: tests
+collected 416 items
+
+tests/integration/test_data_pipeline.py ..............................   [  7%]
+tests/integration/test_datasets.py .......                               [  8%]
+tests/integration/test_remote_job.py .                                   [  9%]
+tests/integration/test_resumable_run.py .........                        [ 11%]
+tests/integration/test_train_real_data.py ......                         [ 12%]
+tests/integration/test_verify_data_cli.py .                              [ 12%]
+tests/research_integrity/test_final_test_lock.py ..................      [ 17%]
+tests/research_integrity/test_robustness_disjoint.py ..                  [ 17%]
+tests/simulator/test_diffusion_closed_loop.py ....                       [ 18%]
+tests/simulator/test_env_adapter.py ..........................           [ 25%]
+tests/simulator/test_eval_variants.py .......                            [ 26%]
+tests/simulator/test_features_closed_loop.py ......                      [ 28%]
+tests/simulator/test_learned_policy.py .........                         [ 30%]
+tests/simulator/test_lift_sim.py ............                            [ 33%]
+tests/simulator/test_render_probe.py .                                   [ 33%]
+tests/simulator/test_rgb_alignment.py ..........                         [ 35%]
+tests/simulator/test_rgb_closed_loop.py ..                               [ 36%]
+tests/simulator/test_robustness_states.py ..........                     [ 38%]
+tests/simulator/test_rollout.py .....                                    [ 39%]
+tests/simulator/test_smoke_sim_lock.py ..                                [ 40%]
+tests/simulator/test_taxonomy_sim.py .                                   [ 40%]
+tests/unit/test_analyze_heldout.py ......                                [ 42%]
+tests/unit/test_analyze_robustness.py ..                                 [ 42%]
+tests/unit/test_bc_models.py ..............                              [ 45%]
+tests/unit/test_compare_platform_evidence.py ...                         [ 46%]
+tests/unit/test_compute.py ............                                  [ 49%]
+tests/unit/test_coords.py .......                                        [ 51%]
+tests/unit/test_diffusion_policy.py ..........                           [ 53%]
+tests/unit/test_diffusion_reference.py ...........                       [ 56%]
+tests/unit/test_fetch_and_inspect.py ...........                         [ 58%]
+tests/unit/test_fetch_resume.py .......                                  [ 60%]
+tests/unit/test_forward_pass.py ..                                       [ 61%]
+tests/unit/test_freeze.py .............                                  [ 64%]
+tests/unit/test_math_and_backend.py .....                                [ 65%]
+tests/unit/test_normalization.py ...........                             [ 68%]
+tests/unit/test_paths.py ....                                            [ 68%]
+tests/unit/test_rgb_dataset.py ...                                       [ 69%]
+tests/unit/test_rgb_probe.py .F.....                                     [ 71%]
+tests/unit/test_rgb_projection.py ......                                 [ 72%]
+tests/unit/test_rgb_train.py .....                                       [ 74%]
+tests/unit/test_rgb_train_plan.py ....                                   [ 75%]
+tests/unit/test_run_suite_reads.py ....                                  [ 75%]
+tests/unit/test_selection.py .........                                   [ 78%]
+tests/unit/test_sequence.py ..........                                   [ 80%]
+tests/unit/test_slots.py ...                                             [ 81%]
+tests/unit/test_snapshot.py .....                                        [ 82%]
+tests/unit/test_split.py .......                                         [ 84%]
+tests/unit/test_statistics.py ...........                                [ 86%]
+tests/unit/test_suite_plan.py .............                              [ 89%]
+tests/unit/test_taxonomy.py ...............                              [ 93%]
+tests/unit/test_train_loop.py ..........                                 [ 95%]
+tests/unit/test_validation_figures.py ...                                [ 96%]
+tests/unit/test_vision_encoder.py .....                                  [ 97%]
+tests/unit/test_windows.py ........                                      [ 99%]
+tests/web_contract/test_three_contract.py .                              [100%]
+
+=================================== FAILURES ===================================
+__________ test_approval_a02_covers_only_the_rgb_probe_within_its_cap __________
+
+    def test_approval_a02_covers_only_the_rgb_probe_within_its_cap() -> None:
+        a = read_approvals()["A-02"]
+>       assert (a.status, a.functions, a.cap_usd) == ("granted", ("rgb_probe",), 1.0)
+E       AssertionError: assert ('exhausted',...probe',), 1.0) == ('granted', (...probe',), 1.0)
+E         
+E         At index 0 diff: 'exhausted' != 'granted'
+E         Use -v to get more diff
+
+tests/unit/test_rgb_probe.py:46: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_rgb_probe.py::test_approval_a02_covers_only_the_rgb_probe_within_its_cap
+================== 1 failed, 415 passed in 486.22s (0:08:06) ===================
+make: *** [test] Error 1
+rc=2
+== make freeze-check
+ROBOFORGE_EVIDENCE_SESSION=8 uv run --frozen python -c "from roboforge.eval import freeze as f; d = f.load_freeze(); \
+	  bad = f.code_problems(d); print('\n'.join(bad) or 'freeze committed; frozen code unchanged'); \
+	  raise SystemExit(1 if bad else 0)"
+freeze committed; frozen code unchanged
+rc=0
+== after fixing tests/unit/test_rgb_probe.py (A-02 is exhausted): 7 passed in 2.27s

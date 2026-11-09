@@ -1501,3 +1501,18 @@ label or finding; RGB work is a separately labelled observation-modality study (
   - the install step re-verifies the file and content hashes on the host before copying;
   - it never overwrites an installed file;
   - it refuses a partial (`--limit`) build.
+
+### D-080 The RGB experiment is frozen in `docs/RGB_EXPERIMENT_FREEZE.md` (FIXED, before any RGB training run)
+The freeze fixes:
+- arms, observation, encoder, initialization rule and augmentation;
+- budget (60k steps, batch 64, K = 12, seeds 0–2), device and launch order;
+- data hashes (RGB content `41c0ea02…`, paired with low-dim `74e70119…`);
+- the §7 selection rule on the 50 Lift validation starts;
+- the closed-loop policy path, the held-out test and its analysis, the §9 bootstrap;
+- the hashes of the 12 files that define the experiment.
+
+Held-out access stays forbidden until three things are committed:
+- all 6 selections;
+- a decision re-gating the lock on the freeze;
+- a test (freeze §9).
+

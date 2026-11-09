@@ -41,15 +41,13 @@ def test_plan_upper_bound_fits_the_cap_even_at_the_region_maximum() -> None:
     assert any(n.startswith("repeat:deterministic:") for n in names)
 
 
-def test_approval_a02_covers_only_the_rgb_probe_within_its_cap() -> None:
+def test_approval_a02_covered_only_the_rgb_probe_and_is_now_closed() -> None:
     a = read_approvals()["A-02"]
-    assert (a.status, a.functions, a.cap_usd) == ("granted", ("rgb_probe",), 1.0)
+    assert (a.status, a.functions, a.cap_usd) == ("exhausted", ("rgb_probe",), 1.0)
     est = rgb_probe_plan(events=[])["estimate"]["total_usd"]
-    assert authorize("A-02", "rgb_probe", est, [])["remaining_after_usd"] > 0
-    with pytest.raises(ApprovalError):
-        authorize("A-02", "gpu_probe", est, [])
-    with pytest.raises(ApprovalError):
-        authorize("A-02", "rgb_probe", 1.01, [])
+    assert est <= a.cap_usd
+    with pytest.raises(ApprovalError, match="exhausted"):
+        authorize("A-02", "rgb_probe", est, [])
 
 
 def test_job_refuses_once_the_attempt_cap_is_reached(tmp_path: Path) -> None:

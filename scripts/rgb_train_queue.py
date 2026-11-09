@@ -60,8 +60,11 @@ def main(argv: list[str] | None = None) -> int:
                    "--family", family, "--seed", str(seed), "--prefix", a.prefix,
                    "--mode", mode, "--budget-approved", a.budget_approved]
             t0 = time.time()
-            proc = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
-            out = proc.stdout + proc.stderr
+            launch_log = a.log.parent / f"{rid}_launch{n}.log"
+            with launch_log.open("w") as fh:  # streamed, so a hung launch is visible
+                proc = subprocess.run(cmd, cwd=REPO_ROOT, stdout=fh, stderr=subprocess.STDOUT,
+                                      text=True)
+            out = launch_log.read_text()
             m = re.search(r"^result: (.+\.result\.json)$", out, re.M)
             res = json.loads(Path(m.group(1)).read_text()) if m else {}
             rec = {"utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "run_id": rid,
@@ -69,7 +72,8 @@ def main(argv: list[str] | None = None) -> int:
                    "returncode": proc.returncode, "status": res.get("status"),
                    "end_step": res.get("end_step"), "client_wall_s": time.time() - t0,
                    "app_id": (res.get("modal") or {}).get("app_id"),
-                   "detail": res.get("detail"), "tail": out[-1500:] if not m else None}
+                   "detail": res.get("detail"), "launch_log": str(launch_log),
+                   "tail": out[-1500:] if not m else None}
             with a.log.open("a") as fh:
                 fh.write(json.dumps(rec, default=str) + "\n")
             print(json.dumps({k: rec[k] for k in ("run_id", "launch", "mode", "status",

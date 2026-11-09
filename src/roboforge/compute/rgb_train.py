@@ -8,8 +8,9 @@ Run directory ``runs/<run_id>/`` (the Modal runs Volume, or local ``runs/`` for 
 * ``manifest.json`` (``roboforge.rgb_run/1``) holds the config, the data hashes, the status,
   every cadence checkpoint (step, SHA-256, inference digest, validation loss) and every
   segment;
-* ``segments.jsonl`` adds one line per started segment: launch ID, attempt, host, cloud,
-  region, GPU, driver and determinism flags (the amendment's provenance);
+* ``segments.jsonl`` adds one line per started attempt, written and committed before any
+  data or GPU work; the attempt cap counts these lines. The manifest's segment entry adds
+  host, cloud, region, GPU, driver and determinism flags (the amendment's provenance);
 * ``metrics.jsonl`` holds loss and gradient norm every ``log_every`` steps;
 * ``checkpoints/step_<k>.pt`` and ``resume/latest.pt``.
 
@@ -159,7 +160,14 @@ def run_segment(*, family: str, seed: int, prefix: str, overrides: dict[str, Any
         raise FileExistsError(f"{run_dir} already has segments; a new run never reuses it")
     if mode == "resume" and not (run_dir / "resume" / "latest.pt").is_file():
         raise FileNotFoundError(f"{run_dir}: nothing to resume")
+    # Count this attempt before any data or GPU work, so a preemption during start-up still
+    # counts against the cap (KI-031). Details go to the manifest's segment entry below.
     run_dir.mkdir(parents=True, exist_ok=True)
+    with seg_file.open("a") as fh:
+        fh.write(json.dumps({"launch_id": launch_id, "attempt": attempt, "mode": mode,
+                             "utc_start": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                                        time.gmtime())}) + "\n")
+    commit()
     ctx = run_context(cfg, rid)
     h = ctx["hashes"]
     if expected is not None:  # the plan's hashes must be the ones on this machine
@@ -179,8 +187,6 @@ def run_segment(*, family: str, seed: int, prefix: str, overrides: dict[str, Any
            "resumed_from_step": resumed_from, "utc_start": time.strftime(
                "%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "git": git_revision(),
            "flags": tr.flags, "host": segment_host()}
-    with seg_file.open("a") as fh:
-        fh.write(json.dumps(seg, default=str) + "\n")
     man_path = run_dir / "manifest.json"
     man = json.loads(man_path.read_text()) if man_path.exists() else {
         "schema": RUN_SCHEMA, "run_id": rid, "family": cfg["family"], "task": cfg["task"],
@@ -238,6 +244,8 @@ def rgb_train_job(plan: dict[str, Any], *, runs_root: Path, commit: Any = None) 
     """Remote side of a ``train_gpu`` launch."""
     from roboforge.compute.remote import _set_git_env
 
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG",
+                          plan["config"]["device"]["cublas_workspace_config"])  # before CUDA
     _set_git_env(plan)
     return run_segment(family=plan["family"], seed=int(plan["overrides"]["seed"]),
                        prefix=plan["prefix"],

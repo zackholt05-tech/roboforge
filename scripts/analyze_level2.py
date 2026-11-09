@@ -130,9 +130,9 @@ def _training(run_id: str, events: list[dict[str, Any]]) -> dict[str, Any]:
                 if e["event"] == "launch" and e.get("run_id") == run_id}
     billed = sum(float(e["billed_usd"]) for e in events
                  if e["event"] == "billing" and e.get("launch_id") in launches)
-    wall = sum(float(g.get("train_wall_s") or 0) for g in man["segments"])
-    steps = sum(int(g.get("end_step") or 0) - int(g.get("start_step") or g.get("resumed_from")
-                                                    or 0) for g in man["segments"])
+    done = [g for g in man["segments"] if g.get("end_step") is not None]  # KI-047: unfinished
+    wall = sum(float(g.get("train_wall_s") or 0) for g in done)
+    steps = sum(int(g["end_step"]) - int(g.get("resumed_from_step") or 0) for g in done)
     return {"segments": len(man["segments"]), "train_wall_s": wall, "launches": len(launches),
             "billed_usd": round(billed, 4),
             "ms_per_step": round(1000 * wall / steps, 2) if steps > 0 else None}

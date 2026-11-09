@@ -1,0 +1,30 @@
+# Level 2 point-cloud arm (Session 9; MASTER_SPEC §7.3; docs/LEVEL2_GO_NO_GO.md). DP3-inspired:
+# one fused world-frame cloud from the depth of the RGB arm's two cameras (sensor-like depth +
+# calibration + a fixed workspace box; no segmentation, no object state), a per-point MLP
+# encoder (64, 128, 256; LayerNorm) with max pooling and a 64-D projection, plus the same 9-D
+# proprioception. The head, horizons, optimizer, budget, seeds and device are copied verbatim
+# from configs/models/rgb/diffusion_resnet18_lift.yaml (a test checks every shared block).
+schema: roboforge.pc_train_config/1
+name: pc_diffusion_dp3
+family: pc_diffusion
+head_family: diffusion_unet
+head_config: configs/models/diffusion_unet.yaml
+task: lift
+seed: 0
+horizons: {obs: 2, pred: 16, exec: 8}
+observation:
+  cloud: {cameras: [agentview, robot0_eye_in_hand], size: 84, box_lo: [-0.25, -0.25, 0.805],
+          box_hi: [0.25, 0.25, 1.2], n_points: 512, sampler: fps_start0, dtype: float32,
+          schema: roboforge.point_cloud_spec/1}
+  proprio: [robot0_eef_pos, robot0_eef_quat, robot0_gripper_qpos]
+  proprio_dims: [0, 9]   # first 9 of the 19-D low-dim spec; normalized with its train stats
+encoder: {kind: dp3, widths: [64, 128, 256], out_dim: 64, norm: layernorm, augmentation: none}
+model: {down_dims: [64, 128], step_embed_dim: 64, kernel_size: 5, n_groups: 8,
+        num_train_timesteps: 100, beta_schedule: squaredcos_cap_v2, prediction_type: epsilon,
+        clip_sample: true, sampler: ddim, inference_steps: 10, ddim_eta: 0.0,
+        ema: true, ema_power: 0.75, ema_max_decay: 0.9999}
+loss: {kind: denoising_mse}
+optim: {name: adamw, lr: 1.0e-4, betas: [0.9, 0.999], weight_decay: 0.0, schedule: constant}
+train: {max_steps: 60000, batch_size: 64, ckpt_every: 5000, log_every: 100, grad_clip: null}
+device: {kind: cuda, deterministic: true, cublas_workspace_config: ":4096:8"}
+data: {pc_relpath: processed/robomimic_v1.5_ph/lift/pc512_v1.hdf5}

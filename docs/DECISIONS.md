@@ -1579,3 +1579,66 @@ path on the first validation starts, is labelled, is never reported, and does no
   held-out suite or reset to its seed block);
 - `heldout.evaluate_entry` refuses all 26 Level 1 entries: off the canonical platform, and,
   on it, because each already ran. It also refuses an RGB entry.
+
+## Session 9 (2026-11-09 onward)
+Level 1 (`docs/LEVEL1_COMPLETE.md`) and the RGB study (`docs/RGB_EXPERIMENT_FREEZE.md`, D-081)
+are frozen. Nothing below changes a Level 1 or RGB configuration, label or finding. Level 2 is
+a separately labelled, DP3-inspired explicit-3D-perception study (MASTER_SPEC §3.2 item 6,
+§7.3).
+
+### D-082 Makefile defaults bumped to Session 9 (FIXED)
+- `EVIDENCE_SESSION` falls back to 9 and `PREFIX` to `s9` (as D-048, D-053, D-060 and D-073
+  did). No Session 9 command can then write into `reports/session6`–`8` or reuse the `s8` prefix
+  by omission. Evidence goes to `reports/session9/` and `logs/session9/` with
+  `ROBOFORGE_EVIDENCE_SESSION=9`.
+- New targets: `make pc-feasibility` (canonical container), `make pc-feasibility-native`
+  (development only), `make pc-dataset` (container, staged under `runs/pc_data/<task>/`) and
+  `make pc-dataset-install` (host; installing needs its own decision).
+- The held-out targets of Level 1 and of the RGB study are never run again.
+
+### D-083 Level 2 depth and point clouds come from recorded states through the D-074 path, with sites hidden (FIXED for the feasibility; binding for any Level 2 dataset unless a later decision changes it)
+`src/roboforge/data/pointcloud.py`, diagnostics in `src/roboforge/data/pc_checks.py`,
+`scripts/pc_feasibility.py`, `scripts/build_pc_dataset.py`.
+- **Source and alignment** are those of D-074. Cloud `t` of a demo is built from raw
+  `states[t]` and pairs with `obs[t]` and `actions[t]` of the committed processed dataset.
+  The builder checks the raw-state features against the processed observations bitwise for
+  every demo.
+- **Depth.** `DepthRenderer` renders on scratch `MjData` that shares the compiled model, never
+  the live data (KI-019).
+  - It uses geom groups `(0, 1, 1, 0, 0, 0)`, and one discarded warm-up render per GL context.
+  - It also switches **every site group off**. robosuite hides its visualization sites in
+    colour only, with a non-positive alpha, and a hidden site still writes the depth buffer.
+    Lift's grip-site sphere and its 10 m grip-site cylinder would otherwise put a phantom
+    sphere and a line along the gripper axis into every depth image. Measured on
+    `demo_0`, t = 0: 45 agentview pixels and 92 wrist pixels change, by up to 0.43 m.
+  - E8-03 showed that switching the site groups off changes no RGB pixel. This is D-074's
+    "every visualization site hidden", carried over to depth.
+- **Conversion.** MuJoCo 3.2.7's `Renderer` converts the reversed-Z buffer (`mjDEPTH_ZEROFAR`)
+  to metric z-depth along the viewing axis, with `near = znear · extent` and
+  `far = zfar · extent`. Lift gives 0.0106 m and 530.5 m. The convention is recorded per
+  model and checked against exact `mj_ray` casts on every pixel.
+  - Native CGL lacks `ARB_clip_control`, and MuJoCo warns that its depth accuracy is limited.
+    So native depth is **development-only**, like native RGB (D-074). Reported data come from
+    the canonical container (OSMesa).
+- **Back-projection.**
+  - Pixel centres `(j + 0.5, i + 0.5)`.
+  - The pinhole intrinsics of `KinematicsExtractor.camera`.
+  - World pose `cam_xpos`, `cam_xmat` in float64.
+  - The exact inverse of `project_world_point` (unit test).
+- **Cloud** (`PointCloudSpec`, hashed into data and checkpoints):
+  - cameras `agentview` and `robot0_eye_in_hand` at 84²;
+  - pooled in camera order, row-major;
+  - valid pixels: finite depth, `0 < d < 0.99 · far`;
+  - a fixed world box x, y ∈ [−0.25, 0.25] m, z ∈ [0.805, 1.20] m (the table top is at
+    0.800 m);
+  - deterministic farthest-point sampling to N = 512: start at index 0, float64 squared
+    distances, lowest-index ties, a cyclic repeat if fewer than N points;
+  - `float32` world metres.
+- **Privilege: sensor-like, not "privileged geometry".** A cloud uses only:
+  - depth;
+  - the cameras' intrinsics and world poses. The wrist pose comes from robot kinematics,
+    which a real robot knows from its encoders and a hand–eye calibration;
+  - the static box.
+
+  No segmentation, object pose or simulator label enters a cloud. `pc_checks` uses them only
+  to measure clouds. Limitations to state: the depth is noise-free and the calibration exact.

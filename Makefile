@@ -23,7 +23,8 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
 	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
 	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native \
-	rgb-dataset rgb-dataset-install rgb-validate rgb-heldout rgb-heldout-rehearse rgb-heldout-gate
+	rgb-dataset rgb-dataset-install rgb-validate rgb-heldout rgb-heldout-rehearse rgb-heldout-gate \
+	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -138,12 +139,12 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 8 (DECISIONS D-073; Session 7: D-060; Session 6: D-053; Session 5:
-# D-048) so that no Session 8 command can write into Session 6-7 evidence or reuse the s7 run
-# prefix by omission.
-PREFIX ?= s8
+# Defaults bumped to Session 9 (DECISIONS D-082; Session 8: D-073; Session 7: D-060; Session 6:
+# D-053; Session 5: D-048) so that no Session 9 command can write into Session 6-8 evidence or
+# reuse the s8 run prefix by omission.
+PREFIX ?= s9
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),8)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),9)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -257,6 +258,24 @@ rgb-heldout-gate:  ## RGB study: print the RGB held-out gate status inside the c
 
 rgb-dataset-install:  ## Host: verify and install the staged build into data/ (+ committed manifest)
 	$(RUN) python scripts/build_rgb_dataset.py --install runs/rgb_data/$(RGB_TASK)/rgb$(RGB_SIZE)_v1.manifest.json
+
+# ---------------------------------------------------------------- Session 9: Level 2 point clouds
+# Depth, calibration and DP3-inspired clouds of recorded demo states (MASTER_SPEC §7.3; D-083).
+# Canonical evidence and the dataset come from the container (OSMesa); native runs are
+# development-only. The container mounts data/ read-only: the build is staged under runs/pc_data.
+PC_TASK ?= lift
+PC_COVERAGE_STRIDE ?= 5
+pc-feasibility:  ## Level 2 depth/calibration/cloud evidence on the canonical container (reports/session<N>/pc_feasibility)
+	$(IN_SIM_S) python scripts/pc_feasibility.py --coverage-stride $(PC_COVERAGE_STRIDE)
+
+pc-feasibility-native:  ## The same on this host (development only; its own platform_id directory)
+	$(RUN_S) python scripts/pc_feasibility.py --coverage-stride $(PC_COVERAGE_STRIDE)
+
+pc-dataset:  ## Level 2 demo point clouds on the canonical container -> runs/pc_data/<task>/
+	$(IN_SIM_S) python scripts/build_pc_dataset.py --task $(PC_TASK)
+
+pc-dataset-install:  ## Host: verify and install the staged point-cloud build into data/ (+ committed manifest; needs a decision)
+	$(RUN) python scripts/build_pc_dataset.py --install runs/pc_data/$(PC_TASK)/pc512_v1.manifest.json
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

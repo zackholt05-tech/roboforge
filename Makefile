@@ -23,7 +23,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
 	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
 	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native \
-	rgb-dataset rgb-dataset-install
+	rgb-dataset rgb-dataset-install rgb-validate
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -237,6 +237,12 @@ RGB_TASK ?= lift
 RGB_SIZE ?= 84
 rgb-dataset:  ## RGB demo frames on the canonical container -> runs/rgb_data/<task>/ (D-079)
 	$(IN_SIM_S) python scripts/build_rgb_dataset.py --task $(RGB_TASK) --size $(RGB_SIZE)
+
+RGB_RUN ?=
+RGB_STEPS ?=
+rgb-validate:  ## RGB study: validate RGB_RUN's checkpoints on the canonical container (<= 4 at once)
+	@test -n "$(RGB_RUN)" || (echo "set RGB_RUN=<run_id>" >&2; exit 2)
+	$(IN_SIM_S) python scripts/eval_rgb.py validate --run-id $(RGB_RUN) $(if $(RGB_STEPS),--steps $(RGB_STEPS),)
 
 rgb-dataset-install:  ## Host: verify and install the staged build into data/ (+ committed manifest)
 	$(RUN) python scripts/build_rgb_dataset.py --install runs/rgb_data/$(RGB_TASK)/rgb$(RGB_SIZE)_v1.manifest.json

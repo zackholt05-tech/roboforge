@@ -18,9 +18,12 @@ the approval gate and the cost ledger.
     python infra/modal_app.py train ... --budget-approved A-01
     python infra/modal_app.py probe --budget-approved A-01
     python infra/modal_app.py rgb-probe --budget-approved A-02
+    python infra/modal_app.py train-gpu --family diffusion --seed 0 --prefix s8 \
+        --budget-approved A-03                  # Session 8 RGB study (one segment per launch)
 
     # Hash-validated download into runs/ (reads the runs Volume; creates nothing).
     python infra/modal_app.py fetch --run-id <run_id>
+    python infra/modal_app.py fetch-rgb --run-id <run_id>   # RGB study run, hash-verified
     # Kill path for a running launch (also: Ctrl-C in the launching terminal).
     python infra/modal_app.py cancel --app-id <ap-...>
 
@@ -128,8 +131,23 @@ def rgb_probe(plan: dict[str, Any]) -> dict[str, Any]:
     return res
 
 
-FUNCTIONS = {"train_cpu": train_cpu, "gpu_probe": gpu_probe, "rgb_probe": rgb_probe}
-NEEDS_DATA = {"train_cpu", "gpu_probe"}  # rgb_probe reads no data, so uploads nothing
+@app.function(volumes=VOLUMES, gpu=FN["train_gpu"]["gpu"], cpu=FN["train_gpu"]["cpu"],
+              memory=FN["train_gpu"]["memory_mib"],
+              timeout=FN["train_gpu"]["default_timeout_s"], **COMMON)
+def train_gpu(plan: dict[str, Any]) -> dict[str, Any]:
+    """RGB study: one training segment on one L4, deterministic kernels (D-078, A-03)."""
+    from roboforge.compute.rgb_train import rgb_train_job
+
+    runs_vol.reload()  # earlier segments of this run (resume, attempt cap)
+    res = rgb_train_job(plan, runs_root=Path(APP["volumes"]["runs"]["mount"]),
+                        commit=runs_vol.commit)
+    res.setdefault("modal", {})["function"] = "train_gpu"
+    return res
+
+
+FUNCTIONS = {"train_cpu": train_cpu, "gpu_probe": gpu_probe, "rgb_probe": rgb_probe,
+             "train_gpu": train_gpu}
+NEEDS_DATA = {"train_cpu", "gpu_probe", "train_gpu"}  # rgb_probe reads no data
 
 
 # --------------------------------------------------------------------------- local side
@@ -171,12 +189,26 @@ def _upload_data(plan: dict[str, Any]) -> dict[str, Any]:
     vol = modal.Volume.from_name(APP["volumes"]["data"]["name"], create_if_missing=True)
     vol.hydrate()
     modal.Volume.from_name(APP["volumes"]["runs"]["name"], create_if_missing=True).hydrate()
-    rel = plan["data"]["processed_relpath"] if plan.get("data") else \
-        "processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5"
-    local = REPO / "data" / rel
-    with vol.batch_upload(force=True) as batch:
-        batch.put_file(str(local), "/" + rel)
-    return {"uploaded": rel, "bytes": local.stat().st_size}
+    d = plan.get("data") or {}
+    rels = [d.get("processed_relpath", "processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5")]
+    if d.get("rgb_relpath"):
+        rels.append(d["rgb_relpath"])
+    out = {}
+    for rel in rels:
+        local = REPO / "data" / rel
+        size = local.stat().st_size
+        # Large RGB files are uploaded once: skip a file already on the Volume with the same
+        # size (the job re-checks every file's SHA-256 before training).
+        try:
+            same = any(e.path.lstrip("/") == rel and e.size == size
+                       for e in vol.listdir(str(Path(rel).parent)))
+        except Exception:  # missing directory
+            same = False
+        if not same:
+            with vol.batch_upload(force=True) as batch:
+                batch.put_file(str(local), "/" + rel)
+        out[rel] = {"bytes": size, "uploaded": not same}
+    return {"files": out}
 
 
 def _launch(plan_path: Path, approval: str) -> int:
@@ -238,6 +270,31 @@ def _fetch(run_id: str, staging_root: Path) -> int:
     return p.returncode
 
 
+def _fetch_rgb(run_id: str, dest_root: Path, with_resume: bool) -> int:
+    """Download one RGB-study run directory into ``runs/`` and verify every checkpoint hash.
+
+    The resume file (~0.4 GB) stays on the Volume unless ``with_resume``. Files already
+    present locally with the same size are not downloaded again."""
+    vol = modal.Volume.from_name(APP["volumes"]["runs"]["name"])
+    for entry in vol.iterdir(run_id, recursive=True):
+        if entry.type != modal.volume.FileEntryType.FILE:
+            continue
+        if entry.path.split("/")[1:2] == ["resume"] and not with_resume:
+            continue
+        dest = dest_root / entry.path
+        if dest.exists() and dest.stat().st_size == entry.size and \
+                "checkpoints/" in entry.path:
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        tmp = dest.with_suffix(dest.suffix + ".part")
+        with tmp.open("wb") as fh:
+            vol.read_file_into_fileobj(entry.path, fh)
+        tmp.replace(dest)
+    p = _venv("roboforge.compute.rgb_train", "verify", "--run-dir", str(dest_root / run_id))
+    print(p.stdout, p.stderr)
+    return p.returncode
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint (see the module docstring)."""
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -255,21 +312,33 @@ def main(argv: list[str] | None = None) -> int:
     pr = sub.add_parser("probe")
     pr.add_argument("--timeout-s")
     pr.add_argument("--steps", default="300")
+    tg = sub.add_parser("train-gpu")
+    tg.add_argument("--family", choices=["bc_chunk", "diffusion"], required=True)
+    tg.add_argument("--seed", required=True)
+    tg.add_argument("--prefix", required=True)
+    tg.add_argument("--mode", choices=["new", "resume"], default="new")
+    tg.add_argument("--timeout-s")
+    tg.add_argument("--set", dest="overrides", action="append", default=[])
     rp = sub.add_parser("rgb-probe")
     rp.add_argument("--timeout-s")
     rp.add_argument("--steps", default="30")
-    for s in (t, pr, rp):
+    for s in (t, pr, rp, tg):
         s.add_argument("--budget-approved", metavar="APPROVAL_ID",
                        help="launch for real under this recorded owner approval")
         s.add_argument("--plan-dir", type=Path, default=REPO / "logs" / "tmp" / "modal_plans")
     f = sub.add_parser("fetch")
     f.add_argument("--run-id", required=True)
     f.add_argument("--staging", type=Path, default=REPO / "logs" / "tmp" / "modal_fetch")
+    fr = sub.add_parser("fetch-rgb")
+    fr.add_argument("--run-id", required=True)
+    fr.add_argument("--with-resume", action="store_true")
     c = sub.add_parser("cancel")
     c.add_argument("--app-id", required=True)
     args = ap.parse_args(argv)
     if args.cmd == "fetch":
         return _fetch(args.run_id, args.staging)
+    if args.cmd == "fetch-rgb":
+        return _fetch_rgb(args.run_id, REPO / "runs", args.with_resume)
     if args.cmd == "cancel":
         return subprocess.run([sys.executable, "-m", "modal", "app", "stop", "--yes",
                                args.app_id]).returncode
@@ -281,6 +350,13 @@ def main(argv: list[str] | None = None) -> int:
         for k in ("task", "seed", "timeout_s", "simulate_preemption_s", "stop_at_step"):
             if getattr(args, k):
                 cmd += [f"--{k.replace('_', '-')}", str(getattr(args, k))]
+        for o in args.overrides:
+            cmd += ["--set", o]
+    elif args.cmd == "train-gpu":
+        module = "roboforge.compute.rgb_train"
+        cmd = ["plan", "--family", args.family, "--seed", args.seed, "--prefix", args.prefix,
+               "--mode", args.mode] + (["--timeout-s", args.timeout_s] if args.timeout_s
+                                       else [])
         for o in args.overrides:
             cmd += ["--set", o]
     elif args.cmd == "probe":

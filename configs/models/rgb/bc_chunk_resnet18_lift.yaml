@@ -1,0 +1,26 @@
+# RGB observation-modality study (Session 8; D-078; docs/RGB_EXPERIMENT_FREEZE.md).
+# Visual policy = per-camera ResNet-18 (GroupNorm, random init) + SpatialSoftmax(32) +
+# Linear(64), plus 9-D proprioception (no object state), feeding the Level 1 head of
+# configs/models/bc_mlp_chunk.yaml, whose model block is copied here verbatim. The two RGB configs differ only in the
+# head (family, model, loss).
+schema: roboforge.rgb_train_config/1
+name: rgb_bc_chunk_resnet18
+family: rgb_bc_chunk
+head_family: bc_mlp
+head_config: configs/models/bc_mlp_chunk.yaml
+task: lift
+seed: 0
+horizons: {obs: 2, pred: 16, exec: 8}
+observation:
+  cameras: [agentview, robot0_eye_in_hand]
+  image_size: 84
+  crop: 76
+  proprio: [robot0_eef_pos, robot0_eef_quat, robot0_gripper_qpos]
+  proprio_dims: [0, 9]   # first 9 of the 19-D low-dim spec; normalized with its train stats
+encoder: {trunk: resnet18, feature_dim: 64, num_kp: 32, norm: groupnorm, pretrained: false}
+model: {hidden: [1024, 1024], activation: relu, layer_norm: false, dropout: 0.0}
+loss: {kind: mse}
+optim: {name: adamw, lr: 1.0e-4, betas: [0.9, 0.999], weight_decay: 0.0, schedule: constant}
+train: {max_steps: 60000, batch_size: 64, ckpt_every: 5000, log_every: 100, grad_clip: null}
+device: {kind: cuda, deterministic: true, cublas_workspace_config: ":4096:8"}
+data: {rgb_relpath: processed/robomimic_v1.5_ph/lift/rgb84_v1.hdf5}

@@ -1,0 +1,98 @@
+{
+ "function": "train_gpu",
+ "mode": "new",
+ "run_id": "s8_rgb_bc_chunk_resnet18_lift_seed1_c49230ce",
+ "launch_id": "18fd03dc918e466baa4123bf7ce59ed1",
+ "timeout_s": 3600,
+ "deadline_s": 3420,
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 3600.0
+ },
+ "policy": {
+  "gpu_count": 1,
+  "max_attempts_per_launch": 4,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ },
+ "git": {
+  "dirty": false,
+  "sha": "e12a7b4a0be9404abef2020c6541974b51f98343"
+ },
+ "blocking": []
+}
+{
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ }
+}
+UPPER-BOUND ESTIMATE $4.5445 (list prices fetched 2026-11-09; job $4.4653 = 4 attempts x $1.1163 + build/start allowance $0.0791; not a cap)
+{
+ "approval_id": "A-03",
+ "gate": "Gate D2 (RGB main)",
+ "cap_usd": 15.0,
+ "committed_before_usd": 4.18268532718746,
+ "estimate_upper_usd": 4.54445536,
+ "remaining_after_usd": 6.27285931281254
+}
+ 
+✓ Initialized. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-lRsWlbdNYbF27a5eqvxHN6
+✓ Created objects.
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/infra/modal_app.py
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/normalization
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/splits
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/manifests
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/configs
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/scripts
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/src
+├── ✓ Created Function train_cpu.
+├── ✓ Created Function gpu_probe.
+├── ✓ Created Function rgb_probe.
+└── ✓ Created Function train_gpu.
+{"rgb_checkpoint": {"step": 5000, "path": "checkpoints/step_0005000.pt", "sha256": "7931609f5e071688a2c031f606b35a12813d64624baf3a244cee5d5d06dbf5da", "inference_network": "trained", "inference_digest": "58778331a7a07858dd4b9951fadd12d9aaa593c94f6181e7a2189794de1210a7", "valid_loss": 0.044771848017709295}}
+{"rgb_checkpoint": {"step": 10000, "path": "checkpoints/step_0010000.pt", "sha256": "e62830e3ceadd377ef9c7f82f8d3720732b445ceaadd85f3df5b80166838f0bf", "inference_network": "trained", "inference_digest": "febacfee9799633141c4dc7435d41b41a6940e33421822031dc88cc781ba2df0", "valid_loss": 0.051929434648847486}}

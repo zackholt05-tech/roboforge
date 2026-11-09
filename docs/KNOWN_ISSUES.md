@@ -968,3 +968,23 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   `tests/simulator/test_pointcloud_alignment.py` keep it fixed.
 - **Rule:** any new depth path must hide sites, or prove they are absent, before its clouds
   are used.
+
+### KI-047 A client network drop stopped the first Level 2 launch (LOW, MITIGATED; Session 9)
+- **Observed:**
+  - seed 0's first launch waited about 40 min for an L4 (unbilled);
+  - it then trained from 16:40:55 UTC;
+  - at 16:57:10 UTC the host lost DNS (`ConnectionError: [Errno 8] nodename nor servname
+    provided`), and the client recorded `status: error` (`logs/session9/pc_train/queue.jsonl`,
+    `launch_records/`);
+  - the app is ephemeral, so Modal stopped it about 90 s later, just after the step-25,000
+    checkpoint and resume file were written; the run manifest was left `running`.
+- **Handled by design:**
+  - the atomic `resume/latest.pt` holds step 25,000 (verified);
+  - the queue's next launch is a `resume` from it, which A-04 covers;
+  - the 16:00 UTC hour was billed at $0.329 and recorded against the launch, because a
+    launch without a measured result counts at its $4.54 upper bound.
+- **Side effect:** the restarted queue numbers launches from 0 again, so it overwrote the
+  first launch's streamed log (`*_launch0.log`). Its plan, result, ledger events and the run
+  manifest survive. Before any restart, copy the launch logs aside.
+- **Rule:** keep the host online for the whole of a launch. A launch that ends `error` on the
+  client is checked on the Volume (status, checkpoints, resume step) before any resume.

@@ -1,0 +1,143 @@
+{
+ "function": "train_gpu_pc",
+ "mode": "new",
+ "run_id": "s9_pc_diffusion_dp3_lift_seed1_a66a2758",
+ "launch_id": "bb523940dfe44ff49b7b76f396ffe9aa",
+ "timeout_s": 3600,
+ "deadline_s": 3420,
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 3600.0
+ },
+ "policy": {
+  "gpu_count": 1,
+  "max_attempts_per_launch": 4,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ },
+ "git": {
+  "dirty": false,
+  "sha": "41e99bd90d862bb8cbf44c6fdf39b1131025065b"
+ },
+ "blocking": []
+}
+{
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ }
+}
+UPPER-BOUND ESTIMATE $4.5445 (list prices fetched 2026-11-09; job $4.4653 = 4 attempts x $1.1163 + build/start allowance $0.0791; not a cap)
+{
+ "approval_id": "A-04",
+ "gate": "Level 2 (point cloud)",
+ "cap_usd": 9.0,
+ "committed_before_usd": 0.7952098223216679,
+ "estimate_upper_usd": 4.54445536,
+ "remaining_after_usd": 3.660334817678332
+}
+ 
+✓ Initialized. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-i8Qtw55iRuqUiAVwHKU4Sg
+✓ Created objects.
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/infra/modal_app.py
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/normalization
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/splits
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/manifests
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/configs
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/scripts
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/src
+├── ✓ Created Function train_cpu.
+├── ✓ Created Function gpu_probe.
+├── ✓ Created Function rgb_probe.
+├── ✓ Created Function train_gpu.
+└── ✓ Created Function train_gpu_pc.
+function_call: fc-01M70T2WGVXJ0T786GYRC1XQCA
+{"pc_checkpoint": {"step": 5000, "path": "checkpoints/step_0005000.pt", "sha256": "531c9fdbf3a8f2e252eaec5f04705a67ec4e585af08445ad6e9aead2fa090a90", "inference_network": "ema", "inference_digest": "22bc2a5896a8be322af249f5dd5d7aba58e71bda2f3493de6b0cb6479451f645", "valid_loss": 0.06391777173701318}}
+{"pc_checkpoint": {"step": 10000, "path": "checkpoints/step_0010000.pt", "sha256": "acdf0954c6638d6a63b656e9eeab0bd7ef0a7a9ce1a8062135d41ee15c0260ee", "inference_network": "ema", "inference_digest": "f03ba4b93804d7e72ca755a416a41a5e4c7e0a09eaf274a0f3ee9cb7f39149ea", "valid_loss": 0.05632457947521879}}
+{"pc_checkpoint": {"step": 15000, "path": "checkpoints/step_0015000.pt", "sha256": "02ba3a4d4b68a2605ed88f6b5e32b3699c018b212ec13132e00a0e4d8445262d", "inference_network": "ema", "inference_digest": "50b80f23000d11174dc05ead09527547861b59c20824984684dbd9ad7c055f68", "valid_loss": 0.053463562604105265}}
+{"pc_checkpoint": {"step": 20000, "path": "checkpoints/step_0020000.pt", "sha256": "735a61494dd80e2c61aad44cccf473c12102ecd637b45806313ede0b41b39234", "inference_network": "ema", "inference_digest": "bc56a2946cc08608897922c285306532a558c1ce6e6ff98e8ef440e322d0c96e", "valid_loss": 0.05235806232423578}}
+{"pc_checkpoint": {"step": 25000, "path": "checkpoints/step_0025000.pt", "sha256": "1a7dbf714479521d9458d3ae8fc25ecc0d1040f2cb4978602899b1856e1f3d13", "inference_network": "ema", "inference_digest": "1c7f9e8bfe599f112e4d23bb73aeaa4604213eabccf4becde735eb5007f8754a", "valid_loss": 0.0526645344919861}}
+{"pc_checkpoint": {"step": 30000, "path": "checkpoints/step_0030000.pt", "sha256": "37c7e8760ecdc8924e6ca0a0642b4517664048b01609a101cd4d3ba54cee9a7b", "inference_network": "ema", "inference_digest": "778eec3cc07fa7984bd4c27193c16ec44f28103e233ce9839ed7cf38bff7283a", "valid_loss": 0.053856405460404606}}
+{"pc_checkpoint": {"step": 35000, "path": "checkpoints/step_0035000.pt", "sha256": "ea2533a2d20af02139f8cd24c4d08c8d69366fb15602c0a2b6f5838719e43f1c", "inference_network": "ema", "inference_digest": "fdceea03f7f2471bd0f66097c2d922689ab5d9c6ef7af2920bc5f2c3ed9b544d", "valid_loss": 0.05645240183563841}}
+{"pc_checkpoint": {"step": 40000, "path": "checkpoints/step_0040000.pt", "sha256": "cf45edd5e9ce1b8c28c6107a7eddccfa37cbbe9f068a02648b5b051355eb8aed", "inference_network": "ema", "inference_digest": "7b12c5f3ee6c9e3612f455a3af39409270be1d4aac2d55825a691ffe7997e004", "valid_loss": 0.06058968137768161}}
+{"pc_checkpoint": {"step": 45000, "path": "checkpoints/step_0045000.pt", "sha256": "b2e03db36dfda733e3af054345597a12d81d0f3f9da3ed79c92d6c651b83abb4", "inference_network": "ema", "inference_digest": "dc8f9d40b98a9b4c4668942c2b7cdb51b11e3548f89f523429f951e7c81bc423", "valid_loss": 0.06630906250988647}}
+{"pc_checkpoint": {"step": 50000, "path": "checkpoints/step_0050000.pt", "sha256": "6882e6e39edb36dc522d24ea5622c017b3e44a4ea2afbc49b8a998571f40f2c3", "inference_network": "ema", "inference_digest": "643032d0a61e3d0c5e560fdf40e45f09e20ad340d5b4c1f9cad90e1b7a932323", "valid_loss": 0.07305984823196604}}
+{"pc_checkpoint": {"step": 55000, "path": "checkpoints/step_0055000.pt", "sha256": "a0c67786984f51ea8fdc9ea3f86d2cfb6f0170415f7c747333a2514560439c15", "inference_network": "ema", "inference_digest": "24a11b77a30e36d3801a16d9f467df011e3e6ee2b798ea925f5bfc159dd11cab", "valid_loss": 0.08009368681927986}}
+{"pc_checkpoint": {"step": 60000, "path": "checkpoints/step_0060000.pt", "sha256": "0989e05109e62d4d3a8d46d92c755200e447a64e08cd38c930df888021490a78", "inference_network": "ema", "inference_digest": "d0815268b1bfb5f656bf1559bc70bee76e1c24b2c488404b8ccc3ddd354761e3", "valid_loss": 0.08713754117997186}}
+✓ App completed. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-i8Qtw55iRuqUiAVwHKU4Sg
+{
+ "schema": "roboforge.cost_event/1",
+ "event": "result",
+ "utc": "2026-11-09T19:43:35.672877+00:00",
+ "launch_id": "bb523940dfe44ff49b7b76f396ffe9aa",
+ "run_id": "s9_pc_diffusion_dp3_lift_seed1_a66a2758",
+ "status": "complete",
+ "container_wall_s": 2512.3816006009997,
+ "measured_cost_usd": 0.7792571456582619,
+ "measured_cost_kind": "estimate: measured container time x list price (excludes image build and start-up)",
+ "modal": {
+  "function": "train_gpu_pc",
+  "app_id": "ap-i8Qtw55iRuqUiAVwHKU4Sg",
+  "upload": {
+   "files": {
+    "processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5": {
+     "bytes": 1586020,
+     "uploaded": false
+    },
+    "processed/robomimic_v1.5_ph/lift/pc512_v1.hdf5": {
+     "bytes": 56284412,
+     "uploaded": false
+    }
+   }
+  },
+  "function_call_id": "fc-01M70T2WGVXJ0T786GYRC1XQCA"
+ },
+ "detail": null
+}
+ 
+result: /Users/zackaryholt/Projects/roboforge/logs/tmp/modal_plans/train_gpu_pc_20261109T134453.result.json

@@ -24,7 +24,8 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
 	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native \
 	rgb-dataset rgb-dataset-install rgb-validate rgb-heldout rgb-heldout-rehearse rgb-heldout-gate \
-	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement
+	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement \
+	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -289,6 +290,20 @@ PC_SUITE ?=
 pc-placement:  ## Level 2: the ONE placement evaluation of PC_ARM (pc|rgb) seed PC_SEED on PC_SUITE (canonical container)
 	@test -n "$(PC_ARM)" -a -n "$(PC_SEED)" -a -n "$(PC_SUITE)" || (echo "set PC_ARM, PC_SEED, PC_SUITE" >&2; exit 2)
 	$(IN_SIM_S) python scripts/eval_pc.py placement --arm $(PC_ARM) --seed $(PC_SEED) --suite $(PC_SUITE)
+
+pc-heldout:  ## Level 2: the ONE held-out test of PC_RUN's selected checkpoint (canonical container, clean tree; D-086)
+	@test -n "$(PC_RUN)" || (echo "set PC_RUN=<run_id>" >&2; exit 2)
+	$(IN_SIM_S) python scripts/run_pc_heldout.py run --run-id $(PC_RUN)
+
+pc-heldout-rehearse:  ## Level 2: rehearse the held-out path on PC_N (default 2) validation starts (labelled, not a result)
+	@test -n "$(PC_RUN)" || (echo "set PC_RUN=<run_id>" >&2; exit 2)
+	$(IN_SIM_S) python scripts/run_pc_heldout.py rehearse --run-id $(PC_RUN) --n-states $(or $(PC_N),2)
+
+pc-heldout-gate:  ## Level 2: print the Level 2 held-out gate status inside the canonical container
+	$(IN_SIM_S) python scripts/run_pc_heldout.py gate
+
+level2-analyze:  ## Host: the ONE Level 2 analysis (Level 2 freeze §8), after every placement and held-out report
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN) python scripts/analyze_level2.py
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

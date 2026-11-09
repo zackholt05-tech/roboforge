@@ -1,0 +1,247 @@
+{
+ "app": "roboforge",
+ "blocking": [],
+ "config": {
+  "data": {
+   "pc_relpath": "processed/robomimic_v1.5_ph/lift/pc512_v1.hdf5"
+  },
+  "device": {
+   "cublas_workspace_config": ":4096:8",
+   "deterministic": true,
+   "kind": "cuda"
+  },
+  "encoder": {
+   "augmentation": "none",
+   "kind": "dp3",
+   "norm": "layernorm",
+   "out_dim": 64,
+   "widths": [
+    64,
+    128,
+    256
+   ]
+  },
+  "family": "pc_diffusion",
+  "head_config": "configs/models/diffusion_unet.yaml",
+  "head_family": "diffusion_unet",
+  "horizons": {
+   "exec": 8,
+   "obs": 2,
+   "pred": 16
+  },
+  "loss": {
+   "kind": "denoising_mse"
+  },
+  "model": {
+   "beta_schedule": "squaredcos_cap_v2",
+   "clip_sample": true,
+   "ddim_eta": 0.0,
+   "down_dims": [
+    64,
+    128
+   ],
+   "ema": true,
+   "ema_max_decay": 0.9999,
+   "ema_power": 0.75,
+   "inference_steps": 10,
+   "kernel_size": 5,
+   "n_groups": 8,
+   "num_train_timesteps": 100,
+   "prediction_type": "epsilon",
+   "sampler": "ddim",
+   "step_embed_dim": 64
+  },
+  "name": "pc_diffusion_dp3",
+  "observation": {
+   "cloud": {
+    "box_hi": [
+     0.25,
+     0.25,
+     1.2
+    ],
+    "box_lo": [
+     -0.25,
+     -0.25,
+     0.805
+    ],
+    "cameras": [
+     "agentview",
+     "robot0_eye_in_hand"
+    ],
+    "dtype": "float32",
+    "n_points": 512,
+    "sampler": "fps_start0",
+    "schema": "roboforge.point_cloud_spec/1",
+    "size": 84
+   },
+   "proprio": [
+    "robot0_eef_pos",
+    "robot0_eef_quat",
+    "robot0_gripper_qpos"
+   ],
+   "proprio_dims": [
+    0,
+    9
+   ]
+  },
+  "optim": {
+   "betas": [
+    0.9,
+    0.999
+   ],
+   "lr": 0.0001,
+   "name": "adamw",
+   "schedule": "constant",
+   "weight_decay": 0.0
+  },
+  "schema": "roboforge.pc_train_config/1",
+  "seed": 2,
+  "task": "lift",
+  "train": {
+   "batch_size": 64,
+   "ckpt_every": 5000,
+   "grad_clip": null,
+   "log_every": 100,
+   "max_steps": 60000
+  }
+ },
+ "config_path": "configs/models/pointcloud/diffusion_dp3_lift.yaml",
+ "config_sha256": "402a1f24bea0ef6049319f9974cf0c53294118de9fd9023bb7aad0c6a903e9e1",
+ "created_utc": "2026-11-09T19:43:37.401300+00:00",
+ "data": {
+  "pc_content_sha256": "39fa3e523f6735cd95f0da879d171e589ff65305ec5f7db7c5b9be1464d05329",
+  "pc_file_sha256": "6ab4b31d20b3cec694588534116cceb6045ea25bf16c3bfa22126e02272890b8",
+  "pc_relpath": "processed/robomimic_v1.5_ph/lift/pc512_v1.hdf5",
+  "processed_content_sha256": "74e70119993830798c8b4ed87f202f64d8d2c9d573c0f376d54c4130e52d63c8",
+  "processed_file_sha256": "bd98a626810b82d1cc1fd8d56ceabd092f08a03af404d442fe1bc6947b7460cf",
+  "processed_relpath": "processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5",
+  "task": "lift"
+ },
+ "deadline_s": 3420,
+ "estimate": {
+  "attempts": 4,
+  "build_allowance": {
+   "cpu_usd": 0.04716,
+   "gpu_usd": 0.0,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.031967999999999996,
+   "multiplier": 1.0,
+   "resources": {
+    "count": 1,
+    "cpu": 4.0,
+    "gpu": null,
+    "memory_gib": 16.0,
+    "seconds": 900.0
+   },
+   "total_usd": 0.079128
+  },
+  "function": "train_gpu_pc",
+  "job": {
+   "attempts": 4,
+   "cpu_usd": 0.7549792,
+   "gpu_usd": 3.198576,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.51177216,
+   "resources_per_attempt": {
+    "count": 1,
+    "cpu": 4.0,
+    "gpu": "L4",
+    "memory_gib": 16.0,
+    "seconds": 3602.0
+   },
+   "total_usd": 4.46532736
+  },
+  "kind": "upper-bound estimate (list price; 4 attempts of the full timeout)",
+  "one_attempt": {
+   "cpu_usd": 0.1887448,
+   "gpu_usd": 0.799644,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.12794304,
+   "multiplier": 1.0,
+   "resources": {
+    "count": 1,
+    "cpu": 4.0,
+    "gpu": "L4",
+    "memory_gib": 16.0,
+    "seconds": 3602.0
+   },
+   "total_usd": 1.11633184
+  },
+  "pricing_fetched_utc": "2026-11-09",
+  "pricing_source": "https://modal.com/pricing",
+  "timeout_s": 3600,
+  "total_usd": 4.54445536
+ },
+ "family": "pc_diffusion",
+ "function": "train_gpu_pc",
+ "git": {
+  "dirty": false,
+  "sha": "4f0a3027e52e8b492c022203d5e57a3e83640fee"
+ },
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ },
+ "launch_id": "a4a09104acb048aaaafcab53b1f471ee",
+ "mode": "new",
+ "overrides": {
+  "seed": 2
+ },
+ "policy": {
+  "gpu_count": 1,
+  "max_attempts_per_launch": 4,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "prefix": "s9",
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 3600.0
+ },
+ "run_id": "s9_pc_diffusion_dp3_lift_seed2_402a1f24",
+ "schema": "roboforge.modal_plan/1",
+ "timeout_s": 3600,
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ }
+}

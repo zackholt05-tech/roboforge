@@ -1692,3 +1692,31 @@ a separately labelled, DP3-inspired explicit-3D-perception study (MASTER_SPEC §
   approval gate and the cost ledger. `infra/modal_app.py` is not in any freeze table.
 - **Operational consequence:** Ctrl-C in the launching terminal stops only the client. To
   stop a job, run `python infra/modal_app.py cancel --app-id <ap-…>`.
+
+### D-086 The held-out lock is re-gated on the Level 2 freeze (FIXED, Session 9, after all 3 point-cloud selections)
+`src/roboforge/eval/pc_heldout.py`, `scripts/run_pc_heldout.py`,
+`tests/research_integrity/test_pc_heldout_gate.py`, `make pc-heldout[-rehearse|-gate]`. The D-081
+pattern: a new module, no frozen file changed.
+- **The gate opens only when all of these hold:**
+  - `docs/LEVEL2_EXPERIMENT_FREEZE.md` is committed and still the file of `b93c50c`
+    (SHA-256 pinned);
+  - its §9 table's 12 files still have their frozen hashes;
+  - the 3 point-cloud selection artifacts in `reports/session9/pc_selection/` are present,
+    tracked, unmodified, and equal to the hashes pinned in the module;
+  - this decision is in HEAD's DECISIONS;
+  - the RGB study's own gate (D-081) is still open, and the 3 reused RGB diffusion held-out
+    reports still have their frozen hashes;
+  - the Level 1 lock is open, and Lift's held-out manifest has the frozen hash.
+- **One-shot:** `evaluate_selected` checks the gate, the canonical platform and "already ran"
+  before it reads any held-out state. A second run is refused. An engineering rerun follows
+  RESEARCH_PROTOCOL §14.6: a reason, at most once, and the incomplete attempt is kept.
+- **Rehearsal:** the identical path runs on the first validation starts. It is labelled, not
+  reported and not gated.
+- **Tests:** an autouse guard fails any test that reads a held-out state. The tests prove four
+  things:
+  - the gate shuts when each precondition is removed;
+  - a run is refused before any state is read;
+  - the point-cloud evaluation path admits only validation and the two placement sets;
+  - the RGB gate is unaffected.
+- **Analysis:** `scripts/analyze_level2.py` (`make level2-analyze`) implements Level 2 freeze §8
+  as written. It runs once, refuses to overwrite, and refuses while the gate is shut.

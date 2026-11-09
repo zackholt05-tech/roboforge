@@ -24,7 +24,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
 	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native \
 	rgb-dataset rgb-dataset-install rgb-validate rgb-heldout rgb-heldout-rehearse rgb-heldout-gate \
-	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install
+	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -276,6 +276,19 @@ pc-dataset:  ## Level 2 demo point clouds on the canonical container -> runs/pc_
 
 pc-dataset-install:  ## Host: verify and install the staged point-cloud build into data/ (+ committed manifest; needs a decision)
 	$(RUN) python scripts/build_pc_dataset.py --install runs/pc_data/$(PC_TASK)/pc512_v1.manifest.json
+
+PC_RUN ?=
+PC_STEPS ?=
+pc-validate:  ## Level 2: validate PC_RUN's checkpoints on the canonical container (<= 4 at once)
+	@test -n "$(PC_RUN)" || (echo "set PC_RUN=<run_id>" >&2; exit 2)
+	$(IN_SIM_S) python scripts/eval_pc.py validate --run-id $(PC_RUN) $(if $(PC_STEPS),--steps $(PC_STEPS),)
+
+PC_ARM ?=
+PC_SEED ?=
+PC_SUITE ?=
+pc-placement:  ## Level 2: the ONE placement evaluation of PC_ARM (pc|rgb) seed PC_SEED on PC_SUITE (canonical container)
+	@test -n "$(PC_ARM)" -a -n "$(PC_SEED)" -a -n "$(PC_SUITE)" || (echo "set PC_ARM, PC_SEED, PC_SUITE" >&2; exit 2)
+	$(IN_SIM_S) python scripts/eval_pc.py placement --arm $(PC_ARM) --seed $(PC_SEED) --suite $(PC_SUITE)
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

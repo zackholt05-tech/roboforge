@@ -35,6 +35,9 @@ CUBE_VISUAL_GEOM = "cube_g0_vis"
 TABLE_VISUAL_GEOM = "table_visual"
 # A sampled point counts as "on the cube" within this distance of the cube's box surface.
 ON_CUBE_TOL_M = 0.002
+# depth_vs_ray: largest second difference of exact inverse ray depth, relative to the pixel's
+# inverse depth, for a pixel to count as locally planar (interior).
+PLANAR_TOL = 0.005
 
 
 def _geom(model: Any, name: str) -> int:
@@ -70,11 +73,17 @@ def depth_vs_ray(maker: CloudMaker, state: np.ndarray, camera: str,
     The ray direction is ``R (x, y, −1)`` in camera coordinates, so the returned distance is
     itself a z-depth. Only geom groups 1 and 2, the rendered ones, are hit.
 
-    **Interior pixels** are pixels in the interior of one geom's image: the ray hits the geom
-    that segmentation shows there, and all 8 neighbours show the same geom. The conversion is
-    tested on these pixels. **Boundary pixels** are the rest. There the multisampled depth
-    buffer can mix two surfaces inside one pixel ("flying pixels", as in real depth sensors).
-    They are reported, not tested."""
+    **Interior pixels** lie on one smooth patch of one geom, decided from geometry alone:
+    * the ray hits the geom that segmentation shows there;
+    * all 8 neighbours show the same geom;
+    * the exact ray depth is locally planar. Inverse depth is affine in image coordinates on
+      a plane, so its second differences along the row and the column through the pixel stay
+      within ``PLANAR_TOL`` of the centre's inverse depth. A self-occluding mesh, such as the
+      robot pedestal, has silhouettes inside one geom; this excludes them.
+
+    The conversion is tested on interior pixels. **Boundary pixels** are the rest. There the
+    multisampled depth buffer can mix two surfaces inside one pixel ("flying pixels", as in
+    real depth sensors). They are reported, not tested."""
     import mujoco
 
     from roboforge.sim.shadow_render import ROBOSUITE_GEOMGROUP
@@ -103,7 +112,12 @@ def depth_vs_ray(maker: CloudMaker, state: np.ndarray, camera: str,
                   == label[None], axis=0).reshape(-1)
     flat = dep.reshape(-1).astype(np.float64)
     hit = ray >= 0
-    interior = hit & same & (ray_geom == label.reshape(-1))
+    inv = np.where(hit, 1.0 / np.where(hit, ray, 1.0), 0.0).reshape(size, size)
+    pinv = np.pad(inv, 1, mode="edge")
+    d2r = np.abs(pinv[1:-1, :-2] + pinv[1:-1, 2:] - 2 * inv)
+    d2c = np.abs(pinv[:-2, 1:-1] + pinv[2:, 1:-1] - 2 * inv)
+    planar = (np.maximum(d2r, d2c) <= PLANAR_TOL * inv).reshape(-1)
+    interior = hit & same & planar & (ray_geom == label.reshape(-1))
     err = np.abs(flat - ray)
     ei, eb = err[interior], err[hit & ~interior]
     far = maker.depth.convention["far_m"]
@@ -258,7 +272,7 @@ def sites_in_depth(maker: CloudMaker, state: np.ndarray, camera: str,
             "max_change_m": float(np.abs(with_sites - hidden).max())}
 
 
-__all__ = ["CUBE_VISUAL_GEOM", "ON_CUBE_TOL_M", "TABLE_VISUAL_GEOM", "box_pose",
+__all__ = ["CUBE_VISUAL_GEOM", "ON_CUBE_TOL_M", "PLANAR_TOL", "TABLE_VISUAL_GEOM", "box_pose",
            "body_geom_ids", "box_signed_distance", "cube_coverage", "cube_surface_residual",
            "depth_vs_ray", "dilate_mask", "object_mask",
            "known_point_check", "maker_segmentation", "sites_in_depth", "table_plane_residual"]

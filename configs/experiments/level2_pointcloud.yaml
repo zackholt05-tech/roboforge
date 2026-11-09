@@ -1,0 +1,39 @@
+# Level 2 (Session 9): DP3-inspired point-cloud diffusion vs the frozen RGB diffusion arm, Lift.
+# Machine-read by scripts/eval_pc.py, scripts/run_pc_heldout.py and scripts/analyze_level2.py.
+# Every value here is fixed by docs/LEVEL2_EXPERIMENT_FREEZE.md once that file is committed.
+schema: roboforge.level2_plan/1
+task: lift
+arms:
+  pc_diffusion:
+    config: configs/models/pointcloud/diffusion_dp3_lift.yaml
+    seeds: [0, 1, 2]
+    prefix: s9
+  rgb_diffusion:   # frozen RGB study arm (docs/RGB_EXPERIMENT_FREEZE.md, d9c6217); never retrained
+    selections:    # reports/session8/rgb_selection/<run_id>.json (sha256 of the file)
+      - {run_id: s8_rgb_diffusion_resnet18_lift_seed0_dddc7f1c, seed: 0, step: 55000,
+         checkpoint_sha256: 6d919dfb989c2a8e68a97e9f56d9efbe7fcf00eab2e723c4c20df14112bc7b97,
+         selection_sha256: e0c972eff15d6a97b73327ade8dc8f66312e3079e825811ce1b000664e3c9d09,
+         heldout_report_sha256: 23008d7ed09c0af5418486fb5eb50a177a8e0cc51a268aa4134fe441107dd74f}
+      - {run_id: s8_rgb_diffusion_resnet18_lift_seed1_51deeb3e, seed: 1, step: 55000,
+         checkpoint_sha256: 5a14e1510f4b55fbc83e6cdab7fb1843ebf604aa7c62e4f90db04d5a15fa0044,
+         selection_sha256: 602bc9fc0c0fd1b57c59c48e451bd5c9cfa47a09d7e7075c322a963f58add6c4,
+         heldout_report_sha256: 5aa18f54287314e7fdbd0512b97fffd3ba62dee3b9dfae4051b3fbe1d45c8cbd}
+      - {run_id: s8_rgb_diffusion_resnet18_lift_seed2_ec213b6a, seed: 2, step: 60000,
+         checkpoint_sha256: 048031b33f05676d42e2e2e35b75a992d6ae3ad252fe322e0e9520cffaaf7c24,
+         selection_sha256: 0f3c14ed3b7f3f190c5fabeb5f41c5898e4512ae2f0e4112bb1a0594beb73f77,
+         heldout_report_sha256: 0b07c26bd354f19a112e66139db9be6c99206255153da15e6098a47ad7039bdb}
+suites:
+  selection: {name: validation, manifest_content_sha256: 0b1368fae0d5e967955ad7b5c3a6191001bbad2758becad537412b45e71c8785}
+  heldout: {name: "the locked suite (roboforge.sim.eval_states.LOCKED_SUITE)", manifest_content_sha256: e02498651b9d5bb88b6aec0870c5e3277cadaaeaf0e325abf86c79e89b1f22da}
+  placement_base: {name: robustness_base, manifest_content_sha256: b1ffb682c2c94128c7c773f8899edba42f04d8e2631f3ab63f7f7085cb05855d}
+  placement_ood: {name: ood_cube_shift, manifest_content_sha256: c6083afc0212bf06f6eb98e7fc5522fae4ed8fae49bb89d8faf1e74d65d1b7ac}
+evaluation: {policy_seed: 0, repeat: 0, device: cpu, torch_threads: 1, platform: canonical}
+analysis:
+  bootstrap: {B: 10000, seed: 20261106, method: "RESEARCH_PROTOCOL §9 hierarchical paired"}
+  draw_order: [states, pc_diffusion seeds, rgb_diffusion seeds]
+  comparisons:
+    primary: "H5: pc_diffusion − rgb_diffusion success on ood_cube_shift (paired with robustness_base by index)"
+    secondary:
+      - "pc_diffusion − rgb_diffusion paired drop (robustness_base − ood_cube_shift)"
+      - "pc_diffusion − rgb_diffusion success on the Lift held-out starts (RGB records reused, never rerun)"
+      - "pc_diffusion − rgb_diffusion censored episode length on the held-out starts (failures count 400)"

@@ -239,9 +239,9 @@ episode times out; Can 4.7–5.7 min and 16–19 min.
 3. Then the RGB dataset build, training and evaluation under that freeze.
 
 ## 7. Session 8 Gate D2 proposal: main RGB training from the L4 probe (2026-11-09)
-**Status: PROPOSED, awaiting the owner's decision.** A-02 covers only the probe, which is
-done. No main RGB training, local or remote, starts until the owner chooses here and the
-choice is recorded as an approval row. Every duration and cost below is an **estimate**
+**Status: DECIDED 2026-11-08 21:52 EST: L60** (approval A-03, $15 cap; DECISIONS D-078).
+Training needs `docs/RGB_EXPERIMENT_FREEZE.md` committed first. A-02 covered only the probe,
+which is done. Every duration and cost below is an **estimate**
 built from the probe's measurements, not a promise.
 
 ### 7.1 What the probe measured (E8-06; `reports/session8/modal/README.md`)

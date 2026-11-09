@@ -1462,3 +1462,20 @@ label or finding; RGB work is a separately labelled observation-modality study (
   - two same-seed 20-step repeats in each mode.
 - `_launch` maps functions by name explicitly and refuses unknown names. Only `train_cpu`
   and `gpu_probe` upload data.
+
+### D-078 Gate D2 decided: L60, GPU training of the Lift RGB comparison (OWNER, 2026-11-08 21:52 EST)
+- **Choice:** "L60: Lift, GPU, 60k (Recommended)" (COMPUTE_PLAN §7.4).
+- **Approval A-03:** function `train_gpu`, cap $15. Expected cost is about $9.8 at list
+  price.
+- **Runs:** 6 on Lift, visual BC-MLP-chunk and visual diffusion, seeds 0–2.
+- **Model and budget:** ResNet-18 trunks (GroupNorm, from scratch) at 84² with random crop 76;
+  batch 64, 60k steps, a checkpoint every 5k (K = 12).
+- **Device:** deterministic CUDA under the RESEARCH_PROTOCOL §13 amendment of 2026-11-08.
+- **Launches:** at most 1 h each, resumed, strictly sequential.
+- **Before the first launch:**
+  - `docs/RGB_EXPERIMENT_FREEZE.md` is committed;
+  - the RGB dataset is built in the canonical container and recorded by a decision;
+  - the trainer, `train_gpu` and the closed-loop RGB policy path are implemented and tested
+    on the CPU.
+- **Not covered:** Can, tuning trials, and any run outside the freeze.
+

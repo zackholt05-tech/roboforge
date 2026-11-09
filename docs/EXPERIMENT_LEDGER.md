@@ -354,6 +354,22 @@ estimate stays within the cap. Caps are client-side guards, not Modal spending l
 |---|---|---|---|---|---|---|
 | A-01 | 2026-11-06 | Gate A | gpu_probe, train_cpu | 2.00 | exhausted | Owner, Session 5 (23:35 EST): general instruction "please do not exceed the $30 monthly quota if possible"; then chose "Approve, $2 cap" for: 1 L4 GPU probe (≤ 15 min, upper bound $0.36), a 2,000-step diffusion CPU training smoke with simulated preemption (timeout 15 min, $0.11) and its resume launch (timeout 20 min, $0.12); max_containers=1, retries=0, preemptible; Volumes roboforge-data and roboforge-runs. Month-to-date Modal usage before Session 5: $5.27 (another app), so ≈ $24.73 of the $30 credit remained. **Amended 2026-11-07 (00:20 EST):** after the probe lost its results to a BC-RNN CUDA device bug and the training smoke looped on Modal restarts (KNOWN_ISSUES KI-030, KI-031; spend so far ≈ $0.10), the owner chose "All 3, same $2 cap" for: 1 L4 probe retry (≤ 15 min, $0.36), 1 new CPU training smoke with a real-SIGINT drill and a clean stop at step 1500 (≤ 15 min, $0.11) and its resume launch (≤ 20 min, $0.12); a 4-attempt cap per launch; worst case including the spend so far $0.77. **Closed 2026-11-07 (≈ 00:52 EST, with the Gate C decision)** at the end of Gate A: $0.148 billed over 6 launches (E5-04–E5-09); the remaining headroom is not usable (status `exhausted`) |
 | A-02 | 2026-11-08 | Gate D (RGB probe) | rgb_probe | 1.00 | granted | Owner, Session 8 (21:21 EST), answering the Gate D proposal (docs/COMPUTE_PLAN.md §6): chose "D: Modal GPU probe first (≤ $1)", described as "Approve only a ≤$1 L4 probe to measure ResNet-18 training speed. It also needs a protocol amendment, because CUDA training is not deterministic. No main RGB training until a separately capped plan is approved." Scope: 1 launch of `rgb_probe` (1 L4, 4 cores, 16 GiB; random inputs only, no dataset, no evaluation state, nothing kept); max_containers=1, retries=0, preemptible, timeout 360 s, an attempt cap of 4 enforced inside the job; upper bound $0.528 at list price (4 × 362 s + build allowance), $0.92 at the 1.75× region maximum, which the estimate does not model. Prices re-fetched 2026-11-09 02:30 UTC: unchanged. Month-to-date Modal usage at the Gate C close: $5.42, so ≈ $24.58 of the $30 credit remained |
+| A-03 | 2026-11-08 | Gate D2 (RGB main) | train_gpu | 15.00 | granted | Owner, Session 8 (21:52 EST), answering the Gate D2 proposal (docs/COMPUTE_PLAN.md §7): chose "L60: Lift, GPU, 60k (Recommended)", described as "Lift. Visual BC-chunk vs visual diffusion, ResNet-18 at 84², 3 seeds each, 60k steps, 12 checkpoints. About 8 h of L4. Expected ≈ $9.8 at list price; new approval A-03 with a $15 cap. About 78 local evaluations (≈ 1.3–13 h)." The question stated that every GPU option includes the RESEARCH_PROTOCOL amendment for deterministic CUDA training (COMPUTE_PLAN §7.3), with launches of at most 1 h each, strictly one after another, and evaluation on the local container at $0. Scope: the 6 Lift runs of the RGB experiment freeze (2 families × seeds 0–2) on function `train_gpu` (1 L4, 4 cores, 16 GiB), with resume launches; max_containers=1, retries=0, preemptible, attempt cap 4 per launch; no tuning runs. Month-to-date Modal usage at the decision: $5.45 (through the probe's day) |
+
+**Gate D2 (RGB main training), 2026-11-08, 21:52 EST.** Owner choice: **"L60: Lift, GPU, 60k
+(Recommended)"** (approval A-03, $15 cap; COMPUTE_PLAN §7).
+- **Approved:** the 6 Lift runs of the RGB experiment (visual BC-MLP-chunk and visual
+  diffusion, seeds 0–2), with ResNet-18 at 84², 60k steps, batch 64 and a checkpoint every
+  5k (K = 12).
+- **Where it runs:** training on one L4 with deterministic kernels, under the
+  RESEARCH_PROTOCOL amendment of 2026-11-08. Evaluation runs on the local canonical
+  container.
+- **How launches run:**
+  - each launch is at most 1 h and resumes the run as needed;
+  - launches run strictly one after another, and each result is recorded before the next is
+    authorized.
+- **Not approved:** Can, tuning trials and any run outside `docs/RGB_EXPERIMENT_FREEZE.md`.
+  That file must be committed before the first training launch.
 
 **Gate D (RGB budget), 2026-11-08, 21:21 EST.** Owner choice: **"D: Modal GPU probe first
 (≤ $1)"** (approval A-02).

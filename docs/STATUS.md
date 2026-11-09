@@ -57,7 +57,7 @@ UPDATED: 2026-11-09
   - held-out: the difference is not separated.
 - Context only, not a declared comparison: Level 1's low-dim policies on the same starts scored
   BC-MLP-chunk 98.0 % and diffusion 97.3 %. Visual control from two 84² cameras plus 9-D
-  proprioception matches them on Lift. Lift saturates for every arm (KI-034), so it cannot
+  proprioception sits at the same Lift ceiling. Lift saturates for every arm (KI-034), so it cannot
   rank visual BC against visual diffusion.
 
 ## Session 8 acceptance (MASTER_SPEC Session 8)

@@ -196,9 +196,9 @@ Lift saturates for every arm (KI-034).
   - diffusion climbs from 40–43/50 at 5k to 50/50 by 20–25k.
 - **Held-out test.** Visual diffusion 100.0 % and visual BC-chunk 99.3 %; the difference is
   not separated.
-  - Visual control from two 84² cameras plus 9-D proprioception matches the Level 1 low-dim
-    policies on Lift: BC-MLP-chunk 98.0 %, diffusion 97.3 %. This is context only, not a
-    declared comparison.
+  - Visual control from two 84² cameras plus 9-D proprioception sits at the same Lift ceiling
+    as the Level 1 low-dim policies (BC-MLP-chunk 98.0 %, diffusion 97.3 %). This is context
+    only, not a declared comparison.
   - Lift cannot rank visual BC against visual diffusion.
 - **Cost and latency.**
   - Diffusion costs 1.35× the training (1.29–1.36 h, $1.52–1.60 per run, against BC's

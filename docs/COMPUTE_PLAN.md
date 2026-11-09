@@ -1,4 +1,4 @@
-# Compute and Modal Plan (Session 5: implemented, tested on Modal, Gate C decided; Sessions 6–7: Level 1 ran locally at $0)
+# Compute and Modal Plan (Session 5: implemented, tested on Modal, Gate C decided; Sessions 6–7: Level 1 ran locally at $0; Session 8: Gate D proposal, §6)
 
 **Status (2026-11-07):**
 - **Built and tested:** the Modal integration (D-045–D-050).
@@ -155,6 +155,84 @@ All local, $0, Gate C (D-051); no Modal resource. Measured, from manifests and s
 - **Gate B:** pilot. Done locally at $0 in Sessions 3–4: one seed per family on Lift, with
   wall time, evaluation throughput and storage measured.
 - **Gate C:** main suite. **Approved as local CPU only, $0** (2026-11-07).
-- **Gate D:** each extension, approved separately.
+- **Gate D:** each extension, approved separately. Session 8 RGB proposal: §6 (awaiting the
+  owner's decision).
 
 No paid job runs without an explicit owner approval recorded in `docs/EXPERIMENT_LEDGER.md`.
+
+## 6. Session 8 Gate D proposal: RGB visual policies (from the measured pilot, 2026-11-09)
+**Status: PROPOSED, awaiting the owner's decision.** No RGB dataset, training run or RGB
+evaluation exists. Every duration below is an **estimate** computed from the measurements in
+EXPERIMENT_LEDGER E8-03–E8-05; none is a promise.
+
+### 6.1 Measured inputs (this host, an M1 Pro with 8 performance + 2 efficiency cores)
+| Input | Measured | Source |
+|---|---|---|
+| Render, canonical container (OSMesa), ms per frame | 37–71 (84² and 128² alike: per-frame overhead dominates) | E8-03 |
+| Control step in the container: physics only / + both cameras | Lift 5.8 / 103–123 ms; Can 11.6 / 127–149 ms | E8-03 |
+| Storage, both cameras, HDF5 gzip-4, whole task | Lift 0.13 GiB (84²), 0.30 (128²); Can 0.51, 1.07 | E8-03 |
+| Training step, batch 64, T_o = 2, two cameras, 1 thread alone | compact 84² 0.91–0.98 s; compact 128² 2.06–2.10 s; ResNet-18 84² 4.07–4.14 s; ResNet-18 128² 6.96–7.64 s | E8-05 |
+| Same, compact 84², N concurrent 1-thread runs (s/step each; aggregate steps/s) | 3: 1.07 (2.77); 4: 1.37 (2.94); **6: 1.90 (3.16)**; 8: 3.69 (2.18). More threads per run do not help (8 threads: 1.08–1.21 s) | E8-05 |
+| Inference per decision, container, 1 thread (compact 84²) | BC-chunk head 11.5 ms; diffusion DDIM-10 92.9 ms (ResNet-18: 41.8 / 109.9 ms) | E8-05 |
+| Free disk | 20 GiB (2026-11-09) | `df -h` |
+
+### 6.2 What the budget buys (the design the RGB freeze would fix)
+- **Comparison:** visual BC-MLP-chunk vs visual diffusion (Lift; Can optional). Both use the
+  same per-camera encoder (architecture and per-seed initialization), the same random crop
+  (76 of 84 px), the same 9-D proprioception (`robot0_eef_pos`, `robot0_eef_quat`,
+  `robot0_gripper_qpos`, train-only normalization) and no object state; the heads, horizons
+  (T_o 2, T_p 16, T_a 8), optimizer and sampler are the Level 1 ones. The two arms differ only
+  in the head: deterministic regression vs conditional diffusion.
+- **Encoder:** the compact residual trunk + SpatialSoftmax, trained from scratch: 0.63 M
+  parameters for two cameras, no download and no licence question. ResNet-18 (22.4 M) is
+  4.4× slower per step alone and not affordable on this CPU (§6.4).
+- **Resolution:** 84² (robomimic's image default). 128² costs 2.2× per training step and the
+  same to render.
+- **Budget per run:** batch 64, S steps, a checkpoint every 5,000 steps, every checkpoint on the
+  50 validation starts (RESEARCH_PROTOCOL §7 rule). Seeds {0, 1, 2}. One configuration per
+  family, fixed in the freeze (no tuning trials).
+- **Evaluation:** canonical container, ≤ 4 in parallel, rendering only the frames each decision
+  reads (2 per camera per 8 steps); the RGB held-out suite is decided in the freeze.
+- **Dataset:** both cameras at 84², rendered from the raw states in the container (D-074).
+
+### 6.3 Options (local CPU is $0; durations are estimates)
+Training: 6 runs (2 families × 3 seeds) as 6 concurrent 1-thread processes at the measured
+1.90 s/step, plus 10 % for data loading, checkpoints and offline metrics. Evaluation: per 50-start
+evaluation, between "every episode succeeds near the demonstrations' length" and "every
+episode times out at 400 steps", scaled by the measured 2.25× slowdown per container at 4 in
+parallel.
+
+| Option | Scope | Training | Validation + test evaluations | Elapsed (estimate) | Disk | Cost |
+|---|---|---|---|---|---|---|
+| **A (recommended)** | Lift, compact 84², S = 30k (K = 6) | 17.4 h (104 CPU-h) | 36 + 6 = 42; 0.6–6.2 h | **≈ 18–24 h** | ≈ 2 GiB | $0 |
+| B | A + Can (same plan) | + 17.4 h | + 42; + 1.8–7.5 h | ≈ 38–51 h | ≈ 4 GiB | $0 |
+| C | Lift, compact 84², S = 20k (K = 4) | 11.7 h | 24 + 6 = 30; 0.4–4.4 h | ≈ 12.5–16.5 h | ≈ 1.5 GiB | $0 |
+| D | GPU path for ResNet-18 (Modal L4) | not estimable yet | local container | — | — | probe ≤ $1, then a capped plan |
+
+Dataset build (container, one process): Lift ≈ 19 min, Can ≈ 53 min. A 50-start Lift
+evaluation takes about 1.5–2 min if every episode succeeds within 50 steps and 12–16 min if every
+episode times out; Can 4.7–5.7 min and 16–19 min.
+
+### 6.4 Why not ResNet-18 on CPU, and what the GPU path would need
+- ResNet-18 at 84² takes 4.1 s per step alone; 30k steps would be ≥ 34 h per run with nothing
+  else running, and concurrency makes each run slower (compact: 1.9× at 6 processes).
+- **Option D needs, in order:** (1) a new approval row for a ≤ $1.00 L4 probe (one function,
+  ≤ 15 min, the Gate A pattern) to *measure* visual training steps/s on the GPU; (2) a dated
+  RESEARCH_PROTOCOL amendment, because the protocol trains on CPU in float32 and CUDA training is
+  not bitwise deterministic; (3) then a capped main plan. List price of the L4 function
+  (1 L4, 4 cores, 16 GiB) is $1.12/h, $1.95/h at the highest region multiplier
+  (`configs/compute/modal.yaml`, fetched 2026-11-06: recheck before any launch). For scale only:
+  6 runs capped at 2 h each would have an upper bound of ≈ $23, more than the remaining monthly
+  credit the owner asked to stay within. Not recommended now.
+
+### 6.5 What happens after the decision
+1. The decision is recorded as an approval row (A-02) in `docs/EXPERIMENT_LEDGER.md`, with cap
+   $0.00 for a local-only choice, so no Modal launch can use it.
+2. `docs/RGB_EXPERIMENT_FREEZE.md` is written and committed before the first RGB training run:
+   observation spec, encoder, augmentations, budget, selection rule, held-out suite and the
+   analysis. Before any RGB held-out rollout, the held-out lock is re-gated on that file with a
+   test, as a recorded decision; `make freeze-check` then needs to compare the Level 1 frozen
+   hashes with the freeze commit `bf0a0fa` rather than the working tree (frozen modules such as
+   `eval_states.py` must change for the re-gate), while `heldout.evaluate_entry` keeps refusing
+   any Level 1 rerun.
+3. Then the RGB dataset build, training and evaluation under that freeze.

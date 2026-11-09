@@ -45,6 +45,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-038 | LOW | RESOLVED (Session 7) | `analyze_robustness.py` read the checkpoint step from the wrong field |
 | KI-039 | MEDIUM | RESOLVED (Session 7, D-072) | A simulator test would have built a held-out start once the lock opened |
 | KI-040 | MEDIUM | RESOLVED (Session 8) | `make smoke-sim` built Lift held-out start 0 in memory once the lock had opened |
+| KI-041 | LOW | MITIGATED (Session 8, D-074) | The first render of a fresh CGL context differs from later renders by a few pixels (macOS only) |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -870,3 +871,20 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Rule for later sessions:** with the Level 1 lock open, no tool may test the lock against the
   real freeze. The lock is re-gated on `docs/RGB_EXPERIMENT_FREEZE.md` (HANDOFF) before any RGB
   held-out work.
+
+### KI-041 — The first render of a fresh CGL context differs from later renders by a few pixels (MITIGATED, Session 8)
+- **Observed (macOS arm64, `MUJOCO_GL=cgl`, Session 8):** rendering one state several times with
+  a fresh `mujoco.Renderer`, the first frame differs from every later frame on 1–6 pixels by one
+  grey level (Can agentview 4–6 px, Can wrist 1–6 px, Lift ≤ 1 px); frames 2, 3, … are bitwise
+  equal. The artifact belongs to the GL context (any camera, any state); warming one size's
+  context does not warm another's (`reports/session8/rgb_feasibility/darwin-arm64-native/*_invariants.json`,
+  `first_render`).
+- **Canonical container (OSMesa):** 0 px on every checked context, both tasks
+  (`linux-aarch64-container-1f685638f28c/*_invariants.json`).
+- **Why it matters:** `ShadowRenderer` creates a context per model and size, and every episode
+  restore compiles a new model, so without a warm-up the first frame of each episode (and of each
+  dataset demo with a new model) would differ from steady-state frames.
+- **Mitigation (D-074):** every kept RGB frame is a steady-state frame: each new context renders
+  once and discards it (`roboforge.data.rgb.WARM_UP_RENDERS = 1`). The closed-loop RGB observation
+  path must do the same. Native frames are development-only anyway (CGL vs OSMesa differ by
+  0.6–3.1 mean grey levels, E8-04).

@@ -1,0 +1,71 @@
+== make lint
+uv run --frozen ruff check src scripts tests infra
+All checks passed!
+rc=0
+== make test
+uv run --frozen pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.2.0, pluggy-1.7.0
+rootdir: /Users/zackaryholt/Projects/roboforge
+configfile: pyproject.toml
+testpaths: tests
+collected 390 items
+
+tests/integration/test_data_pipeline.py ..............................   [  7%]
+tests/integration/test_datasets.py .......                               [  9%]
+tests/integration/test_remote_job.py .                                   [  9%]
+tests/integration/test_resumable_run.py .........                        [ 12%]
+tests/integration/test_train_real_data.py ......                         [ 13%]
+tests/integration/test_verify_data_cli.py .                              [ 13%]
+tests/research_integrity/test_final_test_lock.py ..................      [ 18%]
+tests/research_integrity/test_robustness_disjoint.py ..                  [ 18%]
+tests/simulator/test_diffusion_closed_loop.py ....                       [ 20%]
+tests/simulator/test_env_adapter.py ..........................           [ 26%]
+tests/simulator/test_eval_variants.py .......                            [ 28%]
+tests/simulator/test_features_closed_loop.py ......                      [ 30%]
+tests/simulator/test_learned_policy.py .........                         [ 32%]
+tests/simulator/test_lift_sim.py ............                            [ 35%]
+tests/simulator/test_render_probe.py .                                   [ 35%]
+tests/simulator/test_rgb_alignment.py ..........                         [ 38%]
+tests/simulator/test_robustness_states.py ..........                     [ 40%]
+tests/simulator/test_rollout.py .....                                    [ 42%]
+tests/simulator/test_smoke_sim_lock.py ..                                [ 42%]
+tests/simulator/test_taxonomy_sim.py .                                   [ 42%]
+tests/unit/test_analyze_heldout.py ......                                [ 44%]
+tests/unit/test_analyze_robustness.py ..                                 [ 44%]
+tests/unit/test_bc_models.py ..............                              [ 48%]
+tests/unit/test_compare_platform_evidence.py ...                         [ 49%]
+tests/unit/test_compute.py ............                                  [ 52%]
+tests/unit/test_coords.py .......                                        [ 54%]
+tests/unit/test_diffusion_policy.py ..........                           [ 56%]
+tests/unit/test_diffusion_reference.py ...........                       [ 59%]
+tests/unit/test_fetch_and_inspect.py ...........                         [ 62%]
+tests/unit/test_fetch_resume.py .......                                  [ 64%]
+tests/unit/test_forward_pass.py ..                                       [ 64%]
+tests/unit/test_freeze.py .............                                  [ 67%]
+tests/unit/test_math_and_backend.py .....                                [ 69%]
+tests/unit/test_normalization.py ...........                             [ 72%]
+tests/unit/test_paths.py ....                                            [ 73%]
+tests/unit/test_rgb_projection.py ......                                 [ 74%]
+tests/unit/test_run_suite_reads.py ....                                  [ 75%]
+tests/unit/test_selection.py .........                                   [ 77%]
+tests/unit/test_sequence.py ..........                                   [ 80%]
+tests/unit/test_slots.py ...                                             [ 81%]
+tests/unit/test_snapshot.py .....                                        [ 82%]
+tests/unit/test_split.py .......                                         [ 84%]
+tests/unit/test_statistics.py ...........                                [ 87%]
+tests/unit/test_suite_plan.py .............                              [ 90%]
+tests/unit/test_taxonomy.py ...............                              [ 94%]
+tests/unit/test_train_loop.py ..........                                 [ 96%]
+tests/unit/test_validation_figures.py ...                                [ 97%]
+tests/unit/test_windows.py ........                                      [ 99%]
+tests/web_contract/test_three_contract.py .                              [100%]
+
+======================= 390 passed in 449.40s (0:07:29) ========================
+rc=0
+== make freeze-check
+ROBOFORGE_EVIDENCE_SESSION=8 uv run --frozen python -c "from roboforge.eval import freeze as f; d = f.load_freeze(); \
+	  bad = f.code_problems(d); print('\n'.join(bad) or 'freeze committed; frozen code unchanged'); \
+	  raise SystemExit(1 if bad else 0)"
+freeze committed; frozen code unchanged
+rc=0

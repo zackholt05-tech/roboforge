@@ -1,0 +1,145 @@
+== make lint
+uv run --frozen ruff check src scripts tests infra
+All checks passed!
+rc=0
+== make freeze-check
+ROBOFORGE_EVIDENCE_SESSION=8 uv run --frozen python -c "from roboforge.eval import freeze as f; d = f.load_freeze(); \
+	  bad = f.code_problems(d); print('\n'.join(bad) or 'freeze committed; frozen code unchanged'); \
+	  raise SystemExit(1 if bad else 0)"
+freeze committed; frozen code unchanged
+rc=0
+== make test
+uv run --frozen pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.2.0, pluggy-1.7.0
+rootdir: /Users/zackaryholt/Projects/roboforge
+configfile: pyproject.toml
+testpaths: tests
+collected 372 items
+
+tests/integration/test_data_pipeline.py ..............................   [  8%]
+tests/integration/test_datasets.py .......                               [  9%]
+tests/integration/test_remote_job.py .                                   [ 10%]
+tests/integration/test_resumable_run.py .........                        [ 12%]
+tests/integration/test_train_real_data.py ......                         [ 14%]
+tests/integration/test_verify_data_cli.py .                              [ 14%]
+tests/research_integrity/test_final_test_lock.py ..................      [ 19%]
+tests/research_integrity/test_robustness_disjoint.py ..                  [ 19%]
+tests/simulator/test_diffusion_closed_loop.py ....                       [ 20%]
+tests/simulator/test_env_adapter.py ..........................           [ 27%]
+tests/simulator/test_eval_variants.py .......                            [ 29%]
+tests/simulator/test_features_closed_loop.py ......                      [ 31%]
+tests/simulator/test_learned_policy.py .........                         [ 33%]
+tests/simulator/test_lift_sim.py ............                            [ 37%]
+tests/simulator/test_render_probe.py .                                   [ 37%]
+tests/simulator/test_robustness_states.py ..........                     [ 40%]
+tests/simulator/test_rollout.py .....                                    [ 41%]
+tests/simulator/test_taxonomy_sim.py .                                   [ 41%]
+tests/unit/test_analyze_heldout.py ......                                [ 43%]
+tests/unit/test_analyze_robustness.py ..                                 [ 43%]
+tests/unit/test_bc_models.py ..............                              [ 47%]
+tests/unit/test_compare_platform_evidence.py ...                         [ 48%]
+tests/unit/test_compute.py ............                                  [ 51%]
+tests/unit/test_coords.py .......                                        [ 53%]
+tests/unit/test_diffusion_policy.py ..........                           [ 56%]
+tests/unit/test_diffusion_reference.py ...........                       [ 59%]
+tests/unit/test_fetch_and_inspect.py ...........                         [ 62%]
+tests/unit/test_fetch_resume.py .......                                  [ 63%]
+tests/unit/test_forward_pass.py ..                                       [ 64%]
+tests/unit/test_freeze.py .............                                  [ 68%]
+tests/unit/test_math_and_backend.py .....                                [ 69%]
+tests/unit/test_normalization.py ...........                             [ 72%]
+tests/unit/test_paths.py ....                                            [ 73%]
+tests/unit/test_run_suite_reads.py ....                                  [ 74%]
+tests/unit/test_selection.py .........                                   [ 76%]
+tests/unit/test_sequence.py ..........                                   [ 79%]
+tests/unit/test_slots.py ...                                             [ 80%]
+tests/unit/test_snapshot.py .....                                        [ 81%]
+tests/unit/test_split.py .......                                         [ 83%]
+tests/unit/test_statistics.py ...........                                [ 86%]
+tests/unit/test_suite_plan.py .............                              [ 90%]
+tests/unit/test_taxonomy.py ...............                              [ 94%]
+tests/unit/test_train_loop.py ..........                                 [ 96%]
+tests/unit/test_validation_figures.py ...                                [ 97%]
+tests/unit/test_windows.py ........                                      [ 99%]
+tests/web_contract/test_three_contract.py .                              [100%]
+
+======================= 372 passed in 453.68s (0:07:33) ========================
+rc=0
+== make smoke-sim
+[robosuite WARNING] No private macro file found! (macros.py:53)
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+[robosuite WARNING] To setup, run: python /Users/zackaryholt/Projects/roboforge/.venv/lib/python3.11/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+[robosuite WARNING] Could not import robosuite_models. Some robots may not be available. If you want to use these robots, please install robosuite_models from source (https://github.com/ARISE-Initiative/robosuite_models) or through pip install. (__init__.py:30)
+[robosuite WARNING] Could not load the mink-based whole-body IK. Make sure you install related import properly, otherwise you will not be able to use the default IK controller setting for GR1 robot. (__init__.py:40)
+[PASS] same_seed_identical_reset
+[PASS] different_seed_changes_object
+[PASS] action_dim_7
+[PASS] time_advances_correctly
+[PASS] robot_moves
+[PASS] random_policy_not_successful
+[PASS] obs_finite
+[PASS] success_predicate_responds
+[PASS] done_only_at_horizon
+[PASS] render_nontrivial
+[PASS] cross_process_deterministic
+[PASS] adapter_reset_exact
+[PASS] adapter_valid_dynamic_dim_action
+[PASS] adapter_rejects_invalid_actions
+[PASS] adapter_no_success_at_start
+[PASS] adapter_render
+[FAIL] adapter_reserved_test_seed_locked
+report: logs/session8/prereq/smoke_sim_lift.json
+make: *** [smoke-sim] Error 1
+rc=2
+== container smoke lift
+infra/containers/run_sim_cpu.sh python scripts/smoke_sim.py --task lift --out-dir logs/session8/prereq/container
+[robosuite WARNING] No private macro file found! (macros.py:53)
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+[robosuite WARNING] To setup, run: python /app/.venv/lib/python3.11/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+[robosuite WARNING] Could not import robosuite_models. Some robots may not be available. If you want to use these robots, please install robosuite_models from source (https://github.com/ARISE-Initiative/robosuite_models) or through pip install. (__init__.py:30)
+[robosuite WARNING] Could not load the mink-based whole-body IK. Make sure you install related import properly, otherwise you will not be able to use the default IK controller setting for GR1 robot. (__init__.py:40)
+[PASS] same_seed_identical_reset
+[PASS] different_seed_changes_object
+[PASS] action_dim_7
+[PASS] time_advances_correctly
+[PASS] robot_moves
+[PASS] random_policy_not_successful
+[PASS] obs_finite
+[PASS] success_predicate_responds
+[PASS] done_only_at_horizon
+[PASS] render_nontrivial
+[PASS] cross_process_deterministic
+[PASS] adapter_reset_exact
+[PASS] adapter_valid_dynamic_dim_action
+[PASS] adapter_rejects_invalid_actions
+[PASS] adapter_no_success_at_start
+[PASS] adapter_render
+[PASS] adapter_reserved_test_seed_locked
+report: logs/session8/prereq/container/smoke_sim_lift.json
+rc=0
+== container smoke can
+infra/containers/run_sim_cpu.sh python scripts/smoke_sim.py --task can --out-dir logs/session8/prereq/container
+[robosuite WARNING] No private macro file found! (macros.py:53)
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+[robosuite WARNING] To setup, run: python /app/.venv/lib/python3.11/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+[robosuite WARNING] Could not import robosuite_models. Some robots may not be available. If you want to use these robots, please install robosuite_models from source (https://github.com/ARISE-Initiative/robosuite_models) or through pip install. (__init__.py:30)
+[robosuite WARNING] Could not load the mink-based whole-body IK. Make sure you install related import properly, otherwise you will not be able to use the default IK controller setting for GR1 robot. (__init__.py:40)
+[PASS] same_seed_identical_reset
+[PASS] different_seed_changes_object
+[PASS] action_dim_7
+[PASS] time_advances_correctly
+[PASS] robot_moves
+[PASS] random_policy_not_successful
+[PASS] obs_finite
+[PASS] done_only_at_horizon
+[PASS] render_nontrivial
+[PASS] cross_process_deterministic
+[PASS] adapter_reset_exact
+[PASS] adapter_valid_dynamic_dim_action
+[PASS] adapter_rejects_invalid_actions
+[PASS] adapter_no_success_at_start
+[PASS] adapter_render
+[PASS] adapter_reserved_test_seed_locked
+report: logs/session8/prereq/container/smoke_sim_can.json
+rc=0

@@ -1,0 +1,137 @@
+{
+ "function": "train_gpu",
+ "mode": "new",
+ "run_id": "s8_rgb_diffusion_resnet18_lift_seed0_dddc7f1c",
+ "launch_id": "ad45e0188bf94be79e9022be02c04a9c",
+ "timeout_s": 3600,
+ "deadline_s": 3420,
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 3600.0
+ },
+ "policy": {
+  "gpu_count": 1,
+  "max_attempts_per_launch": 4,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ },
+ "git": {
+  "dirty": false,
+  "sha": "d9c62172fad0c6ad3a4135a6866aea1c4c4a47e9"
+ },
+ "blocking": []
+}
+{
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ }
+}
+UPPER-BOUND ESTIMATE $4.5445 (list prices fetched 2026-11-09; job $4.4653 = 4 attempts x $1.1163 + build/start allowance $0.0791; not a cap)
+{
+ "approval_id": "A-03",
+ "gate": "Gate D2 (RGB main)",
+ "cap_usd": 15.0,
+ "committed_before_usd": 0.0,
+ "estimate_upper_usd": 4.54445536,
+ "remaining_after_usd": 10.45554464
+}
+ 
+✓ Initialized. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-kZzeZeEKODcLaYNjnh2DHz
+✓ Created objects.
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/infra/modal_app.py
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/normalization
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/splits
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/manifests
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/configs
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/scripts
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/src
+├── ✓ Created Function train_cpu.
+├── ✓ Created Function gpu_probe.
+├── ✓ Created Function rgb_probe.
+└── ✓ Created Function train_gpu.
+{"rgb_checkpoint": {"step": 5000, "path": "checkpoints/step_0005000.pt", "sha256": "565cbbcaa5bcc3927a73a6cb8c0a34eb0f242b4ac294742bdb4b6907cc86c1f9", "inference_network": "ema", "inference_digest": "4b249c7acbc82a27863c82bd91992439f6baad5fd10abf82f907b8a3666dacd1", "valid_loss": 0.06339056509570537}}
+{"rgb_checkpoint": {"step": 10000, "path": "checkpoints/step_0010000.pt", "sha256": "aaaa7bd89cbd264db516c270c54b9bf22365047465495e068b35887f138ed0ab", "inference_network": "ema", "inference_digest": "b03c9c36868b28afc34e6db1bd912ee177f4ee687b44f8dbe1014dcce54244b1", "valid_loss": 0.05568446864539187}}
+{"rgb_checkpoint": {"step": 15000, "path": "checkpoints/step_0015000.pt", "sha256": "132bdec8dd4ca7a94bcd0fef73edc0ad1836be6904fe1883bf3452c1bb549b0e", "inference_network": "ema", "inference_digest": "7c8bc16eeb074bad6a6fa7629e861a83d553bcad684560384c14de3b91849bad", "valid_loss": 0.05347240788836693}}
+{"rgb_checkpoint": {"step": 20000, "path": "checkpoints/step_0020000.pt", "sha256": "5c34c3a7bef12d1f9c354c7049b977d624f918f9830e633aeaf19d524140c0bc", "inference_network": "ema", "inference_digest": "ddb16ce10b6b8dc667c29d6af08a767825dbc719b9f93bd762b142914c5494cb", "valid_loss": 0.05440904209517364}}
+{"rgb_checkpoint": {"step": 25000, "path": "checkpoints/step_0025000.pt", "sha256": "881a84f6abca7e84a6bc75022a23fc1c700d15043052838197f443fbdcdc8328", "inference_network": "ema", "inference_digest": "f1d3bb90a49ac851e8167e5a067ba296a5f60a7bc5c570d4af6e8e9f3821377f", "valid_loss": 0.05879201318117378}}
+{"rgb_checkpoint": {"step": 30000, "path": "checkpoints/step_0030000.pt", "sha256": "5cf8ee5cc3b4bcc367fafb1feb50c57470967181332d7591736c8353048d33fb", "inference_network": "ema", "inference_digest": "fb02af0568359802b1b96df882d7e556eb2a1839f37ed623ea0678446e480e88", "valid_loss": 0.0658712329063383}}
+{"rgb_checkpoint": {"step": 35000, "path": "checkpoints/step_0035000.pt", "sha256": "26f2e5a1c700c8ae4187f56c291b8f13f0c077639adc199707e4294121db8131", "inference_network": "ema", "inference_digest": "9d4b7796759ad12a8cbbcedac4f93de0a0067821f256cbb84c1b743166624e34", "valid_loss": 0.07588243010303199}}
+{"rgb_checkpoint": {"step": 40000, "path": "checkpoints/step_0040000.pt", "sha256": "b1c6e081361fc793b25049175c15ac1751e7e881ef8915937efe6f7284f10638", "inference_network": "ema", "inference_digest": "ab2ed1036eed2ea60a7ced17e81ab02dcc1290736d8b5ce5ebfb110371f85827", "valid_loss": 0.08649476007585637}}
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-kZzeZeEKODcLaYNjnh2DHz
+{
+ "schema": "roboforge.cost_event/1",
+ "event": "result",
+ "utc": "2026-11-09T05:26:09.969656+00:00",
+ "launch_id": "ad45e0188bf94be79e9022be02c04a9c",
+ "run_id": "s8_rgb_diffusion_resnet18_lift_seed0_dddc7f1c",
+ "status": "interrupted",
+ "container_wall_s": 3426.1471547170004,
+ "measured_cost_usd": 1.0624513661898927,
+ "measured_cost_kind": "estimate: measured container time x list price (excludes image build and start-up)",
+ "modal": {
+  "function": "train_gpu",
+  "app_id": "ap-kZzeZeEKODcLaYNjnh2DHz",
+  "upload": {
+   "files": {
+    "processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5": {
+     "bytes": 1586020,
+     "uploaded": false
+    },
+    "processed/robomimic_v1.5_ph/lift/rgb84_v1.hdf5": {
+     "bytes": 137536082,
+     "uploaded": true
+    }
+   }
+  }
+ },
+ "detail": null
+}
+ 
+result: /Users/zackaryholt/Projects/roboforge/logs/tmp/modal_plans/train_gpu_20261108T232524.result.json

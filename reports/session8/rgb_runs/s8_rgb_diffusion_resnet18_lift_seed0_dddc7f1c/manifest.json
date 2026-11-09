@@ -1,0 +1,286 @@
+{
+ "schema": "roboforge.rgb_run/1",
+ "run_id": "s8_rgb_diffusion_resnet18_lift_seed0_dddc7f1c",
+ "family": "rgb_diffusion",
+ "task": "lift",
+ "seed": 0,
+ "config": {
+  "schema": "roboforge.rgb_train_config/1",
+  "name": "rgb_diffusion_resnet18",
+  "family": "rgb_diffusion",
+  "head_family": "diffusion_unet",
+  "head_config": "configs/models/diffusion_unet.yaml",
+  "task": "lift",
+  "seed": 0,
+  "horizons": {
+   "obs": 2,
+   "pred": 16,
+   "exec": 8
+  },
+  "observation": {
+   "cameras": [
+    "agentview",
+    "robot0_eye_in_hand"
+   ],
+   "image_size": 84,
+   "crop": 76,
+   "proprio": [
+    "robot0_eef_pos",
+    "robot0_eef_quat",
+    "robot0_gripper_qpos"
+   ],
+   "proprio_dims": [
+    0,
+    9
+   ]
+  },
+  "encoder": {
+   "trunk": "resnet18",
+   "feature_dim": 64,
+   "num_kp": 32,
+   "norm": "groupnorm",
+   "pretrained": false
+  },
+  "model": {
+   "down_dims": [
+    64,
+    128
+   ],
+   "step_embed_dim": 64,
+   "kernel_size": 5,
+   "n_groups": 8,
+   "num_train_timesteps": 100,
+   "beta_schedule": "squaredcos_cap_v2",
+   "prediction_type": "epsilon",
+   "clip_sample": true,
+   "sampler": "ddim",
+   "inference_steps": 10,
+   "ddim_eta": 0.0,
+   "ema": true,
+   "ema_power": 0.75,
+   "ema_max_decay": 0.9999
+  },
+  "loss": {
+   "kind": "denoising_mse"
+  },
+  "optim": {
+   "name": "adamw",
+   "lr": 0.0001,
+   "betas": [
+    0.9,
+    0.999
+   ],
+   "weight_decay": 0.0,
+   "schedule": "constant"
+  },
+  "train": {
+   "max_steps": 60000,
+   "batch_size": 64,
+   "ckpt_every": 5000,
+   "log_every": 100,
+   "grad_clip": null
+  },
+  "device": {
+   "kind": "cuda",
+   "deterministic": true,
+   "cublas_workspace_config": ":4096:8"
+  },
+  "data": {
+   "rgb_relpath": "processed/robomimic_v1.5_ph/lift/rgb84_v1.hdf5"
+  }
+ },
+ "config_sha256": "dddc7f1cc6c700fa9089799a1efea9f163a6e68215d18b1cc70af30a541dc77e",
+ "hashes": {
+  "task_manifest_sha256": "2ac6070d18cc53f565ec11e67e01f6b5a91de7e268df6a491590b0e45f0528ac",
+  "observation_spec_sha256": "dfbd868e0ec11da76f66a71a9c3468e58590728ca95e93bbfb0a50ce182a7721",
+  "action_spec_sha256": "bcae0b7110c56e1bfdf8e2754c03ff95c8c9e77a34c56ef9ebae11e60d7fa77f",
+  "task_spec_sha256": "67290895c8ee852f1921242d9f0621b07b6aeb74d4893fce8c6e1b0da59629e5",
+  "processed_content_sha256": "74e70119993830798c8b4ed87f202f64d8d2c9d573c0f376d54c4130e52d63c8",
+  "converter_version": "lowdim_v1",
+  "split_sha256": "73097265526c03dfb7535aa9bff50aadd285cbfb554e563636d66395909c331e",
+  "normalization_sha256": "253bfc7e63570bf3e8f8646a0094d1da4c5b729ba8f463b4955f01410b4812d6",
+  "dataset_id": "robomimic_v1.5/lift/ph",
+  "dataset_low_dim_sha256": "2067777cb8b532e9263dd09fd6448c41cc31224bb27be4a3b734010ae13eb540",
+  "rgb_content_sha256": "41c0ea0253e196c55bdbbca972bf5ccad0136724896eae8e639aa6e1b901334f",
+  "rgb_file_sha256": "05c23eee534bafeeb6f627ceb12d525cfc20a5a54df2ff4ea11e510638c451a3",
+  "rgb_relpath": "processed/robomimic_v1.5_ph/lift/rgb84_v1.hdf5"
+ },
+ "checkpoints": [
+  {
+   "step": 5000,
+   "path": "checkpoints/step_0005000.pt",
+   "sha256": "565cbbcaa5bcc3927a73a6cb8c0a34eb0f242b4ac294742bdb4b6907cc86c1f9",
+   "inference_network": "ema",
+   "inference_digest": "4b249c7acbc82a27863c82bd91992439f6baad5fd10abf82f907b8a3666dacd1",
+   "valid_loss": 0.06339056509570537
+  },
+  {
+   "step": 10000,
+   "path": "checkpoints/step_0010000.pt",
+   "sha256": "aaaa7bd89cbd264db516c270c54b9bf22365047465495e068b35887f138ed0ab",
+   "inference_network": "ema",
+   "inference_digest": "b03c9c36868b28afc34e6db1bd912ee177f4ee687b44f8dbe1014dcce54244b1",
+   "valid_loss": 0.05568446864539187
+  },
+  {
+   "step": 15000,
+   "path": "checkpoints/step_0015000.pt",
+   "sha256": "132bdec8dd4ca7a94bcd0fef73edc0ad1836be6904fe1883bf3452c1bb549b0e",
+   "inference_network": "ema",
+   "inference_digest": "7c8bc16eeb074bad6a6fa7629e861a83d553bcad684560384c14de3b91849bad",
+   "valid_loss": 0.05347240788836693
+  },
+  {
+   "step": 20000,
+   "path": "checkpoints/step_0020000.pt",
+   "sha256": "5c34c3a7bef12d1f9c354c7049b977d624f918f9830e633aeaf19d524140c0bc",
+   "inference_network": "ema",
+   "inference_digest": "ddb16ce10b6b8dc667c29d6af08a767825dbc719b9f93bd762b142914c5494cb",
+   "valid_loss": 0.05440904209517364
+  },
+  {
+   "step": 25000,
+   "path": "checkpoints/step_0025000.pt",
+   "sha256": "881a84f6abca7e84a6bc75022a23fc1c700d15043052838197f443fbdcdc8328",
+   "inference_network": "ema",
+   "inference_digest": "f1d3bb90a49ac851e8167e5a067ba296a5f60a7bc5c570d4af6e8e9f3821377f",
+   "valid_loss": 0.05879201318117378
+  },
+  {
+   "step": 30000,
+   "path": "checkpoints/step_0030000.pt",
+   "sha256": "5cf8ee5cc3b4bcc367fafb1feb50c57470967181332d7591736c8353048d33fb",
+   "inference_network": "ema",
+   "inference_digest": "fb02af0568359802b1b96df882d7e556eb2a1839f37ed623ea0678446e480e88",
+   "valid_loss": 0.0658712329063383
+  },
+  {
+   "step": 35000,
+   "path": "checkpoints/step_0035000.pt",
+   "sha256": "26f2e5a1c700c8ae4187f56c291b8f13f0c077639adc199707e4294121db8131",
+   "inference_network": "ema",
+   "inference_digest": "9d4b7796759ad12a8cbbcedac4f93de0a0067821f256cbb84c1b743166624e34",
+   "valid_loss": 0.07588243010303199
+  },
+  {
+   "step": 40000,
+   "path": "checkpoints/step_0040000.pt",
+   "sha256": "b1c6e081361fc793b25049175c15ac1751e7e881ef8915937efe6f7284f10638",
+   "inference_network": "ema",
+   "inference_digest": "ab2ed1036eed2ea60a7ced17e81ab02dcc1290736d8b5ce5ebfb110371f85827",
+   "valid_loss": 0.08649476007585637
+  },
+  {
+   "step": 45000,
+   "path": "checkpoints/step_0045000.pt",
+   "sha256": "93bad4d65565c560a9db922e35fbd24eab2fd0f8a9d36f957ec6692da2513bed",
+   "inference_network": "ema",
+   "inference_digest": "120cb538b718c357975af97a207d15419380a2460c023ef0315252b314c8f700",
+   "valid_loss": 0.09700515788033982
+  },
+  {
+   "step": 50000,
+   "path": "checkpoints/step_0050000.pt",
+   "sha256": "ea215af7f8385007a477944febc3ae9542380aa538c723b1eff74895ce902717",
+   "inference_network": "ema",
+   "inference_digest": "ec5003670ba500d3581827bc6a9c1aea91895199c228a3c3094e058957e2a23d",
+   "valid_loss": 0.10680620483582073
+  },
+  {
+   "step": 55000,
+   "path": "checkpoints/step_0055000.pt",
+   "sha256": "6d919dfb989c2a8e68a97e9f56d9efbe7fcf00eab2e723c4c20df14112bc7b97",
+   "inference_network": "ema",
+   "inference_digest": "dc815de865981e25685b2a9eb73572df466ed5ddf122a6bab18e0d61d98525f9",
+   "valid_loss": 0.11763369774202621
+  },
+  {
+   "step": 60000,
+   "path": "checkpoints/step_0060000.pt",
+   "sha256": "f67b9795848b36954fa571955774b6e48de97afb9aeac4a11cea4c00efe9ef66",
+   "inference_network": "ema",
+   "inference_digest": "8c54cb68f0a1a57ff032975487219502d7e2248e43e2be64e7559c3504641ebb",
+   "valid_loss": 0.12455203090785308
+  }
+ ],
+ "segments": [
+  {
+   "launch_id": "ad45e0188bf94be79e9022be02c04a9c",
+   "attempt": 0,
+   "mode": "new",
+   "device": "cuda",
+   "resumed_from_step": 0,
+   "utc_start": "2026-11-09T04:29:13Z",
+   "git": {
+    "sha": "d9c62172fad0c6ad3a4135a6866aea1c4c4a47e9",
+    "dirty": false,
+    "source": "launch plan (roboforge.compute.plan; clean committed tree)"
+   },
+   "flags": {
+    "deterministic_algorithms": true,
+    "cudnn_deterministic": true,
+    "cudnn_benchmark": false,
+    "cudnn_allow_tf32": true,
+    "matmul_allow_tf32": false,
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8"
+   },
+   "host": {
+    "hostname": "modal",
+    "torch": "2.15.0+cu132",
+    "torch_cuda": "13.2",
+    "cudnn": 92600,
+    "gpu": "NVIDIA L4",
+    "nvidia_smi": "NVIDIA L4, 610.57.04",
+    "MODAL_REGION": "us-east",
+    "MODAL_CLOUD_PROVIDER": "CLOUD_PROVIDER_GCP",
+    "MODAL_TASK_ID": "ta-01M6Z91XPHSGPFJWF87BKT0TPR",
+    "MODAL_IMAGE_ID": "im-lvU8lSHf3hPqWuY9vZbZEt"
+   },
+   "status": "interrupted",
+   "end_step": 42898,
+   "train_wall_s": 3409.424453283,
+   "signal": null,
+   "steps_per_s": 12.582182281813973
+  },
+  {
+   "launch_id": "d9670aaf883846db9992b355fcb0092c",
+   "attempt": 0,
+   "mode": "resume",
+   "device": "cuda",
+   "resumed_from_step": 42898,
+   "utc_start": "2026-11-09T05:39:46Z",
+   "git": {
+    "sha": "6c7dda0c434d77614ec6687122b414998621bc2d",
+    "dirty": false,
+    "source": "launch plan (roboforge.compute.plan; clean committed tree)"
+   },
+   "flags": {
+    "deterministic_algorithms": true,
+    "cudnn_deterministic": true,
+    "cudnn_benchmark": false,
+    "cudnn_allow_tf32": true,
+    "matmul_allow_tf32": false,
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8"
+   },
+   "host": {
+    "hostname": "modal",
+    "torch": "2.15.0+cu132",
+    "torch_cuda": "13.2",
+    "cudnn": 92600,
+    "gpu": "NVIDIA L4",
+    "nvidia_smi": "NVIDIA L4, 610.57.04",
+    "MODAL_REGION": "us-east",
+    "MODAL_CLOUD_PROVIDER": "CLOUD_PROVIDER_GCP",
+    "MODAL_TASK_ID": "ta-01M6ZD32R37MAJNWA9HYYH8WNR",
+    "MODAL_IMAGE_ID": "im-lvU8lSHf3hPqWuY9vZbZEt"
+   },
+   "status": "complete",
+   "end_step": 60000,
+   "train_wall_s": 1438.882409627,
+   "signal": null,
+   "steps_per_s": 11.885613337138052
+  }
+ ],
+ "status": "complete",
+ "step": 60000
+}

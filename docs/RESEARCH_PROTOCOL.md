@@ -26,7 +26,7 @@ outcome and will be reported as such.
 | H2-c | Any diffusion advantage is due to the generative model, not to action chunking | diffusion vs **BC-MLP-chunk** (identical T_o, T_p, T_a; §6.2) | secondary (required before attributing an H2 effect to the generative model) |
 | H3 | Observation history helps; separate the *history* benefit from the *generative* benefit | BC-RNN vs BC-MLP (history, deterministic head); diffusion T_o = 1 vs T_o = 2 ablation (Session 7; §14.4, Can only) | secondary |
 | H4 | Robustness differs under implemented, physically valid perturbations | only on perturbation sets defined, validated and frozen before the main robustness runs (Session 7; §14.1–14.3) | secondary |
-| H5 | (Level 2, optional) point clouds vs RGB under a matched protocol | separate preregistration (`docs/LEVEL2_GO_NO_GO.md`) | out of scope here |
+| H5 | (Level 2, optional) a point-cloud diffusion policy succeeds more often than the matched RGB diffusion policy when the cube is placed outside the demonstrations' placement square | `pc_diffusion` vs the frozen `rgb_diffusion` on Lift `ood_cube_shift`, paired with `robustness_base` (§15; `docs/LEVEL2_GO_NO_GO.md`) | primary of the Level 2 study only (Session 9); never pooled with H1–H4 |
 
 Everything not in this table is **exploratory** and labeled so.
 
@@ -339,6 +339,7 @@ unbiased estimate.
 | 2026-11-07 | §2, §8, §14 (new) | **Session 7 preregistration** (§14): a fresh in-distribution base set per task (`robustness_base`, seeds 300000 + i) and two OOD sets derived from it (`ood_cube_shift`, Lift only; `ood_arm_offset`, Lift and Can) with fixed magnitudes and validity checks; the H4 analysis; ablations A1 (EMA vs trained weights), A2 (DDIM-10 vs DDPM-100) and A3 (T_o = 1 vs 2, Can only); the failure taxonomy that replaces the post-hoc categories; and test-analysis items (R = 1, random baseline on the test, declared comparisons, separated/not separated, censored episode length as the secondary outcome, engineering reruns) | MASTER_SPEC Session 7 requires robustness sets, failure categories and ≥ 2 controlled ablations preregistered on validation before their runs, and the test analysis fixed before the freeze. Fresh starts avoid the selection bias of the validation suite. Lift's saturation (KI-034) is why A3 is Can only and why a censored secondary outcome is declared | none: committed before any robustness, ablation or test rollout and before any Can result was inspected |
 | 2026-11-07 | §14.2 | **Second Session 7 amendment, validity checks 4 and 5:** contacts are counted only when they involve a robot body or the task object; "at rest" means < 1 mm of motion over the last 5 settling steps instead of a final speed < 0.01 m/s | Found by the development dry run of the generator (3 base states per task, native, never used): every Can draw failed both checks because of the excluded inactive objects' overlap and of solver velocity jitter of a resting can, not because of the perturbation. Lift passed unchanged | none: no robustness state had been generated on the canonical platform and no robustness rollout existed |
 | 2026-11-08 | §6.2 (RGB study only), §11 | **Session 8, RGB observation-modality study:** its training runs on one NVIDIA L4 (Modal), not on the CPU. Float32, under `torch.use_deterministic_algorithms(True)`, cuDNN deterministic, cuDNN benchmark off and `CUBLAS_WORKSPACE_CONFIG=:4096:8`. TF32 stays at PyTorch's defaults (on for convolutions, off for matmuls), and both flags are recorded per run. Bitwise repeatability is claimed only for an uninterrupted segment on one host. The run manifest records host, cloud, region, GPU and driver for every segment. Rollouts, checkpoint selection (§7) and the test stay on the canonical CPU container with one torch thread. The visual BC vs visual diffusion comparison is made only between runs trained this way. Level 1 (CPU-trained, frozen) is unaffected and is never compared as part of the same experiment | Owner Gate D2 decision (A-03), after the A-02 probe (LEDGER E8-06). Default CUDA kernels made two same-seed 20-step runs diverge; deterministic kernels made them bitwise equal at +7 % (BC-chunk) and +12 % (diffusion) step time. A ResNet-18 visual step takes 4.0–4.1 s on this CPU and 58–80 ms on the L4 | none: no RGB training run exists |
+| 2026-11-09 | §2 (H5), §6.2 (Level 2 only), §15 (new) | **Session 9 preregistration, the Level 2 point-cloud study** (§15): H5 and its analysis; the DP3-inspired arm `configs/models/pointcloud/diffusion_dp3_lift.yaml`, matched to the RGB diffusion arm except for the observation and the encoder; training on one NVIDIA L4 under exactly the 2026-11-08 deterministic-CUDA regime of the RGB study; §7 selection; the placement evaluations on `robustness_base` and `ood_cube_shift` for both arms, run once, after every point-cloud selection exists; the held-out test once, behind a new gate; the RGB held-out records reused | Owner GO decision (approval A-04, placement H5 as primary). RGB diffusion scored 150/150 on the Lift held-out test (E8-14), so in-distribution success cannot show a point-cloud advantage (KI-034). Level 1's low-dim diffusion fell from 99.3 % to 85.3 % on `ood_cube_shift` (E7-09), so that set has headroom. The device is matched to the RGB arm so that H5 compares observations, not hardware | none: committed before any Level 2 training run or Level 2 rollout, and before the RGB arm was evaluated on either placement set |
 
 ## 14. Session 7 preregistration: robustness (H4), ablations (H3), failure taxonomy
 Amendment of 2026-11-07 (§13), with the second amendment of the same day to §14.2. Written before any run it governs: no robustness,
@@ -480,3 +481,70 @@ exhaustive and mutually exclusive: the first matching rule labels the episode.
   scratch, with the incident recorded; evaluation is deterministic, so a rerun cannot change
   an outcome. An error raised inside an episode (policy exception, invalid action) is an
   outcome (`engineering_error`), never rerun.
+
+## 15. Session 9 preregistration: the Level 2 point-cloud study (H5)
+Fixed 2026-11-09, after the owner's GO (approval A-04) and before any Level 2 training run or
+rollout. `docs/LEVEL2_EXPERIMENT_FREEZE.md` repeats it with hashes. This section governs the
+Level 2 study only; Level 1 (§1–§14) and the RGB study are frozen and unaffected.
+
+### 15.1 Arms
+- **`pc_diffusion` (DP3-inspired).** Config `configs/models/pointcloud/diffusion_dp3_lift.yaml`:
+  - observation: the D-083 cloud (512 world-frame points fused from the depth of
+    `agentview` and `robot0_eye_in_hand` at 84², fixed box crop, FPS from index 0) and raw 9-D
+    proprioception, T_o = 2;
+  - encoder: per-point MLP 64-128-256 with LayerNorm and ReLU, max pool, Linear to 64,
+    LayerNorm; points normalized by the fixed box;
+  - everything else identical to the RGB diffusion arm: U-Net (64, 128), DDPM K = 100 /
+    DDIM-10, EMA power 0.75 as the evaluated network, T_p/T_a = 16/8, AdamW lr 1e-4, batch 64,
+    60,000 steps, 12 checkpoints, seeds 0–2, the same demonstrations and split, the same action
+    normalization;
+  - training on one NVIDIA L4 under the 2026-11-08 deterministic regime (§13).
+- **`rgb_diffusion` (reference, frozen).** The RGB freeze's diffusion arm. Its 3 selected
+  checkpoints and held-out reports are pinned by hash in
+  `configs/experiments/level2_pointcloud.yaml`. It is never retrained, reselected or rerun on
+  the held-out starts.
+- **Privilege:** sensor-like (depth and calibration only). No segmentation, object pose or
+  simulator label enters a cloud.
+
+### 15.2 Selection
+§7 unchanged, on the 50 validation starts, over all 12 checkpoints of each run. One
+configuration; no tuning trials.
+
+### 15.3 Evaluations, each run once, in this order
+1. Validation of every point-cloud checkpoint (36 evaluations), then selection.
+2. Placement: the 3 selected checkpoints of **each** arm on every start of `robustness_base`
+   and `ood_cube_shift` (12 evaluations). No placement evaluation starts before all 3
+   point-cloud selections are committed.
+3. The held-out test of the 3 point-cloud selections, only after a held-out gate in the D-081
+   pattern opens (3 evaluations). The RGB arm's committed held-out reports are reused.
+
+All of them run on the canonical CPU container with 1 torch thread, `policy_seed = 0` and
+R = 1.
+
+### 15.4 Analysis (run once)
+- **Primary (H5):** success on `ood_cube_shift`, `pc_diffusion` − `rgb_diffusion`.
+- **Secondary:**
+  - each arm's paired drop, `robustness_base` − `ood_cube_shift`, and the difference of the
+    drops (pc − rgb);
+  - held-out success, pc − rgb;
+  - held-out censored episode length, pc − rgb: the first-success step, or 400 for a
+    failure (§14.6).
+- **Uncertainty:** the §9 hierarchical paired bootstrap (B = 10,000, seed 20261106).
+  - The 50 state indices are resampled once per replicate and shared by both arms and both
+    sets; OOD start *i* is paired with base start *i*.
+  - Each arm's base and OOD outcomes share one seed draw (seed groups, as in §14.3).
+  - Draw order: states, `pc_diffusion` seeds, `rgb_diffusion` seeds.
+  - The held-out comparisons use one separate bootstrap with the same settings, over the 50
+    held-out starts in manifest order.
+- **Decision rule:** "separated (+)", "separated (−)" or "not separated", by whether the 95 %
+  percentile interval excludes 0. "Not separated" is never reported as equivalence.
+- **Power:** with 3 seeds × 50 starts per arm, binomial noise alone gives a half-width of
+  about ±8 points near 85 % success (an estimate). Only a large difference can separate.
+- Failures are classified with the §14.5 taxonomy. Every result is labelled
+  **DP3-inspired**, never a DP3 reproduction.
+
+### 15.5 Engineering reruns and limitations
+- Engineering reruns follow §14.6 unchanged.
+- **Limitations to report:** the depth is noise-free and the calibration exact; the world
+  frame is part of the treatment, together with depth and encoder (H5 tests the package);
+  1 task, 3 seeds; the device regime is shared with the RGB arm, never with Level 1.

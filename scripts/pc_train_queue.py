@@ -16,6 +16,9 @@ How launches proceed:
   its result is recorded (``record-result``) before the next starts.
 * The queue stops at the first launch that does not end ``complete`` or ``interrupted``, and
   after 4 launches of one run.
+* It also stops, before the next launch, when a segment trained slower than
+  ``--max-ms-per-step``. The default is 1.3 × the 51.3 ms/step estimate, which approval A-04
+  and ``docs/LEVEL2_GO_NO_GO.md`` (f) fix. The owner is then asked before anything continues.
 
 Nothing here chooses or changes a configuration.
 """
@@ -36,6 +39,14 @@ from roboforge.paths import REPO_ROOT
 
 ORDER = [0, 1, 2]
 MAX_LAUNCHES_PER_RUN = 4
+# A-04: stop when a segment's step time exceeds 1.3 x the estimate (51.3 ms/step).
+MAX_MS_PER_STEP = 1.3 * 51.3
+
+
+def ms_per_step(res: dict) -> float | None:
+    """Measured ms per training step of one launch's segment, or ``None`` if not reported."""
+    sps = (res.get("segment") or {}).get("steps_per_s")
+    return 1000.0 / sps if sps else None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -45,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--prefix", default="s9")
     p.add_argument("--modal-python", default="/opt/anaconda3/bin/python")
     p.add_argument("--only", nargs="*", type=int, help="seeds, e.g. 0")
+    p.add_argument("--max-ms-per-step", type=float, default=MAX_MS_PER_STEP)
     p.add_argument("--log", type=Path, default=REPO_ROOT / "logs" / "session9" / "pc_train" /
                    "queue.jsonl")
     a = p.parse_args(argv)
@@ -71,12 +83,19 @@ def main(argv: list[str] | None = None) -> int:
                    "returncode": proc.returncode, "status": res.get("status"),
                    "end_step": res.get("end_step"), "client_wall_s": time.time() - t0,
                    "app_id": (res.get("modal") or {}).get("app_id"),
+                   "ms_per_step": ms_per_step(res),
                    "detail": res.get("detail"), "launch_log": str(launch_log),
                    "tail": out[-1500:] if not m else None}
             with a.log.open("a") as fh:
                 fh.write(json.dumps(rec, default=str) + "\n")
             print(json.dumps({k: rec[k] for k in ("run_id", "launch", "mode", "status",
-                                                   "end_step", "app_id")}), flush=True)
+                                                   "end_step", "ms_per_step", "app_id")}),
+                  flush=True)
+            if rec["ms_per_step"] is not None and rec["ms_per_step"] > a.max_ms_per_step:
+                print(f"STOP: {rid} launch {n} trained at {rec['ms_per_step']:.1f} ms/step, "
+                      f"above {a.max_ms_per_step:.1f}: ask the owner before the next launch "
+                      f"(A-04)", file=sys.stderr)
+                return 2
             if rec["status"] == "complete":
                 break
             if rec["status"] != "interrupted":

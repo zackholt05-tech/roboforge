@@ -1642,3 +1642,25 @@ a separately labelled, DP3-inspired explicit-3D-perception study (MASTER_SPEC §
 
   No segmentation, object pose or simulator label enters a cloud. `pc_checks` uses them only
   to measure clouds. Limitations to state: the depth is noise-free and the calibration exact.
+
+### D-084 The Lift point-cloud dataset is installed as new data (FIXED, Session 9, after the owner's GO)
+`src/roboforge/data/pc_dataset.py`, `scripts/build_pc_dataset.py`, `make pc-dataset` and
+`make pc-dataset-install`. The D-079 pattern applies.
+- **New data, added by decision.** Nothing existing in `data/` changes. The new pieces are:
+  - `data/processed/robomimic_v1.5_ph/lift/pc512_v1.hdf5`, gitignored like every processed
+    file;
+  - its committed manifest, `data/manifests/pointcloud/lift_pc512_v1.json`.
+- **Content:**
+  - one fused world-frame cloud of 512 points per frame of all 200 demos, under the D-083
+    specification (sha256 `973e27fe…`);
+  - per demo: `points` float32 [T, 512, 3], `n_crop` and the per-step state SHA-256;
+  - schema `roboforge.pc_dataset/1`.
+- **Build:**
+  - on the canonical container at `a20bfe3` (clean), in 594 s;
+  - content `39fa3e52…`, file `6ab4b31d…`, 56.3 MB.
+- **What it does not hold:** proprioception, actions and the split. These come from the
+  committed low-dim dataset, whose content hash the file pins. The install re-verifies hashes
+  on the host, never overwrites an installed file, and refuses a partial build.
+- **Why now:** the owner chose GO on 2026-11-09 (approval A-04; `docs/LEVEL2_GO_NO_GO.md`).
+  The data is derived from the MIT-licensed robomimic demonstrations and is never
+  redistributed.

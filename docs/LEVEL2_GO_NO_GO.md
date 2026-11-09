@@ -1,8 +1,10 @@
 # Level 2 GO / NO-GO: DP3-inspired point clouds on Lift (Session 9)
 
-**Status: GO proposed. Waiting for the owner's decision (approval A-04).** No Level 2
-training, rollout or paid launch has happened. Every number below is measured, unless it is
-marked *estimate*.
+**Status: GO (owner decision, 2026-11-09, ≈ 10:50 EST).** The owner chose "GO, L4, $9 cap
+(Recommended)" (approval **A-04**, `docs/EXPERIMENT_LEDGER.md`) and "Placement H5 primary
+(Recommended)". The proposal below was written before that decision and is kept as it was
+(`85eeb2e`). The experiment is fixed by `docs/LEVEL2_EXPERIMENT_FREEZE.md` and RESEARCH_PROTOCOL
+§15. Every number below is measured, unless it is marked *estimate*.
 
 MASTER_SPEC §7.3 requires items (a)–(f) below. If any of them is missing, the answer is
 `NOT EXECUTED`. Level 1 (`docs/LEVEL1_COMPLETE.md`) and the RGB study

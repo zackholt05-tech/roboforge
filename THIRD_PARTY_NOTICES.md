@@ -138,3 +138,16 @@ https://diffusion-policy.cs.columbia.edu/ (code: `real-stanford/diffusion_policy
 Any code adapted (not just imported) from robomimic, Diffusion Policy, diffusers or DP3
 must carry a header naming the source, revision and license, and be listed under "Adapted
 code" above.
+
+3D Diffusion Policy (DP3): the method that inspired the Level 2 point-cloud arm; no DP3 code,
+weights or data are used, and RoboForge's encoder is reimplemented from the paper
+(`src/roboforge/models/point_encoder.py`) — source: arXiv:2403.03954 abstract page (comments:
+RSS 2024)
+```bibtex
+@inproceedings{ze2024dp3,
+  title={3D Diffusion Policy: Generalizable Visuomotor Policy Learning via Simple 3D Representations},
+  author={Yanjie Ze and Gu Zhang and Kangning Zhang and Chenyuan Hu and Muhan Wang and Huazhe Xu},
+  booktitle={Robotics: Science and Systems (RSS)},
+  year={2024}
+}
+```

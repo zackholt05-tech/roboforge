@@ -1734,3 +1734,147 @@ pattern: a new module, no frozen file changed.
   - `scripts/analyze_level2.py` re-checks the RGB reports' hashes and the full gate on the
     host before analysing.
   - No frozen file changed. A new test checks the split and the order in the Makefile.
+
+## Session 10 (2026-11-09 onward)
+Level 1, the RGB study and Level 2 are frozen and tested once. Session 10 builds the RoboForge
+Observatory (MASTER_SPEC §8) from that frozen evidence. Nothing below changes a configuration,
+selection, label, result or finding of any study, and no held-out start is rolled out again.
+
+### D-087 Makefile defaults bumped to Session 10 (FIXED)
+- `EVIDENCE_SESSION` falls back to 10 and `PREFIX` to `s10` (as D-048, D-053, D-060, D-073 and
+  D-082 did). No Session 10 command can then write into `reports/session6`–`9` or reuse the `s9`
+  prefix by omission. Evidence goes to `reports/session10/` and `logs/session10/` with
+  `ROBOFORGE_EVIDENCE_SESSION=10`.
+- New targets:
+  - `make observatory-select` (host): applies the D-089 rules to the frozen manifests and
+    results and writes `reports/session10/observatory/selection.json`;
+  - `make observatory-export` (canonical container, clean tree): clips, reference frames,
+    media, denoising traces, candidate paths and point clouds from that selection;
+  - `make observatory-findings` (host): `findings.json` from the three frozen `results.json`;
+  - `make web-data` (host): copies the committed Session 10 outputs into
+    `website/public/data/` and checks every file against the export index's SHA-256;
+  - `make web-assets` (host): extracts the visual meshes (D-090);
+  - `make web-build`, `make web-test`, `make web-e2e` and `make web-verify`.
+- The held-out targets of all three studies are never run again.
+
+### D-088 The web stack: a separate `website/` package (FIXED, before any frontend dependency)
+- **Location:** `website/`, the MASTER_SPEC §9 layout, which the committed `.gitignore`
+  already anticipates (`website/node_modules/`, `website/dist/`). The Session 9 handoff called
+  it "web/"; the meaning is the same: a separate npm package with its own lockfile
+  (`website/package-lock.json`), installed with `npm ci`.
+- **Runtime:** React 19 + TypeScript + Vite, React Three Fiber 9 with `three@0.187.0` (the
+  version `tests/web_contract` already pins), and `zod` for runtime schemas of every data file.
+  `@react-three/drei` is not used: its dependency tree is large, and the few helpers needed
+  (orbit controls, fat lines, a room environment) come from `three/examples/jsm`. Versions were
+  read with `npm view` on 2026-11-09 (R3F 9 needs React `>=19 <19.4`). Exact versions are in
+  `website/package.json` and the lockfile.
+- **Dev tooling:** `vitest` (schema and unit tests), `@playwright/test` driving the
+  **installed Google Chrome** (`channel: "chrome"`), so no browser is downloaded (disk,
+  KI-008).
+- **Python unchanged:** `uv.lock` and `pyproject.toml` do not change. The Python export uses
+  only packages already locked (mujoco, numpy, imageio, Pillow).
+- **No backend:** the site is static. It reads verified, compressed JSON and media, and runs no
+  policy and no simulator in the browser (MASTER_SPEC §1.5).
+
+### D-089 Observatory artifacts come from frozen evidence only, by rules fixed here (FIXED, before any clip is exported)
+`src/roboforge/viz/observatory.py`, `scripts/export_observatory.py`,
+`tests/unit/test_observatory.py`, `tests/simulator/test_observatory_export.py`.
+- **Sources:**
+  - recorded episodes of the frozen evaluations under `runs/` (`record.json` +
+    `arrays.npz`, hash-checked on load);
+  - the frozen `results.json` and `taxonomy.json` of `reports/session7/results/`,
+    `reports/session8/rgb_results/` and `reports/session9/level2_results/` (+ `ERRATA.md`),
+    each cited by path and SHA-256.
+
+  No number on the site is typed by hand.
+- **Held-out records are rendered, never rolled out.** The held-out episodes are the measured
+  result, and the Level 1 freeze's example rule targets them ("rendered only from recorded
+  states, labelled illustration"). The Session 8 videos set the precedent (E8-16):
+  - a held-out start loads only through `eval_states.load_suite`, only while all three
+    gates are open, and only for state IDs that already have a frozen record;
+  - its model XML compiles the scene;
+  - every transform is recomputed by `mj_kinematics` on scratch data from the **recorded**
+    states, and must equal the recorded body poses;
+  - no policy is built for a held-out record, and `env.step` is never called on one;
+  - a test enforces this.
+- **New policy calls** (denoising) replay **validation** records only. Each replay is checked
+  bitwise against the recorded actions, which is the Session 4 `viz/denoising.py` method. The
+  output is labelled an export, never a result.
+- **Candidate paths** (MASTER_SPEC §8.4) come from **clone simulation**, on validation records
+  only:
+  1. restore the episode's start;
+  2. re-execute the recorded executed actions up to the decision frame, checking every
+     state bitwise against the record (the hidden controller and gripper state is then
+     exactly the recorded one);
+  3. branch, executing the candidate chunk decoded and clipped by the policy's own codec;
+  4. record the `gripper0_right_eef` body position.
+
+  The executed chunk's branch must reproduce the recorded frames bitwise. Every other branch
+  is labelled "clone simulation of a never-executed proposal". Raw action vectors are never
+  drawn as positions.
+- **Selection rules (declared before any export, never by appearance):**
+  1. **Lab and failure gallery, Level 1 held-out:** the Level 1 freeze rule verbatim (§4):
+     - per task and family, among the frozen checkpoints ordered by seed, the first success
+       and the first failure (sorted `state_id`) of the lowest seed that has one;
+     - plus, per failure category, the first episode in (family order, seed, `state_id`);
+     - families in freeze order: `bc_mlp`, `bc_rnn`, `bc_mlp_chunk`, `diffusion_unet`, and
+       `random_uniform` (the H1 baseline).
+  2. **Hero:** the rule-1 first success of Lift `diffusion_unet`.
+  3. **Head-to-head (Can and Lift held-out, seed 0 of `diffusion_unet` vs seed 0 of
+     `bc_mlp`, the H2 pair):**
+     - (a) the first `state_id` on which both succeed (representative);
+     - (b) case study: the first on which `bc_mlp` fails and `diffusion_unet` succeeds;
+     - (c) case study: the first on which `diffusion_unet` fails and `bc_mlp` succeeds.
+
+     A missing case is recorded as "none". Every pair is shown with the family denominators,
+     and the full 50-start outcome strips of both families come from the manifests.
+  4. **Denoising:** the validation evaluations of the frozen selected checkpoints
+     `s6_diffusion_unet_lr3e4_lift_seed0_2f635398` (step 100000) and
+     `s7_diffusion_unet_cos_can_seed0_99251da3` (step 65000):
+     - episodes: the first success and the first failure in sorted `state_id` (the Session 4
+       rule);
+     - every decision of each episode;
+     - 16 diversity samples per decision, with seeds `1_000_000 + i`, never executed;
+     - clone-simulated paths for each sampler state `A_t`, each predicted clean chunk `x̂₀`,
+       the final chunk and each diversity sample.
+  5. **Beyond Pixels, Level 2 placement records (validation regime):**
+     - on `ood_cube_shift`, `pc_diffusion` seed 0 (step 30000) against `rgb_diffusion`
+       seed 0 (step 55000):
+       - (a) case study: the first `state_id` on which pc fails and RGB succeeds;
+       - (b) the first on which both succeed;
+       - (c) the first on which pc succeeds and RGB fails, or "none";
+     - on `robustness_base`, both arms' first `state_id`;
+     - for every pc clip, the 512-point cloud at each decision frame, recomputed from the
+       recorded state by the frozen `CloudMaker` (D-083);
+     - for every RGB clip, the two 84² policy camera frames at each decision frame (D-074).
+  6. **Reference frames for viewer verification:** at least 3 frames (0, ⌊T/2⌋, T, plus
+     the first-success frame) of the hero, of the Can case study (b) for `diffusion_unet`,
+     and of the Level 2 case study (a) for pc. Each frame gets the MuJoCo `frontview` and
+     `agentview` RGB and segmentation at 480², plus each camera's pose and field of view.
+- **Outputs:** `reports/session10/observatory/` (committed), with an `index.json` that holds
+  every file's SHA-256 and the source records' `arrays_sha256` and `physics_sha256`.
+  `website/public/data/` is generated from it by `make web-data` and is gitignored. Clip MP4s
+  are frontview renders of the recorded states (D-074 path, 256², 20 fps); the inset video and
+  the reduced-motion or no-WebGL fallback use them.
+- **Labels:**
+  - every clip is labelled "recorded closed-loop rollout (illustration of a frozen
+    evaluation)", with its partition, checkpoint, seed, state and outcome;
+  - every proposal is labelled "proposal" and every schematic "illustrative";
+  - the export fails if checkpoint hash, run provenance or simulator build metadata is
+    missing (MASTER_SPEC §8.5).
+
+### D-090 Owner decisions: no hosting this session; meshes are extracted at build time and never committed (OWNER, 2026-11-09)
+- **Hosting:** the owner chose "No hosting". The site is built and verified locally
+  (`npm run build`, preview, E2E). No deployment, no URL, no approval row. Hosting needs a
+  later owner approval.
+- **Meshes:** the owner chose "Extract at build time, gitignored". The visual meshes of the
+  Panda, gripper and task objects ship inside robosuite 1.5.1 under its MIT license
+  (THIRD_PARTY_NOTICES). `make web-assets` reads them from the **compiled** MuJoCo model of the
+  pinned local install (`mesh_vert`, `mesh_face`; MuJoCo recentres and reorients meshes at
+  compile time, so the raw asset files would be placed wrongly). It writes quantized binaries
+  to `website/public/assets/` (gitignored, never committed) and checks each mesh's SHA-256
+  against the container export's scene manifest.
+
+  The site's credits name robosuite and its MIT license. If a later hosting approval ships the
+  build, the MIT notice ships with it. THIRD_PARTY_NOTICES' "RoboForge does not redistribute
+  meshes" stays true for the repository.

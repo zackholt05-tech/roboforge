@@ -25,7 +25,9 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native \
 	rgb-dataset rgb-dataset-install rgb-validate rgb-heldout rgb-heldout-rehearse rgb-heldout-gate \
 	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement \
-	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze
+	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze \
+	observatory-select observatory-export observatory-findings web-data web-assets web-install \
+	web-build web-test web-e2e web-verify web-dev
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -140,12 +142,12 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 9 (DECISIONS D-082; Session 8: D-073; Session 7: D-060; Session 6:
-# D-053; Session 5: D-048) so that no Session 9 command can write into Session 6-8 evidence or
-# reuse the s8 run prefix by omission.
-PREFIX ?= s9
+# Defaults bumped to Session 10 (DECISIONS D-087; Session 9: D-082; Session 8: D-073; Session 7:
+# D-060; Session 6: D-053; Session 5: D-048) so that no Session 10 command can write into
+# Session 6-9 evidence or reuse the s9 run prefix by omission.
+PREFIX ?= s10
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),9)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),10)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -340,3 +342,44 @@ profile-rollouts:  ## Parallel canonical containers on validation starts: physic
 cost-estimate:  ## Main-suite cost/time projection from the measured numbers (estimates)
 	$(RUN_S) python -m roboforge.compute.estimate suite \
 		--out reports/session$(EVIDENCE_SESSION)/cost/suite_projection.json
+
+# ---------------------------------------------------------------- Session 10: Observatory
+# RoboForge Observatory (MASTER_SPEC §8; DECISIONS D-087-D-090). Exports read frozen evidence
+# only; the container export runs from a clean tree (D-089). website/ is its own npm package
+# (D-088); website/public/{data,assets} are generated and gitignored.
+OBS_OUT ?= reports/session$(EVIDENCE_SESSION)/observatory
+NPM ?= npm
+observatory-select:  ## Host: apply the D-089 selection rules to the frozen manifests -> $(OBS_OUT)/selection.json
+	$(RUN_S) python scripts/export_observatory.py select --out-dir $(OBS_OUT)
+
+observatory-export:  ## Container: clips, reference frames, media, denoising, candidate paths, clouds (clean tree)
+	$(IN_SIM_S) python scripts/export_observatory.py export --out-dir $(OBS_OUT)
+
+observatory-findings:  ## Host: findings.json from the frozen results.json files (hashes cited)
+	$(RUN_S) python scripts/export_observatory.py findings --out-dir $(OBS_OUT)
+
+web-data:  ## Host: copy the committed observatory outputs into website/public/data (hash-checked)
+	$(RUN_S) python scripts/export_observatory.py web-data --out-dir $(OBS_OUT) \
+		--web-dir website/public
+
+web-assets:  ## Host: extract compiled visual meshes into website/public/assets (gitignored; D-090)
+	$(RUN_S) python scripts/export_observatory.py web-assets --out-dir $(OBS_OUT) \
+		--web-dir website/public
+
+web-install:  ## npm ci in website/ (lockfile)
+	cd website && $(NPM) ci --no-audit --no-fund
+
+web-build:  ## Type-check and build the static site (website/dist)
+	cd website && $(NPM) run build
+
+web-test:  ## Schema and unit tests of the site (vitest; parses every exported data file)
+	cd website && $(NPM) run test
+
+web-e2e:  ## Playwright E2E/UI sanity checks against the built site (installed Chrome)
+	cd website && $(NPM) run e2e
+
+web-verify:  ## Viewer vs MuJoCo reference frames (silhouette IoU), writes $(OBS_OUT)/viewer_verification.json
+	cd website && $(NPM) run verify
+
+web-dev:  ## Vite dev server (local only)
+	cd website && $(NPM) run dev

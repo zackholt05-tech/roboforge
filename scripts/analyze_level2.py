@@ -159,6 +159,9 @@ def _placement(plan: dict[str, Any], sels: dict[str, list[dict[str, Any]]],
                 bad = _check(s, p, sel, shas[suite], "episodes_sha256")
                 if bad:
                     raise SystemExit("; ".join(bad))
+                # placement reports keep their episode rows in the hash-checked records manifest
+                rec = json.loads((REPO_ROOT / s["records_dir"] / "manifest.json").read_text())
+                s = s | {"episodes": rec["episodes"]}
                 problems = _engineering(s)
                 eng.setdefault(arm, []).extend(f"{sel['run_id']} {suite}: {w}" for w in problems)
                 rows.append(_row(arm, sel, suite, s, p, problems))

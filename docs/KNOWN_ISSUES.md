@@ -945,3 +945,26 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   run had 2 segments; the correction is in E8-10.
 - **Rule:** long GPU jobs keep the per-attempt marker before any work and an atomic resume
   file. Reports must count segments from `segments.jsonl`, not from launches.
+
+### KI-045 Native macOS (CGL) depth lacks reversed-Z precision (LOW, MITIGATED; Session 9)
+- **Observed:** on the native macOS backend MuJoCo warns `ARB_clip_control unavailable while
+  mjDEPTH_ZEROFAR requested, depth accuracy will be limited`. CGL's OpenGL lacks the
+  extension, so the reversed-Z depth buffer loses precision with distance.
+- **Mitigation:** every Level 2 depth, cloud, dataset and evaluation that counts comes from
+  the canonical container (OSMesa). There, depth matches exact `mj_ray` to 3.6 µm on 358,383
+  interior pixels (`reports/session9/pc_feasibility/linux-aarch64-container-1f685638f28c/`).
+  Native depth is development-only, as native rollouts already are (D-017).
+- **Rule:** never report or pool native depth or clouds. `make pc-feasibility-native` labels
+  its output with the native platform ID.
+
+### KI-046 robosuite's hidden sites still write depth (MEDIUM, FIXED; Session 9)
+- **Observed:** robosuite hides visualization sites by setting non-positive alpha, so they are
+  invisible in RGB. MuJoCo's depth buffer still records them. In Lift, the
+  `gripper0_right_grip_site` sphere and the 10 m `grip_site_cylinder` appeared in the wrist
+  camera's depth, about 0.2 m off the true surface on 80 pixels (segmentation type 6, sites 3
+  and 7). Found by the depth-vs-ray check before any cloud was built.
+- **Fix (D-083):** the depth renderer sets `opt.sitegroup[:] = 0`, and the diagnostic
+  segmentation renders with the same options. The invariant `sites_in_depth` and
+  `tests/simulator/test_pointcloud_alignment.py` keep it fixed.
+- **Rule:** any new depth path must hide sites, or prove they are absent, before its clouds
+  are used.

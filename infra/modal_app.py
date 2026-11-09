@@ -27,7 +27,9 @@ the approval gate and the cost ledger.
     python infra/modal_app.py fetch --run-id <run_id>
     python infra/modal_app.py fetch-rgb --run-id <run_id>   # RGB study run, hash-verified
     python infra/modal_app.py fetch-pc --run-id <run_id>    # Level 2 run, hash-verified
-    # Kill path for a running launch (also: Ctrl-C in the launching terminal).
+    python infra/modal_app.py attach --plan <plan.json>     # re-attach a detached launch (D-085)
+    # Kill path for a running launch. Launches are detached (D-085): Ctrl-C stops only the
+    # client, and a new launch is refused while any app of this project is still live.
     python infra/modal_app.py cancel --app-id <ap-...>
 
 Launch policy, fixed for every function (``configs/compute/modal.yaml``):
@@ -230,8 +232,46 @@ def _upload_data(plan: dict[str, Any]) -> dict[str, Any]:
     return {"files": out}
 
 
+def _live_apps() -> list[dict[str, Any]] | None:
+    """This project's Modal apps that are not stopped, or ``None`` if Modal cannot be asked."""
+    p = subprocess.run([sys.executable, "-m", "modal", "app", "list", "--json"],
+                       capture_output=True, text=True)
+    if p.returncode:
+        return None
+    try:
+        rows = json.loads(p.stdout)
+    except json.JSONDecodeError:
+        return None
+    return [r for r in rows if r.get("description") == APP["name"] and r.get("state") != "stopped"]
+
+
+def _stop_app(app_id: str | None) -> None:
+    """Stop a detached app that outlived its call, so the single-flight guard frees up."""
+    if app_id and any(r["app_id"] == app_id for r in (_live_apps() or [])):
+        subprocess.run([sys.executable, "-m", "modal", "app", "stop", "--yes", app_id])
+
+
+def _await_call(call_id: str) -> Any:
+    """The detached call's result, riding out client network outages (D-085)."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "launch_wait", REPO / "src" / "roboforge" / "compute" / "launch_wait.py")
+    lw = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lw)
+    return lw.await_result(lambda t: modal.FunctionCall.from_id(call_id).get(timeout=t),
+                           log=lambda m: print(m, flush=True))
+
+
 def _launch(plan_path: Path, approval: str) -> int:
     plan = json.loads(plan_path.read_text())
+    # Single flight (D-085): a detached app keeps running when its client dies, so a new
+    # launch must never start while any app of this project is still up.
+    live = _live_apps()
+    if live is None or live:
+        print(f"REFUSED: {'cannot list Modal apps' if live is None else 'apps still live'}: "
+              f"{live}", file=sys.stderr)
+        return 2
     auth = _venv("roboforge.compute.plan", "authorize", "--plan", str(plan_path),
                  "--approval", approval)
     print(auth.stdout, auth.stderr)
@@ -249,17 +289,31 @@ def _launch(plan_path: Path, approval: str) -> int:
         else:
             _ensure_volumes()
             upload = None
-        with modal.enable_output(), app.run():
+        # Detached (D-085, KI-047): a client network loss no longer stops the remote job.
+        with modal.enable_output(), app.run(detach=True):
             app_id = app.app_id
-            result = fn.with_options(timeout=plan["timeout_s"]).remote(plan)
-            result.setdefault("modal", {}).update(app_id=app_id, upload=upload)
+            call = fn.with_options(timeout=plan["timeout_s"]).spawn(plan)
+            call_id = call.object_id
+            plan_path.with_suffix(".call.json").write_text(json.dumps(
+                {"function_call_id": call_id, "app_id": app_id,
+                 "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}) + "\n")
+            print(f"function_call: {call_id}", flush=True)
+            result = _await_call(call_id)
+            result.setdefault("modal", {}).update(app_id=app_id, upload=upload,
+                                                  function_call_id=call_id)
     except BaseException as exc:  # incl. KeyboardInterrupt (Ctrl-C, or re-raised remotely)
         result = {"status": "error", "detail": f"{type(exc).__name__}: {exc}",
                   "modal": {"app_id": app_id}}
         reraise = None if isinstance(exc, Exception) else exc
     else:
         reraise = None
-    # Written and logged in every case, so no launch event is left without its result.
+        _stop_app(app_id)  # only after a result: an unfinished detached job keeps running
+    return _finish(plan_path, result, t0, reraise)
+
+
+def _finish(plan_path: Path, result: dict[str, Any], t0: float,
+            reraise: BaseException | None) -> int:
+    """Write and record a launch's result (every case, so no launch is left without one)."""
     result["client_wall_s"] = time.time() - t0
     out = plan_path.with_suffix(".result.json")
     out.write_text(json.dumps(result, indent=1, default=str) + "\n")
@@ -270,6 +324,24 @@ def _launch(plan_path: Path, approval: str) -> int:
     if reraise is not None:
         raise reraise
     return 0 if result.get("status") == "complete" else 1
+
+
+def _attach(plan_path: Path) -> int:
+    """Re-attach to a detached launch whose client died (D-085): wait for the recorded call,
+    then write and record its result. The ledger keeps the last result of a launch."""
+    call = json.loads(plan_path.with_suffix(".call.json").read_text())
+    t0 = time.time()
+    try:
+        result = _await_call(call["function_call_id"])
+        result.setdefault("modal", {}).update(app_id=call["app_id"],
+                                              function_call_id=call["function_call_id"],
+                                              reattached=True)
+    except Exception as exc:
+        result = {"status": "error", "detail": f"{type(exc).__name__}: {exc}",
+                  "modal": {"app_id": call["app_id"], "reattached": True}}
+    else:
+        _stop_app(call["app_id"])
+    return _finish(plan_path, result, t0, None)
 
 
 def _fetch(run_id: str, staging_root: Path) -> int:
@@ -360,6 +432,8 @@ def main(argv: list[str] | None = None) -> int:
         fr = sub.add_parser(name)
         fr.add_argument("--run-id", required=True)
         fr.add_argument("--with-resume", action="store_true")
+    at = sub.add_parser("attach", help="re-attach to a detached launch whose client died")
+    at.add_argument("--plan", type=Path, required=True)
     c = sub.add_parser("cancel")
     c.add_argument("--app-id", required=True)
     args = ap.parse_args(argv)
@@ -367,6 +441,8 @@ def main(argv: list[str] | None = None) -> int:
         return _fetch(args.run_id, args.staging)
     if args.cmd in ("fetch-rgb", "fetch-pc"):
         return _fetch_rgb(args.run_id, REPO / "runs", args.with_resume)
+    if args.cmd == "attach":
+        return _attach(args.plan)
     if args.cmd == "cancel":
         return subprocess.run([sys.executable, "-m", "modal", "app", "stop", "--yes",
                                args.app_id]).returncode

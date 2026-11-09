@@ -1,0 +1,259 @@
+{
+ "function": "train_gpu_pc",
+ "mode": "resume",
+ "run_id": "s9_pc_diffusion_dp3_lift_seed0_8fd35613",
+ "launch_id": "db8d68a734b84ad4a6e91616797942fc",
+ "timeout_s": 3600,
+ "deadline_s": 3420,
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 3600.0
+ },
+ "policy": {
+  "gpu_count": 1,
+  "max_attempts_per_launch": 4,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ },
+ "git": {
+  "dirty": false,
+  "sha": "4555af8e02ff53ca8e68ebc5a475930537b83660"
+ },
+ "blocking": []
+}
+{
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ }
+}
+UPPER-BOUND ESTIMATE $4.5445 (list prices fetched 2026-11-09; job $4.4653 = 4 attempts x $1.1163 + build/start allowance $0.0791; not a cap)
+{
+ "approval_id": "A-04",
+ "gate": "Level 2 (point cloud)",
+ "cap_usd": 9.0,
+ "committed_before_usd": 0.32895338,
+ "estimate_upper_usd": 4.54445536,
+ "remaining_after_usd": 4.1265912600000005
+}
+ 
+✓ Initialized. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-RLS2PChQ53jsL8FKr02QtF
+✓ Created objects.
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/infra/modal_app.py
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/normalization
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/splits
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/manifests
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/configs
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/scripts
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/src
+├── ✓ Created Function train_cpu.
+├── ✓ Created Function gpu_probe.
+├── ✓ Created Function rgb_probe.
+├── ✓ Created Function train_gpu.
+└── ✓ Created Function train_gpu_pc.
+[modal-client] 2026-11-09T12:18:12-0500 Loop attempt for _run_app.<locals>.heartbeat failed
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_grpc_client.py", line 164, in direct
+    return await self.client._call_unary(self.wrapped_method, req, timeout=timeout, metadata=metadata)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/client.py", line 563, in _call_unary
+    return await self._call_safely(coro, grpclib_method.name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/client.py", line 519, in _call_safely
+    return await request_task
+           ^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 912, in __call__
+    await stream.send_message(message, end=True)
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 242, in send_message
+    await self.send_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 174, in send_request
+    protocol = await self._channel.__connect__()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_utils/grpc_utils.py", line 137, in __connect__
+    return await super().__connect__()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 748, in __connect__
+    self._protocol = await self._create_connection()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_utils/grpc_utils.py", line 147, in _create_connection
+    protocol = await self._open_connection()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_utils/grpc_utils.py", line 169, in _open_connection
+    return await super()._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 725, in _create_connection
+    _, protocol = await self._loop.create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    )
+    ^
+  File "/opt/anaconda3/lib/python3.13/asyncio/base_events.py", line 1123, in create_connection
+    infos = await self._ensure_resolved(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        (host, port), family=family,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        type=socket.SOCK_STREAM, proto=proto, flags=flags, loop=self)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/asyncio/base_events.py", line 1519, in _ensure_resolved
+    return await loop.getaddrinfo(host, port, family=family, type=type,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                  proto=proto, flags=flags)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/asyncio/base_events.py", line 940, in getaddrinfo
+    return await self.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, getaddr_func, host, port, family, type, proto, flags)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/anaconda3/lib/python3.13/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_utils/async_utils.py", line 590, in loop_coro
+    await asyncio.wait_for(async_f(), timeout=timeout)
+  File "/opt/anaconda3/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/runner.py", line 68, in _heartbeat
+    await client._stub.AppHeartbeat(request, retry=Retry(attempt_timeout=HEARTBEAT_TIMEOUT))
+modal.exception.ConnectionError: [Errno 8] nodename nor servname provided, or not known
+[modal-client] 2026-11-09T12:18:28-0500 Loop attempt for _run_app.<locals>.heartbeat failed
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_grpc_client.py", line 164, in direct
+    return await self.client._call_unary(self.wrapped_method, req, timeout=timeout, metadata=metadata)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/client.py", line 563, in _call_unary
+    return await self._call_safely(coro, grpclib_method.name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/client.py", line 519, in _call_safely
+    return await request_task
+           ^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 912, in __call__
+    await stream.send_message(message, end=True)
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 242, in send_message
+    await self.send_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 174, in send_request
+    protocol = await self._channel.__connect__()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_utils/grpc_utils.py", line 137, in __connect__
+    return await super().__connect__()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 748, in __connect__
+    self._protocol = await self._create_connection()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_utils/grpc_utils.py", line 147, in _create_connection
+    protocol = await self._open_connection()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_utils/grpc_utils.py", line 169, in _open_connection
+    return await super()._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/grpclib/client.py", line 725, in _create_connection
+    _, protocol = await self._loop.create_connection(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    )
+    ^
+  File "/opt/anaconda3/lib/python3.13/asyncio/base_events.py", line 1123, in create_connection
+    infos = await self._ensure_resolved(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        (host, port), family=family,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        type=socket.SOCK_STREAM, proto=proto, flags=flags, loop=self)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/asyncio/base_events.py", line 1519, in _ensure_resolved
+    return await loop.getaddrinfo(host, port, family=family, type=type,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                  proto=proto, flags=flags)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/asyncio/base_events.py", line 940, in getaddrinfo
+    return await self.run_in_executor(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        None, getaddr_func, host, port, family, type, proto, flags)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/anaconda3/lib/python3.13/socket.py", line 983, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 8] nodename nor servname provided, or not known
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/_utils/async_utils.py", line 590, in loop_coro
+    await asyncio.wait_for(async_f(), timeout=timeout)
+  File "/opt/anaconda3/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/modal/runner.py", line 68, in _heartbeat
+    await client._stub.AppHeartbeat(request, retry=Retry(attempt_timeout=HEARTBEAT_TIMEOUT))
+modal.exception.ConnectionError: [Errno 8] nodename nor servname provided, or not known
+[modal-client] 2026-11-09T17:22:57+0000 Received a cancellation signal while processing input ('in-01M70M1T89YVZ6MRSANNEB460F:1794243619082-0',)
+[modal-client] 2026-11-09T17:22:57+0000 Successfully canceled input ('in-01M70M1T89YVZ6MRSANNEB460F:1794243619082-0',)
+Stopping app - uncaught exception raised locally: StreamTerminatedError('Connection lost').
+{
+ "schema": "roboforge.cost_event/1",
+ "event": "result",
+ "utc": "2026-11-09T17:23:12.453652+00:00",
+ "launch_id": "db8d68a734b84ad4a6e91616797942fc",
+ "run_id": "s9_pc_diffusion_dp3_lift_seed0_8fd35613",
+ "status": "error",
+ "container_wall_s": null,
+ "measured_cost_usd": null,
+ "measured_cost_kind": "estimate: measured container time x list price (excludes image build and start-up)",
+ "modal": {
+  "app_id": "ap-RLS2PChQ53jsL8FKr02QtF"
+ },
+ "detail": "StreamTerminatedError: Connection lost"
+}
+ 
+result: /Users/zackaryholt/Projects/roboforge/logs/tmp/modal_plans/train_gpu_pc_20261109T120014.result.json

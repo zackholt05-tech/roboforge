@@ -1664,3 +1664,31 @@ a separately labelled, DP3-inspired explicit-3D-perception study (MASTER_SPEC §
 - **Why now:** the owner chose GO on 2026-11-09 (approval A-04; `docs/LEVEL2_GO_NO_GO.md`).
   The data is derived from the MIT-licensed robomimic demonstrations and is never
   redistributed.
+
+### D-085 Paid Modal launches run detached, single-flight, and survive client network loss (FIXED, Session 9)
+`infra/modal_app.py` (`_launch`, `attach`), `src/roboforge/compute/launch_wait.py`,
+`tests/unit/test_launch_wait.py`.
+- **Why:** this host lost DNS twice in 90 minutes (KI-047). A launch runs in an ephemeral app,
+  which Modal stops when its client disconnects:
+  - the first loss stopped seed 0's first launch at step 25,000, which it resumed from;
+  - the second killed a resume launch while it was still queued for an L4.
+- **Change, client side only:**
+  - each launch spawns its job into `app.run(detach=True)`, so the job keeps running if the
+    client dies;
+  - the function call ID is written to `<plan>.call.json` before any waiting;
+  - the client polls `FunctionCall.get` and retries only transport failures (Modal
+    `ConnectionError`, grpclib `StreamTerminatedError`, socket and connection errors), for a
+    continuous outage of up to 1 h;
+  - anything the remote job raises propagates unchanged, so `error`, `interrupted` and
+    `complete` keep their meanings;
+  - `attach --plan <plan>` re-attaches to a recorded call whose client died, and records its
+    result; the ledger keeps a launch's last result;
+  - after a result, the app is stopped.
+- **Single flight:** `_launch` refuses (exit 2) when any app of this project is not stopped,
+  or when Modal cannot be asked. This keeps A-04's `max_containers = 1` and "strictly one
+  launch after another" even when a dead client leaves a job running.
+- **What does not change:** training code, configs, budgets, the queue
+  (`scripts/pc_train_queue.py`, frozen in Level 2 freeze §9), launch order, timeouts, the
+  approval gate and the cost ledger. `infra/modal_app.py` is not in any freeze table.
+- **Operational consequence:** Ctrl-C in the launching terminal stops only the client. To
+  stop a job, run `python infra/modal_app.py cancel --app-id <ap-…>`.

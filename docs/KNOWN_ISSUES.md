@@ -811,3 +811,21 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   replaced by the run from the committed fix.
 - **Impact:** none on any evaluation or state. The analysis reads summaries and never rolls
   out, and the script is not part of the frozen held-out code.
+
+### KI-039 — A simulator test would have built a held-out start once the lock opened (FIXED before the freeze commit, Session 7)
+- **Observed (2026-11-08, while reviewing the freeze commit):** the tests that depend on the
+  held-out lock were checked before committing `docs/FINAL_TEST_FREEZE.md`.
+  `tests/simulator/test_env_adapter.py::test_seed_resets_and_the_final_test_seed_lock` asserted
+  that `env.reset(900003)`, a seed in the held-out block, is refused. That holds only while the
+  lock is shut.
+- **Cause:** the test used the real lock state. With the freeze committed, the lock is open, so
+  `make test` would have built a held-out start on macOS (and then failed). That reads the test
+  set outside the frozen path.
+- **Fix (in the freeze commit `bf0a0fa`, D-072):** the test points the lock at a missing freeze
+  through `suites_config`, as the post-freeze lock test does. It asserts that the lock is shut,
+  then expects the refusal. Searching `tests/` for `lock_status`, `FinalTestLockedError`,
+  `LOCKED_SUITE`, `final_test`, `FINAL_TEST_FREEZE`, `load_freeze` and both held-out manifest
+  hashes found no other test that depends on the real lock state. The others use temporary or
+  missing freezes, or only check suite names.
+- **Impact:** none. The test was changed before the lock opened, and `make test` at `bf0a0fa`
+  (372 passed) built no held-out start.

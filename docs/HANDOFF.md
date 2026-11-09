@@ -1,11 +1,14 @@
-<!-- parsable handoff header (values below are real, filled at the end of Session 6) -->
+<!-- parsable handoff header (values below are real, filled at the end of Session 7) -->
 ```yaml
 project: roboforge-3d
-current_session: 6
+current_session: 7
 session_status: PASS
-next_session: 7
-last_verified_commit: 4721c01   # lint clean, 295 tests; the suite ran at 6dce01b (same code apart from the figure scripts); later commits are docs/evidence only
-protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b}
+next_session: 8
+last_verified_commit: bf0a0fa   # last code/test change; lint clean, 372 tests; later commits are evidence/docs only (re-verified at the STOP commit, LEDGER E7-15)
+protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
+freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
+heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
+level1_freeze: docs/LEVEL1_COMPLETE.md   # HARD SCIENTIFIC BOUNDARY: later RGB/point-cloud results never modify Level 1 selection, labels or findings
 python: 3.11.15                       # development (macOS arm64); canonical platform uses 3.11.18
 sim_engine_version: mujoco 3.2.7
 robosuite_revision: 51cc01785bab80ffeed20da15e67d7dd4140e76a   # v1.5.1
@@ -13,28 +16,23 @@ robomimic_revision: d309eaecc18acf4152a830a895a6984b8ac71b05
 diffusers: 0.11.1
 torch: 2.15.0 (macOS) / 2.15.0+cu132 (container and Modal)
 evaluation_platform: {platform_id: linux-aarch64-container-1f685638f28c, image_id: "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c", runner: infra/containers/run_sim_cpu.sh}
-dataset_and_specs: unchanged since Session 2   # git diff d956292 -- data/ uv.lock pyproject.toml configs/eval empty
-main_suite:                           # RESEARCH_PROTOCOL §6.3 + §13 (2026-11-07), D-051, D-053..D-056
-  families: [bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet]   # 4: BC-MLP-chunk is the H2-c control
-  tasks: {lift: "done (Session 6)", can: "Session 7"}
+dataset_and_specs: "demonstrations, validation/held-out suites, uv.lock, pyproject unchanged since Session 2; Session 7 added data/eval_states/<task>/{robustness_base,ood_*} and configs/eval/{robustness,failure_taxonomy}.yaml (D-063, §14)"
+raw_rgb_source: "data/raw/robomimic_v1.5/{lift,can}/ph/demo_v15.hdf5 downloaded (states + model XML per demo; no images); Square not downloaded"
+main_suite:
+  families: [bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet]
+  tasks: {lift: "Session 6 (24 runs, 480 evaluations)", can: "Session 7 (24 runs, 480 evaluations)"}
   seeds: [0, 1, 2]
-  budget: "100,000 steps, batch 100, checkpoints every 5,000 (K = 20), every checkpoint evaluated on 50 validation starts"
-  tuning: "<= 4 configurations per family per task at the main budget, seed 0; Lift: 4/4 used per family; Can: 0/4"
-  compute: "local CPU only, 1 torch thread, <= 8 concurrent training runs; evaluation on the canonical container, <= 4 in parallel; $0"
-  lift_suite: {plan: configs/experiments/level1_core_lift.yaml, plan_sha256: d3de6cbcb14bcda15023a6526c6e3ba8cafb0b37d8692c5f8b6fcba871cfad3f, summary: reports/session6/suite/level1_core_lift.json, runs: 24, evaluations: 480, failed: 0}
-baseline_configs:                     # configs/models/*.yaml still carry the 30k pilot budget; main-budget runs pass --set (run_suite does)
+  budget: "100,000 steps, batch 100, checkpoints every 5,000 (K = 20), every checkpoint on 50 validation starts"
+  tuning: "4 of 4 configurations used per family on Lift and on Can; none remains"
+  compute: "local CPU only, 1 torch thread, <= 8 concurrent training runs; canonical container <= 4 in parallel; $0 (Gate C, D-051)"
+  can_suite: {plan: configs/experiments/level1_core_can.yaml, plan_sha256: 881b4fb7fd72a33866ad4924db3b72cbe4270a212b03a8cc958efc6ba8a89e3c, summary: reports/session7/suite/level1_core_can.json, runs: 24, evaluations: 480, failed: 0}
+baseline_configs:
   bc_mlp:         {horizons: "T_o=1 T_p=1 T_a=1", model: "MLP 2x1024 ReLU", params: 1077255}
   bc_rnn:         {horizons: "L=10 T_p=1 T_a=1", model: "LSTM 2x296, sliding window", params: 1080703}
   bc_mlp_chunk:   {horizons: "T_o=2 T_p=16 T_a=8", model: "MLP 2x1024 ReLU", params: 1204336}
   diffusion_unet: {horizons: "T_o=2 T_p=16 T_a=8", model: "flatten encoder + ConditionalUnet1D (64,128)", params: 1092551, sampler: "DDIM-10", ema: "power 0.75"}
-lift_chosen_configurations:           # §6.3 choice on Lift (reports/session6/tuning/*_lift.json); validation-only
-  bc_mlp: {trial: 4, overrides: "optim.weight_decay=0.1"}
-  bc_rnn: {trial: 4, overrides: "optim.weight_decay=0.1"}
-  bc_mlp_chunk: {trial: 2, overrides: "optim.schedule=cosine"}
-  diffusion_unet: {trial: 3, overrides: "optim.lr=3.0e-4"}
-lift_test_configuration:              # D-058; reports/session6/lift_test_configuration.json (sha256 38ac3c29...); recorded, NOT frozen
+lift_test_configuration:              # FROZEN (bf0a0fa); reports/session6/lift_test_configuration.json (sha256 38ac3c29...)
   held_out_schedule_manifest_sha256: e02498651b9d5bb88b6aec0870c5e3277cadaaeaf0e325abf86c79e89b1f22da   # n = 50; hash only, never loaded
-  validation_suite_manifest_sha256: 0b1368fae0d5e967955ad7b5c3a6191001bbad2758becad537412b45e71c8785
   bc_mlp:   # chosen trial 4 (optim.weight_decay=0.1)
     s6_bc_mlp_wd1e1_lift_seed0_c39e4980: {seed: 0, selected_step: 15000, validation: 49/50, checkpoint_sha256: e68bc5e05c5b5f78c0e11c33401ed6feee361be44a629ff1fac394949cd7ef54}
     s6_bc_mlp_wd1e1_lift_seed1_628a1e7a: {seed: 1, selected_step: 5000, validation: 48/50, checkpoint_sha256: 5454cf8081b88319bcb91e35d8e69eb8fe0dbef9973c21454b690309dd9995ea}
@@ -51,244 +49,269 @@ lift_test_configuration:              # D-058; reports/session6/lift_test_config
     s6_diffusion_unet_lr3e4_lift_seed0_2f635398: {seed: 0, selected_step: 100000, validation: 50/50, checkpoint_sha256: 7e48766542774f52a5c9e73ca2a2776d95981188ed30d65188746479c55f0f38}
     s6_diffusion_unet_lr3e4_lift_seed1_50ae45de: {seed: 1, selected_step: 95000, validation: 50/50, checkpoint_sha256: f26868ea80e307200e92de962493797add56e97d0a1c38519383de64baeb81f7}
     s6_diffusion_unet_lr3e4_lift_seed2_427ac4f5: {seed: 2, selected_step: 80000, validation: 50/50, checkpoint_sha256: b52c30177478e6c8fed6eabd220c08fb839974550da925cb751b341a537f5587}
-engineering_runs_session6:            # never trials, never in selection (LEDGER E6-02, E6-03)
-  s6dev: [s6dev_bc_mlp_lift_seed0_5b350dd9, s6dev_bc_mlp_lr3e4_lift_seed0_01e97f6f, s6dev_bc_mlp_lr3e4_lift_seed1_6fa904b6, s6dev_diffusion_unet_lift_seed0_979d3226, s6dev_diffusion_unet_lr3e4_lift_seed0_885cf2b0, s6dev_diffusion_unet_lr3e4_lift_seed1_dbba935c]   # 200 steps, dirty 273f86a
-  s6dev2: [s6dev2_bc_rnn_lift_seed0_fc3051a1]   # 2,000 steps, stop/resume drill
-pilot_runs:                           # Sessions 3-4, 30k, development records; trial 1 re-trained at 100k reproduces them (E6-07)
-  s3_bc_mlp_lift_seed0_dbf312cd:          {selected_step: 5000,  checkpoint_sha256: 30289109273d433a364aa5a7e1a4fb41e90fc58d804fcc094936b4582b4559db}
-  s3_bc_rnn_lift_seed0_2e7cffe3:          {selected_step: 15000, checkpoint_sha256: 3dbb53ce2a711d89eeb0b5844ae69efb6a45f1da0de21a3fc2cce1472a3da756}
-  s3_bc_mlp_chunk_lift_seed0_bb8b4dd6:    {selected_step: 10000, checkpoint_sha256: a763c83730aeb1dbc9d07fbcc76ede2c3b68e63487fc7e3175395f9774ab83a7}
-  s4_diffusion_unet_lift_seed0_336e15e9:  {selected_step: 15000, checkpoint_sha256: f768cbe32b2664e97d483d1d135863dedcc3646fe2bdda6c0c641d69658459fc}
-modal: {gate_a: done, approval: "A-01 ($2.00 cap) closed", billed_usd: 0.148, used_in_session6: none, egl_vs_osmesa: PENDING (KI-033)}
-final_test_locked_until: docs/FINAL_TEST_FREEZE.md   # does not exist; no held-out state loaded
-next_required_owner_approval: none for the local Session 7 path; any Modal use needs a new approval row
+can_test_configuration:               # FROZEN (bf0a0fa); reports/session7/can_test_configuration.json (sha256 116f10a4...)
+  held_out_schedule_manifest_sha256: 5f407748f5f261ef8fdfe4bec0d53c74f8e5ae064e53ff831e17a649528f7ff0   # n = 50; tested once in Session 7
+  bc_mlp:   # chosen trial 2 (optim.schedule=cosine)
+    s7_bc_mlp_cos_can_seed0_ae8152e3: {seed: 0, selected_step: 55000, checkpoint_sha256: b8fa2d06c19ae9d4830cf6b2a50b272e6fc91f3ab8668c68aae17092a16dc081}
+    s7_bc_mlp_cos_can_seed1_00564355: {seed: 1, selected_step: 15000, checkpoint_sha256: cbf55c0d0656506c8457519024dee360d52f06abf3e92a485a2ef38ee03a34e2}
+    s7_bc_mlp_cos_can_seed2_7359a97f: {seed: 2, selected_step: 55000, checkpoint_sha256: 3c1535918fb744fca9594da6e11220922db759f72fa09c984ec00006f0e4647a}
+  bc_rnn:   # chosen trial 2 (optim.schedule=cosine)
+    s7_bc_rnn_cos_can_seed0_5ff5ce91: {seed: 0, selected_step: 30000, checkpoint_sha256: 5085d716f285631e749a9439151c3aafab6fb6c67baae78800b3a9a0014e6137}
+    s7_bc_rnn_cos_can_seed1_d34c6b99: {seed: 1, selected_step: 25000, checkpoint_sha256: a69eef409a35adbcd6e393e3397fb5603670a254d1d2b05b6d68e677d39fd23a}
+    s7_bc_rnn_cos_can_seed2_8452a37a: {seed: 2, selected_step: 35000, checkpoint_sha256: 7cda91e6881c5d9a71a8c4b4fc5e56b6d527887b049af91eb481d700e164a148}
+  bc_mlp_chunk:   # chosen trial 4 (optim.weight_decay=0.1)
+    s7_bc_mlp_chunk_wd1e1_can_seed0_0c2f9d4b: {seed: 0, selected_step: 95000, checkpoint_sha256: 1968ad1148e4f20f82fffd6dfa57196f82ee3c7544e4e8c6eea5af2d7b367cd9}
+    s7_bc_mlp_chunk_wd1e1_can_seed1_92a1f312: {seed: 1, selected_step: 85000, checkpoint_sha256: 3b306ad736f3b2df7e53928599b17125f834c1260224dbde97d57cdb23dc4fb2}
+    s7_bc_mlp_chunk_wd1e1_can_seed2_63847bb4: {seed: 2, selected_step: 30000, checkpoint_sha256: ebbff8e38a713c584cbef4058534d0377d108701457d79ac25814bc7ff24552f}
+  diffusion_unet:   # chosen trial 2 (optim.schedule=cosine)
+    s7_diffusion_unet_cos_can_seed0_99251da3: {seed: 0, selected_step: 65000, checkpoint_sha256: 41dd66ddaf7b54d7114cbfda8058ede8270abbd83eefe715d679aa8645c35c1d}
+    s7_diffusion_unet_cos_can_seed1_51f8481d: {seed: 1, selected_step: 100000, checkpoint_sha256: a687d9fbadf65410cc768ee63b901c248099d9de1b13bf65384433df58f74fab}
+    s7_diffusion_unet_cos_can_seed2_9b0fde56: {seed: 2, selected_step: 90000, checkpoint_sha256: 49d73c93ed0a70b79a433892808468005004f89f8c923685c4cb342e3a456e27}
+ablation_a3_runs: [s7_diffusion_unet_cos_to1_can_seed0_4b9d434e, s7_diffusion_unet_cos_to1_can_seed1_f9e76b7e, s7_diffusion_unet_cos_to1_can_seed2_5fa43638]   # T_o = 1; selected 95k/100k/90k, 49/50 each (validation, development)
+heldout_results:                      # family success %, 3 seeds x 50 held-out starts (reports/session7/results/tables.md)
+  lift: {bc_mlp: 90.7, bc_rnn: 100.0, bc_mlp_chunk: 98.0, diffusion_unet: 97.3, random_uniform: 0.0}
+  can:  {bc_mlp: 76.7, bc_rnn: 96.0, bc_mlp_chunk: 96.0, diffusion_unet: 95.3, random_uniform: 0.0}
+modal: {gate_a: done, approval: "A-01 ($2.00 cap) closed", billed_usd: 0.148, used_in_sessions_6_7: none, egl_vs_osmesa: PENDING (KI-001, KI-033)}
+final_test: "TESTED ONCE (Session 7). The lock is open because the freeze is committed; no further held-out rollout of any Level 1 configuration, ever"
+disk: "22 GB free at the end of Session 7; runs/ 26 GB (KI-008: Docker build cache prune is an owner decision)"
+next_required_owner_approval: "Session 8: Gate D (RGB visual policies) budget approval before any RGB main training; any Modal/GPU use needs a new approval row with a cap"
 ```
 
-# Session 6 Handoff
+# Session 7 Handoff
 
 Do not trust this file blindly: re-run the checks in "Exact starting instructions".
 
 ## 1. Session completed
-Session 6 (MASTER_SPEC: Level 1 Lift primary benchmark and checkpoint selection). Status
-**PASS**. The full Lift main suite ran from the clean commit `6dce01b` on local CPU and the
-canonical container at $0: 24 training runs of 100k steps, 480 checkpoint evaluations on the
-50 validation starts, §7 selection, §6.3 choice, then seeds 1–2. No run failed. Every number
-below is **validation-only**: the same 50 starts selected the checkpoints and the
-configurations. No held-out test state was loaded, named or reset to.
+Session 7 (MASTER_SPEC: Level 1 Can, paired held-out testing, robustness, scientific freeze).
+Status **PASS**. Level 1 is complete and frozen in `docs/LEVEL1_COMPLETE.md`.
+- **Can main suite:** 24 runs and 480 validation evaluations.
+- **Robustness and ablations:** H4 plus A1–A3 on preregistered fresh starts, 135
+  evaluations, validation regime.
+- **Freeze:** committed before any held-out rollout (`bf0a0fa`).
+- **Held-out test:** run once, 26 evaluations, then analysed once (`97cc48a`).
+
+All work was local at $0. No run failed.
 
 ## 2. Completed work
-- **Search space** for trials 2–4 (identical for every family: cosine schedule, lr 3e-4,
-  weight decay 0.1; D-055) written in the ledger and committed with the plan before the first
-  run (`6dce01b`).
-- **Main suite** (`scripts/run_suite.py`, D-054): training, canonical evaluation of every
-  checkpoint, selection, choice and replicates, end to end in 9.80 h (E6-04–E6-06).
-- **Reproduction check:** trial 1 matches the Session 3–4 pilots by content through 30k, and
-  its 24 evaluations reproduce the pilots episode for episode (E6-07).
-- **Latency** of the 4 chosen configurations on the canonical container, run alone (E6-08).
-- **Diagnostics:** per-start failures, action diagnostics, contamination check (E6-09–E6-11).
-- **Lift test configuration recorded, not frozen** (D-058, E6-12): 12 checkpoints and the
-  held-out schedule by its manifest hash only.
-- **Validation-only figures, table and episode montages** (`make figures`, D-057, E6-13).
+- **Can main suite** (E7-02–E7-04):
+  - Started from `96aa972`. It crashed at 02:14 UTC (KI-036) and was fixed in D-070
+    (`f0715c4`), then restarted.
+  - 24/24 runs complete, 480/480 evaluations, failed none.
+  - Chosen trials: BC-MLP 2, BC-RNN 2, BC-MLP-chunk 4 and diffusion 2.
+- **Can latency, figures and test configuration** (E7-06, E7-07):
+  - `reports/session7/cost_latency/`, `figures/` and `can_test_configuration.json`.
+- **Preregistration, RESEARCH_PROTOCOL §14** (`2859d04`):
+  - the robustness starts (`5d9b8c0`; container check bitwise after KI-037, `005bc94`);
+  - the failure taxonomy, D-065;
+  - the bootstrap, D-066;
+  - the held-out path with its rehearsal, D-067 and D-069.
+- **Robustness (H4) and ablations A1, A2 and A3** (E7-09–E7-11):
+  - Evaluated from `005bc94` and analysed from `565c6e4` after KI-038.
+- **Rehearsal** of the held-out path on the validation suite (E7-12): PASS.
+- **Freeze** (E7-13, D-072, KI-039):
+  - Container attestation: locked before the freeze, unlocked after it.
+  - The freeze is identical to the rehearsed draft except for its date.
+- **Held-out test** once, then the frozen analysis once (E7-14).
+- **Records:** `docs/LEVEL1_COMPLETE.md`, plus all the STOP docs.
 
-## 3. Files created or changed
-- **New code:** `scripts/plot_validation.py`, `scripts/render_episodes.py`,
-  `tests/unit/test_validation_figures.py`; `Makefile` target `figures` (`1280b5d`; footer
-  wrapping and latency-figure layout fixed in `4721c01`). The
-  suite code (`scripts/run_suite.py`, `src/roboforge/train/suite.py`,
-  `src/roboforge/eval/tuning.py`, `configs/experiments/level1_core_lift.yaml`) was committed
-  in `6dce01b` before the suite.
-- **Docs:** STATUS, HANDOFF, DECISIONS (D-057–D-059), KNOWN_ISSUES (KI-034, KI-035; updates
-  to KI-008, KI-021, KI-022, KI-024, KI-028), EXPERIMENT_LEDGER (E6-04–E6-14), COMPUTE_PLAN.
-- **Evidence:** `reports/session6/` (suite summary, 480 validation summaries, 24 selections,
-  4 tuning records, latency, diagnostics, test configuration, figures),
-  `logs/session6/` (suite events, analysis scripts and logs, final checks). Checkpoints and
-  episode records stay in `runs/s6_*` (gitignored, 8.7 GB).
+## 3. Files created or changed (Session 7)
+- **Code:**
+  - Can plan: `configs/experiments/level1_core_can.yaml`.
+  - A3 plan and config: `ablation_a3_can.yaml`, `configs/models/diffusion_unet_to1_can.yaml`.
+  - `src/roboforge/sim/robustness.py`, `configs/eval/{robustness,failure_taxonomy}.yaml`.
+  - `src/roboforge/eval/{taxonomy,statistics,freeze,heldout}.py` and inference variants.
+  - Scripts: `generate_robustness_states`, `run_evals`, `analyze_robustness`,
+    `failure_taxonomy`, `write_freeze_block`, `run_heldout`, `eval_heldout`,
+    `analyze_heldout`, `check_rehearsal`.
+  - Changes: the D-070 guards in `run_suite.py`; the host-wide container slots
+    (`roboforge.slots`).
+  - Tests for each of these.
+- **Data:** `data/eval_states/<task>/{robustness_base,ood_*}`, 5 sets × 50 (D-063).
+- **Docs:**
+  - `docs/FINAL_TEST_FREEZE.md` and `docs/LEVEL1_COMPLETE.md`;
+  - RESEARCH_PROTOCOL §14;
+  - DECISIONS D-060–D-072;
+  - KNOWN_ISSUES KI-036–KI-039;
+  - EXPERIMENT_LEDGER E7-01–E7-15, with cost and tuning accounting;
+  - COMPUTE_PLAN, STATUS and HANDOFF.
+- **Evidence:**
+  - `reports/session7/`: suite, validation, selection, tuning, cost_latency, figures,
+    robustness, heldout and results.
+  - `logs/session7/`: suite, robustness, rehearsal, heldout, analysis and `WORKLOG.md`.
+  - Checkpoints and episode records stay in `runs/` (gitignored).
 
 ## 4. Executed commands and results
-See EXPERIMENT_LEDGER E6-01–E6-14. Summary:
-- prerequisites all PASS at `273f86a`;
-- the suite at `6dce01b`: exit 0, 24/24 runs complete, 480/480 evaluations, 0 errors;
-- latency, diagnostics, contamination check, test-configuration record;
-- figures at `4721c01`;
-- final `make lint` clean and `make test` **295 passed** at `4721c01`.
+See EXPERIMENT_LEDGER E7-01–E7-15. Every reported rollout ran on the canonical container
+through `infra/containers/run_sim_cpu.sh` from a clean commit:
+- **Training:** 27 runs, all `complete`.
+- **Evaluations:** 667 in all, with 0 errors and every audit passing.
+  - 480 Can validation;
+  - 135 robustness and ablation;
+  - 26 rehearsal;
+  - 26 held-out.
+- **Final checks:** `make lint` is clean and `make test` gives **372 passed** at `bf0a0fa`.
+  They were re-run at the STOP commit (E7-15).
 
-## 5. Key findings (validation-only development numbers, not held-out results)
-- **Selected checkpoints of the chosen configurations, seeds 0 / 1 / 2** (successes of 50):
+## 5. Key findings: held-out test, frozen protocol (`docs/LEVEL1_COMPLETE.md` §2–§3)
+- **Success, % of 3 seeds × 50 held-out starts:**
 
-  | Family | Chosen trial | Seed 0 | Seed 1 | Seed 2 | Mean first-success step (seeds 0–2) |
-  |---|---|---|---|---|---|
-  | BC-MLP | 4 (weight decay 0.1) | 49 (15k) | 48 (5k) | 49 (5k) | 49.69, 49.56, 45.00 |
-  | BC-RNN | 4 (weight decay 0.1) | 50 (15k) | 50 (10k) | 50 (5k) | 43.10, 43.48, 42.62 |
-  | BC-MLP-chunk | 2 (cosine) | 50 (15k) | 49 (5k) | 50 (10k) | 44.62, 43.27, 43.40 |
-  | Diffusion U-Net | 3 (lr 3e-4) | 50 (100k) | 50 (95k) | 50 (80k) | 45.54, 44.80, 45.10 |
+  | Family | Lift | Can |
+  |---|---|---|
+  | BC-MLP | 90.7 | 76.7 |
+  | BC-RNN | 100.0 | 96.0 |
+  | BC-MLP-chunk | 98.0 | 96.0 |
+  | Diffusion | 97.3 | 95.3 |
+  | Random | 0 | 0 |
 
-- **Lift validation is saturated (KI-034):** 12 of 16 seed-0 trials and 8 of the 12 chosen
-  checkpoints score 50/50 (Wilson [0.929, 1.000]). Three of four choices fell to the
-  first-success tiebreak by 0.12–0.68 steps. Success cannot separate BC-RNN, BC-MLP-chunk
-  and diffusion here; BC-MLP stays below (47–49/50).
-- **Where policies fail** (all 20 checkpoints of the 12 chosen runs, post-hoc categories):
-  BC-MLP 439 of 3,000 episodes, mostly missed grasp then drift with saturated motion
-  actions (KI-021); BC-MLP-chunk 257, the same mode; BC-RNN 146, mostly missed grasp but
-  stays near; diffusion 18, mostly stays near. Start `lift_validation_0029` is hard for the
-  two T_a = 8 families (KI-028).
-- **When they peak:** BC selects at 5k–15k in 17 of 18 runs, while offline validation MSE
-  rises from the first checkpoint (KI-024). Diffusion selects at 35k–100k with success flat
-  at 49–50/50; its chosen seed-0 run selected the final checkpoint (100k).
-- **Convergence:** training loss flattened in every chosen run (90–100k mean within 1–5 %
-  of 80–90k, after a 70–80 % fall over the first half).
-- **Latency** (canonical container, median per decision): BC-MLP 0.91 ms, BC-MLP-chunk
-  1.66 ms, BC-RNN 9.05 ms, diffusion DDIM-10 36.95 ms.
-- **Compute:** 33.25 CPU core-hours of training, 26.92 container-hours of evaluation,
-  9.80 h elapsed, **$0**. Host contention inflated wall times but not results (KI-035).
+- **H1:** separated for every family on both tasks.
+- **H2, diffusion − BC-MLP:** on Can +18.7 pp [+4.7, +32.7], separated. On Lift +6.7 pp,
+  not separated in success, but separated in the secondary episode length.
+- **H2, diffusion − BC-RNN:** not separated on either task.
+- **H2-c, diffusion − BC-MLP-chunk:** not separated on either task, so the data do not
+  attribute any diffusion advantage to the generative model.
+- **H3, BC-RNN − BC-MLP:** separated on both tasks, +9.3 and +19.3 pp. A3 (T_o within
+  diffusion) is not separated.
+- **H4:** every family drops under every OOD set.
+  - Diffusion degrades least on the Lift arm offset: 88.0 %, against 22.7–50.0 % for the BC
+    families.
+  - On the Can arm offset, diffusion (71.3 %) and BC-MLP-chunk (79.3 %) are not separated.
+- **A1 (EMA) and A2 (DDIM-10 vs DDPM-100):** not separated on either task.
+- **Selection optimism:** validation scores exceed fresh-start and held-out scores. On Can the
+  gap is up to 13.4 pp on fresh starts and up to 6.0 pp on the held-out starts (BC-MLP;
+  descriptive).
 
-## 6. Open decisions (Session 7)
-- **Can search space:** trials 2–4 must be in the ledger before the first Can run. Reusing
-  the Lift trials (D-055) is the default; any other choice needs a recorded reason.
-- **Freeze contents** (`docs/FINAL_TEST_FREEZE.md`): rollout counts R (KI-028: R = 1 unless
-  amended before the freeze), the §9 paired bootstrap, aggregation, failure taxonomy,
-  example rule, and how a saturated Lift comparison is reported (KI-034: "not separated" is
-  a valid outcome; secondary outcomes declared in advance).
-- **Robustness and ablations** (OOD initial-state sets, ≥ 2 ablations) preregistered on
-  validation before their runs.
-- **Optional:** a Modal workspace budget; an EGL vs OSMesa probe (KI-001).
+## 6. Open decisions (Session 8)
+- **Gate D (RGB visual policies):** the owner must approve a budget before any RGB main
+  training, from a measured pilot.
+  - Local CPU only at $0, or a capped Modal approval row.
+- **Resolution 84×84 or 128×128:** from the alignment and throughput pilot (MASTER_SPEC §7.2).
+- **Encoder regime:** from scratch, pretrained and frozen, or fine-tuned. Shared across
+  visual BC and visual diffusion.
+- **Disk:** RGB datasets may not fit in the 22 GB free. Pruning the Docker build cache
+  (KI-008) is an owner decision.
 
 ## 7. Decisions
-D-053–D-056 (before the suite) and D-057–D-059 (DECISIONS, Session 6).
+D-060–D-072 (Session 7). D-072 records how the freeze and the held-out run were executed.
 
-## 8. Outstanding issues (none blocks Session 7)
-- **KI-034:** Lift validation saturated; plan the paired test accordingly.
-- **KI-035:** wall times of Session 6 are contended; use the Session 5 profiles for
-  projections.
-- **KI-028, KI-024, KI-021, KI-023, KI-011, KI-008:** carried over (updated in Session 6).
-- **KI-033 / KI-001:** EGL vs OSMesa on Modal pending; not needed for Level 1.
-- **KI-029, KI-020, KI-019, KI-018:** the rules still apply.
-- **Makefile defaults** are `EVIDENCE_SESSION` 6 and `PREFIX` s6. Session 7 must pass
-  `EVIDENCE_SESSION=7 PREFIX=s7`, or bump the defaults as a recorded change.
+## 8. Outstanding issues (none blocks Session 8)
+- **KI-001 / KI-033:** EGL vs OSMesa on Modal is still unsettled. OSMesa works in the
+  canonical container; check it for RGB throughput.
+- **KI-008:** disk and the Docker build cache.
+- **KI-034:** Lift is near ceiling.
+- **KI-035:** a shared host inflates wall times.
+- **KI-028:** R = 1.
+- All Session 7 issues (KI-036–KI-039) are FIXED.
 
 ## 9. Budget
-- **Spent in Session 6:** $0 (local CPU and the canonical container only; no Modal call).
-- **All-in to date:** $0.148 on Modal (Gate A, A-01 closed). Month-to-date Modal usage,
-  including another app, $5.42 of the $30 credit (as of Session 5; not re-queried, since
-  Session 6 made no Modal call).
-- **Approved:** local CPU only, **$0** (Gate C). Any Modal use needs a new approval row with
-  a cap.
+- **Session 7:** $0. 46.19 CPU core-h of training and 64.25 container-h of evaluation.
+- **Level 1 in all:** $0.148, from Session 5 Modal Gate A.
+- No approval row is open. Any Modal or GPU use needs a new row with a cap first.
 
-## 10. Exact starting instructions for Session 7
+## 10. Exact starting instructions for Session 8
 Paste into a fresh Claude Code session:
 
 ```text
-Implement RoboForge 3D SESSION 7 ONLY from MASTER_SPEC.md (Level 1 Can, paired held-out
-testing, robustness, scientific freeze). Begin by reading all of MASTER_SPEC.md,
-docs/STATUS.md, docs/HANDOFF.md, docs/DECISIONS.md (through D-059), docs/KNOWN_ISSUES.md
-(especially KI-021, KI-024, KI-028, KI-034, KI-035), docs/EXPERIMENT_LEDGER.md (Session 6),
-docs/RESEARCH_PROTOCOL.md (v1 + the 2026-11-06 diffusion amendment + the 2026-11-07
-main-budget amendment, all binding; §5, §7, §8, §9, §10 matter most),
-docs/SIMULATOR_CONTRACT.md, docs/DATA_DICTIONARY.md and docs/COMPUTE_PLAN.md, and inspect
-the actual repository/test state. Do not blindly trust prior handoff claims: first run
-`make setup`, `make download`, `make check-data`, `make build-data`,
-`make check-eval-states`, confirm `git status --short data/` is empty, then run
-`make lint`, `make test`, `make smoke-sim SMOKE_OUT=logs/session7/prereq`,
-`make train-smoke SMOKE_DIR=logs/tmp/s7_smoke` and, on the canonical container,
-`ROBOFORGE_EVIDENCE_SESSION=7 make in-sim CMD="python scripts/smoke_sim.py --task lift --out-dir logs/session7/prereq/container"`
-and the same with `--task can`, and confirm they pass; confirm
+Implement RoboForge 3D SESSION 8 ONLY from MASTER_SPEC.md (Level 1 RGB-conditioned policy,
+separate feasibility/budget gate; MASTER_SPEC §7.2 and Session 8). Begin by reading all of
+MASTER_SPEC.md, docs/STATUS.md, docs/HANDOFF.md, docs/LEVEL1_COMPLETE.md,
+docs/FINAL_TEST_FREEZE.md, docs/DECISIONS.md (through D-072), docs/KNOWN_ISSUES.md
+(especially KI-001, KI-008, KI-018, KI-019, KI-020, KI-022, KI-033, KI-034, KI-035, KI-039),
+docs/EXPERIMENT_LEDGER.md (Sessions 6-7), docs/RESEARCH_PROTOCOL.md (all amendments
+binding, §14 included), docs/SIMULATOR_CONTRACT.md, docs/DATA_DICTIONARY.md and
+docs/COMPUTE_PLAN.md, and inspect the actual repository/test state. Do not blindly trust
+prior handoff claims: first run `make setup`, `make download`, `make check-data`,
+`make build-data`, `make check-eval-states`, confirm `git status --short data/` is empty,
+then `make lint`, `make test`, `make freeze-check`,
+`make smoke-sim SMOKE_OUT=logs/session8/prereq`, and on the canonical container
+`ROBOFORGE_EVIDENCE_SESSION=8 make in-sim CMD="python scripts/smoke_sim.py --task lift --out-dir logs/session8/prereq/container"`
+and the same with `--task can`; confirm
 `docker image inspect -f '{{.Id}}' roboforge-sim-cpu:session0` equals the image_id in
-configs/eval/platform.yaml; check that the 12 Session 6 Lift runs listed in
-docs/HANDOFF.md (`lift_test_configuration`) exist under runs/ and that each selected
-checkpoint's file SHA-256 matches the HANDOFF value and
-reports/session6/lift_test_configuration.json (report if missing rather than assuming); run
-git log --format=fuller -n 5 to confirm the verified commits and the identity
-Zackary Holt <zackholt05@gmail.com>. The Makefile's EVIDENCE_SESSION falls back to 6 and
-PREFIX to s6: pass EVIDENCE_SESSION=7 and PREFIX=s7 (or bump the defaults as a recorded
-change) so Session 7 never writes into Session 6 evidence.
+configs/eval/platform.yaml; confirm the Level 1 freeze is intact:
+`git diff 97cc48a -- docs/FINAL_TEST_FREEZE.md reports/session6/lift_test_configuration.json reports/session7/can_test_configuration.json reports/session7/heldout reports/session7/results`
+is empty and `git log --oneline -- docs/LEVEL1_COMPLETE.md` lists exactly one commit (the
+Session 7 STOP commit; report, do not repair, if not); run git log --format=fuller -n 5 to confirm the
+verified commits and the identity Zackary Holt <zackholt05@gmail.com>. Pass
+EVIDENCE_SESSION=8 and PREFIX=s8 (or bump the Makefile defaults as a recorded change) so
+Session 8 never writes into Session 6-7 evidence.
 
-Session 7 goal (MASTER_SPEC Session 7), in this order:
-(1) Can main suite, validation only: Can's data, split and evaluation suites were built and
-checked in Sessions 0-2 (open-loop replay 190/200, smoke PASS), but no Can policy has been
-trained yet; if a blocker appears, record it precisely and continue with the honest Lift
-result.
-Train the same 4 families (BC-MLP, BC-RNN, BC-MLP-chunk as the H2-c control,
-diffusion_unet) on Can PH with the Session 6 protocol unchanged: 100,000 steps, batch 100,
-checkpoints every 5,000 (K = 20), every checkpoint on all 50 Can validation starts on the
-canonical container, §7 selection, at most 4 configurations per family on Can at seed 0
-(trial 1 = the base config at the main budget), then seeds 1 and 2 of the §6.3 choice.
-Write the Can search space (trials 2-4) in docs/EXPERIMENT_LEDGER.md and commit it BEFORE
-the first Can tuning run; reusing the Session 6 Lift trials (D-055: cosine, lr 3e-4,
-weight decay 0.1) is the default, any other choice needs a recorded reason. Use a new plan
-file (e.g. configs/experiments/level1_core_can.yaml, with task: can and prefix: s7) with
-scripts/run_suite.py (`make suite SUITE_PLAN=... EVIDENCE_SESSION=7`, D-054), launched
-from a clean committed tree, and never edit tracked files while it runs (its clean-tree
-check runs at every launch). Generate the same validation-only figures for Can with
-`make figures SUITE_SUMMARY=<Can suite summary> LATENCY=<Can latency json> EVIDENCE_SESSION=7`
-(D-057; the scripts take the task from the summary but have only been run on Lift).
-Lift selections are final: do not retrain, retune or reselect any Lift run.
-(2) Robustness and ablations, preregistered and run on VALIDATION only: write the OOD
-initial-state perturbation sets (physically valid, implemented through stored snapshots,
-validated, frozen before the robustness runs; H4), the failure taxonomy (replacing the
-post-hoc diagnose_actions categories) and at least 2 controlled ablations (candidates from
-RESEARCH_PROTOCOL: diffusion T_o = 1 vs 2 for H3, DDIM-10 vs DDPM-100, EMA vs no EMA) into
-the protocol as a dated amendment, committed before any of those runs. If the budget forces
-a narrower scope, record that.
-(3) Freeze: write docs/FINAL_TEST_FREEZE.md and lock it with a Git commit BEFORE any
-held-out rollout. It must contain the selected configurations and checkpoint hashes (Lift
-exactly as recorded in reports/session6/lift_test_configuration.json, D-058; Can from
-step 1), the held-out initial-state schedules by suite manifest hash (Lift
-e02498651b9d5bb88b6aec0870c5e3277cadaaeaf0e325abf86c79e89b1f22da), rollout counts (R; any
-change from R = 1 needs an amendment written before the freeze, KI-028), the §9
-hierarchical paired bootstrap (B = 10,000, seed 20261106), the task-metric aggregation,
-the failure taxonomy and the visual example-selection rule. Lift validation is saturated
-(KI-034: most selected checkpoints are 50/50, Wilson [0.929, 1.000]): preregister the
-paired analysis so that "not separated" is a reportable outcome, and declare in advance
-any secondary outcome (e.g. mean first-success step) used in the comparison.
-(4) Execute the final paired test ONCE under the frozen protocol, for all core models and
-tasks that passed feasibility, on the canonical container; no tuning, reselection or rerun
-on the test. Generate immutable machine-readable results, CI and pairwise-difference
-tables, failure analyses and full cost/latency results; distinguish engineering-incomplete
-cases, task failure and statistical uncertainty.
-(5) Write docs/LEVEL1_COMPLETE.md (the Level 1 research freeze): actual executed results,
-omissions and reasons; record exploratory follow-ups separately.
+HARD SCIENTIFIC BOUNDARY (Session 7 STOP): Level 1 state-based results are frozen. Never
+rerun make eval-final or make analyze-final, never re-evaluate any Level 1 configuration on
+the held-out suites, never edit reports/session6-7 evidence, the freeze or LEVEL1_COMPLETE,
+and never let RGB results modify core selection, labels or findings. RGB results are a
+separately labelled observation-modality study (MASTER_SPEC §5 item 5); state-based Level 1
+is an oracle-style comparator because it sees privileged object state.
 
-Compute (Gate C, D-051): local CPU only, $0 — 1 torch thread per run, at most 8
-concurrent training runs, at most 4 evaluation containers in parallel; no Modal resource of
-any kind (any Modal use needs a new owner approval row in docs/EXPERIMENT_LEDGER.md first).
-Can episodes run up to 400 steps and Can evaluation dominates the projected time
-(COMPUTE_PLAN §4); if the host is shared again, wall times inflate (KI-035) but results do
-not. Track failed runs too. Measure latency on the canonical container with nothing else
-running.
+Session 8 goal (MASTER_SPEC Session 8), in this order:
+(1) Feasibility, no training yet: from data/raw/robomimic_v1.5/{lift,can}/ph/demo_v15.hdf5
+(per-demo `states` and `model_file`; no images in the file), restore raw simulator states
+through RoboForgeEnv-compatible code (never mj_forward on live evaluation data, KI-019;
+never robosuite transform helpers for precision-critical values, KI-018), render RGB
+headless with the exact camera name(s) and backend documented (OSMesa in the canonical
+container; EGL on Modal is still unsettled, KI-001/KI-033), and verify exact time-step
+alignment (task, demo/episode id, step_index, state hash, camera intrinsics/extrinsics,
+model XML hash, frame hash). Create a small demonstrably aligned clip with ground-truth
+actions, inspect a fixed random sample by eye, and add a code test comparing the projected
+object position with its visible location (segmentation where available). Measure render
+throughput and storage for 84x84 and 128x128 on this host. If raw data or rendering fails,
+mark the RGB study NOT EXECUTED with details and reproducible evidence, publish that
+feasibility note honestly, update the docs and STOP (no fake or untrained "visual control").
+(2) Gate D budget proposal and owner approval: from the measured pilot, propose seeds x
+steps x encoder/resolution x evaluation cost (local CPU at $0, or an exact capped Modal plan
+with upper bounds), record it in docs/COMPUTE_PLAN.md and STOP to ask the owner; record the
+owner's decision as an approval row in docs/EXPERIMENT_LEDGER.md before any main RGB
+training. No paid or remote compute without that row.
+(3) RGB experiment freeze, committed before the first RGB training run: a fair visual BC vs
+visual diffusion comparison on Lift (optionally Can), RGB-only meaning robot proprioception
++ camera image and NO object ground-truth state (check that object_state never leaks
+through normalisation or features), declared in ObservationSpec and every run manifest;
+one shared encoder architecture and initialization (e.g. a compact ResNet), identical
+augmentations, preprocessing, proprioceptive features, camera settings, budget, selection
+rule (§7 on validation starts only) and evaluation states; the held-out RGB test initial
+states, run count, bootstrap and reporting rules, written into a new docs/RGB_EXPERIMENT_FREEZE.md
+(name it; do not edit docs/FINAL_TEST_FREEZE.md) before any RGB held-out rollout.
+(4) Train and evaluate under that freeze and the approved budget; produce real
+RGB-conditioned closed-loop results on the canonical container and representative failure
+videos; if unsuccessful, publish that fact. Label every RGB number by modality, data and
+compute budget, and compare visual-only to visual-only for architectural claims.
 
-Keep the Session 1–6 contracts (DECISIONS D-010, D-017..D-059): training data only from
-SequenceDataset.from_committed; policy observations only from RoboForgeEnv; outputs decoded
-with ActionCodec; learned policies implement roboforge.eval.policies.Policy and run with
-run_episode + verify_record; stochastic policies seeded by the protocol's noise-seed rule
-(policy_seed 0, R = 1 unless amended before the freeze); resets only from stored
-snapshots; first success or 400 steps; model and checkpoint selection only on the
-eval_validation suite; the held-out suites are read only through
-src/roboforge/sim/eval_states.py after the lock check, and only after
-docs/FINAL_TEST_FREEZE.md is committed (RESEARCH_PROTOCOL §10; the integrity test
-restricts which files may name them); every reported, selection or test rollout on the
-canonical container via infra/containers/run_sim_cpu.sh with ROBOFORGE_EVIDENCE_SESSION=7
-(never uv sync/uv run inside the image, KI-020). Native macOS rollouts are
-development-only; never call mj_forward on live evaluation data (KI-019); never use
-robosuite transform helpers for precision-critical values (KI-018); checkpoints and
-anything a container rollout reads live under runs/<run_id>/; every run writes an immutable
-manifest with git SHA + dirty flag (launch reported runs from a clean committed tree; do not
-edit tracked files while they run), environment, platform, data/spec hashes, full config,
-seeds, parameter count, checkpoint hashes and wall/CPU time; compare checkpoints by
-content, not file hash (KI-029); report motion-dimension clipping separately from the
-gripper (KI-022); offline validation MSE never selects (KI-024). Use the Make variable
-TRAIN_RUN (not RUN) for run directories. No paid or remote compute and no remote
-publication without explicit owner approval; do not change committed data artifacts, eval
-suites, uv.lock or dependencies without a recorded decision.
+Compute: Gate C covered the Level 1 main suite (local CPU only, $0; 1 torch thread per run,
+at most 8 concurrent training runs, at most 4 evaluation containers in parallel); Session 8
+needs its own Gate D decision before main RGB training, and any Modal use needs a new owner
+approval row first. Disk is tight (22 GB free at the end of Session 7; KI-008): measure RGB
+storage before generating datasets. Track failed runs too. Measure latency on the canonical
+container with nothing else running.
+
+Keep the Session 1-7 contracts (DECISIONS D-010, D-017..D-072): training data only through
+committed, hashed, versioned datasets (extend SequenceDataset.from_committed or add a
+recorded RGB equivalent); policy observations only from RoboForgeEnv; outputs decoded with
+ActionCodec; learned policies implement roboforge.eval.policies.Policy and run with
+run_episode + verify_record; stochastic policies seeded by the protocol's noise-seed rule;
+resets only from stored snapshots; first success or 400 steps; model and checkpoint
+selection only on validation starts; held-out states read only through
+src/roboforge/sim/eval_states.py and only under a committed freeze; every reported,
+selection or test rollout on the canonical container via infra/containers/run_sim_cpu.sh
+with ROBOFORGE_EVIDENCE_SESSION=8 (never uv sync/uv run inside the image, KI-020). Native
+macOS rollouts are development-only; checkpoints and anything a container rollout reads
+live under runs/<run_id>/; every run writes an immutable manifest with git SHA + dirty flag
+(launch reported runs from a clean committed tree; do not edit tracked files or commit
+while they run), environment, platform, data/spec hashes, full config, seeds, parameter
+count, checkpoint hashes and wall/CPU time; compare checkpoints by content, not file hash
+(KI-029); report motion-dimension clipping separately from the gripper (KI-022); offline
+validation MSE never selects (KI-024). Use the Make variable TRAIN_RUN (not RUN) for run
+directories. No paid or remote compute and no remote publication without explicit owner
+approval; do not change committed data artifacts, eval suites, uv.lock or dependencies
+without a recorded decision (an image/rendering dependency needs one).
 
 Use the current verified simulator/data/checkpoint/manifest contracts. Run relevant tests
 and record commands, real results and provenance. Never leak held-out test states into model
 selection; never invent results or costs (label estimates as estimates). Use Zackary Holt
 as the sole named RoboForge project author with the verified local Git identity; no AI
 co-author trailers, while preserving external scientific and license credit (Diffusion
-Policy, robomimic, diffusers). At the SESSION 7 STOP boundary (a HARD SCIENTIFIC BOUNDARY:
-later RGB/point-cloud results may never modify core test selection, labels or findings),
-update docs/STATUS.md, docs/HANDOFF.md, docs/DECISIONS.md, docs/KNOWN_ISSUES.md,
-docs/EXPERIMENT_LEDGER.md (all runs, including failed ones, the tuning-budget accounting
-and the all-in cost record) and docs/COMPUTE_PLAN.md if compute changed; commit verified
-code only, inspect commit metadata (git log --format=fuller -n 5), write the exact prompt
-for SESSION 8, and STOP. Do NOT proceed automatically.
+Policy, robomimic, diffusers, robosuite, MuJoCo and any vision backbone used). At the
+SESSION 8 STOP boundary (core Level 1 metrics remain frozen and unchanged), update
+docs/STATUS.md, docs/HANDOFF.md, docs/DECISIONS.md, docs/KNOWN_ISSUES.md,
+docs/EXPERIMENT_LEDGER.md (all runs, including failed ones, and the all-in cost record) and
+docs/COMPUTE_PLAN.md; commit verified code only, inspect commit metadata
+(git log --format=fuller -n 5), write the exact prompt for SESSION 9, and STOP. Do NOT
+proceed automatically.
 ```

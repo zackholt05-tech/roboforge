@@ -1347,3 +1347,38 @@ Found by review before any freeze, rehearsal or held-out run:
   with `horizons.obs = 1`", which is known only after the choice. Nothing else about A3 was
   decided after any Can result: the arms, seeds, budget, evaluation suites and analysis are
   those of §14.4.
+
+### D-072 Executing the freeze and the one held-out run (FIXED, Session 7)
+- **Order kept (D-067):**
+  1. The robustness and ablation evaluations ended and their evidence was committed
+     (`a92c74d`).
+  2. The container attestation showed both tasks **locked**
+     (`logs/session7/analysis/lock_status_before_freeze.log`).
+  3. `scripts/write_freeze_block.py --document 2026-11-08` wrote `docs/FINAL_TEST_FREEZE.md`
+     from the committed records at `a92c74d`.
+  4. The freeze was committed alone with its tests (`bf0a0fa`).
+  5. `make freeze-check`, `make lint` and `make test` (372 passed) ran next.
+  6. A second container attestation showed both tasks **unlocked**, with the wrapper's freeze
+     blob `bfdb4b77…` equal to `git rev-parse HEAD:docs/FINAL_TEST_FREEZE.md`
+     (`logs/session7/analysis/lock_status_after_freeze.log`).
+  7. `make eval-final` ran once, then `make analyze-final` ran once.
+- **The rehearsal still holds.** The committed freeze differs from the rehearsed draft
+  (`logs/session7/freeze_prep/draft_freeze.md`, generated at `005bc94`) in one line only, the
+  date. Every frozen-code SHA-256 is identical. The commits between the rehearsal and the
+  freeze touched no frozen file: `565c6e4` changed `scripts/analyze_robustness.py`, a unit test
+  and docs (KI-038); `a92c74d` added evidence and `.gitignore` lines.
+- **Tests changed with the freeze.**
+  - `tests/research_integrity/test_final_test_lock.py` is replaced by its post-freeze form
+    (drafted and reviewed before the freeze). It checks that the committed freeze names both
+    held-out manifests and opens the lock, and that the lock stays shut for a missing,
+    uncommitted or non-naming freeze.
+  - `tests/simulator/test_env_adapter.py::test_seed_resets_and_the_final_test_seed_lock`
+    asserted that `env.reset(900003)` is refused. With the lock open, that call would have
+    built a held-out start on macOS during `make test`. The test now points the lock at a
+    missing freeze, asserts the lock is shut, and then expects the refusal. No test ever builds
+    a held-out start; only `scripts/eval_heldout.py` reads them.
+- **Not committed:** `logs/session*/freeze_prep/`, which named the held-out suites before the
+  freeze, and the rehearsal episode records under `logs/session*/rehearsal/heldout/runs/`
+  (218 MB). Both are `.gitignore`d. The rehearsal summaries, check and analysis are committed.
+- **Boundary (MASTER_SPEC Session 7 STOP):** from here on, nothing may change the Level 1 test
+  configuration, the labels or the findings. That includes later RGB or point-cloud results.

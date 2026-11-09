@@ -159,3 +159,16 @@ incomplete-family rule, host-wide container slots (logs/container_slots), disk c
   analysis (with A3) ran from 565c6e4 clean -> reports/session7/robustness/.
 - Rehearsal episode records (218 MB under logs/session7/rehearsal/heldout/runs/) and
   freeze_prep/ are gitignored, not committed.
+
+## 2026-11-08 22:30-24:00 UTC: freeze, held-out test, STOP
+- Container attestation before the freeze: locked (both tasks). The freeze was generated from
+  a92c74d with --document 2026-11-08 and differs from the rehearsed draft only in its date.
+- Lock-dependent test audit (advisor): test_env_adapter's seed-lock test would have built a
+  held-out start once the lock opened (KI-039). It was fixed in the freeze commit bf0a0fa.
+- make freeze-check OK, lint OK, test 372 passed; container attestation after: unlocked,
+  freeze blob bfdb4b77 = HEAD blob.
+- make eval-final once, 22:50:42-23:48:50 UTC: 26/26 ok, failed none. make analyze-final once:
+  complete for both tasks. Committed 97cc48a.
+- STOP docs: LEVEL1_COMPLETE, STATUS, HANDOFF (with the Session 8 prompt), DECISIONS D-072,
+  KNOWN_ISSUES KI-039, LEDGER E7-02-E7-15 with cost and tuning accounting, COMPUTE_PLAN.
+  Final lint, freeze-check and test (372) on the STOP tree.

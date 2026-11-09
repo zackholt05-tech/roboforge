@@ -1,4 +1,4 @@
-# Compute and Modal Plan (Session 5: implemented, tested on Modal, Gate C decided; Session 6: Lift suite ran locally)
+# Compute and Modal Plan (Session 5: implemented, tested on Modal, Gate C decided; Sessions 6–7: Level 1 ran locally at $0)
 
 **Status (2026-11-07):**
 - **Built and tested:** the Modal integration (D-045–D-050).
@@ -125,6 +125,29 @@ reserve; Session 6 had no failed run.
 - **For Session 7 (Can):** the projection's Can share is about 17–42 h of evaluation elapsed
   (the full-suite 22.4–50.7 h minus Lift's 5.4–8.2 h; estimate), plus training like Lift's.
   Use the Session 5 profiles; if the host is shared again, scale by the Session 6 factors.
+
+### Session 7 (Can, robustness, ablations, held-out test) actual vs projected
+All local, $0, Gate C (D-051); no Modal resource. Measured, from manifests and summaries.
+
+| Quantity | Projected | Actual (Session 7) | Source |
+|---|---|---|---|
+| Can training runs / validation evaluations | 24 / 480 | 24 / 480 | `reports/session7/suite/level1_core_can.json` |
+| Can training core time | like Lift's (≈ 33 core-h) | **34.12 CPU core-h** (37.37 h summed run wall time) | run manifests |
+| Can evaluation | 17–42 h elapsed at 4 containers (estimate, §4 above) | **46.36 container-hours**; 16.46 h elapsed for the whole suite, 3.1 h of it the crash gap (KI-036) | suite events, summaries |
+| Robustness + A1 + A2 | not in the Session 5 projection (§14 came later) | 72 evaluations, 7.86 container-hours, 2.6 h elapsed | `logs/session7/robustness/events.jsonl` |
+| A3 (3 diffusion runs, T_o = 1) | not projected | 12.07 CPU-h training; 63 evaluations, 6.65 container-hours | `reports/session7/suite/ablation_a3_can.json` |
+| Rehearsal + held-out test | not projected | 52 evaluations, 3.37 container-hours (61 min + 58 min elapsed) | `logs/session7/rehearsal/`, `logs/session7/heldout/` |
+| Session total | — | **46.19 CPU core-h training, 64.25 container-h evaluation, ≈ 24.4 h elapsed** | LEDGER Session 7 |
+| Cost | $0 | **$0** | — |
+
+- Can evaluations take longer than Lift's: the mean first-success step is about 110 against
+  about 45, and failures run to the 400-step horizon. The Can validation share came out above
+  the projected range. That projection was an estimate made from Lift-only profiles.
+- **Level 1 total (Sessions 1–7):** $0.148 billed (Session 5 Modal Gate A). Everything else
+  was local.
+- **For Session 8 (RGB):** any GPU or Modal use needs a new owner approval row with a cap
+  first. Image-conditioned training on this CPU host is not projected yet; Session 8 must
+  measure a pilot before it asks for a budget.
 
 ## 5. Approval gates (MASTER_SPEC §6.3)
 - **Gate A:** GPU smoke. **Done** under A-01, $0.148 of $2.00, closed. EGL vs OSMesa on Modal

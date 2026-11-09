@@ -174,7 +174,7 @@ def _tables(res: dict[str, Any]) -> str:
     lines = ["# RGB study: held-out results (Lift, generated)", "",
              f"Freeze `{res['rgb_freeze']['commit']}`, decision {res['decision']}, "
              f"engineering {res['engineering']['status']}. {res['note']}.", "",
-             "| Family | Seed | Step | k/50 | Wilson 95 % | Mean first-success step | "
+             "| Family | Seed | Step | k/n | Wilson 95 % | Mean first-success step | "
              "Latency ms (median) | Errors |", "|---|---|---|---|---|---|---|---|"]
     for c in res["per_checkpoint"]:
         lo, hi = c["wilson95"]

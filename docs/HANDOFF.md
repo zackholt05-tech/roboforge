@@ -133,6 +133,18 @@ Month-to-date Modal usage before A-03 was $5.45 of the $30 credit. Record billin
 
 When all 6 runs are complete, mark A-03 `exhausted` in the ledger, as A-01 and A-02 were.
 
+## 9. Owner intent for Session 9 (recorded 2026-11-09, 07:57 EST)
+The owner said: "session 9 is a go, we're doing it all today".
+- Session 9 (Level 2, DP3-inspired point clouds) follows the GO path.
+- It still opens with `docs/LEVEL2_GO_NO_GO.md`, listing the blockers, as MASTER_SPEC
+  requires.
+- It needs a **new capped approval row** before any GPU training, because A-03 covers only the
+  6 RGB runs.
+- Proposed scope: Lift only, point clouds from the same two cameras, DP3-inspired diffusion
+  vs the frozen RGB diffusion arm on the same held-out starts, 3 seeds × 60k steps on the L4.
+  That is about 4 h of GPU and about $5 at list price (estimate). The cap is put to the
+  owner at the start of Session 9, with measured numbers.
+
 ## 10. Exact starting instructions (Session 8 continuation)
 Paste into a fresh Claude Code session:
 

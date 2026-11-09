@@ -1516,3 +1516,66 @@ Held-out access stays forbidden until three things are committed:
 - a decision re-gating the lock on the freeze;
 - a test (freeze §9).
 
+
+### D-081 The held-out lock is re-gated on the RGB freeze (FIXED, before any RGB held-out rollout)
+**Context.** The Level 1 lock (`eval_states.lock_status`) has been open since the Level 1 freeze
+(Session 7). RGB freeze §9 forbids RGB held-out access until three things are committed:
+- all 6 selections;
+- this decision;
+- a test.
+
+**Decision.** A second gate, `roboforge.eval.rgb_heldout.gate_status`, stands in front of every
+RGB held-out evaluation. It opens only when all of these hold:
+1. `docs/RGB_EXPERIMENT_FREEZE.md` is committed, with SHA-256 `47e7cb8e…`, the file of `d9c6217`;
+2. every file in the freeze's §10 table has its frozen SHA-256;
+3. the 6 selection artifacts in `reports/session8/rgb_selection/` exist with the SHA-256 values
+   pinned in the module, and nothing else is in that directory. On the host they must also be
+   tracked and unmodified;
+4. D-081 is in HEAD's `docs/DECISIONS.md`;
+5. the Level 1 lock is open for Lift, and Lift's held-out manifest is `e0249865…` (freeze §9).
+
+**How "committed" is checked.**
+- On the host, git answers.
+- The container has no `.git`, and its frozen wrapper attests only the Level 1 freeze file, so
+  inside it the gate uses the wrapper's clean-tree flag (`ROBOFORGE_GIT_DIRTY=0`). That flag
+  covers `src`, `docs` and `configs` but not `reports`, `logs` or `runs`. The selection
+  artifacts are therefore pinned by hash in the committed module.
+- No frozen Level 1 file changes: `eval_states.py`, `heldout.py`, `provenance.py` and
+  `run_sim_cpu.sh` are untouched, so `make freeze-check` stays valid.
+- The new module reads the held-out states only through `eval_states.load_suite`, by the
+  constant `LOCKED_SUITE`, so the research-integrity name scan needs no exception.
+- No RGB freeze §10 file changes either: the runner and the analysis are new files
+  (`scripts/run_rgb_heldout.py`, `scripts/analyze_rgb_heldout.py`).
+
+**The one-shot runner** (`evaluate_selected`, `make rgb-heldout RGB_RUN=<run_id>`):
+- checks the gate, the canonical platform and "already ran" before it reads any held-out state;
+- uses each run's committed selection: the step, and a checkpoint SHA-256 checked against the
+  training manifest and the file;
+- follows freeze §8 (`policy_seed = 0`, `repeat = 0`, CPU, 1 thread);
+- writes `runs/rgb_heldout/<eval_run_id>/` and `reports/session8/rgb_heldout/<run_id>.json`,
+  and never overwrites either.
+
+An **engineering rerun** follows RESEARCH_PROTOCOL §14.6, as in Level 1. It is allowed only
+when a fault outside the policy stopped the attempt before its summary. It happens at most once,
+needs a written reason, and keeps the incomplete attempt. A rehearsal mode runs the identical
+path on the first validation starts, is labelled, is never reported, and does not open the gate.
+
+**Analysis choices the freeze leaves open, fixed here before any rollout**
+(`scripts/analyze_rgb_heldout.py`, run once):
+- the family keys are `rgb_diffusion` and `rgb_bc_chunk`;
+- the bootstrap draw order is states, then `rgb_diffusion` seeds, then `rgb_bc_chunk` seeds;
+- the one comparison is `rgb_diffusion − rgb_bc_chunk`;
+- states are in held-out manifest order, and seed rows in order 0, 1, 2;
+- success is the only inferential statistic. First-success step, latency, the failure taxonomy,
+  training wall time and billed cost are descriptive;
+- a family with an engineering problem (an incomplete run, a failed `verify_record` or an
+  episode error) is not bootstrapped, and is reported as engineering-incomplete;
+- the Level 1 low-dim Lift numbers appear only as labelled context, never as a comparison.
+
+**Test.** `tests/research_integrity/test_rgb_heldout_gate.py`:
+- the gate is open now, and shut when any precondition is removed: decision, selection,
+  freeze, §10 code, the Level 1 lock, or the container's clean tree;
+- a refused RGB run never reads a held-out state (an autouse guard fails any read of the
+  held-out suite or reset to its seed block);
+- `heldout.evaluate_entry` refuses all 26 Level 1 entries: off the canonical platform, and,
+  on it, because each already ran. It also refuses an RGB entry.

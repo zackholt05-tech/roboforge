@@ -23,7 +23,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	diagnose-actions check-ckpt-equivalence diffusion-reference export-denoising \
 	modal-dry-run modal-probe-dry-run modal-sim fetch-run profile-rollouts \
 	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native \
-	rgb-dataset rgb-dataset-install rgb-validate
+	rgb-dataset rgb-dataset-install rgb-validate rgb-heldout rgb-heldout-rehearse rgb-heldout-gate
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -243,6 +243,17 @@ RGB_STEPS ?=
 rgb-validate:  ## RGB study: validate RGB_RUN's checkpoints on the canonical container (<= 4 at once)
 	@test -n "$(RGB_RUN)" || (echo "set RGB_RUN=<run_id>" >&2; exit 2)
 	$(IN_SIM_S) python scripts/eval_rgb.py validate --run-id $(RGB_RUN) $(if $(RGB_STEPS),--steps $(RGB_STEPS),)
+
+rgb-heldout:  ## RGB study: the ONE held-out test of RGB_RUN's selected checkpoint (canonical container, clean tree; D-081)
+	@test -n "$(RGB_RUN)" || (echo "set RGB_RUN=<run_id>" >&2; exit 2)
+	$(IN_SIM_S) python scripts/run_rgb_heldout.py run --run-id $(RGB_RUN)
+
+rgb-heldout-rehearse:  ## RGB study: rehearse the held-out path on RGB_N (default 2) validation starts (labelled, not a result)
+	@test -n "$(RGB_RUN)" || (echo "set RGB_RUN=<run_id>" >&2; exit 2)
+	$(IN_SIM_S) python scripts/run_rgb_heldout.py rehearse --run-id $(RGB_RUN) --n-states $(or $(RGB_N),2)
+
+rgb-heldout-gate:  ## RGB study: print the RGB held-out gate status inside the canonical container
+	$(IN_SIM_S) python scripts/run_rgb_heldout.py gate
 
 rgb-dataset-install:  ## Host: verify and install the staged build into data/ (+ committed manifest)
 	$(RUN) python scripts/build_rgb_dataset.py --install runs/rgb_data/$(RGB_TASK)/rgb$(RGB_SIZE)_v1.manifest.json

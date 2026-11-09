@@ -1016,7 +1016,9 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Observed:** `reports/session9/level2_results/` shows seed 0 at 24.62 ms/step and 0.41 h.
   `_training` read the resume step from the wrong key and counted two unfinished segments
   (KI-047).
-- **Correct values:** 42.2 ms/step and 0.70 h (`reports/session9/level2_results/ERRATA.md`).
-  No success, interval, separation or taxonomy count is affected.
+- **Correct values:** 42.2 ms/step. The total training time is 0.70 h, including the cut first
+  segment; the completed segment alone is 0.41 h, which is what the fixed script reports
+  (`reports/session9/level2_results/ERRATA.md`). No success, interval, separation or taxonomy
+  count is affected.
 - **Handling:** the analysis is never rerun or overwritten. The erratum sits beside it, and
   the script is fixed for the record.

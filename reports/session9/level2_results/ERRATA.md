@@ -10,11 +10,14 @@ The analysis is never rerun or overwritten (Level 2 freeze §7). Corrections are
      - the first trained 25,000 steps in 1,040 s (from `metrics.jsonl`) before the client's
        network loss stopped it;
      - the second was stopped about 20 s after it started, before any step was saved.
-   - **Corrected:** the completed segment trained 35,000 steps in 1,477 s, **42.2 ms/step**
-     (not 24.62). Total training wall time is about 2,517 s, **0.70 h** (not 0.41 h).
+   - **Corrected:** the completed segment trained 35,000 steps in 1,477 s (0.41 h),
+     **42.2 ms/step** (not 24.62). Seed 0's total training time, including the 1,040 s of the
+     cut first segment, is about 2,517 s, **0.70 h**. The generated 0.41 h is the
+     completed-segment time only, so it understates the total.
    - Billed amounts are unaffected: $0.80 for seed 0 over its three launches, $2.37 for all.
 2. Nothing else is affected: every success, interval, separation, taxonomy count and latency
    in the files is as generated.
 
-The script is fixed for the record (`scripts/analyze_level2.py`, `_training`). The fix changes
-no generated file.
+The script is fixed for the record (`scripts/analyze_level2.py`, `_training`). It now counts
+completed segments only, reporting 1,477 s (0.41 h) at 42.2 ms/step for seed 0; segments without
+an end record (KI-047) are left out. The fix changes no generated file.

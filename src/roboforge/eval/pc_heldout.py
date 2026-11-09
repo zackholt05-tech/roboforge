@@ -12,7 +12,8 @@ precondition of Level 2 freeze §7.3 holds:
    :data:`SELECTIONS`. On the host they must also be tracked and unmodified at HEAD;
 4. decision :data:`DECISION_ID` is in HEAD's ``docs/DECISIONS.md``;
 5. the frozen RGB study is untouched: its own gate (D-081) is still open, and the 3 RGB
-   diffusion held-out reports this study reuses still have their pinned SHA-256;
+   diffusion held-out reports this study reuses still have their pinned SHA-256. These
+   Session 8 checks run on the host only (:data:`SESSION8_CHECKS_WHERE`);
 6. the Level 1 lock is open for Lift, and Lift's held-out manifest has the frozen hash.
 
 **Committed.** On the host, git answers whether a file is committed. The container has no
@@ -75,6 +76,12 @@ RGB_HELDOUT_REPORTS = {
         "0b07c26bd354f19a112e66139db9be6c99206255153da15e6098a47ad7039bdb",
 }
 N_CODE_FILES = 12
+# D-086 amendment: the frozen container wrapper mounts only reports/session<N> (here 9), so the
+# Session 8 checks (the RGB gate and the reused RGB held-out reports) run on the host, where
+# git also verifies them. `make pc-heldout` runs this full gate on the host before the
+# container run, and scripts/analyze_level2.py checks them again before any analysis.
+SESSION8_CHECKS_WHERE = ("host only: the container does not mount reports/session8; "
+                         "`make pc-heldout` runs the full gate on the host first (D-086)")
 OUT_ROOT_REL = "runs/pc_heldout"
 REHEARSAL_ROOT_REL = "runs/pc_heldout_rehearsal"
 _TABLE_ROW = re.compile(r"^\| `([^`]+)` \| `([0-9a-f]{64})` \|$")
@@ -168,13 +175,15 @@ def gate_status() -> tuple[bool, list[str]]:
     ok, why = _decision_committed()
     if not ok:
         problems.append(why)
-    rgb_open, rgb_problems = rh.gate_status()
-    if not rgb_open:
-        problems.append("RGB study gate (D-081): " + "; ".join(rgb_problems))
-    for run_id, sha in RGB_HELDOUT_REPORTS.items():
-        p = REPO_ROOT / RGB_HELDOUT_DIR_REL / f"{run_id}.json"
-        if not p.exists() or sha256_file(p) != sha:
-            problems.append(f"{repo_relative(p)}: missing or not the frozen RGB held-out report")
+    if _has_git():  # Session 8 evidence: see SESSION8_CHECKS_WHERE
+        rgb_open, rgb_problems = rh.gate_status()
+        if not rgb_open:
+            problems.append("RGB study gate (D-081): " + "; ".join(rgb_problems))
+        for run_id, sha in RGB_HELDOUT_REPORTS.items():
+            p = REPO_ROOT / RGB_HELDOUT_DIR_REL / f"{run_id}.json"
+            if not p.exists() or sha256_file(p) != sha:
+                problems.append(f"{repo_relative(p)}: missing or not the frozen RGB held-out "
+                                "report")
     unlocked, why = es.lock_status(TASK)
     if not unlocked:
         problems.append(f"Level 1 lock: {why}")
@@ -270,7 +279,11 @@ def evaluate_selected(run_id: str, *, out_root: Path | None = None,
         "stochastic_policy": {"policy_seed": 0, "repeat": 0, "samples_per_decision": 1},
         "level2_freeze": {"path": LEVEL2_FREEZE_REL, "sha256": sha256_file(freeze),
                           "commit": LEVEL2_FREEZE_COMMIT},
-        "decision": DECISION_ID, "gate": {"open": gate[0], "problems": gate[1]},
+        "decision": DECISION_ID, "gate": {"open": gate[0], "problems": gate[1],
+                                          "where": "host" if _has_git() else "container",
+                                          "session8_checks": (
+                                              "in this gate" if _has_git()
+                                              else SESSION8_CHECKS_WHERE)},
         "engineering_rerun": incident, "rehearsal": rehearsal,
         "platform": platform, "canonical_platform": canonical,
         "eligible_for_selection": False, "git": git_revision(),

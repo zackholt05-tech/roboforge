@@ -293,6 +293,7 @@ pc-placement:  ## Level 2: the ONE placement evaluation of PC_ARM (pc|rgb) seed 
 
 pc-heldout:  ## Level 2: the ONE held-out test of PC_RUN's selected checkpoint (canonical container, clean tree; D-086)
 	@test -n "$(PC_RUN)" || (echo "set PC_RUN=<run_id>" >&2; exit 2)
+	$(RUN) python scripts/run_pc_heldout.py gate  # host: the full gate, incl. Session 8 (D-086)
 	$(IN_SIM_S) python scripts/run_pc_heldout.py run --run-id $(PC_RUN)
 
 pc-heldout-rehearse:  ## Level 2: rehearse the held-out path on PC_N (default 2) validation starts (labelled, not a result)

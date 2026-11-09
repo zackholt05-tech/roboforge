@@ -173,3 +173,24 @@ def test_the_level2_evaluation_path_admits_only_its_suites(suite: str) -> None:
 def test_the_rgb_gate_is_unaffected() -> None:
     assert rh.gate_status() == (True, [])
     assert rh.DECISION_ID == "D-081"
+
+
+def test_the_session8_checks_run_on_the_host_and_make_runs_them_first(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    """The container mounts only reports/session9, so the RGB gate and the reused RGB reports
+    are checked on the host, and `make pc-heldout` runs the host gate before the container."""
+    called = []
+    monkeypatch.setattr(rh, "gate_status", lambda: called.append(1) or (False, ["x"]))
+    assert not ph.gate_status()[0] and called  # host: checked (and shut here)
+    called.clear()
+    monkeypatch.setattr(ph, "_has_git", lambda: False)
+    monkeypatch.setenv("ROBOFORGE_GIT_SHA", "x" * 40)
+    monkeypatch.setenv("ROBOFORGE_GIT_DIRTY", "0")
+    assert ph.gate_status() == (True, []) and not called  # container: not reachable there
+    from roboforge.paths import REPO_ROOT
+
+    lines = (REPO_ROOT / "Makefile").read_text().split("pc-heldout:", 1)[1].splitlines()[1:4]
+    host = next(i for i, x in enumerate(lines) if "run_pc_heldout.py gate" in x)
+    run = next(i for i, x in enumerate(lines) if "run_pc_heldout.py run" in x)
+    assert host < run and "IN_SIM" not in lines[host]
+

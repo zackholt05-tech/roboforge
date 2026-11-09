@@ -1720,3 +1720,17 @@ pattern: a new module, no frozen file changed.
   - the RGB gate is unaffected.
 - **Analysis:** `scripts/analyze_level2.py` (`make level2-analyze`) implements Level 2 freeze §8
   as written. It runs once, refuses to overwrite, and refuses while the gate is shut.
+- **Amendment (2026-11-09, ≈ 17:55 EST, before any held-out Level 2 rollout):**
+  - The first `make pc-heldout` attempts (3, from `4ebebc1` clean) were refused by this
+    gate inside the container, before any held-out state was read; nothing was written.
+  - Cause: the frozen wrapper `infra/containers/run_sim_cpu.sh` mounts only
+    `reports/session<N>` (here 9), so the Session 8 checks (the RGB gate, D-081, and the 3
+    reused RGB held-out reports) can never pass in a Session 9 container.
+  - Change:
+    - those Session 8 checks now run on the host only, where git also verifies the files;
+    - `make pc-heldout` runs the full gate on the host first and stops if it is shut;
+    - the container gate checks everything else, as before;
+    - each held-out report records where its gate ran.
+  - `scripts/analyze_level2.py` re-checks the RGB reports' hashes and the full gate on the
+    host before analysing.
+  - No frozen file changed. A new test checks the split and the order in the Makefile.

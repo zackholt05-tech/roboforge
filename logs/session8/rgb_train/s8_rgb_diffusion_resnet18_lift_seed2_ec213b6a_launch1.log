@@ -1,0 +1,134 @@
+{
+ "function": "train_gpu",
+ "mode": "resume",
+ "run_id": "s8_rgb_diffusion_resnet18_lift_seed2_ec213b6a",
+ "launch_id": "116f287e7af94d41aa2fd820722eadfd",
+ "timeout_s": 3600,
+ "deadline_s": 3420,
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 3600.0
+ },
+ "policy": {
+  "gpu_count": 1,
+  "max_attempts_per_launch": 4,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ },
+ "git": {
+  "dirty": false,
+  "sha": "23e641531b5bd1e28b477f3fcb84b5f9cef517ce"
+ },
+ "blocking": []
+}
+{
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ }
+}
+UPPER-BOUND ESTIMATE $4.5445 (list prices fetched 2026-11-09; job $4.4653 = 4 attempts x $1.1163 + build/start allowance $0.0791; not a cap)
+{
+ "approval_id": "A-03",
+ "gate": "Gate D2 (RGB main)",
+ "cap_usd": 15.0,
+ "committed_before_usd": 6.384588920264265,
+ "estimate_upper_usd": 4.54445536,
+ "remaining_after_usd": 4.0709557197357364
+}
+ 
+✓ Initialized. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-oorVFhTma153vfCjw6p7T6
+✓ Created objects.
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/infra/modal_app.py
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/normalization
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/splits
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/manifests
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/configs
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/scripts
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/src
+├── ✓ Created Function train_cpu.
+├── ✓ Created Function gpu_probe.
+├── ✓ Created Function rgb_probe.
+└── ✓ Created Function train_gpu.
+{"rgb_checkpoint": {"step": 45000, "path": "checkpoints/step_0045000.pt", "sha256": "40fa0fea53fc228600209325f3debad7b1221b057da0b763eeb6bb3e27d70c1e", "inference_network": "ema", "inference_digest": "078cb29cd3998ce5c5a135e5a54cf4e8a1a4253fde419174bbe7e4ac508c063b", "valid_loss": 0.09482902257937437}}
+Container terminated due to preemption. For more details, see https://modal.com/docs/guide/preemption
+{"rgb_checkpoint": {"step": 50000, "path": "checkpoints/step_0050000.pt", "sha256": "17c40f24ecf59a85d5bdab0f1575eaddee2d04edab811e09eebc3dd2c871852c", "inference_network": "ema", "inference_digest": "689f505d9408b3e1d2e51f9169e778b7354f4cef822ebfdf3b8fb81175c88210", "valid_loss": 0.10396206551040822}}
+{"rgb_checkpoint": {"step": 55000, "path": "checkpoints/step_0055000.pt", "sha256": "a2fae94de5a07b9b447526cf367844c22b49fa4a0d50e3f110124d53591d5c42", "inference_network": "ema", "inference_digest": "8fd67d4309dd46054e83b83b688b9a71f15a16f05e1a7c47a33da5398acaaa54", "valid_loss": 0.11185264349942318}}
+{"rgb_checkpoint": {"step": 60000, "path": "checkpoints/step_0060000.pt", "sha256": "048031b33f05676d42e2e2e35b75a992d6ae3ad252fe322e0e9520cffaaf7c24", "inference_network": "ema", "inference_digest": "0db0ab20d043dd21a1c4d985b285aff47c58b517112e60c61e8086cf785438a7", "valid_loss": 0.11870163066592249}}
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-oorVFhTma153vfCjw6p7T6
+{
+ "schema": "roboforge.cost_event/1",
+ "event": "result",
+ "utc": "2026-11-09T12:04:38.347203+00:00",
+ "launch_id": "116f287e7af94d41aa2fd820722eadfd",
+ "run_id": "s8_rgb_diffusion_resnet18_lift_seed2_ec213b6a",
+ "status": "complete",
+ "container_wall_s": 1239.761450773,
+ "measured_cost_usd": 0.3848467088235682,
+ "measured_cost_kind": "estimate: measured container time x list price (excludes image build and start-up)",
+ "modal": {
+  "function": "train_gpu",
+  "app_id": "ap-oorVFhTma153vfCjw6p7T6",
+  "upload": {
+   "files": {
+    "processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5": {
+     "bytes": 1586020,
+     "uploaded": false
+    },
+    "processed/robomimic_v1.5_ph/lift/rgb84_v1.hdf5": {
+     "bytes": 137536082,
+     "uploaded": false
+    }
+   }
+  }
+ },
+ "detail": null
+}
+ 
+result: /Users/zackaryholt/Projects/roboforge/logs/tmp/modal_plans/train_gpu_20261109T062952.result.json

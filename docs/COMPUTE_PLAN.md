@@ -260,19 +260,63 @@ built from the probe's measurements, not a promise.
 - **Probe cost:** $0.029 measured (container time × list price). $0.032 is on Modal's report
   so far.
 
-### 7.2 Proposed design (the RGB freeze would fix it)
+### 7.2 How long to train: what Level 1's validation curves show
+Validation successes per 50 starts by checkpoint (`reports/session6/selection/`,
+`reports/session7/selection/`, low-dim observations, batch 100):
+- **Lift, diffusion:**
+  - every seed of every trial is at 49–50/50 by step 10k;
+  - the late selections (80k–100k) are tie-breaks on the mean first-success step (§7 rule 3),
+    not continued learning;
+  - BC-MLP-chunk peaks at 5k–15k.
+- **Can, diffusion:**
+  - slow: 2–8/50 at 5k and 37–44/50 at 30k;
+  - its best checkpoints come only at 55k–100k;
+  - BC-MLP-chunk peaks at 5k–15k.
+
+Visual policies learn from harder inputs, and no RGB curve exists yet.
+- **30k steps at batch 64:** 1.9 M samples, about 200 passes over Lift's 9,666 frames.
+- **Level 1:** about 1,035 passes.
+
+A matched 30k budget is therefore safe for BC but may stop visual diffusion before its plateau,
+which would bias the comparison toward BC. Budgets of 60k (about 400 passes) halve that risk at
+twice the training cost. Can needs at least Level 1's 100k for diffusion, so Can is not
+proposed at a short budget.
+
+### 7.3 Proposed design (the RGB freeze would fix it)
 §6.2 still applies, with two changes:
 - **Encoder:** ResNet-18, GroupNorm, from scratch, at 84² with a random crop of 76. This
   is the robomimic and Diffusion Policy image encoder, and it is affordable on the GPU.
 - **Training:** on one Modal L4 with deterministic kernels. Each run is its own sequential
   launch, resumable on preemption like `train_cpu`.
 
-Unchanged: batch 64, S = 30,000 steps, a checkpoint every 5,000 (K = 6), seeds {0, 1, 2},
-and one configuration per family. The 6 runs cover 2 families × 3 seeds, on Lift.
+Unchanged: batch 64, a checkpoint every 5,000 steps, seeds {0, 1, 2}, and one configuration
+per family. The 6 runs cover 2 families × 3 seeds, on Lift.
 
-Evaluation stays local on the canonical container ($0): 36 validation and 6 test
-evaluations of 50 starts each. That takes about 0.7–7 h, from the §6.3 range scaled for
-ResNet-18's slower CPU inference (41.8 / 109.9 ms per decision).
+Budget S is the option's: 60k gives K = 12 checkpoints, 30k gives K = 6.
+
+Launches:
+- each launch is capped at 1 h;
+- a run longer than that continues in resume launches, as `train_cpu` does;
+- launches run strictly one after another, and each result is recorded before the next is
+  authorized.
+
+That keeps every launch's 4-attempt upper bound at $4.54 or less. The cap therefore only has
+to cover expected spend plus one bound.
+
+Evaluation stays local on the canonical container ($0):
+- **60k:** 72 validation and 6 test evaluations of 50 starts, about 1.3–13 h;
+- **30k:** 36 and 6, about 0.7–7 h.
+
+These ranges are the §6.3 range scaled for ResNet-18's slower CPU inference (41.8 / 109.9 ms
+per decision).
+
+Checkpoints: inference weights are about 95 MB (BC) and 190 MB (diffusion, model + EMA).
+- **60k:** about 10 GiB.
+- **30k:** about 5 GiB.
+
+Every checkpoint stays on the Modal runs Volume (within its free 1 TiB). Checkpoints are
+fetched with hash checks as evaluation needs them. Local copies of non-selected checkpoints
+may be removed only after their hashes are recorded, because local disk has 20 GiB free.
 
 Engineering before any launch, all $0, with tests and CPU smokes:
 - the RGB dataset build in the container, 84², both cameras (Lift ≈ 19 min);
@@ -289,41 +333,52 @@ option):
   and `CUBLAS_WORKSPACE_CONFIG=:4096:8`.
 - TF32 stays at PyTorch's defaults: on for convolutions, off for matmuls. Both are recorded
   per run.
+- Bitwise repeatability is claimed only for an uninterrupted segment on one host. The probe
+  verified it at 20 steps in one container. A resumed segment can land on another host,
+  cloud or driver (KI-031), so the run manifest records host, cloud, region, GPU and driver
+  for every segment.
 - Rollouts, selection and test stay on the canonical CPU container with one torch thread.
 - The visual BC vs visual diffusion comparison is made only between runs trained this way.
   It is a separate study from Level 1 and never modifies Level 1.
 
-### 7.3 Options
-L4 function at list price: $1.12/h, and $1.95/h at the 1.75× region maximum. Each launch also
-carries a build allowance of $0.08.
+### 7.4 Options
+Prices:
+- **L4 function, list price:** $1.12/h.
+- **Region multiplier (1.15–1.75×):** applies only when a region is pinned, and RoboForge
+  pins none. The probe was billed $0.032, against $0.029 of container time at list price,
+  which fits list price plus start-up.
+- **Build allowance:** $0.08 per launch.
 
-Expected training time, deterministic L4 at 84² and batch 64, with 15 % for checkpoints, data
-and start-up:
+Expected deterministic L4 time per run at 84² and batch 64, with 15 % for checkpoints, data and
+start-up:
 
-| Run | Steps | Expected time | Timeout | Upper bound per launch |
-|---|---|---|---|---|
-| BC-MLP-chunk | 30k | 34 min | 45 min | $3.43 |
-| diffusion | 30k | 46 min | 60 min | $4.54 |
+| Run | 30k steps | 60k steps |
+|---|---|---|
+| BC-MLP-chunk | 34 min | 67 min (2 launches) |
+| diffusion | 46 min | 92 min (2 launches) |
 
-Launches run one after another, so a cap only has to cover the spend already committed plus
-one launch's upper bound.
-
-| Option | Scope | GPU time | Expected cost (list / region max) | Proposed cap | Elapsed (estimate) |
+| Option | Scope | GPU time | Expected cost (list) | Proposed cap | Local evaluation |
 |---|---|---|---|---|---|
-| **G1 (recommended)** | Lift, ResNet-18 84², 30k, K = 6, 3 seeds × 2 families | 4.0 h | **$4.91 / $8.59** | $10 | engineering, then ≈ 4 h training overlapped with 0.7–7 h evaluation |
-| G2 | G1 + Can (same plan) | 7.9 h | $9.82 / $17.18 | $20 | + 4 h training, + Can dataset (≈ 53 min) and its evaluations |
-| G3 | Lift, ResNet-18 84², the Level 1 budget (100k steps, batch 100, K = 20) | 17.3 h | $19.81 / $34.67 | $36 | not recommended: may exceed the remaining monthly credit |
-| A | local CPU only, compact 84², 30k (§6.3; per-step CPU times re-measured with the same step in E8-07) | — | $0 | $0 | ≈ 18–24 h (§6.3: unchanged, because the same-step CPU times match E8-05 within 2 %) |
+| **L60 (recommended)** | Lift, ResNet-18 84², 60k steps, K = 12, 3 seeds × 2 families | 8.0 h | **≈ $9.8** | $15 | 78 evaluations, ≈ 1.3–13 h |
+| L30 | Lift, as L60 but 30k steps, K = 6 | 4.0 h | ≈ $4.9 | $10 | 42 evaluations, ≈ 0.7–7 h |
+| A | local CPU only, compact 84², 30k (§6.3; same-step CPU times match E8-05 within 2 %, E8-07) | — | $0 | $0 | as §6.3; ≈ 18–24 h in all |
+| Stop | no RGB training; Session 8 ends with the feasibility evidence | — | $0 | — | — |
+
+Not proposed:
+- **Can:** it would need about 100k steps for diffusion (§7.2). At 100k steps and batch 64
+  that is about 13 h of L4, roughly $15 for Can alone.
+- **The Level 1 budget on Lift** (100k steps, batch 100): 17.3 h, about $19.8.
+
+Both are possible later, once the remaining credit is known.
 
 **Monthly credit.** Month-to-date Modal usage is $5.45, from `modal billing report`, through
-the probe's day. About $24.5 of the $30 credit remains. G1 stays within it even at the
-region maximum, and G2 does at list price.
+the probe's day. About $24.5 of the $30 credit remains. L60 uses about 40 % of it.
 
-**Why G1.**
+**Why L60.**
 - ResNet-18 is the standard visual encoder for both arms. A deterministic L4 step is 52–69×
   faster than one 1-thread step on this CPU: 58–80 ms against 4.0–4.1 s.
-- Deterministic CUDA keeps the protocol's bitwise-repeatability property on one GPU type.
-- The cost fits the owner's "do not exceed the $30 monthly quota" instruction with a wide
-  margin.
-- Option A remains the $0 fallback. It uses a much smaller, non-standard encoder and takes
-  about a day of this machine.
+- Deterministic CUDA keeps bitwise repeatability within a segment.
+- At 60k, the budget is less likely to cut visual diffusion off before its plateau. Level 1's
+  Can curves show diffusion learning far more slowly than BC-chunk. Lift showed no such gap.
+- L30 halves the cost but carries that risk. Option A costs $0 but uses a small,
+  non-standard encoder and takes about a day of this machine.

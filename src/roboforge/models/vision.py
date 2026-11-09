@@ -98,18 +98,22 @@ class SpatialSoftmax(nn.Module):
 
 def crop(images: torch.Tensor, size: int, generator: torch.Generator | None,
          train: bool) -> torch.Tensor:
-    """``[N, H, W, C]`` → ``[N, size, size, C]``: random windows (train) or the centre window."""
+    """``[N, H, W, C]`` → ``[N, size, size, C]``: random windows (train) or the centre window.
+
+    The windows are drawn on ``images.device``, so ``generator`` must live on that device (a
+    CPU generator for CPU images, a CUDA generator for CUDA images)."""
     n, h, w, _ = images.shape
     if size > min(h, w):
         raise ValueError(f"crop {size} larger than image {h}x{w}")
     if not train:
         top, left = (h - size) // 2, (w - size) // 2
         return images[:, top:top + size, left:left + size]
-    tops = torch.randint(0, h - size + 1, (n,), generator=generator)
-    lefts = torch.randint(0, w - size + 1, (n,), generator=generator)
-    rows = tops[:, None] + torch.arange(size)[None]
-    cols = lefts[:, None] + torch.arange(size)[None]
-    idx = torch.arange(n)[:, None, None]
+    dev = images.device
+    tops = torch.randint(0, h - size + 1, (n,), generator=generator, device=dev)
+    lefts = torch.randint(0, w - size + 1, (n,), generator=generator, device=dev)
+    rows = tops[:, None] + torch.arange(size, device=dev)[None]
+    cols = lefts[:, None] + torch.arange(size, device=dev)[None]
+    idx = torch.arange(n, device=dev)[:, None, None]
     return images[idx, rows[:, :, None], cols[:, None, :]]
 
 

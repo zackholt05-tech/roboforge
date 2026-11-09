@@ -1,4 +1,6 @@
-"""RoboForge on Modal: budget-gated training and the Gate A probe (Session 5; D-045..D-047).
+"""RoboForge on Modal: budget-gated training, the Gate A probe and the Gate D RGB probe.
+
+Sessions 5 and 8; DECISIONS D-045..D-047.
 
 Run with a Python that has the Modal SDK, which is kept **outside** the project venv
 (D-045; e.g. ``/opt/anaconda3/bin/python``). This file never imports RoboForge locally. It
@@ -10,10 +12,12 @@ the approval gate and the cost ledger.
     python infra/modal_app.py train --config configs/models/diffusion_unet.yaml --task lift \
         --seed 0 --prefix s5modal --set train.max_steps=2000 --timeout-s 1800
     python infra/modal_app.py probe
+    python infra/modal_app.py rgb-probe              # Session 8 Gate D: RGB timing, no data
 
     # PAID LAUNCH: only with an owner approval recorded in docs/EXPERIMENT_LEDGER.md.
     python infra/modal_app.py train ... --budget-approved A-01
     python infra/modal_app.py probe --budget-approved A-01
+    python infra/modal_app.py rgb-probe --budget-approved A-02
 
     # Hash-validated download into runs/ (reads the runs Volume; creates nothing).
     python infra/modal_app.py fetch --run-id <run_id>
@@ -25,7 +29,7 @@ Launch policy, fixed for every function (``configs/compute/modal.yaml``):
 * ``max_containers=1``, ``retries=0``, ``single_use_containers=True``;
 * ``scaledown_window=2`` s and an explicit per-launch timeout (``with_options``);
 * preemptible, with preemption handled by resumable training: the same launch ID resumes;
-* one GPU at most (``gpu_probe``), never multi-GPU;
+* one GPU at most (``gpu_probe``, ``rgb_probe``), never multi-GPU;
 * a new run ID is never reused, and a duplicate launch is refused both by the gate and inside
   the job (``launch.json``).
 
@@ -110,14 +114,32 @@ def gpu_probe(plan: dict[str, Any]) -> dict[str, Any]:
     return res
 
 
+@app.function(volumes={APP["volumes"]["runs"]["mount"]: runs_vol}, gpu=FN["rgb_probe"]["gpu"],
+              cpu=FN["rgb_probe"]["cpu"], memory=FN["rgb_probe"]["memory_mib"],
+              timeout=FN["rgb_probe"]["default_timeout_s"], **COMMON)
+def rgb_probe(plan: dict[str, Any]) -> dict[str, Any]:
+    """Gate D: RGB policy training speed on CUDA; random inputs only (no data Volume)."""
+    from roboforge.compute.rgb_probe import rgb_probe_job
+
+    runs_vol.reload()  # see earlier attempts' markers (the attempt cap)
+    res = rgb_probe_job(plan, attempts_root=Path(APP["volumes"]["runs"]["mount"]) / "_probes",
+                        commit=runs_vol.commit)
+    res.setdefault("modal", {})["function"] = "rgb_probe"
+    return res
+
+
+FUNCTIONS = {"train_cpu": train_cpu, "gpu_probe": gpu_probe, "rgb_probe": rgb_probe}
+NEEDS_DATA = {"train_cpu", "gpu_probe"}  # rgb_probe reads no data, so uploads nothing
+
+
 # --------------------------------------------------------------------------- local side
 def _venv(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["uv", "run", "--frozen", "python", "-m", *args], cwd=REPO,
                           capture_output=True, text=True)
 
 
-def _plan(cmd: list[str], out: Path) -> dict[str, Any]:
-    p = _venv("roboforge.compute.plan", *cmd, "--out", str(out), "--record")
+def _plan(module: str, cmd: list[str], out: Path) -> dict[str, Any]:
+    p = _venv(module, *cmd, "--out", str(out), "--record")
     if p.returncode:
         raise SystemExit(f"plan failed:\n{p.stdout}\n{p.stderr}")
     return json.loads(out.read_text())
@@ -133,6 +155,12 @@ def _print_plan(plan: dict[str, Any]) -> None:
           f"{est['pricing_fetched_utc']}; job ${est['job']['total_usd']:.4f} = "
           f"{est['attempts']} attempts x ${est['one_attempt']['total_usd']:.4f} + build/start "
           f"allowance ${est['build_allowance']['total_usd']:.4f}; not a cap)")
+
+
+def _ensure_volumes() -> None:
+    """Create both Volumes if missing: ``app.run()`` looks every function's Volumes up."""
+    for v in ("data", "runs"):
+        modal.Volume.from_name(APP["volumes"][v]["name"], create_if_missing=True).hydrate()
 
 
 def _upload_data(plan: dict[str, Any]) -> dict[str, Any]:
@@ -158,12 +186,18 @@ def _launch(plan_path: Path, approval: str) -> int:
     print(auth.stdout, auth.stderr)
     if auth.returncode:
         return 2
-    fn = train_cpu if plan["function"] == "train_cpu" else gpu_probe
+    if plan["function"] not in FUNCTIONS:
+        raise SystemExit(f"unknown function {plan['function']!r}; known: {sorted(FUNCTIONS)}")
+    fn = FUNCTIONS[plan["function"]]
     result: dict[str, Any]
     app_id = None  # read while the app runs: app.app_id is unset again after it stops
     t0 = time.time()
     try:
-        upload = _upload_data(plan)
+        if plan["function"] in NEEDS_DATA:
+            upload = _upload_data(plan)
+        else:
+            _ensure_volumes()
+            upload = None
         with modal.enable_output(), app.run():
             app_id = app.app_id
             result = fn.with_options(timeout=plan["timeout_s"]).remote(plan)
@@ -221,7 +255,10 @@ def main(argv: list[str] | None = None) -> int:
     pr = sub.add_parser("probe")
     pr.add_argument("--timeout-s")
     pr.add_argument("--steps", default="300")
-    for s in (t, pr):
+    rp = sub.add_parser("rgb-probe")
+    rp.add_argument("--timeout-s")
+    rp.add_argument("--steps", default="30")
+    for s in (t, pr, rp):
         s.add_argument("--budget-approved", metavar="APPROVAL_ID",
                        help="launch for real under this recorded owner approval")
         s.add_argument("--plan-dir", type=Path, default=REPO / "logs" / "tmp" / "modal_plans")
@@ -237,7 +274,8 @@ def main(argv: list[str] | None = None) -> int:
         return subprocess.run([sys.executable, "-m", "modal", "app", "stop", "--yes",
                                args.app_id]).returncode
     stamp = time.strftime("%Y%m%dT%H%M%S")
-    out = args.plan_dir / f"{args.cmd}_{stamp}.json"
+    out = args.plan_dir / f"{args.cmd.replace('-', '_')}_{stamp}.json"
+    module = "roboforge.compute.plan"
     if args.cmd == "train":
         cmd = ["train", "--config", args.config, "--prefix", args.prefix, "--mode", args.mode]
         for k in ("task", "seed", "timeout_s", "simulate_preemption_s", "stop_at_step"):
@@ -245,10 +283,14 @@ def main(argv: list[str] | None = None) -> int:
                 cmd += [f"--{k.replace('_', '-')}", str(getattr(args, k))]
         for o in args.overrides:
             cmd += ["--set", o]
-    else:
+    elif args.cmd == "probe":
         cmd = ["probe", "--steps", args.steps] + (["--timeout-s", args.timeout_s]
                                                  if args.timeout_s else [])
-    plan = _plan(cmd, out)
+    else:
+        module = "roboforge.compute.rgb_probe"
+        cmd = ["plan", "--steps", args.steps] + (["--timeout-s", args.timeout_s]
+                                                if args.timeout_s else [])
+    plan = _plan(module, cmd, out)
     _print_plan(plan)
     if not args.budget_approved:
         print(f"DRY RUN: no Modal call was made and nothing was created. Plan: {out}")

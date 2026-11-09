@@ -9,7 +9,7 @@
 schema: roboforge.modal_config/1
 pricing:
   source: https://modal.com/pricing
-  fetched_utc: "2026-11-06"
+  fetched_utc: "2026-11-09"     # re-fetched Session 8 (02:30 UTC): unchanged since 2026-11-06
   plan: starter
   monthly_credits_usd: 30.0
   gpu_usd_per_s: {T4: 0.000164, L4: 0.000222, A10: 0.000306, L40S: 0.000542,
@@ -54,6 +54,11 @@ functions:
               max_timeout_s: 21600}
   gpu_probe: {gpu: L4, cpu: 4.0, memory_mib: 16384, default_timeout_s: 900,
               max_timeout_s: 900}
+  # Session 8 Gate D RGB timing probe (approval A-02, cap $1). 360 s keeps the upper bound
+  # (4 attempts x 362 s + build allowance) at $0.53 list, $0.92 even at the 1.75x region
+  # multiplier, which the estimate does not model.
+  rgb_probe: {gpu: L4, cpu: 4.0, memory_mib: 16384, default_timeout_s: 360,
+              max_timeout_s: 360}
 # Allowance added to every launch estimate for image build and container start, until a real
 # build is measured (estimate; billed or not is unverified).
 build_allowance: {cpu: 4.0, memory_gib: 16.0, seconds: 900}

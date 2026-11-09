@@ -349,6 +349,17 @@ estimate stays within the cap. Caps are client-side guards, not Modal spending l
 | ID | Date | Gate | Functions | Cap (USD) | Status | Evidence |
 |---|---|---|---|---|---|---|
 | A-01 | 2026-11-06 | Gate A | gpu_probe, train_cpu | 2.00 | exhausted | Owner, Session 5 (23:35 EST): general instruction "please do not exceed the $30 monthly quota if possible"; then chose "Approve, $2 cap" for: 1 L4 GPU probe (≤ 15 min, upper bound $0.36), a 2,000-step diffusion CPU training smoke with simulated preemption (timeout 15 min, $0.11) and its resume launch (timeout 20 min, $0.12); max_containers=1, retries=0, preemptible; Volumes roboforge-data and roboforge-runs. Month-to-date Modal usage before Session 5: $5.27 (another app), so ≈ $24.73 of the $30 credit remained. **Amended 2026-11-07 (00:20 EST):** after the probe lost its results to a BC-RNN CUDA device bug and the training smoke looped on Modal restarts (KNOWN_ISSUES KI-030, KI-031; spend so far ≈ $0.10), the owner chose "All 3, same $2 cap" for: 1 L4 probe retry (≤ 15 min, $0.36), 1 new CPU training smoke with a real-SIGINT drill and a clean stop at step 1500 (≤ 15 min, $0.11) and its resume launch (≤ 20 min, $0.12); a 4-attempt cap per launch; worst case including the spend so far $0.77. **Closed 2026-11-07 (≈ 00:52 EST, with the Gate C decision)** at the end of Gate A: $0.148 billed over 6 launches (E5-04–E5-09); the remaining headroom is not usable (status `exhausted`) |
+| A-02 | 2026-11-08 | Gate D (RGB probe) | rgb_probe | 1.00 | granted | Owner, Session 8 (21:21 EST), answering the Gate D proposal (docs/COMPUTE_PLAN.md §6): chose "D: Modal GPU probe first (≤ $1)", described as "Approve only a ≤$1 L4 probe to measure ResNet-18 training speed. It also needs a protocol amendment, because CUDA training is not deterministic. No main RGB training until a separately capped plan is approved." Scope: 1 launch of `rgb_probe` (1 L4, 4 cores, 16 GiB; random inputs only, no dataset, no evaluation state, nothing kept); max_containers=1, retries=0, preemptible, timeout 360 s, an attempt cap of 4 enforced inside the job; upper bound $0.528 at list price (4 × 362 s + build allowance), $0.92 at the 1.75× region maximum, which the estimate does not model. Prices re-fetched 2026-11-09 02:30 UTC: unchanged. Month-to-date Modal usage at the Gate C close: $5.42, so ≈ $24.58 of the $30 credit remained |
+
+**Gate D (RGB budget), 2026-11-08, 21:21 EST.** Owner choice: **"D: Modal GPU probe first
+(≤ $1)"** (approval A-02).
+- Approved now: one L4 timing probe (`rgb_probe`) of the candidate RGB policies. It uses
+  random inputs, so no data or evaluation state is touched and nothing is kept.
+- Not approved: any main RGB training, local or remote. That needs a separately capped plan
+  built from the probe's numbers, and a new owner decision.
+- GPU training would also need a RESEARCH_PROTOCOL amendment covering CUDA non-determinism.
+  The probe measures what that amendment needs: whether deterministic kernels run, how much
+  slower they are, and whether same-seed reruns are bitwise equal.
 
 **Gate C (main suite), 2026-11-07, ≈ 00:52 EST.** Owner choice: **"Local CPU only, $0"**.
 - Training: local CPU, 1 torch thread, at most 8 concurrent runs.

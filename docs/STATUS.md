@@ -1,7 +1,7 @@
 <!-- parsable status header -->
 ```yaml
 CURRENT_SESSION: 8
-SESSION_STATUS: IN_PROGRESS     # RGB study: Gate D (probe) and Gate D2 (L60) decided; freeze committed (d9c6217); 6 Lift runs training on Modal L4 (queue); validation, selection, lock re-gate and held-out test remain
+SESSION_STATUS: IN_PROGRESS     # RGB study: 6/6 runs trained ($8.06 billed, A-03 closed), 72 validations done, 6 selections committed; remaining: lock re-gate decision + test, held-out test once, analysis, STOP
 NEXT_SESSION: 8 (continuation)  # docs/HANDOFF.md §10; Session 9 only after the RGB study's held-out test and STOP
 BLOCKERS: none                  # open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042
 LAST_VERIFIED_COMMIT: d9c6217   # lint clean, 416 tests (415 + the A-02 test fixed), freeze-check OK (logs/session8/prereq/code_checks_before_rgb_freeze.log)
@@ -9,8 +9,8 @@ PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendm
 EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_feasibility: 058cd7e, rgb_probe: cab481b, rgb_dataset_builder: f17db86, rgb_trainer: 6ca5c77, rgb_freeze: d9c6217}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
 FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study: held-out access forbidden until all 6 selections + a lock re-gate decision + test are committed (RGB freeze §9)"
-RESOURCE_SPEND: {usd_billed_total: 0.180, session8_usd_billed: 0.0317, session8_usd_committed_estimate: "A-03 launches in progress (expected ~ $9.8 list)", notes: "A-01 $0.148 (Session 5); A-02 probe $0.0317 billed; A-03 training queue running"}
-APPROVED_LIMIT: {A-02: "closed (exhausted), $0.0317 of $1", A-03: "granted: train_gpu, $15 cap, the 6 frozen Lift RGB runs only", local: "$0"}
+RESOURCE_SPEND: {usd_billed_total: 8.24, session8_usd_billed: 8.09, notes: "A-01 $0.148 (Session 5); A-02 probe $0.0317; A-03 RGB training $8.06 (12 launches); all three approvals closed"}
+APPROVED_LIMIT: {A-02: "closed, $0.0317 of $1", A-03: "closed, $8.06 of $15", open: none, local: "$0"}
 UPDATED: 2026-11-08
 ```
 
@@ -25,9 +25,20 @@ UPDATED: 2026-11-08
 | Protocol amendment (deterministic CUDA training) | DONE: RESEARCH_PROTOCOL §13, 2026-11-08 | `e433f11` |
 | RGB dataset (Lift, both cameras, 84²) | DONE: built on the container, installed with hash checks (D-079) | E8-08, `data/manifests/rgb/lift_rgb84_v1.json` |
 | 3. `docs/RGB_EXPERIMENT_FREEZE.md` before the first RGB training run | DONE: `d9c6217`; §10 hashes checked against the commit | D-080 |
-| 4a. Train the 6 frozen runs (visual BC-chunk vs visual diffusion, seeds 0–2) | **IN PROGRESS**: `scripts/rgb_train_queue.py` under A-03. The first segment trains at 77.9 ms/step (probe 79.8) | `logs/session8/rgb_train/` |
-| 4b. Validate 12 checkpoints per run; select per §7 | TODO | `make rgb-validate`, `scripts/eval_rgb.py select` |
+| 4a. Train the 6 frozen runs (visual BC-chunk vs visual diffusion, seeds 0–2) | DONE: 6/6 at 60k, 12 launches, **$8.06 billed**, 0 failures | E8-10 |
+| 4b. Validate 12 checkpoints per run; select per §7 | DONE: 72/72 canonical; all runs reach 50/50 (ceiling); selections below | E8-11, `reports/session8/rgb_selection/` |
 | 4c. Lock re-gate decision + test; held-out test once; analysis | TODO (freeze §9) | — |
+
+**RGB selections (development numbers; the held-out test is the unbiased estimate):**
+
+| Family | Seed | Run ID | Selected step | Validation | Mean first-success step | Checkpoint SHA-256 |
+|---|---|---|---|---|---|---|
+| rgb_bc_chunk | 0 | `s8_rgb_bc_chunk_resnet18_lift_seed0_73a80bad` | 5000 | 50/50 | 42.38 | `5f8af84e8d0f…` |
+| rgb_bc_chunk | 1 | `s8_rgb_bc_chunk_resnet18_lift_seed1_c49230ce` | 5000 | 50/50 | 43.08 | `7931609f5e07…` |
+| rgb_bc_chunk | 2 | `s8_rgb_bc_chunk_resnet18_lift_seed2_2e677ad6` | 55000 | 50/50 | 44.04 | `b4f191054117…` |
+| rgb_diffusion | 0 | `s8_rgb_diffusion_resnet18_lift_seed0_dddc7f1c` | 55000 | 50/50 | 44.06 | `6d919dfb989c…` |
+| rgb_diffusion | 1 | `s8_rgb_diffusion_resnet18_lift_seed1_51deeb3e` | 55000 | 50/50 | 43.22 | `5a14e1510f4b…` |
+| rgb_diffusion | 2 | `s8_rgb_diffusion_resnet18_lift_seed2_ec213b6a` | 60000 | 50/50 | 43.90 | `048031b33f05…` |
 
 ## Session 7 acceptance criteria (MASTER_SPEC Session 7)
 | Criterion | Status | Evidence |

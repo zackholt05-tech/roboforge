@@ -2,7 +2,7 @@
 ```yaml
 project: roboforge-3d
 current_session: 8
-session_status: IN_PROGRESS   # RGB study training on Modal; see '# Session 8 Handoff'
+session_status: IN_PROGRESS   # RGB study trained, validated and selected; held-out phase remains (see '# Session 8 Handoff' §10)
 next_session: 8 (continuation; §10 of the Session 8 handoff)
 last_verified_commit: d9c6217   # Session 8: lint clean, 416 tests, freeze-check OK (logs/session8/prereq/code_checks_before_rgb_freeze.log)
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
@@ -78,23 +78,24 @@ next_required_owner_approval: "none for the frozen RGB study (A-03 covers it); a
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", dataset: "data/processed/robomimic_v1.5_ph/lift/rgb84_v1.hdf5 content 41c0ea0253e196c55bdbbca972bf5ccad0136724896eae8e639aa6e1b901334f", runs: [s8_rgb_diffusion_resnet18_lift_seed0_dddc7f1c, "s8_rgb_bc_chunk_resnet18_lift_seed0_*", "seeds 1-2 of both"], queue: scripts/rgb_train_queue.py, heldout: "forbidden until RGB freeze §9 preconditions"}
 ```
 
-# Session 8 Handoff (in progress: the RGB study is training)
+# Session 8 Handoff (in progress: training, validation and selection done; held-out phase remains)
 
 ## 1. Where the session stands
-The Session 8 steps:
-1. **Feasibility: done.** Every check passes on the canonical container (D-074).
-2. **Gate D: done.** The owner chose "D: GPU probe ≤ $1" (A-02). The L4 probe ran and was
-   closed at $0.0317 billed. The owner then chose **"L60"** at Gate D2 (A-03, $15 cap).
-3. **The RGB experiment freeze: committed** at `d9c6217`, before any RGB training run.
-4. **Training: running.** The 6 frozen Lift runs train on Modal under
-   `scripts/rgb_train_queue.py`, strictly one launch after another, in this order:
-   diffusion s0, BC s0, diffusion s1, BC s1, diffusion s2, BC s2.
-   - The first segment: GCP us-east L4, deterministic flags in force, **77.9 ms/step**
-     (probe 79.8). Its step-5000 checkpoint is on the Volume.
-   - Expected total: about 8 h of L4, about $9.8 list (estimate).
+**Done:**
+- feasibility, Gate D (A-02 probe, $0.0317) and Gate D2 (A-03, "L60");
+- the RGB freeze (`d9c6217`);
+- **all 6 runs trained**: 12 launches, **$8.06 billed**, A-03 closed;
+- **72 validation evaluations** and **6 selections**, committed (STATUS table).
 
-Still to do: validation (72 local container evaluations), selection, the lock re-gate
-(decision and test), the held-out test, the analysis, and the STOP documents.
+Validation is at ceiling: every run reaches 50/50 (KI-034).
+
+**Remaining (the continuation, steps 4–5 of §10):**
+- the lock re-gate decision and its test;
+- the held-out test of the 6 selected checkpoints, run once;
+- the §9 analysis;
+- the STOP documents.
+
+Skip §10 steps 1–3: training, fetch/validate/select and billing are all done.
 
 ## 2. Completed work (Session 8)
 - **KI-040 fix:** smoke-sim had built a held-out start.
@@ -124,7 +125,7 @@ Still to do: validation (72 local container evaluations), selection, the lock re
 | Approval | Status | Spend |
 |---|---|---|
 | A-02 | closed | $0.0317 billed |
-| A-03 | granted, $15 cap | in use by the queue |
+| A-03 | closed | $8.06 billed (12 launches) |
 
 Month-to-date Modal usage before A-03 was $5.45 of the $30 credit. Record billing per launch:
 - the app IDs are in `logs/session8/rgb_train/queue.jsonl`;

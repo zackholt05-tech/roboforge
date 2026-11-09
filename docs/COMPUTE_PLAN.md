@@ -383,7 +383,7 @@ the probe's day. About $24.5 of the $30 credit remains. L60 uses about 40 % of i
 - L30 halves the cost but carries that risk. Option A costs $0 but uses a small,
   non-standard encoder and takes about a day of this machine.
 
-### 7.5 Execution (in progress)
+### 7.5 Execution (training done)
 - The freeze was committed at `d9c6217` before the first launch.
 - The queue started at 04:25 UTC on 2026-11-09.
 - The first segment measured **77.9 ms/step** on the L4 with deterministic kernels, against
@@ -391,4 +391,8 @@ the probe's day. About $24.5 of the $30 credit remains. L60 uses about 40 % of i
 - The §7.4 expectation therefore stands: about $9.8 at list price (an estimate), about 1.3 h
   per diffusion run and about 1 h per BC run, plus start-up.
 - Billed amounts are recorded per launch from Modal's hourly report (E8-10).
+- **Done 2026-11-09 13:18 UTC:**
+  - 6 runs, 12 launches, about 8.9 h of L4 in all;
+  - **$8.06 billed**, against the $9.8 estimate and the $15 cap; A-03 closed;
+  - one resume waited about 27 min for an L4, which Modal does not bill.
 

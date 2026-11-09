@@ -1,20 +1,33 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 7
-SESSION_STATUS: PASS            # Level 1 complete and frozen (docs/LEVEL1_COMPLETE.md): Can suite, robustness + 3 ablations, freeze, held-out test run once
-NEXT_SESSION: 8
-BLOCKERS: none for Session 8    # Gate D (RGB) needs an owner budget decision after the feasibility pilot; open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035
-LAST_VERIFIED_COMMIT: bf0a0fa   # last code/test change: lint clean, 372 tests; later commits evidence/docs only, re-verified at the STOP commit (LEDGER E7-15)
-PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04}
-EVIDENCE_COMMITS: {can_suite: dadd533, can_latency_figures_config: c380a5e, robustness_states: [5d9b8c0, 005bc94], robustness_ablations_rehearsal: a92c74d, freeze: bf0a0fa, heldout_results: 97cc48a}
+CURRENT_SESSION: 8
+SESSION_STATUS: IN_PROGRESS     # RGB study: Gate D (probe) and Gate D2 (L60) decided; freeze committed (d9c6217); 6 Lift runs training on Modal L4 (queue); validation, selection, lock re-gate and held-out test remain
+NEXT_SESSION: 8 (continuation)  # docs/HANDOFF.md §10; Session 9 only after the RGB study's held-out test and STOP
+BLOCKERS: none                  # open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042
+LAST_VERIFIED_COMMIT: d9c6217   # lint clean, 416 tests (415 + the A-02 test fixed), freeze-check OK (logs/session8/prereq/code_checks_before_rgb_freeze.log)
+PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11}
+EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_feasibility: 058cd7e, rgb_probe: cab481b, rgb_dataset_builder: f17db86, rgb_trainer: 6ca5c77, rgb_freeze: d9c6217}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: TESTED_ONCE         # docs/FINAL_TEST_FREEZE.md committed at bf0a0fa; 26 held-out evaluations at bf0a0fa; results reports/session7/results/ (97cc48a); never rerun
-RESOURCE_SPEND: {usd: 0.148, gpu_hours: 0.09, session7_usd: 0, notes: "Session 7: local CPU 46.19 core-h training (27 runs), 64.25 container-h evaluation (667 evaluations), $0. Modal total unchanged (Gate A, A-01 closed)"}
-APPROVED_LIMIT: {gate_c: "local CPU only, $0 (Level 1 main suite; done)", gate_d_rgb: "not yet requested", modal: "none until a new approval row"}
+FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study: held-out access forbidden until all 6 selections + a lock re-gate decision + test are committed (RGB freeze §9)"
+RESOURCE_SPEND: {usd_billed_total: 0.180, session8_usd_billed: 0.0317, session8_usd_committed_estimate: "A-03 launches in progress (expected ~ $9.8 list)", notes: "A-01 $0.148 (Session 5); A-02 probe $0.0317 billed; A-03 training queue running"}
+APPROVED_LIMIT: {A-02: "closed (exhausted), $0.0317 of $1", A-03: "granted: train_gpu, $15 cap, the 6 frozen Lift RGB runs only", local: "$0"}
 UPDATED: 2026-11-08
 ```
 
 # RoboForge Status
+
+## Session 8: RGB observation-modality study (in progress)
+| Step (Session 8 prompt) | Status | Evidence |
+|---|---|---|
+| Prerequisites; KI-040 (smoke-sim built a held-out start) fixed | DONE | LEDGER E8-01, E8-02 |
+| 1. RGB feasibility, no training: alignment, projection test, clip, by-eye sample, cost at 84/128 | DONE, every check passes on the canonical container | E8-03–E8-05, `reports/session8/rgb_feasibility/README.md`, D-074 |
+| 2. Gate D proposal; owner decision; approval row | DONE: Gate D "D: GPU probe ≤ $1" (A-02, D-076), run and closed at **$0.0317 billed**. Gate D2 "**L60**" (A-03, $15 cap, D-078) after the probe | E8-06, E8-07, COMPUTE_PLAN §6–§7, `reports/session8/modal/README.md` |
+| Protocol amendment (deterministic CUDA training) | DONE: RESEARCH_PROTOCOL §13, 2026-11-08 | `e433f11` |
+| RGB dataset (Lift, both cameras, 84²) | DONE: built on the container, installed with hash checks (D-079) | E8-08, `data/manifests/rgb/lift_rgb84_v1.json` |
+| 3. `docs/RGB_EXPERIMENT_FREEZE.md` before the first RGB training run | DONE: `d9c6217`; §10 hashes checked against the commit | D-080 |
+| 4a. Train the 6 frozen runs (visual BC-chunk vs visual diffusion, seeds 0–2) | **IN PROGRESS**: `scripts/rgb_train_queue.py` under A-03. The first segment trains at 77.9 ms/step (probe 79.8) | `logs/session8/rgb_train/` |
+| 4b. Validate 12 checkpoints per run; select per §7 | TODO | `make rgb-validate`, `scripts/eval_rgb.py select` |
+| 4c. Lock re-gate decision + test; held-out test once; analysis | TODO (freeze §9) | — |
 
 ## Session 7 acceptance criteria (MASTER_SPEC Session 7)
 | Criterion | Status | Evidence |
@@ -49,9 +62,8 @@ Family success, % of 3 seeds × 50 held-out starts, with the §9 bootstrap 95 % 
 Interpretation and robustness: `docs/LEVEL1_COMPLETE.md`.
 
 ## Owner decisions pending
-1. **Gate D (Session 8, RGB visual policies):** a budget decision after the measured
-   feasibility pilot. It can be local CPU at $0 or a capped Modal approval row.
-2. Optional: set a Modal **workspace budget** (the only hard spending cap) before any paid
-   session.
-3. Optional: prune the Docker build cache (KI-008). 22 GB was free at the end of Session 7,
-   and RGB datasets may need more.
+1. None blocks the RGB study now. A-03 covers its training. Evaluation is local.
+2. Optional: set a Modal **workspace budget** (the only hard spending cap).
+3. Optional: prune the Docker build cache (KI-008). 24 GB is free (2026-11-09).
+4. Later: Can for the RGB study needs about 100k steps for diffusion, about $15 more
+   (COMPUTE_PLAN §7.4). It is not approved.

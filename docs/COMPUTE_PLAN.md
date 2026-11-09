@@ -382,3 +382,13 @@ the probe's day. About $24.5 of the $30 credit remains. L60 uses about 40 % of i
   Can curves show diffusion learning far more slowly than BC-chunk. Lift showed no such gap.
 - L30 halves the cost but carries that risk. Option A costs $0 but uses a small,
   non-standard encoder and takes about a day of this machine.
+
+### 7.5 Execution (in progress)
+- The freeze was committed at `d9c6217` before the first launch.
+- The queue started at 04:25 UTC on 2026-11-09.
+- The first segment measured **77.9 ms/step** on the L4 with deterministic kernels, against
+  the probe's 79.8.
+- The §7.4 expectation therefore stands: about $9.8 at list price (an estimate), about 1.3 h
+  per diffusion run and about 1 h per BC run, plus start-up.
+- Billed amounts are recorded per launch from Modal's hourly report (E8-10).
+

@@ -1,10 +1,10 @@
-<!-- parsable handoff header (values below are real, filled at the end of Session 7) -->
+<!-- parsable handoff header (real values; Session 8 in progress, updated 2026-11-08 EST) -->
 ```yaml
 project: roboforge-3d
-current_session: 7
-session_status: PASS
-next_session: 8
-last_verified_commit: bf0a0fa   # last code/test change; lint clean, 372 tests; later commits are evidence/docs only (re-verified at the STOP commit, LEDGER E7-15)
+current_session: 8
+session_status: IN_PROGRESS   # RGB study training on Modal; see '# Session 8 Handoff'
+next_session: 8 (continuation; §10 of the Session 8 handoff)
+last_verified_commit: d9c6217   # Session 8: lint clean, 416 tests, freeze-check OK (logs/session8/prereq/code_checks_before_rgb_freeze.log)
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -71,10 +71,129 @@ ablation_a3_runs: [s7_diffusion_unet_cos_to1_can_seed0_4b9d434e, s7_diffusion_un
 heldout_results:                      # family success %, 3 seeds x 50 held-out starts (reports/session7/results/tables.md)
   lift: {bc_mlp: 90.7, bc_rnn: 100.0, bc_mlp_chunk: 98.0, diffusion_unet: 97.3, random_uniform: 0.0}
   can:  {bc_mlp: 76.7, bc_rnn: 96.0, bc_mlp_chunk: 96.0, diffusion_unet: 95.3, random_uniform: 0.0}
-modal: {gate_a: done, approval: "A-01 ($2.00 cap) closed", billed_usd: 0.148, used_in_sessions_6_7: none, egl_vs_osmesa: PENDING (KI-001, KI-033)}
+modal: {gate_a: done, A-01: "closed, $0.148", A-02: "Gate D RGB probe, closed (exhausted), $0.0317 billed", A-03: "Gate D2 L60: train_gpu, $15 cap, granted; 6 frozen Lift RGB runs", egl_vs_osmesa: PENDING (KI-001, KI-033)}
 final_test: "TESTED ONCE (Session 7). The lock is open because the freeze is committed; that is not permission: no further held-out rollout of any Level 1 configuration, ever, and no Session 8 read of final_test until docs/RGB_EXPERIMENT_FREEZE.md is committed and the lock is re-gated on it"
 disk: "22 GB free at the end of Session 7; runs/ 26 GB (KI-008: Docker build cache prune is an owner decision)"
-next_required_owner_approval: "Session 8: Gate D (RGB visual policies) budget approval before any RGB main training; any Modal/GPU use needs a new approval row with a cap"
+next_required_owner_approval: "none for the frozen RGB study (A-03 covers it); any other Modal use (e.g. Can RGB) needs a new row"
+rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", dataset: "data/processed/robomimic_v1.5_ph/lift/rgb84_v1.hdf5 content 41c0ea0253e196c55bdbbca972bf5ccad0136724896eae8e639aa6e1b901334f", runs: [s8_rgb_diffusion_resnet18_lift_seed0_dddc7f1c, "s8_rgb_bc_chunk_resnet18_lift_seed0_*", "seeds 1-2 of both"], queue: scripts/rgb_train_queue.py, heldout: "forbidden until RGB freeze §9 preconditions"}
+```
+
+# Session 8 Handoff (in progress: the RGB study is training)
+
+## 1. Where the session stands
+The Session 8 steps:
+1. **Feasibility: done.** Every check passes on the canonical container (D-074).
+2. **Gate D: done.** The owner chose "D: GPU probe ≤ $1" (A-02). The L4 probe ran and was
+   closed at $0.0317 billed. The owner then chose **"L60"** at Gate D2 (A-03, $15 cap).
+3. **The RGB experiment freeze: committed** at `d9c6217`, before any RGB training run.
+4. **Training: running.** The 6 frozen Lift runs train on Modal under
+   `scripts/rgb_train_queue.py`, strictly one launch after another, in this order:
+   diffusion s0, BC s0, diffusion s1, BC s1, diffusion s2, BC s2.
+   - The first segment: GCP us-east L4, deterministic flags in force, **77.9 ms/step**
+     (probe 79.8). Its step-5000 checkpoint is on the Volume.
+   - Expected total: about 8 h of L4, about $9.8 list (estimate).
+
+Still to do: validation (72 local container evaluations), selection, the lock re-gate
+(decision and test), the held-out test, the analysis, and the STOP documents.
+
+## 2. Completed work (Session 8)
+- **KI-040 fix:** smoke-sim had built a held-out start.
+- **RGB render and alignment tooling and evidence:** `reports/session8/rgb_feasibility/`.
+- **Timing core and Modal L4 probe:** `roboforge.compute.{rgb_bench,rgb_probe}`; evidence in
+  `reports/session8/modal/`.
+- **Deterministic-CUDA protocol amendment:** RESEARCH_PROTOCOL §13, 2026-11-08.
+- **RGB dataset builder (D-079) and the Lift 84² dataset** (E8-08).
+- **RGB trainer:** `roboforge.train.rgb`.
+- **Segments and plans:** `roboforge.compute.rgb_train`, and in `infra/modal_app.py` the
+  `train_gpu` function, `train-gpu` and `fetch-rgb`.
+- **Queue:** `scripts/rgb_train_queue.py`.
+- **Closed-loop RGB policy and validation/selection:** `roboforge.eval.rgb`,
+  `scripts/eval_rgb.py`, `make rgb-validate`.
+- **Smokes** (E8-09).
+- **Freeze:** `docs/RGB_EXPERIMENT_FREEZE.md`.
+
+## 3. Decisions and issues
+- **Decisions:** D-073–D-080.
+- **New issues:**
+  - KI-040 (fixed);
+  - KI-041 (CGL first render);
+  - KI-042: the frozen diffusion sampler is CPU-only, so CUDA inference is never used;
+  - KI-043: host memory stall. **Never run the full test suite alongside a container job.**
+
+## 4. Budget
+| Approval | Status | Spend |
+|---|---|---|
+| A-02 | closed | $0.0317 billed |
+| A-03 | granted, $15 cap | in use by the queue |
+
+Month-to-date Modal usage before A-03 was $5.45 of the $30 credit. Record billing per launch:
+- the app IDs are in `logs/session8/rgb_train/queue.jsonl`;
+- `/opt/anaconda3/bin/python -m modal billing report --for today --resolution h --json`;
+- then `uv run --frozen python -m roboforge.compute.plan record-billing --launch-id <id> --app-id <ap-…> --report <json>`.
+
+When all 6 runs are complete, mark A-03 `exhausted` in the ledger, as A-01 and A-02 were.
+
+## 10. Exact starting instructions (Session 8 continuation)
+Paste into a fresh Claude Code session:
+
+```text
+Continue RoboForge 3D SESSION 8 (Level 1 RGB-conditioned policy study) from docs/HANDOFF.md
+"# Session 8 Handoff". Read MASTER_SPEC.md §7.2 and the Session 8 section,
+docs/RGB_EXPERIMENT_FREEZE.md (binding; frozen at d9c6217), docs/STATUS.md,
+docs/DECISIONS.md D-073-D-080, docs/KNOWN_ISSUES.md KI-030, KI-031, KI-040-KI-043,
+docs/EXPERIMENT_LEDGER.md (Session 8 and the approvals table; A-03 is the only open
+approval), docs/COMPUTE_PLAN.md §6-§7, and RESEARCH_PROTOCOL §7, §9, §10 and the §13
+amendment of 2026-11-08. Inspect the real state first: git log --format=fuller -n 8; git
+status; make lint; make freeze-check; verify every §10 hash of the RGB freeze against
+`git show d9c6217:<file>`; never run the full test suite alongside a container job (KI-043).
+
+1. Training. Check `logs/session8/rgb_train/queue.jsonl` and the Modal runs Volume. If the
+   queue is not running and a run is incomplete, restart it. It resumes from the ledger:
+   `uv run --frozen python scripts/rgb_train_queue.py --budget-approved A-03`.
+   Launches stay strictly sequential, and each result is recorded before the next. Stop
+   and report if a launch ends other than complete or interrupted, or if the approval gate
+   refuses one. Never exceed A-03's $15 cap; never change a config.
+2. For each complete run:
+   a. `/opt/anaconda3/bin/python infra/modal_app.py fetch-rgb --run-id <run_id>`. This is
+      hash-verified, and the resume file stays on the Volume.
+   b. Validate on the canonical container, at most 4 containers at once:
+      `make rgb-validate RGB_RUN=<run_id> RGB_STEPS="<subset>"`. Split the 12 steps
+      across containers.
+   c. `uv run --frozen python scripts/eval_rgb.py select --run-id <run_id>`, then commit
+      the summaries and the selection.
+   Local copies of non-selected checkpoints may be deleted only after their hashes are in
+   the committed manifest. The Volume keeps them.
+3. Record billing for every A-03 launch, and close A-03 once all 6 runs are done.
+4. Held-out (RGB freeze §9). Only after all 6 selections are committed:
+   a. Write a recorded decision that re-gates the held-out lock on
+      docs/RGB_EXPERIMENT_FREEZE.md. Recommended: a new module
+      `src/roboforge/eval/rgb_heldout.py` with its own gate:
+      - the RGB freeze is tracked and unmodified;
+      - the 6 selection artifacts are committed;
+      - the decision is committed.
+      The research-integrity test then allows exactly that module to name the held-out
+      suite. Frozen Level 1 files (`eval_states.py`, `heldout.py`) stay unchanged, so
+      freeze-check stays valid.
+   b. Add a test proving two things: the RGB gate is shut until the preconditions hold,
+      and `heldout.evaluate_entry` still refuses every Level 1 configuration.
+   c. Run each of the 6 selected checkpoints once on the 50 Lift held-out starts on the
+      canonical container (R = 1).
+   d. Analyse per freeze §9: the Level 1 §9 bootstrap, B = 10,000, seed 20261106,
+      diffusion − BC, "not separated" if the interval contains 0, the failure taxonomy,
+      latency and cost. Never rerun.
+5. STOP:
+   a. Update STATUS, HANDOFF, DECISIONS, KNOWN_ISSUES, EXPERIMENT_LEDGER and
+      COMPUTE_PLAN.
+   b. Run lint, the full test suite (alone) and freeze-check.
+   c. Commit as Zackary Holt <zackholt05@gmail.com>, with no AI co-author trailers.
+   d. Inspect git log --format=fuller -n 5, then write the Session 9 prompt.
+Boundaries: Level 1 is frozen (never rerun make eval-final or make analyze-final; never
+edit reports/session6-7, the Level 1 freeze or LEVEL1_COMPLETE; never prune or move
+frozen runs). No changes to data, eval suites, uv.lock or dependencies without a decision.
+Never uv sync or uv run inside the image. Launch reported runs from a clean tree. Use
+EVIDENCE_SESSION=8 and PREFIX=s8. Every reported, selection or test rollout runs on the
+canonical container via run_sim_cpu.sh with ROBOFORGE_EVIDENCE_SESSION=8. Label every
+estimate as an estimate.
 ```
 
 # Session 7 Handoff

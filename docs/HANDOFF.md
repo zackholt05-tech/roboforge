@@ -72,7 +72,7 @@ heldout_results:                      # family success %, 3 seeds x 50 held-out 
   lift: {bc_mlp: 90.7, bc_rnn: 100.0, bc_mlp_chunk: 98.0, diffusion_unet: 97.3, random_uniform: 0.0}
   can:  {bc_mlp: 76.7, bc_rnn: 96.0, bc_mlp_chunk: 96.0, diffusion_unet: 95.3, random_uniform: 0.0}
 modal: {gate_a: done, approval: "A-01 ($2.00 cap) closed", billed_usd: 0.148, used_in_sessions_6_7: none, egl_vs_osmesa: PENDING (KI-001, KI-033)}
-final_test: "TESTED ONCE (Session 7). The lock is open because the freeze is committed; no further held-out rollout of any Level 1 configuration, ever"
+final_test: "TESTED ONCE (Session 7). The lock is open because the freeze is committed; that is not permission: no further held-out rollout of any Level 1 configuration, ever, and no Session 8 read of final_test until docs/RGB_EXPERIMENT_FREEZE.md is committed and the lock is re-gated on it"
 disk: "22 GB free at the end of Session 7; runs/ 26 GB (KI-008: Docker build cache prune is an owner decision)"
 next_required_owner_approval: "Session 8: Gate D (RGB visual policies) budget approval before any RGB main training; any Modal/GPU use needs a new approval row with a cap"
 ```
@@ -238,8 +238,17 @@ HARD SCIENTIFIC BOUNDARY (Session 7 STOP): Level 1 state-based results are froze
 rerun make eval-final or make analyze-final, never re-evaluate any Level 1 configuration on
 the held-out suites, never edit reports/session6-7 evidence, the freeze or LEVEL1_COMPLETE,
 and never let RGB results modify core selection, labels or findings. RGB results are a
-separately labelled observation-modality study (MASTER_SPEC §5 item 5); state-based Level 1
+separately labelled observation-modality study (MASTER_SPEC §3.2 item 5); state-based Level 1
 is an oracle-style comparator because it sees privileged object state.
+The held-out lock is now OPEN for every caller (the Level 1 freeze is committed, so
+eval_states.lock_status returns unlocked): that is NOT permission. No Session 8 code may
+load, render, reset to or otherwise read the final_test suite or its seeds for any purpose
+until docs/RGB_EXPERIMENT_FREEZE.md is committed; before any RGB held-out work, re-gate the
+lock on that file (or on a new, separately locked RGB suite) with a test, as a recorded
+decision, and decide in the RGB freeze whether the RGB test reuses the Level 1 held-out
+states or a new suite. Never prune or move the 24 frozen run directories, the A3 runs or
+runs/*__heldout* (gitignored; the only copies behind the freeze's checkpoint hashes and
+the results' taxonomy), even if disk runs short.
 
 Session 8 goal (MASTER_SPEC Session 8), in this order:
 (1) Feasibility, no training yet: from data/raw/robomimic_v1.5/{lift,can}/ph/demo_v15.hdf5

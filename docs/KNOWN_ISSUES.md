@@ -46,6 +46,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-039 | MEDIUM | RESOLVED (Session 7, D-072) | A simulator test would have built a held-out start once the lock opened |
 | KI-040 | MEDIUM | RESOLVED (Session 8) | `make smoke-sim` built Lift held-out start 0 in memory once the lock had opened |
 | KI-041 | LOW | MITIGATED (Session 8, D-074) | The first render of a fresh CGL context differs from later renders by a few pixels (macOS only) |
+| KI-042 | LOW | OPEN (Session 8) | Frozen `DiffusionPolicy.sample` draws its initial noise on the CPU, so diffusion inference cannot run on CUDA |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -888,3 +889,21 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   once and discards it (`roboforge.data.rgb.WARM_UP_RENDERS = 1`). The closed-loop RGB observation
   path must do the same. Native frames are development-only anyway (CGL vs OSMesa differ by
   0.6–3.1 mean grey levels, E8-04).
+
+### KI-042 Frozen `DiffusionPolicy.sample` cannot run on CUDA (LOW, OPEN; Session 8)
+- **Observed** (code reading while building the Gate D probe, 2026-11-09):
+  `src/roboforge/models/diffusion.py` (frozen at `bf0a0fa`) draws the initial noise of
+  `sample` with `torch.randn(shape, generator=generator, dtype=...)`. That call takes no
+  device, so it is always on the CPU. Each U-Net call also builds its timestep tensor on the
+  CPU.
+- **Consequence:** with a CUDA model, sampling mixes devices and fails. Training
+  (`training_loss`) is unaffected: it draws noise and timesteps on the data's device, and it
+  ran on the L4 (E8-06).
+- **Current handling:**
+  - No rollout needs CUDA. Every reported rollout runs on the canonical CPU container, and a
+    checkpoint trained on a GPU loads there on the CPU.
+  - The RGB probe does not time inference on CUDA.
+  - Any GPU-side offline metric that samples, such as validation action MSE, must move the
+    model to the CPU first, or use a new, non-frozen sampler wrapper. Level 1's file stays
+    unchanged.
+

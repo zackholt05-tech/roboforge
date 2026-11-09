@@ -161,8 +161,9 @@ All local, $0, Gate C (D-051); no Modal resource. Measured, from manifests and s
 No paid job runs without an explicit owner approval recorded in `docs/EXPERIMENT_LEDGER.md`.
 
 ## 6. Session 8 Gate D proposal: RGB visual policies (from the measured pilot, 2026-11-09)
-**Status: PROPOSED, awaiting the owner's decision.** No RGB dataset, training run or RGB
-evaluation exists. Every duration below is an **estimate** computed from the measurements in
+**Status: DECIDED 2026-11-08 21:21 EST: option D**, the ≤ $1 L4 probe (approval A-02,
+DECISIONS D-076). The probe ran (§7.1). The main plan is proposed in §7. No RGB dataset,
+training run or RGB evaluation exists. Every duration below is an **estimate** computed from the measurements in
 EXPERIMENT_LEDGER E8-03–E8-05; none is a promise.
 
 ### 6.1 Measured inputs (this host, an M1 Pro with 8 performance + 2 efficiency cores)
@@ -236,3 +237,93 @@ episode times out; Can 4.7–5.7 min and 16–19 min.
    `eval_states.py` must change for the re-gate), while `heldout.evaluate_entry` keeps refusing
    any Level 1 rerun.
 3. Then the RGB dataset build, training and evaluation under that freeze.
+
+## 7. Session 8 Gate D2 proposal: main RGB training from the L4 probe (2026-11-09)
+**Status: PROPOSED, awaiting the owner's decision.** A-02 covers only the probe, which is
+done. No main RGB training, local or remote, starts until the owner chooses here and the
+choice is recorded as an approval row. Every duration and cost below is an **estimate**
+built from the probe's measurements, not a promise.
+
+### 7.1 What the probe measured (E8-06; `reports/session8/modal/README.md`)
+| Trunk, 84², batch 64 | Head | L4 default | L4 deterministic | CPU, this host, 1 thread, same step (E8-07) |
+|---|---|---|---|---|
+| ResNet-18 | BC-MLP-chunk | 54.5 ms | 58.4 ms | 4.02 s |
+| ResNet-18 | diffusion | 71.6 ms | 79.8 ms | 4.11 s |
+| compact | BC-MLP-chunk | 28.1 ms | not measured | 0.90 s |
+| compact | diffusion | 45.8 ms | not measured | 0.98 s |
+
+- **Determinism.** With default kernels, two same-seed runs on the same L4 diverge within
+  20 steps. With deterministic kernels they are bitwise equal: parameters, EMA and every
+  loss. Every op has a deterministic kernel, and the cost is +7 % (BC) and +12 %
+  (diffusion). Not verified: equality across different L4 hosts or drivers.
+- **Memory** peaks at 1.2 GiB (84², batch 64), so the L4 has ample room.
+- **Probe cost:** $0.029 measured (container time × list price). $0.032 is on Modal's report
+  so far.
+
+### 7.2 Proposed design (the RGB freeze would fix it)
+§6.2 still applies, with two changes:
+- **Encoder:** ResNet-18, GroupNorm, from scratch, at 84² with a random crop of 76. This
+  is the robomimic and Diffusion Policy image encoder, and it is affordable on the GPU.
+- **Training:** on one Modal L4 with deterministic kernels. Each run is its own sequential
+  launch, resumable on preemption like `train_cpu`.
+
+Unchanged: batch 64, S = 30,000 steps, a checkpoint every 5,000 (K = 6), seeds {0, 1, 2},
+and one configuration per family. The 6 runs cover 2 families × 3 seeds, on Lift.
+
+Evaluation stays local on the canonical container ($0): 36 validation and 6 test
+evaluations of 50 starts each. That takes about 0.7–7 h, from the §6.3 range scaled for
+ResNet-18's slower CPU inference (41.8 / 109.9 ms per decision).
+
+Engineering before any launch, all $0, with tests and CPU smokes:
+- the RGB dataset build in the container, 84², both cameras (Lift ≈ 19 min);
+- an RGB trainer that reuses the Level 1 EMA, loss and checkpoint conventions;
+- a `train_gpu` Modal function;
+- the RGB closed-loop observation path, with warm-up and only the frames each decision
+  reads;
+- `docs/RGB_EXPERIMENT_FREEZE.md` and the lock re-gate (§6.5).
+
+**Proposed RESEARCH_PROTOCOL amendment** (committed only if the owner approves a GPU
+option):
+- RGB-experiment training runs on one NVIDIA L4 in float32 under
+  `torch.use_deterministic_algorithms(True)`, with cuDNN deterministic, cuDNN benchmark off,
+  and `CUBLAS_WORKSPACE_CONFIG=:4096:8`.
+- TF32 stays at PyTorch's defaults: on for convolutions, off for matmuls. Both are recorded
+  per run.
+- Rollouts, selection and test stay on the canonical CPU container with one torch thread.
+- The visual BC vs visual diffusion comparison is made only between runs trained this way.
+  It is a separate study from Level 1 and never modifies Level 1.
+
+### 7.3 Options
+L4 function at list price: $1.12/h, and $1.95/h at the 1.75× region maximum. Each launch also
+carries a build allowance of $0.08.
+
+Expected training time, deterministic L4 at 84² and batch 64, with 15 % for checkpoints, data
+and start-up:
+
+| Run | Steps | Expected time | Timeout | Upper bound per launch |
+|---|---|---|---|---|
+| BC-MLP-chunk | 30k | 34 min | 45 min | $3.43 |
+| diffusion | 30k | 46 min | 60 min | $4.54 |
+
+Launches run one after another, so a cap only has to cover the spend already committed plus
+one launch's upper bound.
+
+| Option | Scope | GPU time | Expected cost (list / region max) | Proposed cap | Elapsed (estimate) |
+|---|---|---|---|---|---|
+| **G1 (recommended)** | Lift, ResNet-18 84², 30k, K = 6, 3 seeds × 2 families | 4.0 h | **$4.91 / $8.59** | $10 | engineering, then ≈ 4 h training overlapped with 0.7–7 h evaluation |
+| G2 | G1 + Can (same plan) | 7.9 h | $9.82 / $17.18 | $20 | + 4 h training, + Can dataset (≈ 53 min) and its evaluations |
+| G3 | Lift, ResNet-18 84², the Level 1 budget (100k steps, batch 100, K = 20) | 17.3 h | $19.81 / $34.67 | $36 | not recommended: may exceed the remaining monthly credit |
+| A | local CPU only, compact 84², 30k (§6.3; per-step CPU times re-measured with the same step in E8-07) | — | $0 | $0 | ≈ 18–24 h (§6.3: unchanged, because the same-step CPU times match E8-05 within 2 %) |
+
+**Monthly credit.** Month-to-date Modal usage is $5.45, from `modal billing report`, through
+the probe's day. About $24.5 of the $30 credit remains. G1 stays within it even at the
+region maximum, and G2 does at list price.
+
+**Why G1.**
+- ResNet-18 is the standard visual encoder for both arms. A deterministic L4 step is 52–69×
+  faster than one 1-thread step on this CPU: 58–80 ms against 4.0–4.1 s.
+- Deterministic CUDA keeps the protocol's bitwise-repeatability property on one GPU type.
+- The cost fits the owner's "do not exceed the $30 monthly quota" instruction with a wide
+  margin.
+- Option A remains the $0 fallback. It uses a much smaller, non-standard encoder and takes
+  about a day of this machine.

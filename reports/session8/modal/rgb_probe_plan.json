@@ -1,0 +1,370 @@
+{
+ "app": "roboforge",
+ "blocking": [],
+ "created_utc": "2026-11-09T02:33:43.395337+00:00",
+ "deadline_s": 300,
+ "estimate": {
+  "attempts": 4,
+  "build_allowance": {
+   "cpu_usd": 0.04716,
+   "gpu_usd": 0.0,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.031967999999999996,
+   "multiplier": 1.0,
+   "resources": {
+    "count": 1,
+    "cpu": 4.0,
+    "gpu": null,
+    "memory_gib": 16.0,
+    "seconds": 900.0
+   },
+   "total_usd": 0.079128
+  },
+  "function": "rgb_probe",
+  "job": {
+   "attempts": 4,
+   "cpu_usd": 0.0758752,
+   "gpu_usd": 0.321456,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.05143296,
+   "resources_per_attempt": {
+    "count": 1,
+    "cpu": 4.0,
+    "gpu": "L4",
+    "memory_gib": 16.0,
+    "seconds": 362.0
+   },
+   "total_usd": 0.44876415999999997
+  },
+  "kind": "upper-bound estimate (list price; 4 attempts of the full timeout)",
+  "one_attempt": {
+   "cpu_usd": 0.0189688,
+   "gpu_usd": 0.080364,
+   "kind": "estimate (list price)",
+   "memory_usd": 0.01285824,
+   "multiplier": 1.0,
+   "resources": {
+    "count": 1,
+    "cpu": 4.0,
+    "gpu": "L4",
+    "memory_gib": 16.0,
+    "seconds": 362.0
+   },
+   "total_usd": 0.11219103999999999
+  },
+  "pricing_fetched_utc": "2026-11-09",
+  "pricing_source": "https://modal.com/pricing",
+  "timeout_s": 360,
+  "total_usd": 0.5278921599999999
+ },
+ "function": "rgb_probe",
+ "git": {
+  "dirty": false,
+  "sha": "5f2ca4a0c642c700a200abb8d81fcbc106b21b52"
+ },
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ },
+ "launch_id": "c087ef13659840d8aea71012da69fad2",
+ "mode": "probe",
+ "policy": {
+  "gpu_count": 1,
+  "max_attempts_per_launch": 4,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 360.0
+ },
+ "rgb_probe": {
+  "data": "none: random inputs only (timing probe)",
+  "sections": [
+   {
+    "batch": 64,
+    "head": "bc_chunk",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:resnet18:84:bc_chunk:b64",
+    "size": 84,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 100,
+    "head": "bc_chunk",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:resnet18:84:bc_chunk:b100",
+    "size": 84,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 64,
+    "head": "diffusion",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:resnet18:84:diffusion:b64",
+    "size": 84,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 100,
+    "head": "diffusion",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:resnet18:84:diffusion:b100",
+    "size": 84,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 64,
+    "head": "bc_chunk",
+    "kind": "train",
+    "mode": "deterministic",
+    "name": "train:deterministic:resnet18:84:bc_chunk:b64",
+    "size": 84,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 64,
+    "head": "bc_chunk",
+    "kind": "repeat",
+    "mode": "default",
+    "name": "repeat:default:resnet18:84:bc_chunk:b64",
+    "size": 84,
+    "steps": 20,
+    "trunk": "resnet18"
+   },
+   {
+    "batch": 64,
+    "head": "bc_chunk",
+    "kind": "repeat",
+    "mode": "deterministic",
+    "name": "repeat:deterministic:resnet18:84:bc_chunk:b64",
+    "size": 84,
+    "steps": 20,
+    "trunk": "resnet18"
+   },
+   {
+    "batch": 64,
+    "head": "diffusion",
+    "kind": "train",
+    "mode": "deterministic",
+    "name": "train:deterministic:resnet18:84:diffusion:b64",
+    "size": 84,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 64,
+    "head": "diffusion",
+    "kind": "repeat",
+    "mode": "default",
+    "name": "repeat:default:resnet18:84:diffusion:b64",
+    "size": 84,
+    "steps": 20,
+    "trunk": "resnet18"
+   },
+   {
+    "batch": 64,
+    "head": "diffusion",
+    "kind": "repeat",
+    "mode": "deterministic",
+    "name": "repeat:deterministic:resnet18:84:diffusion:b64",
+    "size": 84,
+    "steps": 20,
+    "trunk": "resnet18"
+   },
+   {
+    "batch": 64,
+    "head": "bc_chunk",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:resnet18:128:bc_chunk:b64",
+    "size": 128,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 100,
+    "head": "bc_chunk",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:resnet18:128:bc_chunk:b100",
+    "size": 128,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 64,
+    "head": "diffusion",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:resnet18:128:diffusion:b64",
+    "size": 128,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 100,
+    "head": "diffusion",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:resnet18:128:diffusion:b100",
+    "size": 128,
+    "steps": 30,
+    "trunk": "resnet18",
+    "warmup": 5
+   },
+   {
+    "batch": 64,
+    "head": "bc_chunk",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:compact:84:bc_chunk:b64",
+    "size": 84,
+    "steps": 30,
+    "trunk": "compact",
+    "warmup": 5
+   },
+   {
+    "batch": 100,
+    "head": "bc_chunk",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:compact:84:bc_chunk:b100",
+    "size": 84,
+    "steps": 30,
+    "trunk": "compact",
+    "warmup": 5
+   },
+   {
+    "batch": 64,
+    "head": "diffusion",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:compact:84:diffusion:b64",
+    "size": 84,
+    "steps": 30,
+    "trunk": "compact",
+    "warmup": 5
+   },
+   {
+    "batch": 100,
+    "head": "diffusion",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:compact:84:diffusion:b100",
+    "size": 84,
+    "steps": 30,
+    "trunk": "compact",
+    "warmup": 5
+   },
+   {
+    "batch": 64,
+    "head": "bc_chunk",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:compact:128:bc_chunk:b64",
+    "size": 128,
+    "steps": 30,
+    "trunk": "compact",
+    "warmup": 5
+   },
+   {
+    "batch": 100,
+    "head": "bc_chunk",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:compact:128:bc_chunk:b100",
+    "size": 128,
+    "steps": 30,
+    "trunk": "compact",
+    "warmup": 5
+   },
+   {
+    "batch": 64,
+    "head": "diffusion",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:compact:128:diffusion:b64",
+    "size": 128,
+    "steps": 30,
+    "trunk": "compact",
+    "warmup": 5
+   },
+   {
+    "batch": 100,
+    "head": "diffusion",
+    "kind": "train",
+    "mode": "default",
+    "name": "train:default:compact:128:diffusion:b100",
+    "size": 128,
+    "steps": 30,
+    "trunk": "compact",
+    "warmup": 5
+   }
+  ]
+ },
+ "run_id": null,
+ "schema": "roboforge.modal_plan/1",
+ "timeout_s": 360,
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ }
+}

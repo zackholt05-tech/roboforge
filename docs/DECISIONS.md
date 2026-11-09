@@ -1432,3 +1432,33 @@ label or finding; RGB work is a separately labelled observation-modality study (
 - `reports/session8/` and `logs/session8/` with `ROBOFORGE_EVIDENCE_SESSION=8`, as D-062.
   RGB feasibility evidence: `reports/session8/rgb_feasibility/<platform_id>/`.
 
+
+### D-076 Gate D decided: a $1 L4 timing probe first, no main RGB training yet (OWNER, 2026-11-08 21:21 EST)
+- The owner chose option D of `docs/COMPUTE_PLAN.md` §6.3, "Modal GPU probe first (≤ $1)".
+  It is recorded as approval **A-02**: function `rgb_probe` only, cap $1.00
+  (`docs/EXPERIMENT_LEDGER.md`).
+- The approval does not cover any main RGB training, local or remote. That needs a
+  separately capped plan and a new owner decision.
+- GPU training would also need a dated RESEARCH_PROTOCOL amendment. The protocol trains on
+  CPU in float32, and default CUDA kernels are not bitwise deterministic.
+
+### D-077 The RGB probe's design (FIXED for A-02)
+`src/roboforge/compute/{rgb_bench,rgb_probe}.py`, the `rgb_probe` function of
+`infra/modal_app.py`, and `configs/compute/modal.yaml`.
+- **No data.** Inputs are random, so nothing touches a dataset, an evaluation state or a
+  checkpoint. The function mounts only the runs Volume, and only for attempt markers.
+- **Same step everywhere.** `rgb_bench.Bench.step` mirrors `Trainer.step`: host-to-device
+  copy, crops, loss, backward, gradient norm, AdamW, and EMA where the head config enables
+  it. One generator lives on the data's device, and the EMA is built after the move (KI-030).
+  Inference is not timed on CUDA (KI-042).
+- **Bound that holds:**
+  - the job enforces `max_attempts_per_launch` itself through `_probes/<launch_id>/attempt_<n>.json` on the runs Volume, committed before any GPU work;
+  - it starts no section after `timeout − 60 s`;
+  - the timeout is 360 s, so the upper bound is $0.53 at list price and $0.92 even at the 1.75× region maximum, which the estimate does not model.
+- **Amendment evidence in the same launch.** For ResNet-18 at 84² with both heads, the probe
+  ran:
+  - deterministic kernels (`use_deterministic_algorithms`, cuDNN deterministic, benchmark
+    off, `CUBLAS_WORKSPACE_CONFIG=:4096:8`), timed;
+  - two same-seed 20-step repeats in each mode.
+- `_launch` maps functions by name explicitly and refuses unknown names. Only `train_cpu`
+  and `gpu_probe` upload data.

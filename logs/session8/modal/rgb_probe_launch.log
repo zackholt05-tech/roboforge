@@ -1,0 +1,141 @@
+{
+ "function": "rgb_probe",
+ "mode": "probe",
+ "run_id": null,
+ "launch_id": "c087ef13659840d8aea71012da69fad2",
+ "timeout_s": 360,
+ "deadline_s": 300,
+ "resources": {
+  "count": 1,
+  "cpu": 4.0,
+  "gpu": "L4",
+  "memory_gib": 16.0,
+  "seconds": 360.0
+ },
+ "policy": {
+  "gpu_count": 1,
+  "max_attempts_per_launch": 4,
+  "max_containers": 1,
+  "preemptible": true,
+  "retries": 0,
+  "scaledown_window_s": 2
+ },
+ "volumes": {
+  "data": {
+   "mount": "/data",
+   "name": "roboforge-data"
+  },
+  "runs": {
+   "mount": "/app/runs",
+   "name": "roboforge-runs"
+  }
+ },
+ "git": {
+  "dirty": false,
+  "sha": "5f2ca4a0c642c700a200abb8d81fcbc106b21b52"
+ },
+ "blocking": []
+}
+{
+ "image": {
+  "apt": [
+   "git",
+   "cmake",
+   "build-essential",
+   "libegl-dev",
+   "libegl1",
+   "libosmesa6",
+   "libgl1",
+   "libglib2.0-0"
+  ],
+  "base": "modal.Image.debian_slim(python_version='3.11')",
+  "code_dirs": [
+   "src",
+   "scripts",
+   "configs",
+   "data/manifests",
+   "data/splits",
+   "data/normalization"
+  ],
+  "env": {
+   "MUJOCO_GL": "egl",
+   "PYOPENGL_PLATFORM": "egl",
+   "PYTHONPATH": "/app/src",
+   "ROBOFORGE_DATA_ROOT": "/data"
+  },
+  "install": "Image.uv_sync(frozen=True, extra_options='--no-dev') from uv.lock",
+  "pyproject_sha256": "fe57b6432fa75147a0721783d034cc0e8e2ba14e1330e93145d6b3790d005dc9",
+  "repo_root": "/app",
+  "uv_lock_sha256": "327eaa2ea05a4e8fa46d8ed717ae4c7f5bcfa9a4069edac31b778d6b42ac5ca9",
+  "uv_version": "0.11.11"
+ }
+}
+UPPER-BOUND ESTIMATE $0.5279 (list prices fetched 2026-11-09; job $0.4488 = 4 attempts x $0.1122 + build/start allowance $0.0791; not a cap)
+{
+ "approval_id": "A-02",
+ "gate": "Gate D (RGB probe)",
+ "cap_usd": 1.0,
+ "committed_before_usd": 0.0,
+ "estimate_upper_usd": 0.5278921599999999,
+ "remaining_after_usd": 0.47210784000000006
+}
+ 
+✓ Initialized. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-v4h8hPxCAv9fSLgXDsFlBH
+✓ Created objects.
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/infra/modal_app.py
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/normalization
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/splits
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/data/manifests
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/configs
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/scripts
+├── ✓ Uploaded /Users/zackaryholt/Projects/roboforge/src
+├── ✓ Created Function train_cpu.
+├── ✓ Created Function gpu_probe.
+└── ✓ Created Function rgb_probe.
+{"probe_section": "cuda", "ok": true, "value": {"available": true, "torch": "2.15.0+cu132", "torch_cuda": "13.2", "cudnn": 92600, "device": "NVIDIA L4", "nvidia_smi": "NVIDIA L4, 610.57.04, 23034 MiB", "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "seconds": 0.6004769269999999}
+{"probe_section": "train:default:resnet18:84:bc_chunk:b64", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1446000, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.0545481634999998, "mean_s_per_step": 0.05463844226666647, "max_s_per_step": 0.05647001899999893, "steps_per_s_median": 18.332422868828637, "peak_memory_mib": 1107.669921875}, "seconds": 7.149210942}
+{"probe_section": "train:default:resnet18:84:bc_chunk:b100", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1446000, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 100, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.07413974049999972, "mean_s_per_step": 0.07416837573333339, "max_s_per_step": 0.07648208300000192, "steps_per_s_median": 13.488042893810828, "peak_memory_mib": 1447.048828125}, "seconds": 3.095760744999998}
+{"probe_section": "train:default:resnet18:84:diffusion:b64", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1455047, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.07164974149999992, "mean_s_per_step": 0.07177593600000011, "max_s_per_step": 0.0742128820000012, "steps_per_s_median": 13.956784477722103, "peak_memory_mib": 1202.7763671875}, "seconds": 3.1098225830000032}
+{"probe_section": "train:default:resnet18:84:diffusion:b100", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1455047, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 100, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.0909980259999994, "mean_s_per_step": 0.0909309068666668, "max_s_per_step": 0.09270743399999759, "steps_per_s_median": 10.989249371189729, "peak_memory_mib": 1545.26025390625}, "seconds": 3.7307461330000002}
+{"probe_section": "train:deterministic:resnet18:84:bc_chunk:b64", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1446000, "flags": {"mode": "deterministic", "deterministic_algorithms": true, "cudnn_deterministic": true, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.05839211800000044, "mean_s_per_step": 0.05869941169999973, "max_s_per_step": 0.0603079820000012, "steps_per_s_median": 17.125599040610112, "peak_memory_mib": 1111.876953125}, "seconds": 2.525623507999999}
+{"probe_section": "repeat:default:resnet18:84:bc_chunk:b64", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1446000, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "steps": 20, "param_sha256": ["8068bad5557a245ad15ec8227fd6eeec5d1b0b69c862b16f74fbbdc641207e1c", "4d3d07e03bb7f5dc5097dfa344e0f9ab1f05c5abaf074fd20dc1572f2759c781"], "bitwise_equal": false, "losses_equal": false, "final_losses": [0.31104639172554016, 0.3110845983028412]}, "seconds": 3.697182360000003}
+{"probe_section": "repeat:deterministic:resnet18:84:bc_chunk:b64", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1446000, "flags": {"mode": "deterministic", "deterministic_algorithms": true, "cudnn_deterministic": true, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "steps": 20, "param_sha256": ["9d80d160daa7c91288eb3fe091a5e582dd67da9002e9f68d3b74e06e7556af6b", "9d80d160daa7c91288eb3fe091a5e582dd67da9002e9f68d3b74e06e7556af6b"], "bitwise_equal": true, "losses_equal": true, "final_losses": [0.3110325336456299, 0.3110325336456299]}, "seconds": 3.8622137520000024}
+{"probe_section": "train:deterministic:resnet18:84:diffusion:b64", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1455047, "flags": {"mode": "deterministic", "deterministic_algorithms": true, "cudnn_deterministic": true, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.07983540549999901, "mean_s_per_step": 0.07983807046666555, "max_s_per_step": 0.08102964799999768, "steps_per_s_median": 12.525770912505886, "peak_memory_mib": 1202.2939453125}, "seconds": 3.317385220999995}
+{"probe_section": "repeat:default:resnet18:84:diffusion:b64", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1455047, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "steps": 20, "param_sha256": ["b366b06f14a77fde62200c7d16199ac0b3269da5e6975f6fba3ed6e738f9d67b", "eac91298f7672a6b9e49f6f547bd7880ff21fe42b8d4ddf7a4d2b661e547cc85"], "bitwise_equal": false, "losses_equal": false, "final_losses": [0.9631120562553406, 0.9631247520446777]}, "seconds": 5.151242672000002}
+{"probe_section": "repeat:deterministic:resnet18:84:diffusion:b64", "ok": true, "value": {"trunk": "resnet18", "size": 84, "crop": 76, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1455047, "flags": {"mode": "deterministic", "deterministic_algorithms": true, "cudnn_deterministic": true, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "steps": 20, "param_sha256": ["607c6aa404abe97310d71107e01d73ec749b19e679b5dd4a56fc575af3f80cfe", "607c6aa404abe97310d71107e01d73ec749b19e679b5dd4a56fc575af3f80cfe"], "bitwise_equal": true, "losses_equal": true, "final_losses": [0.9631132483482361, 0.9631132483482361]}, "seconds": 5.645527441999995}
+{"probe_section": "train:default:resnet18:128:bc_chunk:b64", "ok": true, "value": {"trunk": "resnet18", "size": 128, "crop": 116, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1446000, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.10510517299999833, "mean_s_per_step": 0.10540743996666653, "max_s_per_step": 0.10861081400000216, "steps_per_s_median": 9.514279568333102, "peak_memory_mib": 1936.4521484375}, "seconds": 4.305369777999999}
+{"probe_section": "train:default:resnet18:128:bc_chunk:b100", "ok": true, "value": {"trunk": "resnet18", "size": 128, "crop": 116, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1446000, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 100, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.1659025740000004, "mean_s_per_step": 0.1661237940000004, "max_s_per_step": 0.16960930000000474, "steps_per_s_median": 6.027634025738489, "peak_memory_mib": 2782.474609375}, "seconds": 6.4672452100000015}
+{"probe_section": "train:default:resnet18:128:diffusion:b64", "ok": true, "value": {"trunk": "resnet18", "size": 128, "crop": 116, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1455047, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.12112116549999996, "mean_s_per_step": 0.1213044776999998, "max_s_per_step": 0.12344407499999477, "steps_per_s_median": 8.256195322030651, "peak_memory_mib": 2026.05859375}, "seconds": 4.816593477999994}
+{"probe_section": "train:default:resnet18:128:diffusion:b100", "ok": true, "value": {"trunk": "resnet18", "size": 128, "crop": 116, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 22394176, "params_head": 1455047, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 100, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.18259806000000367, "mean_s_per_step": 0.18263378596666655, "max_s_per_step": 0.1843963620000011, "steps_per_s_median": 5.47650944374754, "peak_memory_mib": 2873.44580078125}, "seconds": 7.067330261999999}
+{"probe_section": "train:default:compact:84:bc_chunk:b64", "ok": true, "value": {"trunk": "compact", "size": 84, "crop": 76, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 632224, "params_head": 1446000, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.028081776499995215, "mean_s_per_step": 0.028146835800001213, "max_s_per_step": 0.029017795000001456, "steps_per_s_median": 35.61028270416476, "peak_memory_mib": 512.447265625}, "seconds": 1.2683843930000052}
+{"probe_section": "train:default:compact:84:bc_chunk:b100", "ok": true, "value": {"trunk": "compact", "size": 84, "crop": 76, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 632224, "params_head": 1446000, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 100, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.043174591499997916, "mean_s_per_step": 0.0432133663666652, "max_s_per_step": 0.043944435000000226, "steps_per_s_median": 23.161770968928526, "peak_memory_mib": 772.58251953125}, "seconds": 1.6634721599999978}
+{"probe_section": "train:default:compact:84:diffusion:b64", "ok": true, "value": {"trunk": "compact", "size": 84, "crop": 76, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 632224, "params_head": 1455047, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.04580625450000042, "mean_s_per_step": 0.04581260290000084, "max_s_per_step": 0.04808484000000135, "steps_per_s_median": 21.831079858319146, "peak_memory_mib": 519.5283203125}, "seconds": 1.7630729640000027}
+{"probe_section": "train:default:compact:84:diffusion:b100", "ok": true, "value": {"trunk": "compact", "size": 84, "crop": 76, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 632224, "params_head": 1455047, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 100, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.059955289000001244, "mean_s_per_step": 0.05985996889999967, "max_s_per_step": 0.06111110899999517, "steps_per_s_median": 16.67909565076034, "peak_memory_mib": 780.60498046875}, "seconds": 2.282931428000012}
+{"probe_section": "train:default:compact:128:bc_chunk:b64", "ok": true, "value": {"trunk": "compact", "size": 128, "crop": 116, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 632224, "params_head": 1446000, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.06280238800000149, "mean_s_per_step": 0.06302365170000002, "max_s_per_step": 0.06461129899999207, "steps_per_s_median": 15.922961400766741, "peak_memory_mib": 1139.1220703125}, "seconds": 2.424684531000011}
+{"probe_section": "train:default:compact:128:bc_chunk:b100", "ok": true, "value": {"trunk": "compact", "size": 128, "crop": 116, "head": "bc_chunk", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 632224, "params_head": 1446000, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 100, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": false, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.10404785550000639, "mean_s_per_step": 0.10437360323333422, "max_s_per_step": 0.10656652500000519, "steps_per_s_median": 9.610962140396431, "peak_memory_mib": 1741.42578125}, "seconds": 3.942928174000002}
+{"probe_section": "train:default:compact:128:diffusion:b64", "ok": true, "value": {"trunk": "compact", "size": 128, "crop": 116, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 632224, "params_head": 1455047, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 64, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.0794498820000058, "mean_s_per_step": 0.07949556040000137, "max_s_per_step": 0.08133595699999319, "steps_per_s_median": 12.586551104001979, "peak_memory_mib": 1146.97265625}, "seconds": 3.0271529810000004}
+{"probe_section": "train:default:compact:128:diffusion:b100", "ok": true, "value": {"trunk": "compact", "size": 128, "crop": 116, "head": "diffusion", "device": "cuda", "device_name": "NVIDIA L4", "params_encoder": 632224, "params_head": 1455047, "flags": {"mode": "default", "deterministic_algorithms": false, "cudnn_deterministic": false, "cudnn_benchmark": false, "cudnn_allow_tf32": true, "matmul_allow_tf32": false, "CUBLAS_WORKSPACE_CONFIG": ":4096:8"}, "step_def": {"batch": 100, "h2d_copy_in_step": true, "grad_norm": true, "grad_clip": null, "ema": true, "optimizer": "adamw", "name": "adamw", "lr": 0.0001, "betas": [0.9, 0.999], "weight_decay": 0.0, "schedule": "constant"}, "warmup": 5, "steps_timed": 30, "median_s_per_step": 0.11948911200000367, "mean_s_per_step": 0.11953579103333282, "max_s_per_step": 0.12130641000000253, "steps_per_s_median": 8.368963357933142, "peak_memory_mib": 1748.96923828125}, "seconds": 4.519709747999997}
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/zackholt05-tech/main/ap-v4h8hPxCAv9fSLgXDsFlBH
+{
+ "schema": "roboforge.cost_event/1",
+ "event": "result",
+ "utc": "2026-11-09T02:36:23.886053+00:00",
+ "launch_id": "c087ef13659840d8aea71012da69fad2",
+ "run_id": null,
+ "status": "complete",
+ "container_wall_s": 92.534743861,
+ "measured_cost_usd": 0.02929820781740112,
+ "measured_cost_kind": "estimate: measured container time x list price (excludes image build and start-up)",
+ "modal": {
+  "function": "rgb_probe",
+  "app_id": "ap-v4h8hPxCAv9fSLgXDsFlBH",
+  "upload": null
+ },
+ "detail": null
+}
+ 
+result: /Users/zackaryholt/Projects/roboforge/logs/tmp/modal_plans/rgb_probe_20261108T213343.result.json
+exit=0

@@ -44,7 +44,7 @@ function Schematic() {
         {mode === "bc"
           ? "A policy trained to predict the average action blends two valid demonstrations into one that neither demonstrator took."
           : "A diffusion policy learns the distribution of whole action sequences and draws one sample, so each plan follows a single demonstrated way."}{" "}
-        Dashed: demonstrations. This is the textbook motivation; whether it matters on Lift and Can is what the findings test.
+        Dashed: demonstrations. This is the textbook motivation, not a measurement: the findings below compare success rates on Lift and Can, not modes.
       </figcaption>
     </figure>
   );

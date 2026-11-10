@@ -243,6 +243,7 @@ export const RegistryClip = z.object({
   checkpoint: z.object({ sha256: z.string().nullable(), step: z.number().int().nullable() })
     .passthrough(),
   eval_run_id: z.string(), physics_sha256: z.string(), has: z.array(z.string()),
+  verification: z.object({ body_pos_max_abs_m: z.number() }).passthrough().optional(),
 });
 export type RegistryClip = z.infer<typeof RegistryClip>;
 

@@ -166,6 +166,35 @@ const ObsWindow = memo(function ObsWindow({ d, names }: { d: Decision; names: st
   );
 });
 
+// Spread of the clone-simulated gripper positions over the 16 extra seeds plus the sampled
+// chunk, after `step` actions: RMS distance from their centroid and the largest pairwise
+// distance, in metres. Computed here from the exported paths (an export measurement).
+function spread(d: Decision, step: number): { rms: number; max: number; n: number } {
+  const ends = [d.paths.final, ...d.paths.diversity].map((p) => p[Math.min(step, p.length - 1)]);
+  const c = [0, 1, 2].map((i) => ends.reduce((a, e) => a + e[i], 0) / ends.length);
+  const rms = Math.sqrt(ends.reduce((a, e) => a + (e[0] - c[0]) ** 2 + (e[1] - c[1]) ** 2 + (e[2] - c[2]) ** 2, 0) / ends.length);
+  let max = 0;
+  for (const a of ends) for (const b of ends) max = Math.max(max, Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]));
+  return { rms, max, n: ends.length };
+}
+
+const EnvActions = memo(function EnvActions({ d }: { d: Decision }) {
+  return (
+    <div className="table-scroll">
+      <table className="env-actions">
+        <caption>The sampled chunk in the controller's units (denormalized): the first {d.n_executed} rows were sent to the simulator; the rest were discarded when the policy replanned.</caption>
+        <thead><tr><th scope="col">Step</th>{DIMS.map((n) => <th key={n} scope="col" className="num">{n}</th>)}</tr></thead>
+        <tbody>{d.final_env_action.map((r, t) => (
+          <tr key={t} className={t < d.n_executed ? "" : "discarded"}>
+            <td className="num">{d.first_action_index + t}{t < d.n_executed ? "" : " (discarded)"}</td>
+            {r.map((v, k) => <td key={k} className="num">{v.toFixed(3)}</td>)}
+          </tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+});
+
 function Explorer({ clip, den }: { clip: Clip; den: Denoise }) {
   const clock = useClockFor(clip.frames.n, clip.control_dt_s);
   const frames = useMemo(() => den.decisions.map((d) => d.frame), [den]);
@@ -250,6 +279,10 @@ function Explorer({ clip, den }: { clip: Clip; den: Denoise }) {
       </div>
       <Transport clock={clock} n={clip.frames.n} label={`validation episode ${clip.state_id}`}
         successFrame={clip.outcome.first_success_step} decisions={decisionFrames(clip)} />
+      <details className="env-details">
+        <summary>Show this decision's actions in controller units</summary>
+        <EnvActions d={d} />
+      </details>
       <div className="grid-2 inside-foot">
         <ObsWindow d={d} names={den.observation_names} />
         <dl className="provenance">
@@ -258,6 +291,10 @@ function Explorer({ clip, den }: { clip: Clip; den: Denoise }) {
           <div><dt>What this is</dt><dd>{den.kind}</dd></div>
           <div><dt>Checks</dt><dd>replayed chunk equals the recorded action; executed branch equals the record (bitwise); {den.n_branches} clone simulations</dd></div>
           <div><dt>Diversity</dt><dd className="num">mean per-value std across 16 seeds: {d.diversity.mean_std_normalized.toFixed(3)} (normalized units)</dd></div>
+          <div><dt>Path spread</dt><dd className="num">{(() => {
+            const a = spread(d, d.n_executed), b = spread(d, den.horizons.T_p);
+            return `gripper positions of the ${a.n} clone-simulated candidates: after ${d.n_executed} steps, RMS ${(100 * a.rms).toFixed(2)} cm from their centre (largest pair ${(100 * a.max).toFixed(2)} cm); after ${den.horizons.T_p} steps, ${(100 * b.rms).toFixed(2)} cm (${(100 * b.max).toFixed(2)} cm). Computed in the browser from the exported paths. Distinct modes would show as separated clusters of end points; this reports spread only.`;
+          })()}</dd></div>
         </dl>
       </div>
     </div>

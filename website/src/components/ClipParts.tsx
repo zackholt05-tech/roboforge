@@ -21,6 +21,7 @@ export function ClipCaption({ clip, category }: { clip: Clip; category?: string 
       <span>task: {TASK[clip.task]}</span>
       <span className={clip.outcome.success ? "ok" : "bad"}>outcome: {outcomeText(clip)}</span>
       {category && category !== "success" && <span className="bad">{CATEGORY[category] ?? category}</span>}
+      <span className="run-id" title="the evaluation run this episode was recorded in">source: {clip.provenance.eval_run_id}</span>
     </p>
   );
 }

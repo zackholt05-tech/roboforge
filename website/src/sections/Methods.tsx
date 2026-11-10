@@ -27,14 +27,14 @@ const REFS: [string, string, string][] = [
 function Verification() {
   const reg = useRegistry();
   const v = useAsync(loadVerification, []);
-  const rec = reg.clips.map((c) => (c as unknown as { verification?: { body_pos_max_abs_m: number } }).verification?.body_pos_max_abs_m)
+  const rec = reg.clips.map((c) => c.verification?.body_pos_max_abs_m)
     .filter((x): x is number => typeof x === "number");
   return (
     <div className="verify">
       <h3>How the 3D view was checked</h3>
       <ul className="prose checks">
         <li>Every body pose is recomputed from the saved simulator state on the canonical container and compared with the pose recorded during evaluation{rec.length ? `: largest difference ${Math.max(...rec).toExponential(1)} m over ${rec.length} clips` : ""}. Held-out episodes are re-rendered from their states, never re-run.</li>
-        <li>The browser poses each link from its recorded world transform; a unit test also rebuilds every pose from the joint angles through the exported kinematic tree (three.js forward kinematics) and checks they agree.</li>
+        <li>The browser poses each link from its recorded world transform. A unit test also rebuilds the poses from the joint angles through the exported kinematic tree (three.js forward kinematics) on about 12 frames of two clips per task, and checks that they agree within 0.1 mm and 0.06°.</li>
         <li>The silhouette of the 3D reconstruction is rendered through each MuJoCo camera and compared with MuJoCo's own segmentation render of the same state:</li>
       </ul>
       {v.status === "ready" && v.value ? (

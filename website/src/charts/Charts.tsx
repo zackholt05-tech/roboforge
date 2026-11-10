@@ -48,11 +48,15 @@ export function EstimateChart({ rows, title, unit = "success", counts, label, co
   );
 }
 
-export function DifferenceChart({ rows, title, label }: { rows: Diff[]; title: string;
-  label?: (d: Diff) => string }) {
-  const W = 640, L = 250, R = 128, rowH = 34, H = rows.length * rowH + 34;
+export function DifferenceChart({ rows, title, label, labelWidth = 250, lowerIsBetter = false, note }: {
+  rows: Diff[]; title: string; label?: (d: Diff) => string; labelWidth?: number;
+  lowerIsBetter?: boolean; note?: string }) {
+  // Colour follows which side the interval favours: cyan for the first-named arm, red for the
+  // second. For a difference in drops (lowerIsBetter) a negative value favours the first arm.
+  const W = 640, L = labelWidth, R = 128, rowH = 34, H = rows.length * rowH + 34;
   const raw = Math.max(0.1, ...rows.flatMap((d) => [Math.abs(d.ci95[0]), Math.abs(d.ci95[1])]));
-  const step = [0.05, 0.1, 0.25, 0.5].find((st) => raw / st <= 4) ?? 0.5;
+  const perSide = W - L - R < 260 ? 3 : 4; // fewer ticks when the plot is narrow
+  const step = [0.05, 0.1, 0.25, 0.5].find((st) => raw / st <= perSide) ?? 0.5;
   const lim = Math.ceil((raw * 1.04) / step) * step;
   const x = (v: number) => L + ((v + lim) / (2 * lim)) * (W - L - R);
   const ticks = Array.from({ length: Math.round((2 * lim) / step) + 1 }, (_, i) => Math.round((-lim + i * step) * 1000) / 1000);
@@ -70,7 +74,8 @@ export function DifferenceChart({ rows, title, label }: { rows: Diff[]; title: s
         {rows.map((d, i) => {
           const y = 18 + i * rowH;
           const sep = d.separation.startsWith("separated");
-          const c = !sep ? "var(--ivory-dim)" : d.difference > 0 ? "var(--signal)" : "var(--error)";
+          const favoursFirst = lowerIsBetter ? d.difference < 0 : d.difference > 0;
+          const c = !sep ? "var(--ivory-dim)" : favoursFirst ? "var(--signal)" : "var(--error)";
           return (
             <g key={i}>
               <text x={L - 12} y={y + 4} textAnchor="end" className="row-label">
@@ -83,7 +88,7 @@ export function DifferenceChart({ rows, title, label }: { rows: Diff[]; title: s
           );
         })}
       </svg>
-      <figcaption>{title}. Diamond: paired difference in percentage points; bar: 95 % interval. Filled: the interval excludes 0 ("separated"); hollow: it includes 0 ("not separated", which is not evidence of equivalence).</figcaption>
+      <figcaption>{title}. Diamond: paired difference in percentage points; bar: 95 % interval. Filled: the interval excludes 0 ("separated"); hollow: it includes 0 ("not separated", which is not evidence of equivalence).{note ? ` ${note}` : ""}</figcaption>
     </figure>
   );
 }

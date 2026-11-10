@@ -278,6 +278,11 @@ export const Difference = z.object({ a: z.string(), b: z.string(), difference: z
 export const Bootstrap = z.object({ method: z.string().optional(), B: z.number().int(),
   families: z.record(z.string(), FamilyEstimate), differences: z.array(Difference) })
   .passthrough();
+const Contrast = z.object({ name: z.string(), estimate: z.number(), ci95: Interval,
+  separation: z.string() }).passthrough();
+const EvalRef = z.object({ family: z.string(), seed: z.number().int(), suite: z.string(),
+  eval_run_id: z.string(), summary: z.string(), summary_sha256: z.string().length(64),
+  successes: z.number().int(), n_episodes: z.number().int() }).passthrough();
 const Strip = z.object({ outcomes: z.array(z.object({ state_id: z.string(),
   category: z.string(), steps: z.number().nullable() })) }).passthrough();
 export const Findings = z.object({
@@ -294,6 +299,20 @@ export const Findings = z.object({
       param_count: z.number().int().nullable() }).passthrough()),
     strips: z.array(Strip.extend({ family: z.string(), seed: z.number().int().nullable() })),
   }).passthrough()) }).passthrough(),
+  level1_robustness: z.object({ label: z.string(),
+    perturbations: z.object({
+      ood_cube_shift: z.object({ training_half_range_m: z.number(), radius_m: Interval }).passthrough(),
+      ood_arm_offset: z.object({ offset_rad: z.number(), training_noise_sigma_rad: z.number() }).passthrough(),
+    }).passthrough(),
+    tasks: z.record(z.string(), z.object({
+      h4: z.object({ sets: z.array(z.string()), n_states: z.number().int(),
+        bootstrap: Bootstrap.extend({ contrasts: z.array(Contrast) }),
+        taxonomy: z.record(z.string(), z.record(z.string(), z.number().int())),
+        evaluations: z.array(EvalRef) }).passthrough(),
+      ablations: z.record(z.string(), z.object({ bootstrap: Bootstrap,
+        bias_disclosure: z.string().optional(), note: z.string().optional(),
+        evaluations: z.array(EvalRef) }).passthrough()),
+    })) }).passthrough(),
   rgb: z.object({ success: Bootstrap, per_checkpoint: z.array(z.object({ family: z.string(),
     seed: z.number().int(), successes: z.number().int(), n: z.number().int(),
     latency_ms_median_of_episode_medians: z.number() }).passthrough()),
@@ -301,9 +320,7 @@ export const Findings = z.object({
     strips: z.array(Strip.extend({ family: z.string(), seed: z.number().int() })) })
     .passthrough(),
   level2: z.object({
-    placement: z.object({ bootstrap: Bootstrap.extend({ contrasts: z.array(z.object({
-      name: z.string(), estimate: z.number(), ci95: Interval, separation: z.string() })
-      .passthrough()) }), evaluations: z.array(z.record(z.string(), z.unknown())) })
+    placement: z.object({ bootstrap: Bootstrap.extend({ contrasts: z.array(Contrast) }), evaluations: z.array(z.record(z.string(), z.unknown())) })
       .passthrough(),
     heldout: z.object({ success: Bootstrap, censored_episode_length: Bootstrap })
       .passthrough(),

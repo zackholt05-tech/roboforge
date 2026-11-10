@@ -1,8 +1,9 @@
 """``findings.json`` for the Observatory: the frozen results, copied verbatim with citations.
 
 The site never computes or types a statistic. This module copies the **generated** blocks of
-the three frozen analyses (Level 1 ``reports/session7/results``, the RGB study
-``reports/session8/rgb_results``, Level 2 ``reports/session9/level2_results``) into one file,
+the frozen analyses (Level 1 ``reports/session7/results`` and, in the validation regime, its
+robustness and ablation analysis ``reports/session7/robustness``; the RGB study
+``reports/session8/rgb_results``; Level 2 ``reports/session9/level2_results``) into one file,
 each block next to the path and SHA-256 of the file it came from. It adds only:
 
 * **outcome strips**: per evaluated checkpoint, the category of each start, from the frozen
@@ -29,6 +30,9 @@ FINDINGS_SCHEMA = "roboforge.observatory_findings/1"
 RGB_RESULTS = "reports/session8/rgb_results/results.json"
 RGB_TAXONOMY = "reports/session8/rgb_results/taxonomy.json"
 L2_ERRATA = "reports/session9/level2_results/ERRATA.md"
+L1_ROBUSTNESS = "reports/session7/robustness/analysis.json"
+EVAL_REF = ("family", "seed", "suite", "variant", "step", "train_run_id", "eval_run_id",
+            "summary", "summary_sha256", "successes", "n_episodes")
 NOTES = {
     "ki_034": "Lift is saturated: most learned families reach 100 % or close, so Lift cannot "
               "rank them on success (KNOWN_ISSUES KI-034). Can separates more.",
@@ -37,6 +41,10 @@ NOTES = {
     "privilege_level1": "Level 1 policies observe privileged simulator object state "
                         "(cube/can pose) and robot proprioception; they are not vision "
                         "policies.",
+    "robustness": "Robustness and ablations are in the validation regime: fresh, preregistered "
+                  "starts (RESEARCH_PROTOCOL §14) evaluated once with the frozen Level 1 "
+                  "checkpoints; nothing was selected on them, and they are not held-out "
+                  "results.",
     "privilege_rgb": "RGB study: two 84² cameras + 9-D proprioception; no object state.",
     "privilege_level2": "Level 2: one 512-point world-frame cloud from depth + calibration of "
                         "two 84² cameras, + 9-D proprioception; sensor-like, no segmentation "
@@ -74,6 +82,45 @@ def level1() -> dict[str, Any]:
             "status", "n_states", "available_families", "success", "censored_episode_length",
             "per_checkpoint", "taxonomy_by_family", "cost_latency", "engineering")}
         out["tasks"][task]["strips"] = strips
+    return out
+
+
+def _eval_ref(e: dict[str, Any]) -> dict[str, Any]:
+    return {k: e.get(k) for k in EVAL_REF}
+
+
+def robustness() -> dict[str, Any]:
+    """Level 1 robustness (H4) and ablations (A1-A3), verbatim; validation regime, no selection.
+
+    Per task: the H4 bootstrap (family estimates, drops, between-family differences and the
+    declared contrasts) and its failure taxonomy; each ablation's arms, bias disclosure and
+    bootstrap. Each evaluation is kept as a reference (run id, summary path and SHA-256, counts)
+    so every number links to its manifest.
+    """
+    from roboforge.sim import robustness as rb
+
+    r = _load(L1_ROBUSTNESS)
+    if rb.config_sha256() != r["robustness_config_sha256"]:
+        raise ValueError("configs/eval/robustness.yaml differs from the analysed configuration")
+    out: dict[str, Any] = {k: r[k] for k in ("label", "git", "generated_utc",
+                                              "robustness_config_sha256", "taxonomy_sha256")}
+    out["perturbations"] = rb.robustness_config()["ood"]
+    out["perturbations_source"] = source("configs/eval/robustness.yaml")
+    out["tasks"] = {}
+    for task, block in r["tasks"].items():
+        h = block["h4"]
+        abl = {}
+        for name in ("A1", "A2", "A3"):
+            if name in block:
+                a = block[name]
+                abl[name] = {**{k: v for k, v in a.items()
+                                if k not in ("evaluations", "taxonomy")},
+                             "evaluations": [_eval_ref(e) for e in a["evaluations"]]}
+        out["tasks"][task] = {
+            "h4": {"status": h["status"], "sets": h["sets"], "n_states": h["n_states"],
+                   "bootstrap": h["bootstrap"], "taxonomy": h["taxonomy"],
+                   "evaluations": [_eval_ref(e) for e in h["evaluations"]]},
+            "ablations": abl}
     return out
 
 
@@ -137,6 +184,7 @@ def build_findings(selection: dict[str, Any]) -> dict[str, Any]:
     return {"schema": FINDINGS_SCHEMA,
             "label": "frozen results, copied verbatim from the generated analyses (no value "
                      "on the site is typed by hand)",
-            "sources": [source(p) for p in (L1_RESULTS, L1_TAXONOMY, RGB_RESULTS, RGB_TAXONOMY,
-                                            L2_RESULTS, L2_TAXONOMY, L2_ERRATA)],
-            "notes": NOTES, "level1": level1(), "rgb": rgb(), "level2": level2(selection)}
+            "sources": [source(p) for p in (L1_RESULTS, L1_TAXONOMY, L1_ROBUSTNESS, RGB_RESULTS,
+                                            RGB_TAXONOMY, L2_RESULTS, L2_TAXONOMY, L2_ERRATA)],
+            "notes": NOTES, "level1": level1(), "level1_robustness": robustness(),
+            "rgb": rgb(), "level2": level2(selection)}

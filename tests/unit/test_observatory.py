@@ -89,6 +89,18 @@ def test_findings_copy_the_frozen_blocks_verbatim_with_the_erratum() -> None:
     assert "KI-049" in f["notes"]["ki_049"]
     paths = {s["path"] for s in f["sources"]}
     assert of.L2_ERRATA in paths and osel.L1_RESULTS in paths
+    rob = json.loads((REPO_ROOT / of.L1_ROBUSTNESS).read_text())
+    assert of.L1_ROBUSTNESS in paths
+    assert f["level1_robustness"]["label"] == rob["label"]  # "VALIDATION REGIME ..."
+    assert f["level1_robustness"]["perturbations"]["ood_arm_offset"]["offset_rad"] == 0.10
+    for task in ("lift", "can"):
+        got, want = f["level1_robustness"]["tasks"][task], rob["tasks"][task]
+        assert got["h4"]["bootstrap"] == want["h4"]["bootstrap"]
+        assert got["h4"]["taxonomy"] == want["h4"]["taxonomy"]
+        assert set(got["ablations"]) == {k for k in ("A1", "A2", "A3") if k in want}
+        for name, a in got["ablations"].items():
+            assert a["bootstrap"] == want[name]["bootstrap"]
+        assert all(e["summary_sha256"] for e in got["h4"]["evaluations"])
     states = f["level2"]["placement_map"]["states"]
     assert {s["suite"] for s in states} == {"robustness_base", "ood_cube_shift"}
     assert len(states) == 100

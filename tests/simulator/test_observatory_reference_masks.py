@@ -14,6 +14,7 @@ import pytest
 from roboforge.sim.env_adapter import RoboForgeEnv
 from roboforge.sim.eval_states import load_suite
 from roboforge.sim.shadow_render import ShadowRenderer
+from roboforge.viz.obs_media import segmentation_geoms_only
 
 pytestmark = [pytest.mark.sim, pytest.mark.render]
 
@@ -28,7 +29,7 @@ def test_reference_segmentation_has_no_site_pixels() -> None:
             state = env.current_state()
             site = int(mujoco.mjtObj.mjOBJ_SITE)
             with_sites = shadow.segmentation(state, "frontview", 240, 240)
-            without = shadow.segmentation(state, "frontview", 240, 240, sites=False)
+            without = segmentation_geoms_only(shadow, state, "frontview", 240)
         finally:
             shadow.close()
     finally:

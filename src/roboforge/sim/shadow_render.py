@@ -64,22 +64,13 @@ class ShadowRenderer:
         return frame
 
     def segmentation(self, state: np.ndarray, camera: str, height: int,
-                     width: int, sites: bool = True) -> np.ndarray:
-        """``int32 [H, W, 2]``: per pixel (object id, ``mjtObj`` type); ``-1`` = background.
-
-        ``sites=False`` hides every site group. Segmentation draws sites whatever their alpha,
-        so robosuite's transparent gripper sites (``grip_site_cylinder``: radius 5 mm,
-        half-length 10 m) would occlude geoms that the RGB render shows (DECISIONS D-091)."""
+                     width: int) -> np.ndarray:
+        """``int32 [H, W, 2]``: per pixel (object id, ``mjtObj`` type); ``-1`` = background."""
         self._load(state)
         r = self._renderer(height, width)
-        opt = self._opt
-        if not sites:
-            opt = self._mj.MjvOption()
-            opt.geomgroup[:] = ROBOSUITE_GEOMGROUP
-            opt.sitegroup[:] = 0
         r.enable_segmentation_rendering()
         try:
-            r.update_scene(self._data, camera=camera, scene_option=opt)
+            r.update_scene(self._data, camera=camera, scene_option=self._opt)
             seg = np.ascontiguousarray(r.render())
         finally:
             r.disable_segmentation_rendering()

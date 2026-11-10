@@ -1037,3 +1037,7 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Handling:** the partial export is discarded and the export reruns from one clean commit
   (D-091). Before any long container run, a development pass must cover one clip of every
   kind, including the non-learned baseline.
+- **Follow-up:** the first mask fix edited the frozen `roboforge.sim.shadow_render`
+  (FINAL_TEST_FREEZE), and `make freeze-check` failed at STOP. The file is restored, and the
+  fix moved to `roboforge.viz.obs_media` (D-091 amendment). A development re-render showed
+  the committed reference frames are byte-identical (E10-08).

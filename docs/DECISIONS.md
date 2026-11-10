@@ -1906,3 +1906,16 @@ selection, label, result or finding of any study, and no held-out start is rolle
   37: the random baseline's manifest has `checkpoint: null` (KI-050). It wrote 18 clips and no
   `index.json`. Its partial output is discarded. After the fix, the whole export reruns from a
   single clean commit, so every committed file has one provenance.
+- **Amendment (Session 10 STOP): the frozen renderer is restored.** The D-091 change was made
+  in `roboforge.sim.shadow_render`. That file is pinned by `docs/FINAL_TEST_FREEZE.md`, and
+  `make freeze-check` failed at STOP. The evidence export ran from `b5fc2ee`, which held the
+  edited file. The edit added an optional `sites` argument whose default left the frozen code
+  path unchanged, and no frozen evaluation was rerun.
+  - The file is restored to its frozen bytes.
+  - The geoms-only segmentation now lives in Session 10 code,
+    `roboforge.viz.obs_media.segmentation_geoms_only`.
+  - A development re-render of the 3 verification clips from the restored tree must reproduce
+    the committed reference PNGs byte for byte. It is recorded in the ledger (E10-08), so the
+    export is not rerun.
+  - Rule: run `make freeze-check` before any commit that touches `src/roboforge/sim` or
+    `src/roboforge/eval`.

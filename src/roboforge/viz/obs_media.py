@@ -46,6 +46,33 @@ def render_video(shadow: Any, states: np.ndarray, path: Path) -> dict[str, Any]:
             "label": "MuJoCo offscreen render of the recorded states (simulator ground truth)"}
 
 
+def segmentation_geoms_only(shadow: Any, state: np.ndarray, camera: str,
+                            size: int) -> np.ndarray:
+    """MuJoCo segmentation of ``state`` with every site group hidden (D-091, KI-050).
+
+    Segmentation draws sites whatever their alpha, so robosuite's transparent
+    ``grip_site_cylinder`` (radius 5 mm, half-length 10 m) would cover geoms that the RGB render
+    shows. This uses the frozen ``ShadowRenderer``'s scratch data and renderer, with its own
+    visual options; ``roboforge.sim.shadow_render`` is pinned by FINAL_TEST_FREEZE and stays
+    unchanged. Output layout as ``ShadowRenderer.segmentation``."""
+    import mujoco
+
+    from roboforge.sim.shadow_render import ROBOSUITE_GEOMGROUP
+
+    shadow._load(state)
+    r = shadow._renderer(size, size)
+    opt = mujoco.MjvOption()
+    opt.geomgroup[:] = ROBOSUITE_GEOMGROUP
+    opt.sitegroup[:] = 0
+    r.enable_segmentation_rendering()
+    try:
+        r.update_scene(shadow._data, camera=camera, scene_option=opt)
+        seg = np.ascontiguousarray(r.render())
+    finally:
+        r.disable_segmentation_rendering()
+    return seg
+
+
 def class_mask(model: Any, seg: np.ndarray, robot_bodies: set[int],
                object_bodies: set[int]) -> np.ndarray:
     """``uint8`` silhouette classes of a MuJoCo segmentation render (geoms only)."""
@@ -80,7 +107,7 @@ def reference_frames(shadow: Any, kin: Any, model: Any, states: np.ndarray,
         for cam_name in REF_CAMERAS:
             s = states[k]
             rgb = shadow.rgb(s, cam_name, REF_SIZE, REF_SIZE)
-            seg = shadow.segmentation(s, cam_name, REF_SIZE, REF_SIZE, sites=False)  # D-091
+            seg = segmentation_geoms_only(shadow, s, cam_name, REF_SIZE)  # D-091
             mask = class_mask(model, seg, robot, obj)
             cam = kin.camera(s, cam_name, REF_SIZE, REF_SIZE)
             rgb_p = out_dir / f"{stem}_t{k:03d}_{cam_name}_rgb.png"

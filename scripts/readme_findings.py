@@ -1,6 +1,6 @@
-"""Write (or check) the README's generated key-findings block (DECISIONS D-103).
+"""Write (or check) the README's generated blocks: key findings and setup facts (D-103).
 
-    uv run --frozen python scripts/readme_findings.py          # rewrite README.md's block
+    uv run --frozen python scripts/readme_findings.py          # rewrite every generated block
     uv run --frozen python scripts/readme_findings.py --check  # fail if it is stale
 
 The numbers come only from paper/generated/numbers.tex (verified by make paper-check).
@@ -11,8 +11,9 @@ from __future__ import annotations
 import argparse
 import sys
 
+from roboforge.paths import REPO_ROOT
 from roboforge.release.macros import Macros, load_macros
-from roboforge.release.readme import README, check_readme, findings_block, replace_block
+from roboforge.release.readme import GENERATED_FILES, check_readme, render
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -21,11 +22,16 @@ def main(argv: list[str] | None = None) -> int:
     a = p.parse_args(argv)
     if a.check:
         problems = check_readme()
-        print("\n".join(problems) or "README findings block matches a fresh generation")
+        print("\n".join(problems) or "generated README and audit blocks match a fresh build")
         return 1 if problems else 0
-    text = README.read_text(encoding="utf-8")
-    README.write_text(replace_block(text, findings_block(Macros(load_macros()))), encoding="utf-8")
-    print(f"wrote the findings block of {README.name}")
+    m = Macros(load_macros())
+    for rel, names in GENERATED_FILES.items():
+        path = REPO_ROOT / rel
+        if not path.exists():
+            print(f"skipped {rel}: not written yet")
+            continue
+        path.write_text(render(path.read_text(encoding="utf-8"), m, names), encoding="utf-8")
+        print(f"wrote the generated {', '.join(names)} block(s) of {rel}")
     return 0
 
 

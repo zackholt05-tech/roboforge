@@ -1,0 +1,35 @@
+## pytest tests/research_integrity
+FAILED tests/research_integrity/test_rgb_heldout_gate.py::test_level1_evaluate_entry_still_refuses_every_level1_configuration[lift]
+FAILED tests/research_integrity/test_rgb_heldout_gate.py::test_level1_evaluate_entry_still_refuses_every_level1_configuration[can]
+4 failed, 41 passed in 9.42s
+## make freeze-check
+freeze committed; frozen code unchanged
+## gates
+{
+ "open": true,
+ "problems": []
+}
+{
+ "open": true,
+ "problems": []
+}
+## make paper-check
+uv run --frozen python scripts/paper_assets.py lint
+paper lint: every number comes from a generated macro
+## make release-check (docs not yet written)
+uv run --frozen python scripts/release_check.py
+history          PASS
+secrets          PASS
+private_paths    PASS
+tracked_content  PASS
+docs             FAIL (4)
+  - docs/REPRODUCIBILITY.md:6: placeholder '<repo>'
+  - docs/FINAL_RELEASE_AUDIT.md: missing
+  - CITATION.cff: missing date-released
+  - CITATION.cff: abstract still says there are no results
+readme_findings  FAIL (1)
+  - README findings block: README must contain exactly one findings BEGIN and END marker
+readme_preview   PASS
+disclosed local-path files (D-100): 136
+release-check: FAIL
+make: *** [release-check] Error 1

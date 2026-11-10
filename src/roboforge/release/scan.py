@@ -345,6 +345,8 @@ def external_urls(root: Path = REPO_ROOT) -> dict[str, list[str]]:
             continue
         for url in _URL.findall(p.read_text(encoding="utf-8")):
             url = url.rstrip(".,;:")
+            if re.match(r"https?://(127\.0\.0\.1|localhost)[:/]", url):
+                continue  # local preview servers, not external links
             out.setdefault(url, []).append(rel)
     return dict(sorted(out.items()))
 

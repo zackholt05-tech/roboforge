@@ -2226,6 +2226,11 @@ file.
   code. Transformations: decode, resize, place side by side, add labels (task, policy, seed,
   start, outcome, source), hold the shorter clip's last frame. A JSON sidecar records the
   source paths and SHA-256, the selection rule and the transformation.
+- **Amendment (Session 12, before the README was committed):** a second generated block,
+  `setup` (simulator, data, policies and evaluation facts), is written by the same script from
+  the same macros, so no configuration number in the README is typed by hand either. Outside
+  the two blocks the README states no result; sizes and times measured in Session 12 are in
+  `docs/FINAL_RELEASE_AUDIT.md`.
 
 ### D-104 The release checks (FIXED, before they are run)
 `make release-check` (offline, also in CI) and `scripts/release_check.py --network` (manual):

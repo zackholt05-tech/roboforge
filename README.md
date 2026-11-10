@@ -2,160 +2,205 @@
 
 **Can a diffusion model teach a robot arm to grasp and place objects?**
 
-RoboForge is a research project by **Zackary Holt** that compares deterministic behavior
-cloning, recurrent behavior cloning and a conditional diffusion action policy on simulated
-3D robotic manipulation: a 7-DoF Franka Panda arm in MuJoCo via robosuite, trained from
-robomimic proficient-human demonstrations, and evaluated by closed-loop simulator rollouts
-from paired, held-out initial states.
+![Two recorded held-out episodes on the Can task, side by side: the seed 0 diffusion U-Net policy (left) and the seed 0 BC-MLP policy (right) from the same initial state; both grasp the can and place it in the bin.](docs/media/readme_preview.gif)
 
-> **Status: Session 10.** Level 1 (Lift and Can; four learned families and a random baseline;
-> three seeds each), the RGB study and the Level 2 point-cloud study are complete, each tested
-> once on held-out starts under a frozen protocol. Session 10 builds the RoboForge Observatory, an interactive 3D site
-> drawn only from that frozen evidence (below). Results, with denominators and intervals:
-> [docs/STATUS.md](docs/STATUS.md), [docs/LEVEL1_COMPLETE.md](docs/LEVEL1_COMPLETE.md),
-> `reports/session7/results/`, `reports/session8/rgb_results/` and
-> `reports/session9/level2_results/` (with its `ERRATA.md`).
+<sub>MuJoCo renders of two recorded held-out episodes (Can, seed 0 diffusion U-Net vs seed 0
+BC-MLP, same start; both succeed). Chosen by a written rule, not by taste: the first held-out
+start on which both succeed (DECISIONS D-089 rule 3(a), labelled "representative"). Sources,
+checkpoints and transformation: [docs/media/readme_preview.json](docs/media/readme_preview.json).</sub>
 
-## The Observatory (Session 10)
+RoboForge is a research project by **Zackary Holt**. It compares deterministic behavior
+cloning, recurrent behavior cloning and a conditional diffusion action policy on simulated 3D
+robotic manipulation. A 7-DoF Franka Panda arm in MuJoCo (through robosuite) learns the Lift
+and Can tasks from the robomimic proficient-human demonstrations. Every policy is evaluated by
+closed-loop simulator rollouts from paired, held-out initial states, under protocols that were
+frozen and committed before the held-out starts were first used, and run once.
 
-A local, static site (`website/`, React Three Fiber) that tells the study's story from
-recorded evidence only:
+**[Read the paper](paper/main.pdf)**: *Learning 3D Robotic Manipulation from Demonstrations: A
+Controlled Comparison of Behavior Cloning and Diffusion Policies* (a local build, not peer
+reviewed). Every number in it is generated from the frozen result files.
 
-- recorded held-out rollouts, reconstructed in 3D from the simulator's saved states;
-- the diffusion policy's real denoising steps, with clone-simulated candidate paths;
-- the frozen results with their intervals, including the Level 2 point-cloud result and its
-  erratum.
+## Key findings
 
-It is not hosted (DECISIONS D-090). To build and check it:
+<!-- BEGIN GENERATED: findings (scripts/readme_findings.py from paper/generated/numbers.tex; do not edit by hand) -->
 
-```bash
-make observatory-findings web-data web-assets   # site data from reports/session10/observatory
-make web-install web-build                      # npm ci; type-check, build, asset budgets
-make web-test web-e2e web-verify                # schemas and kinematics; E2E; viewer vs MuJoCo
-cd website && npm run preview                   # http://127.0.0.1:4173
+**Level 1 held-out success** (exact simulator state as input, which is privileged information; 3 training seeds × 50 paired held-out starts = 150 episodes per cell, run once under the frozen protocol; 95 % hierarchical bootstrap interval, preregistered):
+
+| Policy | Lift | Can |
+|---|---|---|
+| BC-MLP (one step) | **90.7 %** (136/150) [83.3, 96.7] | **76.7 %** (115/150) [62.7, 90.0] |
+| BC-RNN (LSTM) | **100.0 %** (150/150) [100.0, 100.0] | **96.0 %** (144/150) [89.3, 100.0] |
+| BC-MLP-chunk (16-step chunks) | **98.0 %** (147/150) [94.0, 100.0] | **96.0 %** (144/150) [88.7, 100.0] |
+| Diffusion U-Net (10 DDIM steps) | **97.3 %** (146/150) [93.3, 100.0] | **95.3 %** (143/150) [89.3, 100.0] |
+| Random actions (sanity) | **0.0 %** (0/50) | **0.0 %** (0/50) |
+
+Differences below are in percentage points (pp) with the preregistered 95 % interval and verdict.
+
+- **Diffusion − BC-MLP (H2):** Can +18.7 pp [+4.7, +32.7], separated (+). This separation is fragile: a seed-level t interval, computed after the audit and not preregistered, is [−4.5, +41.8] and includes 0 (KI-053). Lift +6.7 pp [−0.7, +14.7], not separated (seed-level interval [+1.9, +11.5], separated (+)).
+- **Diffusion − BC-MLP-chunk (H2-c, same inputs, horizons and chunking; deterministic head):** Lift −0.7 pp [−5.3, +4.7], not separated; Can −0.7 pp [−8.7, +7.3], not separated. These data give no evidence that the generative model adds to observation history and action chunking. Diffusion is also not separated from BC-RNN on either task.
+- **Action bound (KI-052):** the diffusion sampler keeps every action inside the training range; the BC heads are bounded only by the controller limits. This confounds H2-c and the robustness comparisons.
+- **BC-RNN − BC-MLP (H3):** Lift +9.3 pp [+3.3, +16.7], separated (+); Can +19.3 pp [+5.3, +34.0], separated (+) (seed-level interval [−2.8, +41.5], fragile in the same way).
+- **Cost:** diffusion took 19–26× the chunked MLP's CPU training time, and a diffusion decision (10 DDIM steps) took 22–27× as long.
+- **Robustness (H4, preregistered perturbation sets, not the held-out test):** under the initial arm offset, diffusion degrades least on Lift (its drop is separated from each BC family's; minus the chunked MLP's: −40.0 pp [−54.0, −26.0], separated (−)); on Can the same contrast is +4.7 pp [−10.7, +20.7], not separated. KI-052 applies to both.
+- **RGB study (Lift; two 84×84 cameras plus proprioception, ResNet-18 encoder):** visual diffusion 100.0 % (150/150) vs visual BC-chunk 99.3 % (149/150): +0.7 pp [+0.0, +4.0], not separated. Lift saturates for every policy, so it cannot rank them (KI-034).
+- **Level 2 (Lift; DP3-inspired point clouds from sensor-like depth, 512 points):** under cube placements outside the demonstrations' range, the point-cloud diffusion policy reached 56.7 % vs 98.0 % for the frozen RGB diffusion policy (same head and training, different encoder and augmentation): −41.3 pp [−54.0, −28.0], separated (−). H5 is not supported; the explicit 3D input generalized worse here.
+- **Paid compute:** $10.61 over 24 Modal launches (list price before credits); Level 1 trained on a local CPU.
+
+<!-- END GENERATED: findings -->
+
+The short answer: on these two tasks, the diffusion policy was not separated from a
+deterministic MLP that sees the same history and predicts the same action chunks, and it cost
+far more to train and to run. All of this is simulation with exact object state for Level 1; nothing here was run on a
+physical robot.
+
+## Research questions
+
+Preregistered in [docs/RESEARCH_PROTOCOL.md](docs/RESEARCH_PROTOCOL.md) before any reported run:
+
+- **H1:** trained policies beat a random-action baseline in closed loop.
+- **H2:** the diffusion policy's success exceeds deterministic BC (H2-c: the chunked MLP, which
+  shares the diffusion policy's inputs, horizons and chunking).
+- **H3:** temporal context (an LSTM) helps over a one-step MLP.
+- **H4:** the families differ in robustness to object-placement and arm-start perturbations.
+- **H5 (Level 2):** point clouds generalize to new object placements better than RGB.
+
+## How it works
+
+```mermaid
+flowchart LR
+  D["robomimic PH demonstrations<br/>(Lift, Can; SHA-256 pinned)"] --> P["data pipeline<br/>features from MuJoCo state,<br/>episode splits, train-only normalization"]
+  P --> T["4 policy families × 3 seeds<br/>BC-MLP · BC-RNN · BC-MLP-chunk · diffusion U-Net"]
+  T --> V["validation rollouts<br/>(checkpoint selection)"]
+  V --> F["freeze committed<br/>(configs, checkpoint hashes,<br/>held-out schedule, analysis)"]
+  F --> H["held-out rollouts, run once<br/>(canonical Linux container)"]
+  H --> A["frozen analysis<br/>(paired hierarchical bootstrap)"]
+  A --> R["paper tables and figures,<br/>README block, Observatory<br/>(generated, hash-checked)"]
 ```
 
-The robot meshes are read from the local robosuite install at build time and never committed.
-Every visual output and its source run is listed in
-[docs/VISUAL_PROVENANCE.md](docs/VISUAL_PROVENANCE.md). A ground-truth preview of the hero
-rollout, a MuJoCo render of the recorded states, is
-`reports/session10/observatory/media/lift-diffusion_unet-s0-lift_final_test_0000_frontview.mp4`
-(diffusion U-Net, seed 0, Lift, held-out start 0, success).
+<!-- BEGIN GENERATED: setup (scripts/readme_findings.py from paper/generated/numbers.tex; do not edit by hand) -->
+- **Simulator:** MuJoCo 3.2.7 through robosuite v1.5.1 (`51cc017`); operational-space control of the end effector at 20 Hz, a 400-step horizon, success scored at the first success.
+- **Data:** robomimic proficient-human (PH) demonstrations repackaged for robosuite v1.5, Hugging Face revision `74fa018`: Lift 200 demonstrations (180 train / 20 validation), Can 200 (180 / 20); robomimic `d309eae`.
+- **Policies:** a one-step MLP, an LSTM (10-step window), an MLP that predicts 16-step action chunks, and a 1D temporal U-Net diffusion policy over the same chunks (100 training noise levels, 10 DDIM sampling steps), with 1,077,255–1,204,336 parameters each and a preregistered tuning budget of 4 configurations per family and task.
+- **Evaluation:** 3 training seeds per family, 50 paired held-out starts per task, one canonical platform (a pinned Linux aarch64 container, image `1f685638f28c`), episode records with full kinematics, a failure taxonomy, and a hierarchical bootstrap over seeds and starts (10,000 resamples, 95 % intervals).
+<!-- END GENERATED: setup -->
 
-## What has been verified (Session 0)
+## What makes the results trustworthy
 
-- Pinned stack: Python 3.11.15 · `mujoco==3.2.7` · robosuite v1.5.1 (`51cc017`) ·
-  robomimic `d309eae` · torch 2.15.0 (`uv.lock`).
-- Official robomimic PH datasets for **Lift** and **Can** downloaded and SHA-256-verified.
-- Real 3D simulation: reset, step, success predicate, offscreen render (macOS CGL),
-  exact MuJoCo state restore, and open-loop replay of all 400 recorded demonstrations.
-- Session 1: one canonical, hash-verified data pipeline for Lift and Can. Typed
-  task/action/observation specs, features recomputed from MuJoCo state by one function
-  shared with evaluation (fixes robosuite's lagged Can relative pose, KI-003), upstream
-  episode splits, train-only normalization, and an audited window sampler
-  ([docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md), `reports/data_audit.json`).
-- Session 2: the measurement apparatus.
-  - `RoboForgeEnv` resets only from exact serialized snapshots and validates and clips
-    actions. Success is scored on current kinematics, at first success, with a 400-step
-    horizon.
-  - Validation and final-test initial-state suites are hashed; the final test stays locked
-    until `docs/FINAL_TEST_FREEZE.md` exists.
-  - A frame-indexed rollout recorder with a re-simulation audit, plus random and no-op
-    sanity policies.
-  - Two-process determinism checks, and a MuJoCo → three.js clip export verified with the
-    real three.js library.
-  - Canonical evaluation runs in a pinned Linux container
-    ([docs/SIMULATOR_CONTRACT.md](docs/SIMULATOR_CONTRACT.md), DECISIONS D-017, D-024–D-030).
-- Session 3: the research protocol and the baselines.
-  - [docs/RESEARCH_PROTOCOL.md](docs/RESEARCH_PROTOCOL.md) was committed before any reported
-    run. It fixes the hypotheses, matched budgets, the checkpoint-selection rule and the
-    bootstrap plan.
-  - A shared trainer with strict configs, `weights_only` checkpoints, bitwise resume and
-    immutable run manifests.
-  - BC-MLP and BC-RNN (LSTM), capacity-matched at about 1.08 M parameters, plus an
-    action-chunking control, BC-MLP-chunk.
-  - Validation-only closed-loop evaluation on the pinned container, with checkpoint
-    hashes carried into every record (DECISIONS D-032–D-038).
-- Session 4: the conditional diffusion action policy.
-  - A 1D temporal U-Net (adapted from robomimic, 1.09 M parameters) denoises 16-step action
-    chunks (DDPM training, K = 100; DDIM-10 sampling), with EMA. It is bitwise equal to
-    diffusers 0.11.1 and robomimic `d309eae` on fixed arrays.
-  - Seeded stochastic evaluation: one noise seed per (policy seed, start, repeat).
-  - `scripts/export_denoising.py` exports the real intermediate action tensors of recorded
-    validation decisions, replayed bitwise and labeled as proposals (DECISIONS D-039–D-044).
-- Known issues that shape later sessions are listed in [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
+- **Freezes before tests.** `docs/FINAL_TEST_FREEZE.md` (Level 1),
+  `docs/RGB_EXPERIMENT_FREEZE.md` and `docs/LEVEL2_EXPERIMENT_FREEZE.md` fix configurations,
+  checkpoint hashes, held-out schedules and the analysis before any held-out start was used.
+  Each held-out evaluation ran once; the code refuses to run it again.
+- **Locked held-out starts.** The held-out suites stay locked by code until their freeze is
+  committed; `make freeze-check` and the two gate commands check the frozen code and the gates.
+- **Nothing typed by hand.** The paper's tables, figures and every prose number, and this
+  README's findings block, are generated from hash-pinned frozen files
+  (`make paper-check`, `make release-check`).
+- **An independent audit.** [docs/AUDIT.md](docs/AUDIT.md) records four fresh-context audits
+  (simulator and splits, statistics, spend and timeline, the paper's claims). Every finding
+  has a correction or a disclosed limitation.
+- **Negative and null results are reported.** For example, H2-c is not separated, the RGB
+  comparison is not separated, and H5 is separated in the negative direction.
+- **Spend is reconciled.** All paid compute (Modal) ran under committed owner approvals and
+  reconciles launch by launch with Modal's billing ([reports/compute/](reports/compute/)).
 
-## Quick start
+## Reproduce
+
+Requirements: macOS arm64 or Linux (x86_64 or aarch64), [uv](https://docs.astral.sh/uv/),
+git; Node 24 for the site; [Tectonic](https://tectonic-typesetting.github.io/) for the PDF;
+Docker for the canonical evaluation container. Full commands and what each proves:
+[docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md).
 
 ```bash
-make setup        # uv sync --frozen (Python 3.11 venv from uv.lock)
-make test         # unit + simulator tests; dataset tests skip if data absent
-make smoke-sim    # real Lift/Can reset/step/success/render, no dataset needed
-make download     # official Lift + Can PH datasets (~170 MB), SHA-256 verified
-make check-data   # rebuild the data pipeline in memory; must equal the committed manifests
-make build-data   # write the processed Lift/Can features (gitignored); refuses on any mismatch
-make verify-data  # HDF5 audit, obs/state alignment, replay of all demos, data determinism check
-make audit-data   # reports/data_audit.json, figures, docs/DATA_DICTIONARY.md
-make check-eval-states   # regenerate the eval suites in memory; must equal data/eval_states
-make replay-demos        # 12 sampled demos/task through RoboForgeEnv: divergence, montage, video
-make check-determinism   # two fresh processes, same seed -> bitwise-identical rollouts
-make sanity-eval-canonical  # random + no-op policies on the validation suite, pinned container
-make export-clip && make web-contract  # one real clip, verified against three.js (node)
-make train-smoke         # CPU miniature: overfit checks + 200-step train + 2-start dev eval
-make train MODEL=bc_mlp TASK=lift SEED=0        # one local CPU training run -> runs/<run_id>/
-make eval TRAIN_RUN=runs/<run_id>               # validation rollouts of every checkpoint (container)
-make select TRAIN_RUN=runs/<run_id>             # RESEARCH_PROTOCOL §7 checkpoint selection
+git clone https://github.com/zackholt05-tech/roboforge.git && cd roboforge
+make setup          # uv sync --frozen: Python 3.11 and the exact pins of uv.lock
+make test           # full suite; dataset tests skip with a reason until the data exist
+make download       # official Lift + Can PH datasets from the pinned revision, SHA-256 checked
+make check-data build-data   # rebuild the processed features; must equal the committed manifests
+make smoke-sim SMOKE_OUT=/tmp/smoke   # real reset/step/success/render on both tasks
+
+make paper-check    # regenerate every paper table, figure and number from the frozen files
+make paper          # build paper/main.pdf (Tectonic; first use fetches its TeX bundle once)
+make release-check  # identity, trailers, secrets, paths, docs and the README block
+
+make web-install web-data web-assets web-build web-test   # the Observatory site
+cd website && npm run preview                              # http://127.0.0.1:4173
 ```
 
-Requirements: macOS arm64 or Linux x86_64/aarch64, [uv](https://docs.astral.sh/uv/).
-Linux headless rendering uses `MUJOCO_GL=osmesa` or `egl` (see
-[infra/containers/Dockerfile.sim-cpu](infra/containers/Dockerfile.sim-cpu)). OSMesa is
-verified on linux/aarch64; x86_64 and EGL are not yet (KNOWN_ISSUES KI-001).
+The frozen held-out targets (`make eval-final`, `make rgb-heldout`, `make pc-heldout` and
+their analyses) are never to be run again; they refuse once their results exist.
+
+**Not redistributed:** the datasets (downloaded and checked by `make download`), the trained
+checkpoints and the per-episode rollout records (gitignored `runs/`). The
+committed summaries, selections and analyses regenerate every reported number; re-running a
+policy needs retraining it from the committed configurations.
+
+**Resources:** Level 1 trained on a local CPU (an Apple-silicon laptop) at no cost; the RGB
+and point-cloud studies trained on one NVIDIA L4 on Modal (the spend is in the findings above);
+all evaluation ran on the local CPU container. Disk and time measured in the Session 12
+fresh-clone reproduction are in [docs/FINAL_RELEASE_AUDIT.md](docs/FINAL_RELEASE_AUDIT.md).
+
+## How the showcased episodes were chosen
+
+Every clip in the README, the paper and the Observatory is a recorded evaluation episode,
+re-rendered from its saved simulator states and never re-simulated. Selections follow written
+rules fixed before export ([docs/DECISIONS.md](docs/DECISIONS.md) D-089): the first success and
+first failure per task and family by sorted start, the first head-to-head starts where (a) both,
+(b) only diffusion or (c) only BC-MLP succeed, and the first validation decisions for the
+denoising traces. Case studies are labelled as such. The full ledger is
+[docs/VISUAL_PROVENANCE.md](docs/VISUAL_PROVENANCE.md).
+
+## Extensions: RGB and point clouds
+
+Both optional studies ran, each separately preregistered, frozen and tested once:
+
+- **RGB (Session 8):** visual BC-chunk vs visual diffusion on Lift from two cameras plus
+  proprioception (ResNet-18 encoder, trained on one L4). Both reach the task's ceiling.
+- **Level 2 point clouds (Session 9):** a DP3-inspired point-cloud diffusion policy (not a DP3
+  reproduction) against the frozen RGB diffusion policy, from sensor-like depth and calibration
+  only (no segmentation, no object pose). It generalized worse to shifted cube placements.
+
+## Limitations
+
+- **Simulation only**, with exact object state as input for Level 1 (privileged information).
+- **Resolution:** three training seeds and one set of held-out starts per task cannot resolve
+  differences of a few points near the ceiling; Lift saturates (KI-034), and several
+  separations depend on how the seed-level uncertainty is modelled (KI-053).
+- **A confound:** the diffusion sampler bounds actions to the training range, the BC heads do
+  not (KI-052). An evaluation-only test that would separate the two effects was not run.
+- **Scale:** a compact diffusion U-Net, matched in size to the BC models, and a small tuning
+  budget; the results say nothing about large diffusion policies.
+- **Platform:** physics is not bit-identical across platforms (KI-013); every reported rollout
+  ran on one pinned Linux container.
+
+The full list, with the audit findings, is §9 of the paper and
+[docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 
 ## Repository layout
 
 ```text
-configs/simulator/   task contracts generated from dataset metadata (tested for equality)
-configs/data/        canonical observation-feature selection, horizons, normalization per task
-configs/models/      BC run configs (architecture, horizons, optimizer, step budget)
-configs/eval/        evaluation suites (seeds, final-test lock, termination) + canonical platform
-data/manifests/      dataset source registry (pinned revision, SHA-256) + tasks/ task manifests
-data/splits/         episode-level train/valid split manifests (all IDs, hashed)
-data/normalization/  train-only normalization statistics (hashed)
-data/eval_states/    validation + final-test initial-state suites (final test locked)
-src/roboforge/       data/ (fetch, specs, features, processed, split, normalization, sequence,
-                     audit) · sim/ (env adapter, snapshots, eval suites, kinematics, render) ·
-                     eval/ (policies, rollout recorder, learned policy, validation, selection)
-                     · models/ (BC-MLP, BC-RNN, diffusion U-Net, schedulers, registry) ·
-                     train/ (config, trainer, EMA, checkpoints, runs) · viz/ (three.js
-                     coordinates, clip, denoising traces) · compute/ (Modal plans,
-                     approval gate, cost ledger, retrieval, remote jobs, profiles, estimates)
-scripts/             reproducible CLIs used by the Makefile
-tests/               unit/ · simulator/ · integration/ · research_integrity/ · web_contract/
-                     (pytest markers: sim, data, render, slow, web)
-infra/containers/    headless Linux simulation image + run_sim_cpu.sh (canonical platform)
-infra/modal_app.py   Modal entrypoint (dry run by default; paid launches need an approval row)
-reports/feasibility/ Session 0 evidence (JSON reports, rendered frames)
-reports/data_audit*  Session 1 dataset audit (JSON + figures)
-reports/session2/    Session 2 evidence (replay, contract, determinism, sanity eval, clip)
-reports/session3/    Session 3 evidence (validation pilots, selection, equivalence, diagnostics)
-reports/session4/    Session 4 evidence (diffusion reference, pilot, equivalence, latency, denoising)
-reports/session5/    Session 5 evidence (Modal probe, simulations, profiles, cost projection)
-reports/compute/     cumulative paid-compute cost ledger (launch, result and billing events)
-runs/                training and evaluation runs (gitignored; manifests + checkpoints)
-reports/session10/   Session 10 Observatory export (clips, media, reference frames, traces)
-website/             the Observatory site (own package and lockfile; D-088)
-docs/                status, handoff, decisions, known issues, research protocol
+configs/             simulator, data, model, experiment and evaluation configurations
+data/                manifests, episode splits, normalization, evaluation start suites (no datasets)
+src/roboforge/       data, sim, models, train, eval, viz, compute, paper, release
+scripts/             the command-line tools behind the Makefile
+tests/               unit, simulator, integration, research_integrity, web_contract
+infra/               the canonical evaluation container and the Modal entrypoint
+reports/             evidence by session: results, analyses, figures, Observatory export
+paper/               the LaTeX report, generated tables and figures, main.pdf
+website/             the RoboForge Observatory (React Three Fiber, own lockfile)
+docs/                status, decisions, known issues, ledger, freezes, audit, release audit
 ```
 
-## Authorship and credit
+## Credits
 
-Project author: **Zackary Holt**. RoboForge relies on robomimic, robosuite, MuJoCo and the
-Diffusion Policy line of work; datasets, licenses and required citations are listed in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Project author: **Zackary Holt**. RoboForge builds on robomimic and its datasets (Mandlekar et
+al.), robosuite (Zhu et al.), MuJoCo (Todorov et al.), Diffusion Policy (Chi et al.), whose
+conditional U-Net is adapted through robomimic, and the DP3 paper (Ze et al.), which inspired the
+point-cloud arm. Licenses and required citations: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+To cite RoboForge, use [CITATION.cff](CITATION.cff); please also cite the datasets, simulators
+and algorithms it builds on.
 
 ## License
 
-RoboForge is licensed under the [Apache License 2.0](LICENSE); see also [NOTICE](NOTICE).
-Third-party software, datasets and assets keep their own licenses
-([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
+Apache License 2.0 ([LICENSE](LICENSE), [NOTICE](NOTICE)). Third-party software, datasets and
+assets keep their own licenses.

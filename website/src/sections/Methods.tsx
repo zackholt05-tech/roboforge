@@ -103,8 +103,12 @@ export default function Methods() {
               for recording (Apache-2.0), and the DP3 paper that inspired the point-cloud arm (no DP3 code is used).
               The site is built with React, three.js and React Three Fiber.</p>
             <p className="fine">robosuite is © 2022 Stanford Vision and Learning Lab and UT Robot Perception and Learning Lab,
-              released under the MIT License. Robot meshes are not redistributed with this repository; they are read
-              from the installed package when the site is built. Full notices: THIRD_PARTY_NOTICES.md.</p>
+              released under the MIT License. The robot and object meshes are read from the installed robosuite package
+              when the site is built and are never stored in the main branch; a hosted build serves them under that
+              license, whose text ships with the site in THIRD_PARTY_LICENSES.txt with the other bundled licenses.
+              Full notices: THIRD_PARTY_NOTICES.md.</p>
+            <p className="fine">Code, data manifests, frozen results and the report (paper/main.pdf, a local build, not peer
+              reviewed): <a href="https://github.com/zackholt05-tech/roboforge" rel="noreferrer">github.com/zackholt05-tech/roboforge</a>.</p>
           </div>
           <ol className="refs">
             {REFS.map(([t, a, u]) => <li key={u}><a href={u} rel="noreferrer">{t}</a><span className="dim">{a}</span></li>)}

@@ -13,7 +13,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-006 | LOW | MITIGATED | egl_probe does not build on macOS |
 | KI-007 | MEDIUM | RESOLVED (Session 3) | Local Claude Code plugin hooks blocked legitimate commands |
 | KI-008 | MEDIUM | OPEN | Local disk nearly full (Docker storage repaired) |
-| KI-009 | LOW | OPEN | Evidence files contain absolute local paths |
+| KI-009 | LOW | ACCEPTED (Session 12, D-100) | Evidence files contain absolute local paths |
 | KI-010 | LOW | OPEN | Docker sim image is 8.7 GB |
 | KI-011 | MEDIUM | OPEN | Lift's initial-state distribution is narrow |
 | KI-012 | LOW | ACCEPTED | Repackaged v1.5 datasets ≠ CoRL 2021 numbers |
@@ -62,6 +62,9 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-055 | LOW | FIXED (Session 11, audit B-12, B-13) | `analyze_robustness.py` had no run-once guard; `analyze_level2.py` hashed a report before checking it exists |
 | KI-056 | LOW | DOCUMENTED (Session 11, audit C-6) | One RGB run's training hours omit a preempted attempt that was billed |
 | KI-057 | LOW | DOCUMENTED (Session 11, audit C-5, C-21) | Governance record defects: A-01 probe launch count exceeded before its amendment; the Level 1 freeze calls a content hash "SHA-256" |
+| KI-058 | LOW | FIXED (Session 12) | A fresh clone without datasets failed 9 RGB and point-cloud trainer unit tests that read the processed Lift data without skipping |
+| KI-059 | LOW | FIXED (Session 12) | A fresh clone failed 4 held-out gate tests: their "runs/ not present" skip tested the directory, which a clone has (README.md) |
+| KI-060 | LOW | ACCEPTED (Session 12) | The locked diffusers 0.11.1 and transformers 4.41.2 (pinned by robomimic) carry published security advisories |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -206,6 +209,12 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
 Some files contain `/Users/zackaryholt/...` paths: `reports/feasibility/*.json`
 (environment snapshot, file paths) and `logs/session0/*.log`. Scrub or regenerate before a
 public release (Session 12).
+- **Session 12 (owner decision D-100, "Disclose, no rewrite"):** 136 tracked files carry such
+  paths (the logs of Sessions 0–9, four `reports/feasibility/` and `reports/session5/` evidence
+  files, this file and one test fixture), and every commit in history has them. They reveal only
+  the local username; no secret was found (`make release-check`). The evidence bytes stay
+  unchanged, since some logs are hash-pinned paper sources and rewriting history would change
+  every cited commit SHA. `make release-check` fails if such a path appears in any other file.
 
 ### KI-010 — Docker sim image is 8.7 GB (25.6 GB unpacked)
 The PyPI torch wheels for linux-aarch64 (and x86_64) bundle CUDA libraries. CPU rollout
@@ -1131,3 +1140,37 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Record order (audit C-20):** D-086's amendment time and E9-11's rehearsal order were wrong;
   both are annotated in place.
 
+### KI-058 Trainer tests needed processed data but did not skip without it (LOW, FIXED; Session 12)
+- **Found by** the Session 12 fresh-clone reproduction (D-098): before `make download`, the
+  CI test selection failed 9 tests (7 errors, 2 failures) in `tests/unit/test_rgb_train.py`,
+  `test_pc_train.py` and `test_rgb_train_plan.py` with `FileNotFoundError` on
+  `data/processed/robomimic_v1.5_ph/lift/lowdim_v1.hdf5`. The README promised that dataset
+  tests skip with a reason.
+- **Fix** (`d9da1dd`): a session-scoped fixture `lift_processed_path` in `tests/conftest.py`
+  skips them with the reason. Test infrastructure only; in the working repository, which has the
+  data, all 16 tests of these files still run and pass.
+
+### KI-059 Gate tests looked for runs/, which a fresh clone has (LOW, FIXED; Session 12)
+- **Found by** the fresh clone: 4 tests of `tests/research_integrity/` failed with
+  `FileNotFoundError`. `runs/` is gitignored except `runs/README.md`, so the existing
+  `if not runs.is_dir(): pytest.skip(...)` never fired; and the frozen RGB and Level 2 evaluators
+  read the training record before the platform check, so the "canonical platform" assertion met
+  a missing file.
+- **Fix** (`bd3bf6b`): each test skips only its record-dependent part when the specific frozen
+  record is absent. The gate-shut and host-refusal assertions still run everywhere; with the
+  records present (the working repository) all 45 research-integrity tests run and pass. The
+  frozen evaluators are unchanged (`make freeze-check`, both gates open).
+
+### KI-060 Published advisories in two pinned dependencies (LOW, ACCEPTED; Session 12)
+- `pip-audit` over the 72 PyPI packages of `uv.lock` (`reports/session12/pip_audit.json`) lists
+  29 advisory IDs in **diffusers 0.11.1** (remote code through `from_pretrained`) and
+  **transformers 4.41.2** (deserialization of untrusted checkpoints, ReDoS in tokenizers). Both
+  versions are pinned by robomimic `d309eae`. RoboForge uses diffusers only for the scheduler
+  classes in the reference-equivalence check (`src/roboforge/models/reference.py`, never
+  `from_pretrained`) and never imports transformers; no RoboForge path loads a model, tokenizer
+  or pipeline from an untrusted source.
+- **Not upgraded:** `uv.lock` is the frozen environment record and a hash-pinned paper source
+  (D-094); changing it would need a new decision and a re-verification of the reference
+  equivalence. Anyone reusing this environment for other work should upgrade.
+- robosuite and robomimic are installed from git, so `pip-audit` cannot audit them; `npm audit`
+  finds no vulnerability in the site's packages (`reports/session12/npm_audit_*.json`).

@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 11 STOP, updated 2026-11-09) -->
+<!-- parsable handoff header (real values; Session 12 STOP, project complete, updated 2026-11-09) -->
 ```yaml
 project: roboforge-3d
-current_session: 11
-session_status: PASS          # Session 11: paper/main.pdf from hash-pinned frozen files, independent audit docs/AUDIT.md (A-D), reproducibility docs; local only, $0
-next_session: 12              # fresh-clone reproduction, final QA, public release only with owner authorization; Session 11 handoff §10, fresh context
-last_verified_commit: 8a08247   # lint clean, full suite (alone) 513 passed, freeze-check OK, RGB + Level 2 gates open; paper-check, paper lint, make paper byte-identical; site build, vitest 49
+current_session: 12
+session_status: PASS          # Session 12: fresh-clone reproduction, final QA, release v1.0.0 (D-097-D-104); $0 paid compute
+next_session: none            # PROJECT COMPLETE (MASTER_SPEC Session 12 STOP); no next-session prompt
+last_verified_commit: release-candidate   # recorded with its STOP results in the follow-up commit (# Session 12 Handoff §4)
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -76,12 +76,61 @@ heldout_results:                      # family success %, 3 seeds x 50 held-out 
 modal: {gate_a: done, A-01: "closed, $0.148", A-02: "closed, $0.0317", A-03: "closed, $8.06", A-04: "Level 2, closed, $2.37 (5 launches; KI-047; detached launches since D-085)", open_approvals: none, month_to_date: "$15.89 of $30 (2026-11-09)", egl_vs_osmesa: "PENDING (KI-001, KI-033)"}
 final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081); Level 2 TESTED ONCE (Session 9, D-086 gate, a031e88; analysis 620c541). Session 10 re-rendered recorded episodes only. All three locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1, RGB or Level 2 configuration, ever"
 disk: "about 17 GB free at the end of Session 10 (KI-008); the Observatory export is about 19 MB in git; the Modal runs Volume keeps every checkpoint"
-next_required_owner_approval: "Session 12: any public repository, release, push or hosting needs explicit owner authorization and credentials; paid compute needs a new approval row"
+next_required_owner_approval: "none open. Publication, Pages and CI were authorized in Session 12 (D-099, D-101, D-102). Any further paid compute needs a new approval row; any new experiment (e.g. the KI-052 clamp test) needs its own decision and preregistration"
 observatory: {decisions: "D-087-D-091", site: website/, export: "reports/session10/observatory/ (37 clips from clean b5fc2ee, canonical container; ebfd0c3)", findings: "findings.json, 8 frozen sources (c73a080)", verification: "viewer_verification.json: 18/18 frames pass (robot IoU >= 0.9998, centroid <= 0.04 px)", hosting: "none (owner, D-090); no deployed or staging URL", meshes: "extracted at build time by make web-assets, gitignored (D-090)", provenance: docs/VISUAL_PROVENANCE.md}
 level2_study: {freeze: "docs/LEVEL2_EXPERIMENT_FREEZE.md @ b93c50c (sha256 ffe5a03e...)", gate: "D-086 @ b1f4da2, amended 08c3aa8", runs: [s9_pc_diffusion_dp3_lift_seed0_8fd35613, s9_pc_diffusion_dp3_lift_seed1_a66a2758, s9_pc_diffusion_dp3_lift_seed2_402a1f24], selections: "30000 / 40000 / 60000 (reports/session9/pc_selection/)", placement: "reports/session9/level2_placement/ @ 4ebebc1", heldout: "reports/session9/pc_heldout/ @ a031e88", results: "reports/session9/level2_results/ @ 620c541 (+ ERRATA.md)", h5: "pc - rgb on ood_cube_shift -41.3 pp [-54.0, -28.0], separated (-)", heldout_success: {pc_diffusion: 100.0, rgb_diffusion: 100.0}, label: DP3-inspired, privilege: sensor-like}
-paper: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, build: "make paper (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400)", generated: "paper/generated/ (35 files, index.json)", audit: docs/AUDIT.md, decisions: "D-092-D-096", label: "local build, not peer reviewed"}
+paper: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, build: "make paper (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400)", generated: "paper/generated/ (35 files, index.json)", audit: docs/AUDIT.md, decisions: "D-092-D-096", label: "local build, not peer reviewed", fresh_clone: "byte-identical rebuild (Session 12)"}
+release: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097-D-104", repository: "https://github.com/zackholt05-tech/roboforge", observatory: "GitHub Pages (D-102)", ci: ".github/workflows (D-101)", state: "see # Session 12 Handoff §5 (publication record, verified)"}
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 378ea43", selections: reports/session8/rgb_selection/, heldout: "reports/session8/rgb_heldout/ @ bc054bc", results: "reports/session8/rgb_results/ @ 3b23255", success: {rgb_diffusion: 100.0, rgb_bc_chunk: 99.3}, diffusion_minus_bc: "+0.7 pp [+0.0, +4.0], not separated", videos: reports/session8/rgb_videos/}
 ```
+
+# Session 12 Handoff (project complete)
+
+Do not trust this file blindly: every claim names its command and evidence
+(`docs/FINAL_RELEASE_AUDIT.md`, `logs/session12/`, `reports/session12/`).
+
+## 1. Session completed
+Session 12 (MASTER_SPEC Session 12: fresh-clone reproduction, final quality assurance, public
+release). Status **PASS**. **This is the last session; there is no next-session prompt.**
+
+## 2. Completed work
+- **Decisions D-097 to D-104**, the owner's choices asked once with the facts: public repo, tag
+  `v1.0.0` and GitHub release (D-099); GitHub Pages (D-102); CI on push (D-101); local paths
+  disclosed, no history rewrite (D-100).
+- **Fresh-clone reproduction** (D-098): full suite 519 passed and 7 skipped (each with its
+  reason); container and host smoke 33/33; download links and SHA-256; data rebuild equal;
+  `make paper` byte-identical (`c648e753…`); site build, vitest 49/49, E2E 7/7; a frozen
+  checkpoint hash-checked against the freeze and loaded. It found and fixed two test-only
+  defects (KI-058, KI-059).
+- **Release tooling** (`src/roboforge/release/`, `scripts/release_check.py`,
+  `readme_findings.py`, `readme_preview.py`, `pages_bundle.py`, `license_inventory.py`) and
+  `make release-check`, `readme-findings`, `readme-preview`, `pages-bundle`.
+- **README** per MASTER_SPEC §11.2 with generated findings and setup blocks and a preview from
+  recorded renders; `CITATION.cff` v1.0.0; `docs/REPRODUCIBILITY.md`, `THIRD_PARTY_NOTICES.md`,
+  site credits; `docs/FINAL_RELEASE_AUDIT.md`.
+- **CI** (`.github/workflows/`): python-tests, research-integrity, web-build.
+
+## 3. Results (nothing here is a new experimental result)
+The frozen findings are the generated block of `README.md` and `docs/FINAL_RELEASE_AUDIT.md` §2
+(from `paper/generated/numbers.tex`): Can diffusion − BC-MLP separated under the preregistered
+bootstrap but fragile under the seed-level check; H2-c not separated on either task; BC-RNN −
+BC-MLP separated on both; diffusion costs far more to train and run; the RGB comparison not
+separated at the Lift ceiling; H5 separated in the negative direction (point clouds generalized
+worse to shifted cubes).
+
+## 4. STOP checks (release candidate)
+Recorded in the follow-up commit with the release candidate's SHA.
+
+## 5. Publication record
+Recorded in the follow-up commits, each step only after it was verified.
+
+## 6. Outstanding items (none blocks the release)
+- Open KIs: KI-001/KI-033 (EGL vs OSMesa on Modal), KI-008/KI-010 (disk, image size), KI-011,
+  KI-021, KI-023, KI-024, KI-028, KI-034, KI-035, KI-042; KI-052 and KI-053 documented; KI-060
+  accepted.
+- Not run, by decision: the KI-052 clamp test (needs its own decision and the label
+  "exploratory, after the freeze"); DiT, GMM-BC, Square (D-096).
+- Optional owner actions: a Modal workspace budget; pruning the Docker build cache (KI-008).
 
 # Session 11 Handoff
 

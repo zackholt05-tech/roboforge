@@ -425,6 +425,23 @@ Tectonic TeX bundle (no compute).
 **Session 11 compute:** local CPU only, a few minutes of report generation and PDF builds; no
 paid or remote compute, no hosting. Session 11 total: **$0**.
 
+### Session 12 (2026-11-09 onward): fresh-clone reproduction, final QA, release
+Level 1, the RGB study and Level 2 are frozen. Nothing here trains, evaluates or changes a
+frozen result. The only policy-related action is a hash check and strict load of one frozen
+checkpoint (no rollout). Network use: the dataset download in the fresh clone, `pip-audit`,
+`npm audit`, the link check, and the publication steps the owner authorized (D-099).
+
+| ID | Date | Session | Type | What | Outcome | Evidence | Cost |
+|---|---|---|---|---|---|---|---|
+| E12-01 | 2026-11-09 | 12 | decision | Makefile defaults s12 (D-097); fresh-clone environment (D-098). Owner, asked with the facts: **"Public repo + tag + release"** (D-099), **"GitHub Pages"** (D-102, supersedes D-090's hosting part), **"Disclose, no rewrite"** for local paths (D-100), **"Add CI, run on push"** (D-101); README generated from frozen macros (D-103); release checks (D-104) | Recorded before acting; tooling committed `21fc749` | `docs/DECISIONS.md` D-097–D-104 | $0 |
+| E12-02 | 2026-11-09 | 12 | fresh-clone reproduction | `git clone --no-local` into scratch; `uv sync --frozen`; lint; CI test selection; research-integrity tests; freeze-check; gates; paper-check; container smoke (both tasks); `make download check-data build-data`; full suite alone; host smoke; `make paper`; site install, data, meshes, build, vitest, E2E, web contract; one frozen checkpoint hash-checked and loaded | **Two findings, fixed:** KI-058 (9 trainer tests without a data skip, `d9da1dd`), KI-059 (4 gate tests, `bd3bf6b`). Then: full suite **519 passed, 7 skipped, 0 failed** (8 min 42 s); container smoke 33/33; downloads SHA-256 equal; rebuilt features equal the manifests; **PDF byte-identical** (`c648e753…`); site within budgets, vitest 49/49, E2E 7/7; checkpoint `41dd66dd…` equal to the freeze, 1,092,551 parameters | `docs/FINAL_RELEASE_AUDIT.md` §3, `logs/session12/fresh_clone/`, `reports/session12/fresh_clone/` | $0 |
+| E12-03 | 2026-11-09 | 12 | scans (read-only, network for audits) | `make release-check`; `pip-audit` on the exported lock; `npm audit`; license inventory; external links | History, trailers, secrets, paths (136 disclosed files), tracked content, docs, README blocks and preview: PASS. pip-audit: 29 advisory IDs in diffusers 0.11.1 and transformers 4.41.2, not reachable from RoboForge code (KI-060). npm audit: 0. Licenses: no copyleft in shipped code; two LGPL-3.0 transitive dependencies not redistributed. Links: all external URLs answer except the not-yet-created repository | `reports/session12/{pip_audit,npm_audit_*,licenses}.json` | $0 |
+| E12-04 | 2026-11-09 | 12 | documentation | README per MASTER_SPEC §11.2 (generated findings and setup blocks, preview GIF from the D-089 rule 3(a) pair); `CITATION.cff` v1.0.0; `docs/REPRODUCIBILITY.md` (clone URL, fresh-clone commands, CI); `THIRD_PARTY_NOTICES.md` (inventory, hosted build); site credits (hosted meshes, repository link); `docs/FINAL_RELEASE_AUDIT.md` | Site rebuilt: within budgets, vitest 49/49, E2E 7/7 | the files | $0 |
+
+**Session 12 compute:** local CPU only (about 15 minutes of tests and builds in the fresh
+clone, an estimate from the logged times); no paid or remote compute other than the free CI
+runs of D-101.
+
 ## Owner approvals for paid compute
 Machine-read by `roboforge.compute.approval` (D-049): a paid Modal launch is refused unless a
 `granted` row below covers its function and the committed spend plus the launch's upper-bound

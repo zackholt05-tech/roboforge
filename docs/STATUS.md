@@ -1,21 +1,38 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 11
-SESSION_STATUS: PASS            # Session 11: research paper (paper/main.pdf, 23 pages, generated from hash-pinned frozen files), independent audit (docs/AUDIT.md, passes A-D), reproducibility docs; local only, $0
-NEXT_SESSION: 12                # fresh-clone reproduction, final QA, public release (only with owner authorization); docs/HANDOFF.md "# Session 11 Handoff" §10, fresh context
-BLOCKERS: none                  # open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; KI-052 and KI-053 documented (audit HIGH findings, disclosed in the paper); KI-054, KI-055 fixed; KI-056, KI-057 documented
-LAST_VERIFIED_COMMIT: 8a08247   # lint clean; full suite (alone) 513 passed; freeze-check OK; RGB and Level 2 gates open; paper-check, paper lint, make paper (byte-identical rebuild); web-build within budgets, vitest 49/49
+CURRENT_SESSION: 12
+SESSION_STATUS: PASS            # Session 12: fresh-clone reproduction, final QA, release v1.0.0 (publication record below); $0 paid compute
+NEXT_SESSION: none              # project complete (MASTER_SPEC Session 12 STOP); no further phase is started
+BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-052, KI-053, KI-056, KI-057; accepted: KI-009 (D-100), KI-060; fixed in Session 12: KI-058, KI-059
+LAST_VERIFIED_COMMIT: release-candidate   # the Session 12 release-candidate commit; its SHA and STOP results are recorded in the follow-up commit
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c}
-EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080}
-PAPER: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400 (D-093)", generated: "paper/generated/ (35 files; index.json)", bibliography: "31 entries, all resolved (paper/bibliography_check.json)", label: "local build, not peer reviewed"}
+EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b]}
+PAPER: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400 (D-093)", fresh_clone_rebuild: "byte-identical (Session 12)", label: "local build, not peer reviewed"}
+RELEASE: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097-D-104", repository: "https://github.com/zackholt05-tech/roboforge (public, per D-099; verified state in the publication record)", observatory: "GitHub Pages per D-102 (verified state in the publication record)"}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (a031e88; analysis 620c541; never rerun). Sessions 10-11 read recorded evidence only; no start was stepped. Any later held-out access is exploratory or replication"
-RESOURCE_SPEND: {usd_billed_total: 10.61, session11_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; reconciled launch by launch with Modal billing (docs/AUDIT.md C-1); Sessions 10-11 local only"}
+FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only; no start was stepped"
+RESOURCE_SPEND: {usd_billed_total: 10.61, session12_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-12 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
 APPROVED_LIMIT: {A-03: "closed, $8.06 of $15", A-04: "closed, $2.37 of $9", open: none, local: "$0"}
 UPDATED: 2026-11-09
 ```
 
 # RoboForge Status
+
+## Session 12: fresh-clone reproduction, final QA, release (PASS)
+| Step (Session 12 prompt) | Status | Evidence |
+|---|---|---|
+| 1. Decisions before acting: Makefile defaults s12; fresh-clone environment; what "release" means; owner asked before any public action | DONE: D-097 (s12), D-098 (clone), D-099 (owner: **public repo + tag v1.0.0 + GitHub release**), D-100 (owner: local paths **disclosed, no rewrite**), D-101 (owner: **CI on push**), D-102 (owner: **GitHub Pages**), D-103 (README generated), D-104 (release checks) | E12-01 |
+| 2. Fresh-clone reproduction in a separate clean directory | DONE: full suite 519 passed, 7 skipped; container smoke 33/33; downloads SHA-256 equal; data rebuild equal; `make paper` byte-identical; site build, vitest 49/49, E2E 7/7; one frozen checkpoint hash-checked and loaded. Two test-infrastructure findings fixed (KI-058, KI-059) | E12-02, `docs/FINAL_RELEASE_AUDIT.md` §3 |
+| 3. Download links and commands; scans for placeholders, private paths, secrets, dataset copies, broken citations | DONE: `make download` in the clone; `make release-check` PASS (136 disclosed local-path files, D-100) | E12-03, audit §5 |
+| 4. Commit identity, AI trailers, CITATION.cff | DONE: every commit on every ref `Zackary Holt <zackholt05@gmail.com>`, no trailer or byline; `CITATION.cff` v1.0.0, Zackary Holt only | audit §5 |
+| 5. Full test matrix, security and license scans | DONE: see the STOP row; pip-audit (KI-060, accepted), npm audit 0, license inventory; Python type checking not configured (stated) | audit §4 |
+| 6. README per §11.2 from real artifacts | DONE: generated findings and setup blocks, preview from the D-089 rule 3(a) pair, paper link labelled not peer reviewed; Observatory link only after the hosted site is verified | README, D-103 |
+| 7. `docs/FINAL_RELEASE_AUDIT.md` | DONE | the file |
+| 8. STOP: docs, checks, commit, completion summary | DONE (results in the follow-up commit) | this file, `docs/HANDOFF.md` |
+
+**Nothing here is a new experimental result.** The README's numbers are generated from the
+same frozen macros as the paper. No held-out start was stepped; no training, no evaluation, no
+paid compute.
 
 ## Session 11: research paper, reproducibility, independent audit (PASS, local only)
 | Step (Session 11 prompt) | Status | Evidence |

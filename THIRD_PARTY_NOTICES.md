@@ -2,14 +2,19 @@
 
 RoboForge (project author: Zackary Holt; licensed under Apache-2.0, see `LICENSE` and
 `NOTICE`) builds on the work of other researchers and open-source projects. This file records what is used, under which license, and how it
-must be cited. RoboForge does **not** redistribute any third-party dataset, simulator
-asset, mesh, or pretrained weight; datasets are fetched from their official source by
-`scripts/download_data.py` and verified against SHA-256 hashes in
-`data/manifests/robomimic_v1.5_ph.json`.
+must be cited. The repository's `main` branch does **not** redistribute any third-party
+dataset, simulator asset, mesh, or pretrained weight; datasets are fetched from their official
+source by `scripts/download_data.py` and verified against SHA-256 hashes in
+`data/manifests/robomimic_v1.5_ph.json`. The hosted Observatory (the `gh-pages` branch, GitHub
+Pages) is the one exception, described under "Hosted Observatory" below.
 
 Status: licenses below were checked in Session 0 (2026-11-05) against the pinned
-revisions. BibTeX entries were copied from each project's own README, dataset card, or
-official project page (source noted). Re-verify before publication (Session 11).
+revisions and re-verified in Session 12 (2026-11-09) before publication: every distribution
+of the locked Python environment and every npm package of the site is inventoried with its
+declared license in `reports/session12/licenses.json` (`scripts/license_inventory.py`). BibTeX
+entries were copied from each project's own README, dataset card, or official project page
+(source noted); the paper's bibliography was resolved against DOI and arXiv metadata
+(`paper/bibliography_check.json`).
 
 ## Software dependencies (installed, not vendored)
 
@@ -18,7 +23,11 @@ official project page (source noted). Re-verify before publication (Session 11).
 | MuJoCo (Python bindings) | `mujoco==3.2.7` | Apache-2.0 | GitHub `google-deepmind/mujoco` license field |
 | robosuite | v1.5.1, commit `51cc01785bab80ffeed20da15e67d7dd4140e76a` | MIT (© 2022 Stanford Vision and Learning Lab and UT Robot Perception and Learning Lab); the LICENSE notes it includes partial MuJoCo code under Apache-2.0 | `LICENSE` in the pinned checkout |
 | robomimic | commit `d309eaecc18acf4152a830a895a6984b8ac71b05` (v0.5.0 + 15) | MIT | GitHub license field / `LICENSE` |
-| PyTorch, torchvision, NumPy, h5py, diffusers, transformers, etc. | see `uv.lock` | their respective licenses (BSD/MIT/Apache-2.0) | to be enumerated per package before release |
+| PyTorch, torchvision, NumPy, h5py, diffusers, transformers, etc. | see `uv.lock` | their respective licenses (mostly BSD, MIT, Apache-2.0; matplotlib's PSF-style license; MPL-2.0 for two) | enumerated per package in `reports/session12/licenses.json` (76 distributions) |
+| pynput, qpsolvers (transitive dependencies of robosuite and its IK stack) | see `uv.lock` | LGPL-3.0 | installed from PyPI by `uv sync`, never imported by RoboForge code and not redistributed |
+
+robosuite and robomimic declare no license in their package metadata; both repositories are
+MIT at the pinned revisions (robosuite's installed distribution carries its `LICENSE`).
 
 ## Adapted code (Session 4)
 
@@ -57,6 +66,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Hosted Observatory (GitHub Pages, Session 12)
+
+The Observatory site is built locally (`make web-data web-assets web-build`) and published from
+the `gh-pages` branch (DECISIONS D-102). Unlike `main`, that build contains:
+- the visual meshes of the Franka Panda, gripper, cube and can, extracted from the compiled
+  MuJoCo model of robosuite 1.5.1 (MIT, © 2022 Stanford Vision and Learning Lab and UT Robot
+  Perception and Learning Lab);
+- the Archivo and Newsreader variable fonts from fontsource (SIL Open Font License 1.1);
+- the bundled JavaScript of React, React DOM, scheduler, three.js, React Three Fiber, zustand,
+  its-fine, suspend-react, react-use-measure, use-sync-external-store and zod (MIT), and of
+  small helpers such as ieee754 (BSD-3-Clause).
+
+The site ships `THIRD_PARTY_LICENSES.txt` with the full license text of robosuite and of every
+runtime npm package (`scripts/pages_bundle.py`). React Three Fiber's npm package ships no
+license file, so its upstream `LICENSE` at the same version is kept in
+`website/licenses/react-three-fiber.LICENSE` with its source URL. The build tools (Vite,
+TypeScript, lightningcss under MPL-2.0, Playwright, vitest) are not shipped.
+
+## Robot and object assets
 
 Robot and object assets (Franka Panda meshes, Lift cube, PickPlace bins/can) ship inside
 the robosuite package (`robosuite/models/assets/`). Session 0 found no separate license or

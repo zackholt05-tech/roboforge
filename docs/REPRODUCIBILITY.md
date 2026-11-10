@@ -3,7 +3,7 @@
 ## Environment
 ```bash
 # prerequisites: uv >= 0.11 (https://docs.astral.sh/uv/), git; macOS arm64 or Linux
-git clone <repo> roboforge && cd roboforge
+git clone https://github.com/zackholt05-tech/roboforge.git && cd roboforge
 make setup            # == uv sync --frozen  -> .venv with Python 3.11 and exact pins from uv.lock
 ```
 Pinned core: mujoco 3.2.7 · robosuite v1.5.1 (`51cc017`) · robomimic `d309eae` ·
@@ -66,6 +66,45 @@ Tectonic fetches its TeX bundle on first use. A fresh machine runs one networked
 `make paper` never reaches the network. Two `make paper` builds on this host and bundle give
 byte-identical PDFs; byte equality is not claimed across Tectonic versions, bundles or
 platforms (D-093).
+
+## Fresh-clone reproduction (Session 12)
+Session 12 cloned the committed tree into an empty directory (`git clone --no-local`, nothing
+shared with the working repository) and ran, in order (DECISIONS D-098; results with times in
+`docs/FINAL_RELEASE_AUDIT.md`, logs in `logs/session12/fresh_clone/`):
+
+```bash
+make setup                                   # uv sync --frozen (host only, never in the image)
+make lint
+uv run --frozen pytest tests/unit -m "not sim and not data and not render and not slow and not web"
+uv run --frozen pytest tests/research_integrity
+make freeze-check
+uv run --frozen python scripts/run_rgb_heldout.py gate
+uv run --frozen python scripts/run_pc_heldout.py gate
+make paper-check
+mkdir -p data/raw data/processed             # bind-mount targets of the container
+ROBOFORGE_EVIDENCE_SESSION=12 infra/containers/run_sim_cpu.sh \
+  python scripts/smoke_sim.py --task lift --out-dir reports/session12/container_smoke   # and can
+make download check-data build-data
+make test                                    # alone (KI-043)
+make smoke-sim SMOKE_OUT=<scratch dir>       # host; the default rewrites committed evidence
+make paper                                   # compare the PDF's SHA-256 with the committed one
+make web-install web-data web-assets web-build web-test web-e2e
+```
+
+What a fresh clone cannot do, and why:
+- **Re-run a policy.** Checkpoints and rollout records are in the gitignored `runs/` and are not
+  redistributed. Tests that need them skip with the reason; reported numbers are regenerated
+  from the committed summaries (`make paper-check`).
+- **A first Tectonic build offline.** Tectonic downloads its TeX bundle on first use (D-093).
+- **Bitwise physics on another platform.** Rollouts are reproducible on the canonical container
+  (KI-013).
+
+## Continuous integration
+`.github/workflows/` (DECISIONS D-101) runs on every push to `main` on GitHub's Ubuntu x86_64
+runners: lint and the unit tests that need no simulator, dataset, renderer, node or long run
+(`python-tests`); the held-out lock tests, `make freeze-check`, both gates, `make paper-check`
+and `make release-check` (`research-integrity`); and the site's data, meshes, build with its
+budgets and vitest (`web-build`). No dataset is downloaded and nothing is published.
 
 ## Paid and remote compute
 All paid compute ran on Modal under four committed approvals (A-01 to A-04): 24 launches,

@@ -67,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
         out = a.out if a.out.is_absolute() else REPO_ROOT / a.out
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(report, indent=1, sort_keys=True, default=str) + "\n")
-        print(f"wrote {out.relative_to(REPO_ROOT)}")
+        print(f"wrote {out}")
     failed = any(results.values())
     print("release-check: " + ("FAIL" if failed else "PASS"))
     return 1 if failed else 0

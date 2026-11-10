@@ -4,7 +4,7 @@ project: roboforge-3d
 current_session: 11
 session_status: PASS          # Session 11: paper/main.pdf from hash-pinned frozen files, independent audit docs/AUDIT.md (A-D), reproducibility docs; local only, $0
 next_session: 12              # fresh-clone reproduction, final QA, public release only with owner authorization; Session 11 handoff §10, fresh context
-last_verified_commit: "Session 11 STOP commit (hash recorded by the follow-up commit)"   # lint clean, full suite (alone) 513 passed, freeze-check OK, RGB + Level 2 gates open; paper-check, paper lint, make paper byte-identical; site build, vitest 49
+last_verified_commit: 8a08247   # lint clean, full suite (alone) 513 passed, freeze-check OK, RGB + Level 2 gates open; paper-check, paper lint, make paper byte-identical; site build, vitest 49
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun

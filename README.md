@@ -9,8 +9,7 @@ BC-MLP, same start; both succeed). Chosen by a written rule, not by taste: the f
 start on which both succeed (DECISIONS D-089 rule 3(a), labelled "representative"). Sources,
 checkpoints and transformation: [docs/media/readme_preview.json](docs/media/readme_preview.json).</sub>
 
-RoboForge is a research project by **Zackary Holt**. It compares deterministic behavior
-cloning, recurrent behavior cloning and a conditional diffusion action policy on simulated 3D
+RoboForge compares deterministic behavior cloning, recurrent behavior cloning and a conditional diffusion action policy on simulated 3D
 robotic manipulation. A 7-DoF Franka Panda arm in MuJoCo (through robosuite) learns the Lift
 and Can tasks from the robomimic proficient-human demonstrations. Every policy is evaluated by
 closed-loop simulator rollouts from paired, held-out initial states, under protocols that were

@@ -14,6 +14,14 @@ from pathlib import Path
 
 import pytest
 
+# Load torch._dynamo (and with it triton, which bundles its own LLVM) before any test imports
+# mujoco. With MUJOCO_GL=osmesa, `import mujoco` makes PyOpenGL load Mesa's libOSMesa, and with
+# it libLLVM-15, into the global symbol scope; triton loaded after that segfaults on Linux
+# (KNOWN_ISSUES KI-061). The first torch optimizer imports torch._dynamo, so without this a
+# test that builds one after a simulator-importing test module kills the pytest process. On
+# macOS there is no triton and this is only an import.
+import torch._dynamo  # noqa: F401
+
 from roboforge.sim.backend import configure_mujoco_gl
 
 configure_mujoco_gl()

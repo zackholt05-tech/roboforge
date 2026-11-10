@@ -17,7 +17,8 @@ INSTALLED = (REPO_ROOT / "data" / "manifests" / "rgb" / "lift_rgb84_v1.json").is
 
 @pytest.mark.skipif(not INSTALLED, reason="RGB dataset not installed")
 @pytest.mark.parametrize("family", ["bc_chunk", "diffusion"])
-def test_plan_fit_one_launch_under_a03_which_is_now_closed(family: str) -> None:
+def test_plan_fit_one_launch_under_a03_which_is_now_closed(family: str,
+                                                        lift_processed_path: Path) -> None:
     plan = train_plan(family, 0, "s8", None, events=[])
     assert plan["function"] == "train_gpu" and plan["timeout_s"] == 3600
     assert plan["resources"]["gpu"] == "L4" and plan["policy"]["max_attempts_per_launch"] == 4

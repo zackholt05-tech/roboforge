@@ -80,3 +80,20 @@ def lift_lowdim_path() -> Path:
 def can_lowdim_path() -> Path:
     """Path to the real Can PH low_dim file (skips if absent)."""
     return _dataset_path("can", "low_dim")
+
+
+@pytest.fixture(scope="session")
+def lift_processed_path() -> Path:
+    """Path to the processed Lift low-dim file (skips if `make build-data` has not run).
+
+    Session 12 fresh-clone finding: the RGB and point-cloud trainer tests read it but did not
+    skip without it, so a fresh clone or CI without datasets failed them (DECISIONS D-098).
+    """
+    from roboforge.data.pipeline import load_task_artifacts
+    from roboforge.data.processed import processed_path
+
+    proc = load_task_artifacts("lift")["task_manifest"]["processed"]
+    path = processed_path("lift", proc["converter_version"])
+    if not path.is_file():
+        pytest.skip(f"{path.name} not built (run `make download build-data`)")
+    return path

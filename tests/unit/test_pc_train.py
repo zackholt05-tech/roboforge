@@ -28,7 +28,7 @@ def _cfg(seed: int = 0) -> PCConfig:
 
 
 @pytest.fixture(scope="module")
-def coded_clouds() -> dict:
+def coded_clouds(lift_processed_path: Path) -> dict:
     """Cloud t of demo_k: point 0 = (t, k, 0) / 1000 + the box centre; 8 points per cloud."""
     from roboforge.data.pipeline import load_task_artifacts
     from roboforge.data.processed import load_processed, processed_path
@@ -36,6 +36,7 @@ def coded_clouds() -> dict:
     spec = _cfg().cloud_spec
     proc = load_task_artifacts("lift")["task_manifest"]["processed"]
     eps = load_processed(processed_path("lift", proc["converter_version"]))
+    assert processed_path("lift", proc["converter_version"]) == lift_processed_path
     out = {}
     for d, arr in eps.items():
         n, k = len(arr["obs"]), int(d.split("_")[1])

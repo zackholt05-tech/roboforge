@@ -28,13 +28,14 @@ def _cfg(family: str, seed: int = 0, **extra: object) -> RGBConfig:
 
 
 @pytest.fixture(scope="module")
-def coded_frames() -> dict:
+def coded_frames(lift_processed_path: Path) -> dict:
     """Frame t of demo_k at 16²: channel 0 = t mod 256, channel 1 = k mod 256."""
     from roboforge.data.pipeline import load_task_artifacts
     from roboforge.data.processed import load_processed, processed_path
 
     proc = load_task_artifacts("lift")["task_manifest"]["processed"]
     eps = load_processed(processed_path("lift", proc["converter_version"]))
+    assert processed_path("lift", proc["converter_version"]) == lift_processed_path
     out = {}
     for d, arr in eps.items():
         n, k = len(arr["obs"]), int(d.split("_")[1])

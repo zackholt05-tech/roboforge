@@ -81,7 +81,7 @@ function Robustness({ f, task }: { f: F; task: string }) {
               : <><strong>Success changes under perturbation.</strong>{" "}</>}
             {unsep.length === 0 ? "Every drop is separated." :
               `Every drop is separated except ${unsep.map((d) => `${FAMILY[famSet(d.a)[0]]} on the ${SET[famSet(d.b)[1]]} (${pp(d.difference)} points)`).join(", ")}.`}{" "}
-            Highest success: {best.join("; ")}. Which family holds up best depends on the perturbation, and an order of estimates is not a ranking: the separations are in the charts below.
+            Highest success: {best.join("; ")}. {ood.length > 1 ? "Which family holds up best depends on the perturbation, and an" : "An"} order of estimates is not a ranking: the separations are in the charts below.
           </p>
           <p className="fine">{f.notes.not_separated}</p>
         </div>

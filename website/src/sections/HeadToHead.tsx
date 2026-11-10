@@ -3,7 +3,7 @@
 // order) where (a) both succeed, (b) only diffusion succeeds, (c) only BC-MLP succeeds.
 import { useMemo, useState } from "react";
 import { OutcomeStrip } from "../charts/Charts";
-import { ClipCaption, Status } from "../components/ClipParts";
+import { ActionChannels, ClipCaption, Status } from "../components/ClipParts";
 import { decisionFrames, useClip, ViewerOrFallback } from "../components/ClipStage";
 import { Transport } from "../components/Transport";
 import { loadFindings } from "../lib/data";
@@ -39,6 +39,7 @@ function Pair({ a, b }: { a: Clip; b: Clip }) {
             <ViewerOrFallback clip={c} clock={clock} preset={preset} options={opts}
               ariaLabel={`3D reconstruction of ${FAMILY[c.family]} on ${c.state_id}`} />
             <ClipCaption clip={c} />
+            <ActionChannels clip={c} clock={clock} />
           </figure>
         ))}
       </div>

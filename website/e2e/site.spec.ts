@@ -31,6 +31,7 @@ test("every section renders from the exported data, without console errors", asy
   for (const id of SECTIONS) await expect(page.locator(`#${id} h2`).first()).toBeVisible();
   await expect(page.locator("#pixels .h5 .big-number")).toContainText("−41.3");
   await expect(page.locator("#findings")).toContainText("hierarchical paired");
+  await expect(page.locator("#compare .h2h-side .channels")).toHaveCount(2);
   await expect(page.locator("#findings .robustness")).toContainText("validation regime, not held-out");
   await expect(page.locator("#findings .robustness")).toContainText("BC-MLP-chunk, 79.3 %");
   await expect(page.locator("#findings .robustness .manifests summary")).toContainText("(33)");

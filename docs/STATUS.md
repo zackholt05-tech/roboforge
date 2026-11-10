@@ -1,7 +1,7 @@
 <!-- parsable status header -->
 ```yaml
 CURRENT_SESSION: 12
-SESSION_STATUS: PASS            # Session 12: fresh-clone reproduction, final QA, release v1.0.0 (publication record below); $0 paid compute
+SESSION_STATUS: PASS            # Session 12: fresh-clone reproduction, final QA, release v1.0.0 published (tag 82f3219 on 7b394fa; publication record below); $0 paid compute
 NEXT_SESSION: none              # project complete (MASTER_SPEC Session 12 STOP); no further phase is started
 BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-052, KI-053, KI-056, KI-057; accepted: KI-009 (D-100), KI-060; fixed in Session 12: KI-058, KI-059; partial: KI-061 (root cause found, test harness fixed)
 LAST_VERIFIED_COMMIT: ee1e574   # code as ab17fb2 (STOP checks below); CI on Linux aarch64 passed on it; later commits are records only
@@ -51,7 +51,9 @@ D-099, D-101, D-102):
 | Observatory | GitHub Pages from branch `gh-pages`, orphan commit `c14e041` (Zackary Holt), staged by `make pages-bundle` from clean `b4bd070`; build `built`; `https://zackholt05-tech.github.io/roboforge/` | `gh api …/pages` |
 | Live site check | all 186 files listed in `deploy.json` fetched from the live URL with equal SHA-256; the site's E2E run against the live URL 7/7 | `logs/session12/pages_live_e2e.log` |
 | External links after publication | 19/19 answered with HTTP < 400 | `reports/session12/release_check_network.json` |
-| Tag `v1.0.0` and GitHub release | recorded in the next commit, after verification | |
+| CI, Linux aarch64, `7b394fa` (the tagged commit) | python-tests pass (42760766015), research-integrity pass (42760766276), web-build pass (42760766117) | |
+| Tag `v1.0.0` | annotated tag object `82f3219` on `7b394fa`, tagger Zackary Holt <zackholt05@gmail.com>, no trailer; pushed (`git ls-remote`) | `git cat-file -p v1.0.0` |
+| GitHub release | `https://github.com/zackholt05-tech/roboforge/releases/tag/v1.0.0`, published 2026-11-10 05:24 UTC, not a draft or prerelease; notes written by hand (no generated notes, no byline); asset `main.pdf` (878,204 bytes), GitHub digest and the SHA-256 of the downloaded copy both `c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f`, equal to the committed `paper/main.pdf` | `gh release view`, `gh release download` |
 
 **Nothing here is a new experimental result.** The README's numbers are generated from the
 same frozen macros as the paper. No held-out start was stepped; no training, no evaluation, no

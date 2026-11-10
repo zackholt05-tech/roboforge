@@ -15,7 +15,7 @@ Every row below names the command that was run and its observed result. Logs:
 |---|---|
 | Tested code tree | Fresh clone (§3): `bd3bf6b`. After it, Session 12 changed release tooling, the site credits, the CI workflows and the test harness only (`src/roboforge/release/`, `scripts/release_check.py`, `readme_findings.py`, `license_inventory.py`, `website/src/sections/Methods.tsx`, `.github/workflows/`, `tests/conftest.py` import order for KI-061); nothing under the simulator, evaluation, models, training or analysis code. STOP checks ran on `b4bd070` and again on `ab17fb2` after the harness change (`docs/STATUS.md`); CI reran the D-101 checks from fresh checkouts on Linux aarch64 and passed on `ee1e574` (§7). Later commits change records only |
 | Report | `paper/main.pdf`, 23 pages, SHA-256 `c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f` (unchanged since Session 11; rebuilt byte-identical in the fresh clone) |
-| Tag | `v1.0.0`, annotated, on the commit that completes the release records (§7) |
+| Tag | `v1.0.0`, annotated (tag object `82f3219`), on `7b394fa`, the commit that completed the publication record; the commit after it records the tag and the release only (§7) |
 | Frozen protocols | Level 1 `bf0a0fa` (`docs/FINAL_TEST_FREEZE.md`), RGB `d9c6217`, Level 2 `b93c50c`; held-out results `97cc48a`, `3b23255`, `620c541` |
 | Platform of every reported rollout | Linux aarch64 container, image `sha256:1f685638f28c…` (D-017) |
 
@@ -151,7 +151,9 @@ Each row was verified before it was written (owner authorization D-099, D-101, D
 | Observatory | GitHub Pages from branch `gh-pages`, orphan commit `c14e041` (Zackary Holt), staged by `make pages-bundle` from clean `b4bd070`; build `built`; `https://zackholt05-tech.github.io/roboforge/` | `gh api …/pages` |
 | Live site check | all 186 files listed in `deploy.json` fetched from the live URL with equal SHA-256; the site's E2E run against the live URL 7/7 | `logs/session12/pages_live_e2e.log` |
 | External links after publication | 19/19 answered with HTTP < 400 | `reports/session12/release_check_network.json` |
-| Tag `v1.0.0` and GitHub release | recorded in the next commit, after verification | |
+| CI, Linux aarch64, `7b394fa` (the tagged commit) | python-tests pass (42760766015), research-integrity pass (42760766276), web-build pass (42760766117) | |
+| Tag `v1.0.0` | annotated tag object `82f3219` on `7b394fa`, tagger Zackary Holt <zackholt05@gmail.com>, no trailer; pushed (`git ls-remote`) | `git cat-file -p v1.0.0` |
+| GitHub release | `https://github.com/zackholt05-tech/roboforge/releases/tag/v1.0.0`, published 2026-11-10 05:24 UTC, not a draft or prerelease; notes written by hand (no generated notes, no byline); asset `main.pdf` (878,204 bytes), GitHub digest and the SHA-256 of the downloaded copy both `c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f`, equal to the committed `paper/main.pdf` | `gh release view`, `gh release download` |
 
 ## 8. MASTER_SPEC §13.2 release acceptance matrix
 

@@ -1862,6 +1862,22 @@ selection, label, result or finding of any study, and no held-out start is rolle
   - every proposal is labelled "proposal" and every schematic "illustrative";
   - the export fails if checkpoint hash, run provenance or simulator build metadata is
     missing (MASTER_SPEC §8.5).
+- **Amendment (Session 10 STOP): Level 1's robustness and ablation analysis is a source.**
+  - **Why:** MASTER_SPEC §8.2 F asks for ablations. Before STOP, section F showed only the
+    held-out results, and the Level 1 robustness (H4) and ablation (A1–A3) results were
+    missing.
+  - **Change:** `reports/session7/robustness/analysis.json` is now an eighth cited source,
+    copied verbatim by `roboforge.viz.obs_findings.robustness`. Its blocks are the H4
+    bootstrap and taxonomy and each ablation's arms, bias disclosure and bootstrap; each
+    evaluation is kept as a reference with its summary path and SHA-256.
+  - **Check:** the robustness configuration's content hash must equal the analysed one.
+  - **Display:** the site shows these results in their own panel, labelled "validation regime,
+    not held-out". The callouts only pick values from the data.
+  - **Scope:** no rollout, recomputation or selection is involved. `findings.json` was
+    regenerated from clean `8679aa9` (E10-06).
+  - **Modules:** the module named above was never committed under that name. The code
+    landed in `d12729f` as `roboforge.viz.obs_select`, `obs_scene`, `obs_media`,
+    `obs_branch`, `obs_denoise` and `obs_findings`; the rules are unchanged.
 
 ### D-090 Owner decisions: no hosting this session; meshes are extracted at build time and never committed (OWNER, 2026-11-09)
 - **Hosting:** the owner chose "No hosting". The site is built and verified locally

@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 9 STOP, updated 2026-11-09) -->
+<!-- parsable handoff header (real values; Session 10 STOP, updated 2026-11-09) -->
 ```yaml
 project: roboforge-3d
-current_session: 9
-session_status: PASS          # Session 9: Level 2 GO path complete (H5 separated (-)); see the Session 9 handoff below
-next_session: 10              # RoboForge Observatory; Session 9 handoff §10, fresh context
-last_verified_commit: 620c541   # Session 9 code: lint clean, 478 tests (alone), freeze-check OK, RGB + Level 2 gates open; the STOP commit adds docs only
+current_session: 10
+session_status: PASS          # Session 10: RoboForge Observatory, local only (no hosting, D-090); see the Session 10 handoff below
+next_session: 11              # research paper, reproducibility, independent critical audit; Session 10 handoff §10, fresh context
+last_verified_commit: 4348244   # Session 10 code: lint clean, 492 tests passed (alone), freeze-check OK, RGB + Level 2 gates open; site build, vitest 49, E2E 7/7, viewer verification 18/18; the STOP commit adds docs only
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -74,11 +74,270 @@ heldout_results:                      # family success %, 3 seeds x 50 held-out 
   lift: {bc_mlp: 90.7, bc_rnn: 100.0, bc_mlp_chunk: 98.0, diffusion_unet: 97.3, random_uniform: 0.0}
   can:  {bc_mlp: 76.7, bc_rnn: 96.0, bc_mlp_chunk: 96.0, diffusion_unet: 95.3, random_uniform: 0.0}
 modal: {gate_a: done, A-01: "closed, $0.148", A-02: "closed, $0.0317", A-03: "closed, $8.06", A-04: "Level 2, closed, $2.37 (5 launches; KI-047; detached launches since D-085)", open_approvals: none, month_to_date: "$15.89 of $30 (2026-11-09)", egl_vs_osmesa: "PENDING (KI-001, KI-033)"}
-final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081); Level 2 TESTED ONCE (Session 9, D-086 gate, a031e88; analysis 620c541). All three locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1, RGB or Level 2 configuration, ever"
-disk: "about 17 GB free at the end of Session 9 (KI-008); Level 2 runs are small (about 0.13 GB each); the Modal runs Volume keeps every checkpoint"
-next_required_owner_approval: "none for Session 10 unless hosting or paid compute is proposed (needs a new approval row); frontend dependencies need a recorded decision"
+final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081); Level 2 TESTED ONCE (Session 9, D-086 gate, a031e88; analysis 620c541). Session 10 re-rendered recorded episodes only. All three locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1, RGB or Level 2 configuration, ever"
+disk: "about 17 GB free at the end of Session 10 (KI-008); the Observatory export is about 19 MB in git; the Modal runs Volume keeps every checkpoint"
+next_required_owner_approval: "none for Session 11 unless paid compute or hosting is proposed (needs a new approval row); a paper toolchain or any new dependency needs a recorded decision"
+observatory: {decisions: "D-087-D-091", site: website/, export: "reports/session10/observatory/ (37 clips from clean b5fc2ee, canonical container; ebfd0c3)", findings: "findings.json, 8 frozen sources (c73a080)", verification: "viewer_verification.json: 18/18 frames pass (robot IoU >= 0.9998, centroid <= 0.04 px)", hosting: "none (owner, D-090); no deployed or staging URL", meshes: "extracted at build time by make web-assets, gitignored (D-090)", provenance: docs/VISUAL_PROVENANCE.md}
 level2_study: {freeze: "docs/LEVEL2_EXPERIMENT_FREEZE.md @ b93c50c (sha256 ffe5a03e...)", gate: "D-086 @ b1f4da2, amended 08c3aa8", runs: [s9_pc_diffusion_dp3_lift_seed0_8fd35613, s9_pc_diffusion_dp3_lift_seed1_a66a2758, s9_pc_diffusion_dp3_lift_seed2_402a1f24], selections: "30000 / 40000 / 60000 (reports/session9/pc_selection/)", placement: "reports/session9/level2_placement/ @ 4ebebc1", heldout: "reports/session9/pc_heldout/ @ a031e88", results: "reports/session9/level2_results/ @ 620c541 (+ ERRATA.md)", h5: "pc - rgb on ood_cube_shift -41.3 pp [-54.0, -28.0], separated (-)", heldout_success: {pc_diffusion: 100.0, rgb_diffusion: 100.0}, label: DP3-inspired, privilege: sensor-like}
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 378ea43", selections: reports/session8/rgb_selection/, heldout: "reports/session8/rgb_heldout/ @ bc054bc", results: "reports/session8/rgb_results/ @ 3b23255", success: {rgb_diffusion: 100.0, rgb_bc_chunk: 99.3}, diffusion_minus_bc: "+0.7 pp [+0.0, +4.0], not separated", videos: reports/session8/rgb_videos/}
+```
+
+# Session 10 Handoff
+
+Do not trust this file blindly: re-run the checks in "Exact starting instructions".
+
+## 1. Session completed
+Session 10 (MASTER_SPEC §8 and Session 10: the RoboForge Observatory). Status **PASS, local
+only**.
+- **What it is:** a static site in `website/` that tells the project's story from frozen
+  evidence. It covers the recorded rollouts, the diffusion sampler and the findings of
+  Level 1, the RGB study and Level 2.
+- **Data:**
+  - every rollout is a recorded evaluation episode, re-rendered from its saved simulator
+    states and never re-run;
+  - the only new policy calls are 3 denoising traces on validation starts, replayed bitwise
+    and labelled as an export.
+- **Checks:**
+  - the viewer matches MuJoCo's own renders on 18 reference frames;
+  - every number on the site is copied from a frozen results file.
+- **Hosting:** the owner chose **no hosting** (D-090). **No deployed or staging URL exists.**
+- **Cost:** $0, local CPU and the canonical container only.
+
+## 2. Completed work
+- **Decisions:**
+  - D-087: Makefile defaults for Session 10 (`PREFIX ?= s10`, evidence session 10).
+  - D-088: the web stack, a separate `website/` package with its own lockfile. React 19,
+    React Three Fiber 9, three 0.187, zod, Vite, Vitest, Playwright. `uv.lock` and
+    `pyproject.toml` are unchanged.
+  - D-089: selection rules and provenance, applied by `make observatory-select` (37 clips).
+  - D-090: the owner's choices: no hosting; robot meshes extracted at build time and never
+    committed.
+  - D-091: viewer-verification thresholds, reference masks drawn without sites, and one
+    export from one commit. It has an amendment (frozen renderer restored).
+- **Export (E10-05):** 37 clips from clean `b5fc2ee` on the canonical container, 3,548 s.
+  - 28 Level 1 held-out and 6 Level 2 placement records;
+  - recomputed body poses equal the recorded poses to 0.0 m;
+  - 3 validation denoising traces with clone-simulated candidate paths;
+  - point clouds and RGB policy views at each decision frame;
+  - 18 reference frames.
+- **Findings (E10-06):** `findings.json` copies 8 frozen sources verbatim, each with its
+  SHA-256. Section F was first built without the Level 1 robustness and ablation analysis.
+  That was caught before STOP: the analysis is now a source, and F shows it, labelled
+  "validation regime, not held-out" (`8679aa9`, `c73a080`, `733d840`).
+- **Site, sections A–H of MASTER_SPEC §8.2:**
+  - **A. Hero:** a recorded Lift rollout with its caption.
+  - **B. Why diffusion:** an illustrative schematic kept apart from the recorded sampler
+    tensors.
+  - **C. The lab:** task and policy selectors, scrubber, camera presets.
+  - **D. Head to head:** two seed-matched recorded rollouts from the same start, on a shared
+    clock.
+  - **E. Inside the policy:** scheduler slider; normalized chunks and environment-space
+    actions; observation window; clone-simulated candidate paths; 16 extra seeds; the
+    measured path spread.
+  - **F. Findings:** held-out success with denominators and intervals, paired differences,
+    per-seed rings, outcome strips, failure taxonomy, latency against success.
+    Robustness (H4) and ablations A1–A3 are kept apart.
+  - **G. Beyond pixels:** the RGB study and Level 2 (H5 −41.3 points [−54.0, −28.0],
+    separated (−)), the placement maps, the KI-049 erratum and the calibrated overlays.
+  - **H. Methods:** approximations, verification table, references, credits.
+- **Quality:**
+  - accessibility (text alternatives on every chart, keyboard transport, skip link);
+  - reduced motion;
+  - phone layout;
+  - a no-WebGL fallback to the MuJoCo video;
+  - explicit errors for missing artifacts;
+  - canvases released off screen;
+  - asset budgets enforced by `website/scripts/budget.mjs`.
+- **Provenance ledger:** `docs/VISUAL_PROVENANCE.md`, generated by `make visual-provenance`.
+
+## 3. Files created or changed (Session 10)
+- **Python** (`src/roboforge/viz/`):
+  - `obs_select.py`: selection rules;
+  - `obs_scene.py`: recomputed poses and provenance;
+  - `obs_media.py`: video, reference frames, segmentation without sites;
+  - `obs_branch.py`: clone simulation;
+  - `obs_denoise.py`: sampler traces;
+  - `obs_findings.py`: the verbatim copy.
+- **Scripts:** `scripts/export_observatory.py` and `scripts/visual_provenance.py`.
+- **Tests:**
+  - `tests/unit/test_observatory.py` and `tests/unit/test_visual_provenance.py`;
+  - `tests/simulator/test_observatory_export.py` and
+    `tests/simulator/test_observatory_reference_masks.py`.
+- **Site:** `website/`:
+  - `src/` covers sections, charts, three.js viewer, schemas, the verification page and
+    tests;
+  - also `e2e/`, `scripts/budget.mjs`, `package.json` and `package-lock.json`.
+- **Evidence:** `reports/session10/observatory/`:
+  - `selection.json`, `index.json`, `meshes.json`, `findings.json`,
+    `viewer_verification.json`;
+  - `clips/`, `media/`, `denoise/`, `clouds/`, `policy_views/`, `verification/` (with
+    `viewer_montage.jpg`);
+  - `site_screens/01–04`.
+- **Logs:** `logs/session10/` (the export log, the stopped partial export's log,
+  development logs).
+- **Docs:** README (Observatory section), `Makefile` (observatory and web targets),
+  `.gitignore`. The STOP commit adds DECISIONS D-087–D-091, KNOWN_ISSUES KI-050,
+  `EXPERIMENT_LEDGER` Session 10, STATUS and this handoff.
+
+## 4. Executed commands and results
+| Command | Where | Result |
+|---|---|---|
+| `make observatory-select` | host, `d12729f` | 37 clips; reproduces the Level 1 freeze's example episodes |
+| `make observatory-export` | container, clean `5f398d7` | **stopped** at clip 19/37 (KI-050); partial output discarded |
+| `make observatory-export` | container, clean `b5fc2ee` | 37/37 clips, 155 files, 3,548 s; recompute 0.0 m |
+| `make observatory-findings` | host, clean `8679aa9` | 8 frozen sources (first run `ebfd0c3`: 7) |
+| `make web-data web-assets` | host | 161 data files hash-checked; 61 meshes, 3.12 MB, host = container to 0.0 m |
+| `make web-build` | host | budgets pass: JS 382 KB gzip, first view 3.94 MB, all data 18.5 MB |
+| `make web-test` | host | vitest 49/49 |
+| `make web-verify` | host, headless Chrome | 18/18 frames pass: robot IoU ≥ 0.9998, object IoU ≥ 0.9970, centroid ≤ 0.04 px |
+| `make web-e2e` | host | 7/7 |
+| dev re-render (`--dev-dir observatory_dev4`) | container, restored renderer | 43/43 files identical to the committed export (E10-08) |
+| `make lint`, `make freeze-check`, both gates | host | clean; frozen code unchanged; RGB and Level 2 gates open |
+| `make test` (alone) | host | `733d840`: 491 passed, 1 failed (KI-051); `4348244`: **492 passed** (500.8 s) |
+
+## 5. Key results (nothing here is a new experimental result)
+- **Viewer correctness:** silhouettes through the exported MuJoCo cameras reproduce MuJoCo's
+  segmentation. The per-frame table is in `viewer_verification.json` and the montage in
+  `verification/viewer_montage.jpg`.
+- **Denoising traces:** Lift `lift_validation_0000` (6 decisions, success at step 47). Can
+  `can_validation_0000` (13 decisions, success at step 103) and `can_validation_0003`
+  (50 decisions, failure at 400 steps). Every replayed chunk equals the recorded action.
+- **Path spread** on Lift's first decision, measured in the browser from the exported paths:
+  RMS 0.54 cm after 8 steps (largest pair 1.57 cm), 0.51 cm after 16 steps (1.41 cm).
+
+## 6. Decisions and issues
+- D-087–D-091 are listed in §2. D-089 is amended (the robustness analysis is a source)
+  and D-091 is amended (the frozen renderer is restored).
+- **KI-050 (fixed):**
+  - the first export stopped on the random baseline's null checkpoint;
+  - the reference masks counted robosuite's transparent sites;
+  - the first fix edited the frozen renderer. `make freeze-check` caught it, the file was
+    restored, and the fix moved to `viz/obs_media`.
+- **KI-051 (fixed):** the research-integrity lock test failed at STOP. `obs_select.py`
+  wrote the locked suite's partition label as a literal. The label is now read through
+  `eval_states`, and the selection reproduces exactly (`4348244`).
+- **Rules:**
+  - run `make freeze-check` before touching any simulator or evaluation code;
+  - run `tests/research_integrity/` on new code before any evidence run.
+- **Note, not an issue:** a browser running a WebGL loop on the same host slowed the
+  container export about 7× (inferred, not measured). Park the browser during long container
+  runs.
+
+## 7. Budget
+$0 this session (local only, no hosting). The total billed stays $10.61; no approval is open.
+
+## 8. Outstanding items (none blocks Session 11)
+- **No hosting.** Publishing `website/dist` needs a new approval row and a choice of host.
+- **Meshes are not in git (D-090).** A fresh clone runs `make web-assets`, which needs the
+  pinned robosuite on the host, before the 3D viewer shows meshes. Without them the viewer
+  draws bounding boxes and says so.
+- **Console warning:** three 0.187 logs a deprecation warning from React Three Fiber's use of
+  `THREE.Clock`. It is a library warning, not an error; E2E fails on errors only.
+- **Manifest links:** without hosting, "persistent links to manifests" (§8.2 F) take the form
+  of repository paths with SHA-256 hashes.
+- **Open from earlier sessions:** KI-001/KI-033 (EGL vs OSMesa), KI-008 (disk: about 17 GB
+  free), KI-034 (Lift saturation) and the other open KIs listed in STATUS.
+
+## 9. What Session 11 can use
+- **Tables and figures:** every frozen results file:
+  - `reports/session7/results/` (held-out) and `reports/session7/robustness/` (H4, A1–A3);
+  - `reports/session8/rgb_results/`;
+  - `reports/session9/level2_results/` (with `ERRATA.md`);
+  - each has run manifests and hashes.
+- **Paper figures:** `reports/session10/observatory/findings.json` is a hash-cited
+  convenience copy. The paper must cite the original files.
+- **Genuine visuals for the paper:**
+  - `site_screens/`;
+  - `verification/viewer_montage.jpg`;
+  - the MuJoCo videos in `media/`;
+  - the Session 9 overlays.
+- **Tooling:** Tectonic is installed at `/opt/homebrew/bin/tectonic`; `pdflatex` and
+  `latexmk` are not (checked 2026-11-09).
+
+## 10. Exact starting instructions for Session 11
+Paste into a fresh Claude Code session:
+
+```text
+Implement RoboForge 3D SESSION 11 ONLY from MASTER_SPEC.md (research paper, reproducibility
+and independent critical audit). Begin by reading all of MASTER_SPEC.md (especially §11,
+§11.1–11.3 and the Session 11 section), docs/STATUS.md, docs/HANDOFF.md
+"# Session 10 Handoff", docs/DECISIONS.md (D-063, D-081, D-083–D-091), docs/KNOWN_ISSUES.md
+(every open item; KI-034, KI-045–KI-051), docs/EXPERIMENT_LEDGER.md (Sessions 6–10 and the
+approvals table: no approval is open), docs/RESEARCH_PROTOCOL.md, docs/REPRODUCIBILITY.md,
+docs/COMPUTE_PLAN.md, docs/LEVEL1_COMPLETE.md, docs/FINAL_TEST_FREEZE.md,
+docs/RGB_EXPERIMENT_FREEZE.md, docs/LEVEL2_EXPERIMENT_FREEZE.md, docs/LEVEL2_GO_NO_GO.md,
+docs/VISUAL_PROVENANCE.md, reports/session7/results/tables.md,
+reports/session7/robustness/tables.md, reports/session8/rgb_results/tables.md and
+reports/session9/level2_results/{tables.md,ERRATA.md}.
+
+Inspect the real state first:
+- git log --format=fuller -n 8; git status;
+- make lint; make freeze-check;
+- `uv run --frozen python scripts/run_rgb_heldout.py gate` and
+  `uv run --frozen python scripts/run_pc_heldout.py gate` (both must print open);
+- never run the full test suite alongside a container job (KI-043).
+
+1. Record decisions before adding anything:
+   - Session 11 Makefile defaults (PREFIX ?= s11, evidence session 11; the D-082 pattern);
+   - the paper toolchain. Session 10 found Tectonic at /opt/homebrew/bin/tectonic and no
+     pdflatex or latexmk: verify this yourself. No new Python or npm dependency without a
+     decision; uv.lock and pyproject stay unchanged unless decided.
+2. Generate every table and figure directly from the frozen run manifests and results files,
+   by a script and a make target, with tests. Each output records its source paths and
+   SHA-256 hashes. Cover:
+   - core performance;
+   - paired differences with CIs;
+   - model and seed dispersion;
+   - OOD results (H4, H5);
+   - the action-horizon and denoising ablations (A1–A3);
+   - real hardware, cost and latency (with the KI-049 erratum beside the row it corrects);
+   - the failure taxonomy;
+   - the RGB and point-cloud panels.
+   Cite the original reports/session6-9 files, not the Observatory's findings.json copy.
+3. Write the LaTeX paper in paper/ with the structure of MASTER_SPEC §11.1:
+   - real methods and results, no placeholders and no typed numbers (generated macros or
+     tables only);
+   - quantitative limitations, a reproducibility appendix and a verified third-party
+     bibliography (check that every DOI or arXiv id resolves);
+   - the single project author, Zackary Holt;
+   - claims within MASTER_SPEC §11.3: no novelty or significance beyond what the
+     preregistered analyses show; "DP3-inspired", never a DP3 reproduction.
+4. Independent critical audit:
+   - run it as a separate pass that reads the code and the frozen files, not this handoff's
+     conclusions;
+   - check simulator/controller alignment, evaluation seed pairing, split leakage, privilege
+     mismatch, invalid confidence intervals, dataset reuse, GPU expenditure, missing null
+     results, and incorrectly claimed novelty or statistical significance;
+   - write the findings to docs/ (for example docs/AUDIT.md), with severity and evidence;
+   - each finding gets an engineering correction or a transparent limitation. A material
+     post-freeze correction to a test protocol is labelled a corrected/replication analysis
+     with full provenance, needs a recorded decision before any new evaluation, and never
+     replaces the original result.
+5. Build paper/main.pdf with the verified toolchain. If none works, document the exact
+   compilation commands and do not claim a PDF exists.
+6. STOP:
+   - update STATUS, HANDOFF, DECISIONS, KNOWN_ISSUES and EXPERIMENT_LEDGER;
+   - run lint, the full test suite (alone), freeze-check, both gates, and make web-build and
+     make web-test (the site must still build);
+   - commit verified work as Zackary Holt <zackholt05@gmail.com>, with no AI co-author
+     trailers;
+   - inspect git log --format=fuller -n 5;
+   - write the exact Session 12 prompt, then STOP.
+
+Boundaries (binding):
+- Level 1, the RGB study and Level 2 are frozen. Never rerun make eval-final, make
+  analyze-final, make rgb-heldout, scripts/analyze_rgb_heldout.py, make pc-heldout, make
+  pc-placement or make level2-analyze. Never edit reports/session6-10 results, the freezes,
+  LEVEL1_COMPLETE or LEVEL2_GO_NO_GO's executed outcome. Never prune or move frozen runs.
+- Run make freeze-check before and after touching any simulator, evaluation or analysis code
+  (D-091 amendment), and tests/research_integrity/ on new code before any evidence run
+  (KI-051).
+- No training. No paid or remote compute (including hosting) without an approval row.
+- No changes to data, eval suites, uv.lock or Python dependencies without a decision.
+- Never uv sync or uv run inside the image.
+- Use EVIDENCE_SESSION=11. Any container job runs via run_sim_cpu.sh with
+  ROBOFORGE_EVIDENCE_SESSION=11, from a clean tree.
+- Label every estimate as an estimate.
 ```
 
 # Session 9 Handoff

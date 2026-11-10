@@ -1,20 +1,66 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 9
-SESSION_STATUS: PASS            # Session 9 GO path: DP3-inspired point-cloud policy trained (3 seeds, L4, A-04), matched closed-loop evaluation, calibrated overlays; H5 separated (-)
-NEXT_SESSION: 10                # RoboForge Observatory; docs/HANDOFF.md "# Session 9 Handoff" §10, fresh context
-BLOCKERS: none                  # open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; KI-044, KI-045, KI-047 mitigated; KI-049 documented
-LAST_VERIFIED_COMMIT: 620c541   # code; lint clean, 478 tests (run alone), freeze-check OK, RGB and Level 2 gates open on host; the STOP commit adds docs only
+CURRENT_SESSION: 10
+SESSION_STATUS: PASS            # Session 10: RoboForge Observatory built from frozen evidence (37 clips, viewer verified on 18 MuJoCo frames); local only, no hosting (owner, D-090)
+NEXT_SESSION: 11                # research paper, reproducibility, independent critical audit; docs/HANDOFF.md "# Session 10 Handoff" §10, fresh context
+BLOCKERS: none                  # open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; KI-044, KI-045, KI-047 mitigated; KI-049 documented; KI-050, KI-051 fixed
+LAST_VERIFIED_COMMIT: 4348244   # code; lint clean, full suite (run alone) 492 passed, freeze-check OK, RGB and Level 2 gates open on host; website build, vitest 49, E2E 7/7, viewer verification pass (viewer code unchanged since d2c8add); the STOP commit adds docs only
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c}
-EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541}
+EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (a031e88; analysis 620c541; never rerun). Any later held-out access is exploratory or replication"
-RESOURCE_SPEND: {usd_billed_total: 10.61, session9_usd_billed: 2.37, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 Level 2 training $2.37 (5 launches); all four approvals closed; Modal month-to-date $15.89 of $30"}
+FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (a031e88; analysis 620c541; never rerun). Session 10 re-rendered recorded episodes only; no held-out start was stepped. Any later held-out access is exploratory or replication"
+RESOURCE_SPEND: {usd_billed_total: 10.61, session10_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 Level 2 training $2.37 (5 launches); all four approvals closed; Session 10 local only, no hosting"}
 APPROVED_LIMIT: {A-03: "closed, $8.06 of $15", A-04: "closed, $2.37 of $9", open: none, local: "$0"}
 UPDATED: 2026-11-09
 ```
 
 # RoboForge Status
+
+## Session 10: RoboForge Observatory (PASS, local only)
+| Step (Session 10 prompt) | Status | Evidence |
+|---|---|---|
+| 1. Decisions before any frontend dependency: Makefile defaults s10; web stack | DONE (`086a346`): D-087 (PREFIX s10, evidence session 10), D-088 (`website/` with its own lockfile; uv.lock and pyproject unchanged); D-089 selection and provenance rules; owner: **no hosting**, meshes extracted at build time (D-090) | E10-01 |
+| 2. Export from frozen evidence only; denoising traces only on validation starts; viewer checked against ≥ 3 reference frames; every approximation reported | DONE: 37 clips from clean `b5fc2ee` on the canonical container (E10-05); 18 reference frames pass (D-091 thresholds); approximations on the site (Methods) and in `docs/VISUAL_PROVENANCE.md` | E10-02–E10-05, E10-07 |
+| 3. Sections A–H; findings from the frozen results files; panel G with the real Level 2 results | DONE: `findings.json` copies 8 frozen sources with hashes (E10-06). Section F shows the held-out results and, labelled "validation regime, not held-out", the Level 1 robustness (H4) and ablations A1–A3. Panel G shows H5 −41.3 points [−54.0, −28.0], the KI-049 erratum and the calibrated overlays | `website/src/sections/` |
+| 4. Accessibility, keyboard, reduced motion, mobile, loading states, budgets; build and E2E; hosting only if authorized | DONE: build within budgets, vitest 49/49, E2E 7/7 (keyboard, reduced motion, phone, no WebGL, missing artifact); no hosting, no URL | E10-07 |
+| 5. STOP: docs, lint, full suite alone, freeze-check, both gates, commit, Session 11 prompt | DONE | this file, `docs/HANDOFF.md` |
+
+**What the Observatory shows (all from recorded episodes; nothing new is a result):**
+- 28 Level 1 held-out episodes and 6 Level 2 placement episodes, re-rendered from their saved
+  states and never stepped. Body poses recomputed with `mj_kinematics` equal the recorded
+  poses to 0.0 m.
+- 3 validation denoising traces (Lift `0000`; Can `0000` success, `0003` failure). The frozen
+  checkpoint's sampler was re-run on each recorded episode, and every replayed chunk equals
+  the recorded action bitwise. The candidate paths come from clone simulation.
+- The viewer reproduces MuJoCo's silhouettes: robot IoU 0.9998–1.0000, object IoU
+  0.9970–1.0000, centroid ≤ 0.04 px over 18 frames (`viewer_verification.json`).
+- Approximations, listed on the site:
+  - interpolation between 20 fps frames;
+  - restyled materials and lighting;
+  - meshes quantized to about 7 µm;
+  - candidate paths drawn over the robot;
+  - point clouds as fixed-size dots.
+- Local only: `make web-build` then `npm --prefix website run preview`. No deployed or staging
+  URL exists.
+
+**Integrity:**
+- At STOP, `make freeze-check` caught an edit to the frozen `roboforge.sim.shadow_render`. The
+  file is restored, and the logic now lives in `viz/obs_media` (D-091 amendment, KI-050).
+- A re-render from the restored tree is byte-identical to the committed export: 43 of 43
+  files (E10-08).
+- The full suite at STOP found the locked suite's partition label written in
+  `viz/obs_select.py`, which breaks a research-integrity test (KI-051). It is fixed in
+  `4348244`. The selection reproduces exactly, so no evidence changed (E10-09).
+
+## Session 10 acceptance (MASTER_SPEC Session 10)
+| Criterion | Status | Evidence |
+|---|---|---|
+| `npm run build` passes; E2E/UI sanity checks pass | DONE: `make web-build`, `make web-e2e` 7/7 | E10-07 |
+| No frontend fixture data pretending to be measured results | DONE: every number is read from `findings.json` (copies of frozen files, hash-checked) or the export; the one hand-drawn figure is labelled "illustrative schematic, not data"; unit tests use only the exported data | `website/src/test/fixtures.ts`, `schema.test.ts` |
+| Source provenance visible | DONE: each clip caption names its checkpoint, task, outcome and evaluation run. Its provenance panel adds the policy, seed, start, record and physics hash. Findings and Methods list every frozen source with its SHA-256, and section F lists the 75 robustness and ablation evaluation summaries (Lift 42, Can 33) (repository paths with SHA-256: the form a manifest link takes without hosting). Also `docs/VISUAL_PROVENANCE.md` | site, ledger |
+| A reviewer can confirm the animated joint motion matches the saved MuJoCo transforms | DONE: forward-kinematics test vs recorded poses (vitest), and the `?verify=all` page with its overlap montage (`verification/viewer_montage.jpg`) | E10-07 |
+| Screenshots, videos and GIFs are genuine | DONE: videos are MuJoCo renders of recorded states; screenshots in `site_screens/` are captures of the built site | `reports/session10/observatory/` |
+| Optional RGB and point-cloud panels only for studies actually run | DONE: both studies ran; panel G shows their frozen results, labelled DP3-inspired, H5 negative | `BeyondPixels.tsx` |
 
 ## Session 9: Level 2, DP3-inspired point clouds on Lift (PASS, GO path)
 | Step (Session 9 prompt) | Status | Evidence |
@@ -149,9 +195,12 @@ Interpretation and robustness: `docs/LEVEL1_COMPLETE.md`.
 ## Owner decisions pending
 1. Optional: set a Modal **workspace budget** (the only hard spending cap). About $14.11 of the
    $30 monthly credit remains.
-2. Optional: prune the Docker build cache (KI-008). About 17 GB is free (2026-11-09).
+2. Optional: prune the Docker build cache (KI-008). About 17 GB is free (2026-11-09, end of
+   Session 10).
 3. Optional: fix the host's intermittent DNS. Launches survive it now (D-085), but fetches
    and Modal CLI calls still need retries (KI-047).
-4. Later, not approved: Can for the RGB study (about $15, COMPUTE_PLAN §7.4). Any further
+4. Optional: hosting the Observatory (static build, `website/dist`) needs a new approval row
+   and an owner choice of host (D-090).
+5. Later, not approved: Can for the RGB study (about $15, COMPUTE_PLAN §7.4). Any further
    Level 2 work, such as point-cloud augmentation, ego-centric frames or Can, would be a new,
    separately preregistered study.

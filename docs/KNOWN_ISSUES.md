@@ -1041,3 +1041,17 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   (FINAL_TEST_FREEZE), and `make freeze-check` failed at STOP. The file is restored, and the
   fix moved to `roboforge.viz.obs_media` (D-091 amendment). A development re-render showed
   the committed reference frames are byte-identical (E10-08).
+
+### KI-051 Observatory selection code named the locked suite; the lock test failed at STOP (LOW, FIXED; Session 10)
+- **Failure:** the first complete full-suite run at STOP gave 491 passed and 1 failed. The
+  failing test was `tests/research_integrity/test_final_test_lock.py::test_no_other_code_names_the_locked_suite`.
+  `src/roboforge/viz/obs_select.py` (from `d12729f`) wrote the held-out partition label as a
+  string literal. Only the suite module and its generator may name the locked suite.
+- **Why it was late:** two earlier full-suite runs in this session were stopped before they
+  finished, so the failure first showed at STOP.
+- **Fix (`4348244`):** the label is read from `configs/eval/suites.yaml` through
+  `eval_states.LOCKED_SUITE`. The value is unchanged, and `build_selection()` reproduces the
+  committed `selection.json` exactly (apart from its git and time stamps), so no evidence is
+  regenerated. The frozen test was not edited.
+- **Handling:** for a session's own new code, run the research-integrity tests
+  (`tests/research_integrity/`) before the first evidence export, not only at STOP.

@@ -3,8 +3,8 @@
 CURRENT_SESSION: 12
 SESSION_STATUS: PASS            # Session 12: fresh-clone reproduction, final QA, release v1.0.0 (publication record below); $0 paid compute
 NEXT_SESSION: none              # project complete (MASTER_SPEC Session 12 STOP); no further phase is started
-BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-052, KI-053, KI-056, KI-057; accepted: KI-009 (D-100), KI-060; fixed in Session 12: KI-058, KI-059
-LAST_VERIFIED_COMMIT: release-candidate   # the Session 12 release-candidate commit; its SHA and STOP results are recorded in the follow-up commit
+BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-052, KI-053, KI-056, KI-057; accepted: KI-009 (D-100), KI-060; fixed in Session 12: KI-058, KI-059; partial: KI-061 (root cause found, test harness fixed)
+LAST_VERIFIED_COMMIT: ee1e574   # code as ab17fb2 (STOP checks below); CI on Linux aarch64 passed on it; later commits are records only
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c}
 EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b]}
 PAPER: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400 (D-093)", fresh_clone_rebuild: "byte-identical (Session 12)", label: "local build, not peer reviewed"}
@@ -13,7 +13,7 @@ EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eva
 FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only; no start was stepped"
 RESOURCE_SPEND: {usd_billed_total: 10.61, session12_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-12 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
 APPROVED_LIMIT: {A-03: "closed, $8.06 of $15", A-04: "closed, $2.37 of $9", open: none, local: "$0"}
-UPDATED: 2026-11-09
+UPDATED: 2026-11-10
 ```
 
 # RoboForge Status
@@ -28,7 +28,30 @@ UPDATED: 2026-11-09
 | 5. Full test matrix, security and license scans | DONE: see the STOP row; pip-audit (KI-060, accepted), npm audit 0, license inventory; Python type checking not configured (stated) | audit §4 |
 | 6. README per §11.2 from real artifacts | DONE: generated findings and setup blocks, preview from the D-089 rule 3(a) pair, paper link labelled not peer reviewed; Observatory link only after the hosted site is verified | README, D-103 |
 | 7. `docs/FINAL_RELEASE_AUDIT.md` | DONE | the file |
-| 8. STOP: docs, checks, commit, completion summary | DONE (results in the follow-up commit) | this file, `docs/HANDOFF.md` |
+| 8. STOP: docs, checks, commit, completion summary | DONE: STOP checks and publication record below | this file, `docs/HANDOFF.md` |
+
+**STOP checks.** On `b4bd070` (release candidate), host: `make lint` clean; full suite alone
+526 passed (8:32, `logs/session12/stop_full_suite.log`); `make freeze-check` unchanged; both
+gates open; `make paper-check` pass; `make release-check` PASS; `make web-build`, `web-test`
+49/49, `web-e2e` 7/7. After the test-harness fix for KI-061 (`ab17fb2`, `tests/conftest.py`
+only): `make lint` clean; full suite alone 526 passed (8:20,
+`logs/session12/stop_full_suite_2.log`); `make freeze-check` unchanged; `tests/research_integrity`
+45 passed; `make release-check` PASS. CI on `ee1e574` (fresh checkouts, Linux aarch64): all
+three workflows pass (publication record).
+
+**Publication record** (each row verified before it was written; owner authorization
+D-099, D-101, D-102):
+
+| Step | Verified state | Evidence |
+|---|---|---|
+| Repository | public, `https://github.com/zackholt05-tech/roboforge`; `main` pushed (first `b4bd070`, then each later commit, checked with `git ls-remote`) | `gh repo view`; audit §7 |
+| CI, Linux x86_64, `b4bd070` | research-integrity pass (run 42755805851); python-tests fail, triton segfault (42755805869); web-build fail, mesh check 7.45e-9 m (42755806070) | KI-061 |
+| CI, Linux aarch64, `e11ad04` | research-integrity pass (42756520065); web-build pass (42756520080); python-tests fail, same triton segfault (42756519847) | KI-061 root cause |
+| CI, Linux aarch64, `ee1e574` (after the harness fix) | python-tests pass (42758938590: lint; 303 passed, 12 skipped: 9 without the processed Lift data, 2 without `runs/`, 1 needs MPS); research-integrity pass (42758938394); web-build pass (42758938356) | D-101 amendment 2 |
+| Observatory | GitHub Pages from branch `gh-pages`, orphan commit `c14e041` (Zackary Holt), staged by `make pages-bundle` from clean `b4bd070`; build `built`; `https://zackholt05-tech.github.io/roboforge/` | `gh api …/pages` |
+| Live site check | all 186 files listed in `deploy.json` fetched from the live URL with equal SHA-256; the site's E2E run against the live URL 7/7 | `logs/session12/pages_live_e2e.log` |
+| External links after publication | 19/19 answered with HTTP < 400 | `reports/session12/release_check_network.json` |
+| Tag `v1.0.0` and GitHub release | recorded in the next commit, after verification | |
 
 **Nothing here is a new experimental result.** The README's numbers are generated from the
 same frozen macros as the paper. No held-out start was stepped; no training, no evaluation, no
@@ -246,8 +269,8 @@ Interpretation and robustness: `docs/LEVEL1_COMPLETE.md`.
    Session 10).
 3. Optional: fix the host's intermittent DNS. Launches survive it now (D-085), but fetches
    and Modal CLI calls still need retries (KI-047).
-4. Optional: hosting the Observatory (static build, `website/dist`) needs a new approval row
-   and an owner choice of host (D-090).
+4. Done (Session 12): the Observatory is hosted on GitHub Pages at no cost (owner choice,
+   D-099, D-102).
 5. Later, not approved: Can for the RGB study (about $15, COMPUTE_PLAN §7.4). Any further
    Level 2 work, such as point-cloud augmentation, ego-centric frames or Can, would be a new,
    separately preregistered study.

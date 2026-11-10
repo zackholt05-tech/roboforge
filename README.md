@@ -20,6 +20,12 @@ frozen and committed before the held-out starts were first used, and run once.
 Controlled Comparison of Behavior Cloning and Diffusion Policies* (a local build, not peer
 reviewed). Every number in it is generated from the frozen result files.
 
+**[Open the RoboForge Observatory](https://zackholt05-tech.github.io/roboforge/)**: an
+interactive 3D site that replays recorded evaluation episodes, shows the diffusion sampler's
+real denoising steps (replayed from recorded validation episodes) and presents the frozen
+findings (GitHub Pages; built from commit `b4bd070`, every
+served file checked against its `deploy.json` hash list, DECISIONS D-102).
+
 ## Key findings
 
 <!-- BEGIN GENERATED: findings (scripts/readme_findings.py from paper/generated/numbers.tex; do not edit by hand) -->

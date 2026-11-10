@@ -13,7 +13,7 @@ Every row below names the command that was run and its observed result. Logs:
 
 | Item | Value |
 |---|---|
-| Tested code tree | Fresh clone (§3): `bd3bf6b`. After it, Session 12 changed release tooling and the site credits only (`src/roboforge/release/`, `scripts/release_check.py`, `readme_findings.py`, `license_inventory.py`, `website/src/sections/Methods.tsx`; nothing under the simulator, evaluation, models, training or analysis code). The STOP checks of §4 ran on the release-candidate commit recorded in `docs/STATUS.md` (`LAST_VERIFIED_COMMIT`), and CI reran the checks of D-101 on it from a fresh checkout on Linux x86_64 (§7). Later commits change documentation only |
+| Tested code tree | Fresh clone (§3): `bd3bf6b`. After it, Session 12 changed release tooling, the site credits, the CI workflows and the test harness only (`src/roboforge/release/`, `scripts/release_check.py`, `readme_findings.py`, `license_inventory.py`, `website/src/sections/Methods.tsx`, `.github/workflows/`, `tests/conftest.py` import order for KI-061); nothing under the simulator, evaluation, models, training or analysis code. STOP checks ran on `b4bd070` and again on `ab17fb2` after the harness change (`docs/STATUS.md`); CI reran the D-101 checks from fresh checkouts on Linux aarch64 and passed on `ee1e574` (§7). Later commits change records only |
 | Report | `paper/main.pdf`, 23 pages, SHA-256 `c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f` (unchanged since Session 11; rebuilt byte-identical in the fresh clone) |
 | Tag | `v1.0.0`, annotated, on the commit that completes the release records (§7) |
 | Frozen protocols | Level 1 `bf0a0fa` (`docs/FINAL_TEST_FREEZE.md`), RGB `d9c6217`, Level 2 `b93c50c`; held-out results `97cc48a`, `3b23255`, `620c541` |
@@ -58,7 +58,7 @@ Differences below are in percentage points (pp) with the preregistered 95 % inte
 development host (macOS arm64), then the canonical container from that clone. Commit `21fc749`,
 then `d9da1dd` and `bd3bf6b` pulled into the clone after the two fixes it found. The code
 changed after `bd3bf6b` is listed in §1; the release candidate's own fresh checkouts are the CI
-runs of §7 (Linux x86_64).
+runs of §7 (Linux x86_64 first, then Linux aarch64).
 
 | # | Command (in the clone) | Result | Time |
 |---|---|---|---|
@@ -107,7 +107,7 @@ features 4.4 MB, `website/node_modules` 141 MB, `.git` 81 MB).
 | Dependency vulnerabilities | `pip-audit -r <uv export, PyPI packages> --no-deps` | 72 packages audited; advisories in diffusers 0.11.1 and transformers 4.41.2 (29 IDs), pinned by robomimic, not reachable from RoboForge code (KI-060, ACCEPTED). robosuite and robomimic (git installs) cannot be audited by pip-audit (`reports/session12/pip_audit.json`) |
 | | `npm audit --omit=dev`; `npm audit` | 0 vulnerabilities, runtime and dev (`reports/session12/npm_audit_*.json`) |
 | Licenses | `scripts/license_inventory.py` | 76 Python distributions, 95 npm packages (`reports/session12/licenses.json`). For review: pynput and qpsolvers (LGPL-3.0, transitive, installed from PyPI, never imported, not redistributed); robosuite and robomimic declare no metadata license (MIT in their repositories). Shipped site packages: MIT, BSD-3-Clause, OFL-1.1 |
-| External links | `scripts/release_check.py --network` | before publication: 17 of 20 URLs answered; the failures were the local preview URL (now excluded from the scan as not external) and the repository URL in two forms, 404 because the repository did not exist yet. Rechecked after publication (§7, `reports/session12/release_check_network.json`) |
+| External links | `scripts/release_check.py --network` | before publication: 17 of 20 URLs answered; the failures were the local preview URL (now excluded from the scan as not external) and the repository URL in two forms, 404 because the repository did not exist yet. Rechecked after publication: 19/19 answered with HTTP < 400 (§7, `reports/session12/release_check_network.json`) |
 
 ## 5. Release scans (D-104)
 
@@ -140,8 +140,18 @@ features 4.4 MB, `website/node_modules` 141 MB, `.git` 81 MB).
 
 ## 7. Publication
 
-Recorded only after each step is verified; see the "Publication record" section added after
-the release in `docs/STATUS.md` and `docs/HANDOFF.md`.
+Each row was verified before it was written (owner authorization D-099, D-101, D-102).
+
+| Step | Verified state | Evidence |
+|---|---|---|
+| Repository | public, `https://github.com/zackholt05-tech/roboforge`; `main` pushed (first `b4bd070`, then each later commit, checked with `git ls-remote`) | `gh repo view`; audit §7 |
+| CI, Linux x86_64, `b4bd070` | research-integrity pass (run 42755805851); python-tests fail, triton segfault (42755805869); web-build fail, mesh check 7.45e-9 m (42755806070) | KI-061 |
+| CI, Linux aarch64, `e11ad04` | research-integrity pass (42756520065); web-build pass (42756520080); python-tests fail, same triton segfault (42756519847) | KI-061 root cause |
+| CI, Linux aarch64, `ee1e574` (after the harness fix) | python-tests pass (42758938590: lint; 303 passed, 12 skipped: 9 without the processed Lift data, 2 without `runs/`, 1 needs MPS); research-integrity pass (42758938394); web-build pass (42758938356) | D-101 amendment 2 |
+| Observatory | GitHub Pages from branch `gh-pages`, orphan commit `c14e041` (Zackary Holt), staged by `make pages-bundle` from clean `b4bd070`; build `built`; `https://zackholt05-tech.github.io/roboforge/` | `gh api …/pages` |
+| Live site check | all 186 files listed in `deploy.json` fetched from the live URL with equal SHA-256; the site's E2E run against the live URL 7/7 | `logs/session12/pages_live_e2e.log` |
+| External links after publication | 19/19 answered with HTTP < 400 | `reports/session12/release_check_network.json` |
+| Tag `v1.0.0` and GitHub release | recorded in the next commit, after verification | |
 
 ## 8. MASTER_SPEC §13.2 release acceptance matrix
 
@@ -163,7 +173,7 @@ the release in `docs/STATUS.md` and `docs/HANDOFF.md`.
 | Research report | PASS | `paper/main.pdf`, not peer reviewed |
 | GitHub authorship | PASS | §5 |
 | External credit | PASS | `THIRD_PARTY_NOTICES.md`, bibliography, site credits |
-| Release | see §7 | |
+| Release | PASS | §7 |
 
 ## 9. Outstanding limitations and open items
 
@@ -175,6 +185,9 @@ the release in `docs/STATUS.md` and `docs/HANDOFF.md`.
   `docs/AUDIT.md`.
 - **Engineering, open:** KI-001 and KI-033 (EGL vs OSMesa on Modal unverified), KI-008 and
   KI-010 (local disk, image size), KI-011 (narrow Lift start distribution), KI-021, KI-023,
-  KI-024, KI-028, KI-034, KI-035, KI-042; KI-060 (dependency advisories, accepted).
+  KI-024, KI-028, KI-034, KI-035, KI-042; KI-060 (dependency advisories, accepted); KI-061
+  (partial: triton crashes after Mesa's LLVM is loaded globally; fixed in the test harness, a
+  recorded workaround elsewhere; Linux x86_64 meshes differ by 7.45e-9 m, so x86_64 stays
+  unverified).
 - **Not done, by decision:** DiT, GMM-BC and the Square task (D-096); Python static type
   checking (not configured); a cold-cache macOS install (CI performs a cold Linux install).

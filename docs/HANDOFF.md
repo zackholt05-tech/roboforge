@@ -4,7 +4,7 @@ project: roboforge-3d
 current_session: 12
 session_status: PASS          # Session 12: fresh-clone reproduction, final QA, release v1.0.0 (D-097-D-104); $0 paid compute
 next_session: none            # PROJECT COMPLETE (MASTER_SPEC Session 12 STOP); no next-session prompt
-last_verified_commit: release-candidate   # recorded with its STOP results in the follow-up commit (# Session 12 Handoff §4)
+last_verified_commit: ee1e574   # code as ab17fb2; STOP checks in # Session 12 Handoff §4; CI on Linux aarch64 passed on it
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -108,7 +108,10 @@ release). Status **PASS**. **This is the last session; there is no next-session 
 - **README** per MASTER_SPEC §11.2 with generated findings and setup blocks and a preview from
   recorded renders; `CITATION.cff` v1.0.0; `docs/REPRODUCIBILITY.md`, `THIRD_PARTY_NOTICES.md`,
   site credits; `docs/FINAL_RELEASE_AUDIT.md`.
-- **CI** (`.github/workflows/`): python-tests, research-integrity, web-build.
+- **CI** (`.github/workflows/`): python-tests, research-integrity, web-build, on Linux aarch64.
+  The first runs found a triton segfault whose root cause (Mesa's LLVM in the global symbol
+  scope) was isolated in the canonical container and fixed in the test harness (KI-061).
+- **Publication** (§5): public repository, GitHub Pages Observatory verified file by file.
 
 ## 3. Results (nothing here is a new experimental result)
 The frozen findings are the generated block of `README.md` and `docs/FINAL_RELEASE_AUDIT.md` §2
@@ -118,16 +121,37 @@ BC-MLP separated on both; diffusion costs far more to train and run; the RGB com
 separated at the Lift ceiling; H5 separated in the negative direction (point clouds generalized
 worse to shifted cubes).
 
-## 4. STOP checks (release candidate)
-Recorded in the follow-up commit with the release candidate's SHA.
+## 4. STOP checks
+On `b4bd070` (release candidate), host: `make lint` clean; full suite alone
+526 passed (8:32, `logs/session12/stop_full_suite.log`); `make freeze-check` unchanged; both
+gates open; `make paper-check` pass; `make release-check` PASS; `make web-build`, `web-test`
+49/49, `web-e2e` 7/7. After the test-harness fix for KI-061 (`ab17fb2`, `tests/conftest.py`
+only): `make lint` clean; full suite alone 526 passed (8:20,
+`logs/session12/stop_full_suite_2.log`); `make freeze-check` unchanged; `tests/research_integrity`
+45 passed; `make release-check` PASS. CI on `ee1e574` (fresh checkouts, Linux aarch64): all
+three workflows pass (publication record).
 
 ## 5. Publication record
-Recorded in the follow-up commits, each step only after it was verified.
+
+Each row was verified before it was written (owner authorization D-099, D-101, D-102).
+
+| Step | Verified state | Evidence |
+|---|---|---|
+| Repository | public, `https://github.com/zackholt05-tech/roboforge`; `main` pushed (first `b4bd070`, then each later commit, checked with `git ls-remote`) | `gh repo view`; audit §7 |
+| CI, Linux x86_64, `b4bd070` | research-integrity pass (run 42755805851); python-tests fail, triton segfault (42755805869); web-build fail, mesh check 7.45e-9 m (42755806070) | KI-061 |
+| CI, Linux aarch64, `e11ad04` | research-integrity pass (42756520065); web-build pass (42756520080); python-tests fail, same triton segfault (42756519847) | KI-061 root cause |
+| CI, Linux aarch64, `ee1e574` (after the harness fix) | python-tests pass (42758938590: lint; 303 passed, 12 skipped: 9 without the processed Lift data, 2 without `runs/`, 1 needs MPS); research-integrity pass (42758938394); web-build pass (42758938356) | D-101 amendment 2 |
+| Observatory | GitHub Pages from branch `gh-pages`, orphan commit `c14e041` (Zackary Holt), staged by `make pages-bundle` from clean `b4bd070`; build `built`; `https://zackholt05-tech.github.io/roboforge/` | `gh api …/pages` |
+| Live site check | all 186 files listed in `deploy.json` fetched from the live URL with equal SHA-256; the site's E2E run against the live URL 7/7 | `logs/session12/pages_live_e2e.log` |
+| External links after publication | 19/19 answered with HTTP < 400 | `reports/session12/release_check_network.json` |
+| Tag `v1.0.0` and GitHub release | recorded in the next commit, after verification | |
+
 
 ## 6. Outstanding items (none blocks the release)
 - Open KIs: KI-001/KI-033 (EGL vs OSMesa on Modal), KI-008/KI-010 (disk, image size), KI-011,
-  KI-021, KI-023, KI-024, KI-028, KI-034, KI-035, KI-042; KI-052 and KI-053 documented; KI-060
-  accepted.
+  KI-021, KI-023, KI-024, KI-028, KI-034, KI-035, KI-042; KI-061 partial (any Linux process that
+  imports mujoco with OSMesa before its first torch optimizer crashes; workaround recorded);
+  KI-052 and KI-053 documented; KI-060 accepted.
 - Not run, by decision: the KI-052 clamp test (needs its own decision and the label
   "exploratory, after the freeze"); DiT, GMM-BC, Square (D-096).
 - Optional owner actions: a Modal workspace budget; pruning the Docker build cache (KI-008).

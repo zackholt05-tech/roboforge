@@ -216,6 +216,11 @@ public release (Session 12).
   the local username; no secret was found (`make release-check`). The evidence bytes stay
   unchanged, since some logs are hash-pinned paper sources and rewriting history would change
   every cited commit SHA. `make release-check` fails if such a path appears in any other file.
+- **Session 12, after publication:** commit `5facab8` (pushed) added
+  `logs/session12/stop_full_suite_2.log` with one unsanitized `rootdir:` line holding the same
+  local path. `make release-check` caught it on the next run, and the next commit replaced it
+  with `~`, like the other Session 12 logs. The line stays in that commit's history: it holds
+  the same information as the disclosed set, and history is not rewritten (D-100).
 
 ### KI-010 — Docker sim image is 8.7 GB (25.6 GB unpacked)
 The PyPI torch wheels for linux-aarch64 (and x86_64) bundle CUDA libraries. CPU rollout

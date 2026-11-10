@@ -49,3 +49,13 @@ def test_evals_refuse_duplicates_and_non_canonical(tmp_path: Path) -> None:
     _write(other, "native", step=5000, suite="robustness_base", canonical=False)
     with pytest.raises(ValueError, match="not canonical"):
         ar.Evals(other)
+
+
+def test_main_refuses_to_overwrite_an_existing_analysis(tmp_path: Path,
+                                                        monkeypatch: pytest.MonkeyPatch) -> None:
+    """Run once (audit B-12): an existing analysis.json stops the script before any read."""
+    (tmp_path / "analysis.json").write_text("{}")
+    monkeypatch.setattr(ar, "evidence_reports_dir", lambda *parts: tmp_path)
+    with pytest.raises(SystemExit, match="analysed once"):
+        ar.main(["--config", "lift=configs/experiments/level1_core_lift.yaml"])
+    assert (tmp_path / "analysis.json").read_text() == "{}"

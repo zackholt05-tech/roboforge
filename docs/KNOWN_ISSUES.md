@@ -48,6 +48,20 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-041 | LOW | MITIGATED (Session 8, D-074) | The first render of a fresh CGL context differs from later renders by a few pixels (macOS only) |
 | KI-042 | LOW | OPEN (Session 8) | Frozen `DiffusionPolicy.sample` draws its initial noise on the CPU, so diffusion inference cannot run on CUDA |
 | KI-043 | LOW | MITIGATED (Session 8) | The container dataset build and the full test suite run together exhausted the 16 GB host's memory and stalled both |
+| KI-044 | LOW | MITIGATED (Session 8) | A Modal preemption restarted one RGB resume launch |
+| KI-045 | LOW | MITIGATED (Session 9) | Native macOS (CGL) depth lacks reversed-Z precision |
+| KI-046 | MEDIUM | FIXED (Session 9) | robosuite's hidden sites still write depth |
+| KI-047 | LOW | MITIGATED (Session 9) | A client network drop stopped the first Level 2 launch |
+| KI-048 | LOW | FIXED (Session 9) | The Level 2 gate could not see Session 8 evidence inside the container |
+| KI-049 | LOW | DOCUMENTED (Session 9) | One generated training row of the Level 2 analysis was miscomputed |
+| KI-050 | LOW | FIXED (Session 10) | The first Observatory export stopped on the random baseline; its reference masks counted sites |
+| KI-051 | LOW | FIXED (Session 10) | Observatory selection code named the locked suite; the lock test failed at STOP |
+| KI-052 | MEDIUM | DOCUMENTED (Session 11, audit A-6) | The diffusion sampler bounds its actions to the training range; BC heads are not bounded, a confound for H2-c and H4 |
+| KI-053 | MEDIUM | DOCUMENTED (Session 11, audit B-1 to B-4, D-095) | Several separations depend on the interval method, the bootstrap seed or ties (3 seeds, 50 binary outcomes) |
+| KI-054 | MEDIUM | FIXED by reporting (Session 11, audit C-9, D-096) | Declared secondary metrics were computed per episode but never aggregated by the frozen analyses |
+| KI-055 | LOW | FIXED (Session 11, audit B-12, B-13) | `analyze_robustness.py` had no run-once guard; `analyze_level2.py` hashed a report before checking it exists |
+| KI-056 | LOW | DOCUMENTED (Session 11, audit C-6) | One RGB run's training hours omit a preempted attempt that was billed |
+| KI-057 | LOW | DOCUMENTED (Session 11, audit C-5, C-21) | Governance record defects: A-01 probe launch count exceeded before its amendment; the Level 1 freeze calls a content hash "SHA-256" |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -1055,3 +1069,65 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   regenerated. The frozen test was not edited.
 - **Handling:** for a session's own new code, run the research-integrity tests
   (`tests/research_integrity/`) before the first evidence export, not only at STOP.
+
+### KI-052 The diffusion sampler bounds its actions to the training range; BC heads are not (MEDIUM, DOCUMENTED; Session 11)
+- **Mechanism:** the samplers' shared `_Sampler._x0` (`src/roboforge/models/noise_schedule.py`) clamps the predicted clean chunk to [−1, 1] in min–max
+  normalized space (`clip_sample=True`) and the last DDIM step returns it, so every diffusion
+  action lies inside each dimension's training range. BC outputs are clipped only to the
+  controller limits (`ActionCodec.decode`). Example: Lift drot_x training range
+  [−0.151, 0.119] vs ±0.5 rad for BC.
+- **Evidence (audit A-6, scan of `runs/` arrays):** diffusion executes 0.000 out-of-range motion
+  actions on every set; BC-MLP-chunk 0.53–0.54 and BC-MLP 0.64–0.71 on the Lift OOD sets, almost
+  all in failed episodes. Correlational: the out-of-range actions start after a missed grasp.
+- **Effect:** H2-c and the H4 between-family gaps compare the generative head together with this
+  bound; neither isolates the generative model. The measured differences stand.
+- **Handling:** disclosed in the paper (§4, §6, §7, §9). An evaluation-only clamp test of the BC
+  checkpoints would resolve it; it needs its own decision before any rollout (D-096).
+
+### KI-053 Several separations depend on the interval method (MEDIUM, DOCUMENTED; Session 11)
+- **Evidence (audit B-1 to B-4):** with 3 training seeds, Can H2 and H3 are separated by the
+  preregistered bootstrap but not by Welch, variance-components or Bonferroni intervals; 6 of 41
+  robustness verdicts and 3 of 16 Level 1 verdicts change under the seed-level t analysis
+  (D-095); two verdicts change with the bootstrap seed (tails 0.0264 and 0.0237); 10 of the 64
+  declared success differences have a frozen bound at exactly zero or zero width.
+- **Handling:** the frozen verdicts stay the reported result. The paper reports the D-095
+  sensitivity analysis beside every declared difference, labelled not preregistered, and
+  calls the Can separations fragile.
+
+### KI-054 Declared secondary metrics were never aggregated (MEDIUM, FIXED by reporting; Session 11)
+- RESEARCH_PROTOCOL §8 declares gripper sign changes and action smoothness; every held-out
+  summary computes them per episode, but no frozen result aggregates them, and
+  FINAL_TEST_FREEZE §4 dropped them without an amendment. Plan diversity was measured only for
+  the Session 4 pilot; point-cloud throughput is absent from the Level 2 results.
+- **Fix (D-096):** the paper's Table 4 reports plain means from the 26 hash-chained held-out
+  summaries, labelled "declared secondary, aggregated after the frozen analysis"; the two
+  missing items are listed as declared, not reported.
+
+### KI-055 Two analysis scripts lacked safety checks (LOW, FIXED; Session 11)
+- `scripts/analyze_robustness.py` could overwrite an existing `analysis.json` in the same
+  evidence session; it now refuses (test
+  `tests/unit/test_analyze_robustness.py::test_main_refuses_to_overwrite_an_existing_analysis`).
+- `scripts/analyze_level2.py` hashed an RGB held-out report before checking it exists; it now
+  checks existence first. Neither script is hash-frozen; `make freeze-check` passed before and
+  after. No output was regenerated.
+
+### KI-056 One RGB run's training hours omit a preempted attempt (LOW, DOCUMENTED; Session 11)
+- RGB diffusion seed 2: segment 2 (launch `116f287e`, attempt 0) was preempted (KI-044) and has
+  no `train_wall_s`, so the 1.29 h in `reports/session8/rgb_results/results.json` omits about
+  0.1–0.2 h; the billed $1.60 includes it. The "77.9 ms/step" of E8-10 is the steady-state rate;
+  segment wall time over steps is 79.5–84.1 ms.
+- **Handling:** footnote b of the paper's cost table (generated rule: more segments than
+  launches). The frozen results are not edited.
+
+### KI-057 Governance record defects (LOW, DOCUMENTED; Session 11)
+- **A-01 launch count (audit C-5):** A-01 authorized one GPU probe; two probe launches ran
+  (`5688db17`, failed in 5 s, $0.00001; `4489c09f`, $0.0657) before the 00:20 EST amendment
+  authorized a retry. The launch guard checks function and dollar cap, not launch counts
+  (D-049). The cap was never at risk.
+- **Taxonomy hash wording (audit C-21):** FINAL_TEST_FREEZE gives `5a5d998f…` as the "SHA-256"
+  of `configs/eval/failure_taxonomy.yaml`; it is the canonical-JSON content hash from
+  `taxonomy_sha256()`. The file bytes hash to `e9aea501…`. Both are consistent; the freeze is
+  frozen, so only this note records it.
+- **Record order (audit C-20):** D-086's amendment time and E9-11's rehearsal order were wrong;
+  both are annotated in place.
+

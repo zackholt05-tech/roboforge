@@ -1720,7 +1720,7 @@ pattern: a new module, no frozen file changed.
   - the RGB gate is unaffected.
 - **Analysis:** `scripts/analyze_level2.py` (`make level2-analyze`) implements Level 2 freeze §8
   as written. It runs once, refuses to overwrite, and refuses while the gate is shut.
-- **Amendment (2026-11-09, ≈ 17:55 EST, before any held-out Level 2 rollout):**
+- **Amendment (2026-11-09, ≈ 17:55 EST, before any held-out Level 2 rollout):** *(Corrected in Session 11, audit C-20: the amendment commit `08c3aa8` is at 17:49:10 EST; "≈ 17:55" was wrong. The held-out run started after it and ended at 17:52:26 EST.)*
   - The first `make pc-heldout` attempts (3, from `4ebebc1` clean) were refused by this
     gate inside the container, before any held-out state was read; nothing was written.
   - Cause: the frozen wrapper `infra/containers/run_sim_cpu.sh` mounts only
@@ -1935,3 +1935,164 @@ selection, label, result or finding of any study, and no held-out start is rolle
     export is not rerun.
   - Rule: run `make freeze-check` before any commit that touches `src/roboforge/sim` or
     `src/roboforge/eval`.
+
+## Session 11 (2026-11-09 onward)
+Level 1, the RGB study and Level 2 are frozen and tested once. Session 11 writes the paper
+(MASTER_SPEC §11) from that frozen evidence and audits it. Nothing below changes a
+configuration, selection, label, result or finding of any study, and no held-out start is
+rolled out again.
+
+### D-092 Makefile defaults bumped to Session 11 (FIXED)
+- `EVIDENCE_SESSION` falls back to 11 and `PREFIX` to `s11` (the D-048, D-053, D-060, D-073,
+  D-082 and D-087 pattern). No Session 11 command can then write into `reports/session6`–`10`
+  or reuse the `s10` prefix by omission. Evidence goes to `reports/session11/` and
+  `logs/session11/` with `ROBOFORGE_EVIDENCE_SESSION=11`.
+- **`OBS_OUT` stays pinned to `reports/session10/observatory`.** It used to follow
+  `EVIDENCE_SESSION`, so the bump would have pointed `make web-data`, `make web-assets`,
+  `make web-verify` and `make visual-provenance` at a directory that does not exist. The
+  committed export is Session 10 evidence and does not move.
+- New targets (D-094): `make paper-assets`, `make paper-check`, `make paper-bibcheck`,
+  `make paper`.
+- The held-out, placement and analysis targets of all three studies are never run again.
+
+### D-093 The paper toolchain: Tectonic, BibTeX through Tectonic, matplotlib from the lock (FIXED, before any paper file)
+- **Checked on this host, 2026-11-09:** `/opt/homebrew/bin/tectonic`, Tectonic 0.17.0 (XeTeX
+  engine). `pdflatex`, `latexmk`, `xelatex`, `lualatex`, `bibtex` and `biber` are not
+  installed. Tectonic runs its own BibTeX pass when the `.aux` asks for one, so the
+  bibliography uses BibTeX with `natbib` (no biber or biblatex).
+- **Bundle:** Tectonic fetches its TeX bundle over the network on first use and caches it, here
+  in `~/Library/Caches/TectonicProject.Tectonic` (46 MB). `make paper` passes
+  `--only-cached` so that a build never reaches the network silently; a fresh machine first
+  runs `tectonic -X compile paper/main.tex` once with network access.
+- **Reproducible PDF:** a two-build test (same input, one second apart) gave different PDFs
+  without `SOURCE_DATE_EPOCH` and byte-identical PDFs with it. `make paper` sets
+  `SOURCE_DATE_EPOCH` to a fixed value (`PAPER_EPOCH`), so `paper/main.pdf` is reproducible on
+  this host with this cache. Byte equality is not claimed across Tectonic versions, bundles or
+  platforms.
+- **Figures:** matplotlib 3.11.2, already in `uv.lock` through robomimic, with the precedent of
+  `scripts/plot_validation.py` and `roboforge.data.explore`. Agg backend, embedded TrueType
+  (`pdf.fonttype 42`), `metadata={"CreationDate": None}`, so figure PDFs are byte-identical
+  across rebuilds.
+- **No new dependency:** `pyproject.toml`, `uv.lock` and `website/package-lock.json` do not
+  change. Bibliography checks (D-094) use the standard library only.
+- `paper/main.pdf` is committed with its SHA-256 recorded in the ledger; it is a local,
+  unreviewed preprint-style report, never called a published paper (MASTER_SPEC §11.3).
+
+### D-094 Paper tables, figures and numbers come from frozen files by a generator, with provenance (FIXED, before any paper file)
+`src/roboforge/paper/` (new package), `scripts/paper_assets.py`,
+`scripts/verify_bibliography.py`, `tests/unit/test_paper_*.py`.
+- **Sources** (`roboforge.paper.sources.SOURCES`): the original frozen files, each pinned by
+  SHA-256 in code; a mismatch stops the build. They are:
+  - Level 1 held-out: `reports/session7/results/{results.json,taxonomy.json,tables.md}`;
+  - Level 1 robustness and ablations: `reports/session7/robustness/{analysis.json,tables.md}`;
+  - RGB study: `reports/session8/rgb_results/{results.json,tables.md}`;
+  - Level 2: `reports/session9/level2_results/{results.json,tables.md,ERRATA.md}` and the
+    committed seed-0 launch record and queue log of `logs/session9/pc_train/` (for the KI-049
+    correction);
+  - spend: `reports/compute/cost_ledger.jsonl` (the billing events);
+  - setup facts: the freezes (`docs/FINAL_TEST_FREEZE.md`, `docs/RGB_EXPERIMENT_FREEZE.md`,
+    `docs/LEVEL2_EXPERIMENT_FREEZE.md`), `data/manifests/robomimic_v1.5_ph.json`,
+    `data/splits/{lift,can}_ph.json`, `reports/session4/param_counts.json`,
+    `configs/eval/robustness.yaml`, `uv.lock` and the suite summaries that hold the validation
+    numbers.
+
+  `reports/session10/observatory/findings.json` is a convenience copy and is never a source.
+  Nothing under the gitignored `runs/` is read, so a fresh clone regenerates the same files.
+- **Outputs** under `paper/generated/` (committed):
+  - `tables/*.tex`;
+  - `figures/*.pdf`, each with a JSON sidecar of the plotted values;
+  - `numbers.tex`, the only place a number used in the prose is defined. It holds key–value
+    macros read with `\rf{key}`; an undefined key is a LaTeX error;
+  - `index.json`, which lists every output with its SHA-256 and its source paths and SHA-256.
+
+  Tables, figures and `numbers.tex` contain no timestamp. `index.json` carries the git SHA and
+  dirty flag of the generating tree.
+- **No new statistic.** The paper reports only values stored in the frozen files and plain
+  arithmetic on them, each named in `index.json`: sums of taxonomy counts (k/150), unit
+  conversions (fractions to percent, seconds to hours), and the KI-049 correction
+  `train_wall_s / (end_step − resumed_from_step)` from the committed seed-0 launch record. The
+  preregistered per-checkpoint Wilson intervals are the reported uncertainty where a bootstrap
+  interval collapses at 0 % or 100 %. Any further analysis needs its own decision and a
+  "not preregistered" label.
+- **Checks (tests):**
+  - every source matches its pinned hash;
+  - a rebuild in memory equals the committed `paper/generated/` byte for byte
+    (`make paper-check`);
+  - every value in the generated tables equals the value in the frozen `tables.md` at the same
+    rounding and sign;
+  - every `\rf{key}` used in `paper/` is defined;
+  - no bare number appears in `paper/sections/*.tex` outside `\rf{}` and a short list of
+    identifiers (H1–H5, A1–A3, decision and issue IDs, "3D", names such as ResNet-18 and the
+    sampler names DDIM-10 and DDPM-100);
+  - every bibliography entry has a DOI or an arXiv identifier, or for software a URL, and
+    `paper/bibliography_check.json` records that it resolved, with the title it resolved to.
+- **Bibliography:** entries are taken from the publishers' or arXiv's metadata (DOI content
+  negotiation, the Crossref API and the arXiv export API), never written from memory.
+  `make paper-bibcheck` needs the network and is never part of `make test`.
+
+### D-095 A seed-level sensitivity analysis, labelled not preregistered, beside the frozen intervals (FIXED, Session 11, after audit finding B-1 and before any paper result uses it)
+`roboforge.paper.sensitivity`, tables `paper/generated/tables/sensitivity_main.tex` and
+`sensitivity_robustness.tex`, macros `sens.*` (including `sens.all.boundary`, the count of
+frozen intervals with a bound at exactly zero or zero width; audit B-4).
+- **Why:** the independent audit (docs/AUDIT.md, B-1, B-2) found that, with 3 training seeds, the
+  preregistered hierarchical bootstrap's percentile interval rests on 2 degrees of freedom per
+  family for the dominant seed component. For example, Can diffusion − BC-MLP is separated under
+  it, but a small-sample interval on the per-seed means includes 0. The frozen verdicts cannot
+  change (freeze §4) and are reported as the primary result. Readers also need to see how much
+  each verdict depends on the method.
+- **What is computed**, from the frozen `per_seed` values only (no episode record, nothing
+  under `runs/`, no new rollout):
+  - a difference between two families or arms trained separately: a Welch t interval on the
+    two sets of per-seed success rates (Welch–Satterthwaite df), 95 %;
+  - a difference within one family on the same checkpoints (an OOD drop, A1, A2): a paired t
+    interval on the per-seed differences, df = n − 1;
+  - a difference of two drops: a Welch interval on the per-seed drops of the two families;
+  - when both sets have zero seed variance, the interval is reported as undefined ("no seed
+    variance"), never as a zero-width interval.
+
+  scipy 1.17.1 supplies the t quantile. It is already in `uv.lock` (a transitive dependency),
+  so `pyproject.toml` and `uv.lock` do not change, the same reasoning as matplotlib in D-093.
+- **Scope:** every declared difference of the Level 1 held-out test (success), of H4 and A1–A3,
+  of the RGB study and of Level 2. Each row shows the frozen verdict beside the sensitivity
+  verdict; rows where they disagree are marked.
+- **Labels:** "sensitivity analysis, not preregistered; the preregistered verdict is the
+  result". It never replaces, reranks or relabels a frozen result. It ignores pairing by
+  start (it treats per-seed means as the units), so it is a check on the seed dimension only,
+  not a better test.
+- **Also derived (descriptive, D-094 arithmetic):** the split of each censored-length
+  difference into a success part and a speed part,
+  ΔL = −Δp · (H − T̄_B) + p_A · ΔT̄, where H is the horizon, p is the success rate and T̄ is the
+  mean first-success step over successful episodes. All of these come from `results.json`
+  per-checkpoint values, pooled over seeds as k-weighted means.
+
+### D-096 Dispositions of the independent audit; declared secondary metrics reported post hoc (FIXED, Session 11, after audits A–C and before the paper uses them)
+`docs/AUDIT.md`, `roboforge.paper.secondary`, `Sources.chained_json`, table
+`paper/generated/tables/secondary.tex`, macros `sec.*`.
+- **Rule:** every audit finding gets an engineering correction or a disclosed limitation
+  (`docs/AUDIT.md` lists each with its disposition). No frozen file, freeze or executed outcome
+  changes. No new evaluation, training or paid compute is run in Session 11.
+- **Declared secondary metrics (audit C-9):** RESEARCH_PROTOCOL §8's gripper sign changes and
+  action smoothness were computed per episode in every Level 1 held-out summary but never
+  aggregated. The generator reads the 26 summaries that `reports/session7/results/results.json`
+  cites, each only after its SHA-256 equals the one recorded there (a chained hash, as strong as
+  a direct pin, since the parent is pinned), and reports plain means per family and task
+  (gripper sign changes per episode with the range of per-seed means; mean absolute
+  step-to-step change of the executed motion command; the frozen motion clip fraction). No
+  interval, no test, no comparison. Label: "declared secondary, aggregated after the frozen
+  analysis". Plan diversity (measured only for the Session 4 pilot) and point-cloud throughput
+  (Level 2 freeze, "also reported") are listed as declared, not reported.
+- **Not run, by decision:** the evaluation-only clamp test of audit A-6 (BC checkpoints with
+  outputs clamped to the training range on the robustness sets). It would be a new
+  post-freeze evaluation; in this session the finding is a disclosed limitation. If run later
+  it needs its own decision before any rollout, a clean tree, `ROBOFORGE_EVIDENCE_SESSION`, and
+  the label "exploratory, after the freeze"; it never replaces a frozen result.
+- **Optional items never run (audit C-11; MASTER_SPEC asks for a reason):** DiT, GMM-BC and the
+  Square task were not run, to stay within the project's time and compute budget. No declared
+  hypothesis depends on them.
+- **Engineering corrections:** `scripts/analyze_robustness.py` refuses to overwrite an existing
+  `analysis.json` (B-12, with a test); `scripts/analyze_level2.py` checks that a report exists
+  before hashing it (B-13). Neither script is hash-frozen; `make freeze-check` passed before
+  and after. The RGB cost row whose hours omit a preempted attempt gets a footnote in the
+  paper's cost table (C-6). The D-086 amendment time and the E9-11 order are annotated in place
+  (C-20).
+

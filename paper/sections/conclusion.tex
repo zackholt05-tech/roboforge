@@ -1,0 +1,21 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+Under one preregistered protocol, with matched inputs, parameter counts, budgets and tuning,
+a diffusion policy over action chunks did not outperform a deterministic MLP that sees the
+same observation window and predicts the same chunks, on either Lift or Can. Its advantage
+over a one-step MLP on Can is not separated from that of an LSTM or of the chunked MLP, so
+the data give no evidence for the generative model beyond temporal context on these tasks,
+and even the separation from the one-step MLP depends on how the uncertainty over three seeds
+is computed. Diffusion was the most robust family to a large joint offset on Lift; on Can its
+drop was not separated from the chunked MLP's, and part of its robustness may come from its
+sampler's bound on its actions. It cost more than an order of
+magnitude more training and inference time than the chunked MLP. With images, visual BC and
+visual diffusion both reach the Lift ceiling, and our DP3-inspired point-cloud policy, which
+uses world-frame coordinates and no augmentation, generalized clearly worse than the matched
+RGB policy to unseen cube positions.
+
+The most useful next steps follow from the limitations: more training seeds, harder tasks
+that are not saturated, more than one rollout per start, a BC baseline with the same action
+bound as the diffusion sampler, and a point-cloud arm with augmentation or an object-centred
+frame. Each would need its own preregistration and freeze before it is run.

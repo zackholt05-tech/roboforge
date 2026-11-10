@@ -1,20 +1,50 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 10
-SESSION_STATUS: PASS            # Session 10: RoboForge Observatory built from frozen evidence (37 clips, viewer verified on 18 MuJoCo frames); local only, no hosting (owner, D-090)
-NEXT_SESSION: 11                # research paper, reproducibility, independent critical audit; docs/HANDOFF.md "# Session 10 Handoff" §10, fresh context
-BLOCKERS: none                  # open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; KI-044, KI-045, KI-047 mitigated; KI-049 documented; KI-050, KI-051 fixed
-LAST_VERIFIED_COMMIT: f0c3552   # code (Python unchanged since 4348244, where the full suite ran); lint clean, full suite (run alone) 492 passed, freeze-check OK, RGB and Level 2 gates open on host; website build, vitest 49, E2E 7/7, viewer verification pass (viewer code unchanged since d2c8add); the STOP commit adds docs only
+CURRENT_SESSION: 11
+SESSION_STATUS: PASS            # Session 11: research paper (paper/main.pdf, 23 pages, generated from hash-pinned frozen files), independent audit (docs/AUDIT.md, passes A-D), reproducibility docs; local only, $0
+NEXT_SESSION: 12                # fresh-clone reproduction, final QA, public release (only with owner authorization); docs/HANDOFF.md "# Session 11 Handoff" §10, fresh context
+BLOCKERS: none                  # open items: KI-001, KI-008, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; KI-052 and KI-053 documented (audit HIGH findings, disclosed in the paper); KI-054, KI-055 fixed; KI-056, KI-057 documented
+LAST_VERIFIED_COMMIT: "Session 11 STOP commit (hash recorded by the follow-up commit)"   # lint clean; full suite (alone) 513 passed; freeze-check OK; RGB and Level 2 gates open; paper-check, paper lint, make paper (byte-identical rebuild); web-build within budgets, vitest 49/49
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c}
 EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080}
+PAPER: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400 (D-093)", generated: "paper/generated/ (35 files; index.json)", bibliography: "31 entries, all resolved (paper/bibliography_check.json)", label: "local build, not peer reviewed"}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (a031e88; analysis 620c541; never rerun). Session 10 re-rendered recorded episodes only; no held-out start was stepped. Any later held-out access is exploratory or replication"
-RESOURCE_SPEND: {usd_billed_total: 10.61, session10_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 Level 2 training $2.37 (5 launches); all four approvals closed; Session 10 local only, no hosting"}
+FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (a031e88; analysis 620c541; never rerun). Sessions 10-11 read recorded evidence only; no start was stepped. Any later held-out access is exploratory or replication"
+RESOURCE_SPEND: {usd_billed_total: 10.61, session11_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; reconciled launch by launch with Modal billing (docs/AUDIT.md C-1); Sessions 10-11 local only"}
 APPROVED_LIMIT: {A-03: "closed, $8.06 of $15", A-04: "closed, $2.37 of $9", open: none, local: "$0"}
 UPDATED: 2026-11-09
 ```
 
 # RoboForge Status
+
+## Session 11: research paper, reproducibility, independent audit (PASS, local only)
+| Step (Session 11 prompt) | Status | Evidence |
+|---|---|---|
+| 1. Decisions first: Makefile defaults s11; paper toolchain; no new dependency | DONE: D-092 (PREFIX s11, evidence session 11, `OBS_OUT` pinned to Session 10), D-093 (Tectonic 0.17.0, matplotlib and scipy already in the lock; `uv.lock` and `pyproject.toml` unchanged), D-094 (generator contract) | E11-01 |
+| 2. Every table and figure from frozen files by script and make target, with tests and provenance | DONE: `make paper-assets` / `make paper-check`; 35 files in `paper/generated/` (17 tables, 6 figures with data sidecars, 3 renders, `numbers.tex`, `index.json`); 30 pinned sources plus 26 hash-chained held-out summaries; KI-049 erratum beside its row; nothing read from `findings.json` or `runs/` | E11-02, `tests/unit/test_paper_assets.py`, `test_paper_tex.py` |
+| 3. LaTeX paper, MASTER_SPEC §11.1 structure, no typed numbers, verified bibliography, single author, §11.3 claims, "DP3-inspired" | DONE: `paper/` (abstract, 10 sections, 2 appendices); a lint fails on any typed number or placeholder; 31 bibliography entries resolved (E11-03) | `paper/main.tex`, `paper/sections/` |
+| 4. Independent critical audit, findings with severity and evidence, each corrected or disclosed | DONE: four fresh-context passes (A simulator/splits/privilege, B statistics, C spend/declared analyses/timeline, D claims of the paper). HIGH: A-6 (diffusion action bound, a confound), B-1/B-2 (method-dependent separations), D-1 ("not separated" written as equality, corrected). Post-hoc additions labelled: D-095 sensitivity analysis, D-096 declared secondary metrics. No new evaluation | `docs/AUDIT.md`, D-095, D-096, KI-052–KI-057, E11-04–E11-06 |
+| 5. Build paper/main.pdf | DONE: `make paper` (cached bundle only, fixed SOURCE_DATE_EPOCH), no undefined reference, two builds byte-identical, 23 pages, SHA-256 `c648e753…` | E11-07 |
+| 6. STOP: docs, lint, full suite alone, freeze-check, gates, web-build, web-test, commit, Session 12 prompt | DONE | this file, `docs/HANDOFF.md` |
+
+**What the paper reports (every number generated from the frozen files):**
+- Level 1 held-out: on Can, diffusion − BC-MLP +18.7 pp [+4.7, +32.7], separated by the
+  preregistered bootstrap; a seed-level t interval (not preregistered) includes 0. H2-c
+  (diffusion − BC-MLP-chunk) is not separated on either task, so there is no evidence that
+  the generative head adds to history and chunking. Diffusion costs 19–26× the chunked MLP's
+  CPU hours.
+- H4: on Lift, diffusion degrades least under the arm offset; on Can its drop is not separated
+  from the chunked MLP's. The diffusion sampler bounds actions to the training range (KI-052),
+  a confound for these comparisons.
+- Extensions: RGB visual diffusion vs visual BC-chunk +0.7 pp [0.0, +4.0], not separated
+  (saturated). Level 2 H5: the DP3-inspired point-cloud arm minus the frozen RGB arm under cube
+  shift −41.3 pp [−54.0, −28.0], separated (−), robust to the seed-level check.
+- Limitations are quantitative and include every audit finding (§9 of the paper).
+
+**Integrity:** no frozen file, freeze or executed outcome changed (`make freeze-check` before
+and after the two analysis-script fixes of KI-055); both held-out gates open; no training, no
+evaluation and no paid or remote compute. Network use: the bibliography check and one
+download of Tectonic's TeX bundle files.
 
 ## Session 10: RoboForge Observatory (PASS, local only)
 | Step (Session 10 prompt) | Status | Evidence |

@@ -1,0 +1,107 @@
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Policy families}
+Table~\ref{tab:families} lists the four Level~1 families. All share the observation of
+Section~\ref{sec:setup}, the normalized action, a masked mean-squared error in normalized
+action space (the diffusion family's error is on the predicted noise), float32 training on
+the CPU and one shared action decoder.
+\begin{itemize}
+\item \textbf{BC-MLP} maps the current observation to the next action ($T_o = T_p = T_a =
+  1$), through hidden layers of width \rf{mlp.hidden}.
+\item \textbf{BC-RNN} runs an LSTM~\citep{hochreiter1997lstm} with hidden size
+  \rf{rnn.hidden} over the last \rf{hor.rnn} observations and predicts the next action from its last valid step. At every decision the
+  LSTM restarts from a zero state over the window, exactly as in training, so no hidden state
+  persists between decisions or episodes. This differs from robomimic's BC-RNN, which carries
+  its hidden state for several steps; we chose exact train/inference consistency.
+\item \textbf{BC-MLP-chunk} keeps BC-MLP's hidden layers but takes the diffusion policy's
+  window of $T_o = \rf{hor.obs}$ observations and predicts $T_p = \rf{hor.pred}$ future
+  actions, of which it executes the first $T_a = \rf{hor.exec}$ before observing again. It
+  shares the diffusion policy's inputs, horizons and training budget and is the control for
+  H2-c. It differs in the head (a deterministic MLP against a denoising U-Net evaluated with
+  EMA weights), in the action bound described below, and in the tuning trial each family
+  selected.
+\item \textbf{Diffusion U-Net} is a conditional denoising diffusion model over the
+  normalized $T_p \times \rf{dim.act}$ action chunk~\citep{chi2023diffusion}. The
+  $T_o \times \rf{dim.obs}$ observation window is flattened into a global condition, with no
+  learned observation encoder. A 1D temporal U-Net~\citep{janner2022diffuser} with down
+  widths (\rf{diff.width1}, \rf{diff.width2}), GroupNorm~\citep{wu2018groupnorm} and
+  Mish~\citep{misra2019mish} activations predicts the noise; every residual block receives a
+  FiLM scale and bias~\citep{perez2018film} from the diffusion-timestep embedding and the
+  condition. The architecture is adapted from robomimic's Diffusion Policy implementation,
+  scaled down to match BC's parameter budget and trained with the same optimizer recipe as
+  BC rather than robomimic's warm-up schedule; its scheduler semantics were checked against
+  diffusers~\citep{diffusers}.
+\end{itemize}
+
+\begin{table}[t]
+\centering\small
+\caption{Level~1 policy families. Parameter counts are exact; all four lie within the budget
+rule of the protocol (diffusion's count is not more than twice BC-MLP's, so no
+capacity-matched BC variants were added).}
+\label{tab:families}
+\resizebox{\linewidth}{!}{\input{generated/tables/families.tex}}
+\end{table}
+
+\subsection{Diffusion training and sampling}
+Training uses the DDPM forward process~\citep{ho2020ddpm} with $K = \rf{diff.T}$ steps and
+the squared-cosine noise schedule~\citep{nichol2021improved}:
+$A_t = \sqrt{\bar\alpha_t}\,A_0 + \sqrt{1-\bar\alpha_t}\,\epsilon$ for a normalized
+demonstrated chunk $A_0$, a timestep $t$ drawn uniformly and Gaussian noise $\epsilon$. The
+network predicts $\epsilon$ and the loss is the masked squared error over the valid
+(unpadded) action steps. At inference the policy runs DDIM~\citep{song2021ddim} with
+\rf{diff.ddim} steps and $\eta = 0$, so a chunk is a deterministic function of its initial
+noise; the predicted clean chunk is clipped to $[-1, 1]$ at every step. In min--max
+normalized space this keeps every diffusion action within the range of the training actions
+on each dimension, a bound the BC heads do not have (their outputs are clipped only to the
+controller limits; Section~\ref{sec:limitations}). The evaluated
+network is an exponential moving average (EMA) of the weights with power \rf{diff.ema}; the
+raw trained weights are kept in every checkpoint for ablation A1. DDIM with \rf{diff.ddim}
+steps was fixed before any reported run because the robomimic default (DDPM with all
+\rf{diff.T} steps) made every canonical evaluation several times longer; A2 compares the two.
+
+\subsection{Optimization and matched budgets}
+The base configuration of every family uses AdamW~\citep{loshchilov2019adamw} with learning
+rate \rf{train.lr}, batch \rf{train.batch} and no gradient clipping; the tuning trials below
+change only the optimizer. Every main run trains for
+\rf{train.steps} gradient steps and saves a checkpoint every \rf{train.ckpt} steps
+(\rf{train.K} checkpoints), identically for all families and both tasks, so every family
+sees the same number of training samples. Training ran on the local CPU with one torch
+thread per run.
+
+\paragraph{Tuning budget.} Each family received exactly \rf{train.trials} configurations per
+task, each trained with the first training seed at the main budget and declared before the first run: the
+pilot configuration; a cosine learning-rate schedule annealed to zero; a constant learning
+rate of \rf{train.lr3}; and weight decay \rf{train.wd4}. The architecture, horizons, batch
+and budget never changed. The configuration whose selected checkpoint had the most
+validation successes (ties: lower mean first-success step, then the lower trial number) was
+then trained with the other two seeds. The chosen trials were, on Lift, \rf{sel.lift.bcmlp.chosen}
+(BC-MLP), \rf{sel.lift.bcrnn.chosen} (BC-RNN), \rf{sel.lift.chunk.chosen} (BC-MLP-chunk) and
+\rf{sel.lift.diff.chosen} (diffusion), and on Can \rf{sel.can.bcmlp.chosen},
+\rf{sel.can.bcrnn.chosen}, \rf{sel.can.chunk.chosen} and \rf{sel.can.diff.chosen}.
+
+\subsection{Observation-modality extensions}
+Two further studies replace the privileged state by sensor observations on Lift, each with
+its own freeze. Both keep the diffusion head, horizons and action encoding above, train for
+\rf{vis.steps} steps with batch \rf{vis.batch} and \rf{vis.K} checkpoints on one NVIDIA L4
+GPU with deterministic CUDA kernels, and evaluate on the same CPU platform as Level~1.
+\begin{itemize}
+\item \textbf{RGB study.} Two cameras (the front \code{agentview} and the wrist
+  \code{robot0_eye_in_hand}) at \rf{vis.image}$\times$\rf{vis.image} pixels, rendered from
+  the recorded demonstration states, each randomly cropped during training (centre crop at evaluation) and encoded by a
+  ResNet-18~\citep{he2016resnet} with GroupNorm and random initialization followed by a
+  spatial soft-argmax~\citep{levine2016visuomotor},
+  plus \rf{pc.proprio}-dimensional proprioception (end-effector pose and gripper; no object
+  state). Visual diffusion is compared with visual BC-chunk, which has the same encoder and
+  horizons and a deterministic head.
+\item \textbf{Level~2 point clouds (DP3-inspired).} One world-frame cloud per step, fused
+  from the depth images of the same two cameras, cropped to a fixed workspace box and reduced
+  to \rf{pc.points} points by deterministic farthest-point sampling. A per-point MLP
+  (widths \rf{pc.enc.w1} to \rf{pc.enc.w3}, LayerNorm, ReLU) with max pooling and a
+  \rf{pc.enc.out}-dimensional projection encodes it, following the idea of
+  DP3~\citep{ze2024dp3} and PointNet~\citep{qi2017pointnet}; the same proprioception is
+  added. The cloud uses only depth, camera intrinsics and camera poses (the wrist camera's
+  from robot kinematics). No segmentation, object pose or simulator label enters it, so the
+  arm is sensor-like rather than privileged. The depth is noise-free and the calibration is
+  exact. The reference arm is the RGB study's diffusion arm, frozen and never retrained.
+\end{itemize}

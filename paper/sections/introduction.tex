@@ -1,0 +1,54 @@
+\section{Introduction}
+\label{sec:intro}
+
+Learning robot control from demonstrations turns a manipulation skill into supervised
+learning: a policy is fit to the actions an operator took in the states the operator
+visited~\citep{argall2009survey,pomerleau1991}. Two difficulties make this harder than it
+looks. First, a policy that is slightly wrong drifts into states the demonstrations never
+covered, and its errors compound over a closed-loop episode~\citep{ross2011dagger}. Second,
+human demonstrations are often multimodal: several different action sequences solve the
+same situation, and a regressor trained with a squared loss averages them into an action
+that solves none~\citep{florence2021ibc,shafiullah2022bet}.
+
+Diffusion policies~\citep{chi2023diffusion} address both concerns directly. They model the
+conditional distribution of a whole chunk of future actions with a denoising diffusion
+model~\citep{ho2020ddpm}, so a multimodal distribution can be represented, and they execute
+the chunk in a receding-horizon loop, which reduces how often the policy must decide.
+Reported gains over behavior cloning (BC) are large on several benchmarks, but a gain of
+this kind can have more than one cause. A diffusion policy differs from a one-step BC
+policy in its generative training objective, in its observation history, in predicting
+action chunks rather than single actions, and often in its tuning budget. Action
+chunking alone is known to help deterministic policies~\citep{zhao2023act}.
+
+This report describes a controlled comparison that separates these factors as far as a
+small budget allows. We compare four families on two robosuite tasks under one protocol:
+a one-step MLP (BC-MLP), an LSTM over an observation window (BC-RNN), an MLP with exactly
+the diffusion policy's observation and action horizons (BC-MLP-chunk), and a conditional 1D
+temporal U-Net diffusion policy. The chunked MLP is the control that the protocol requires
+before any advantage of diffusion over BC-MLP may be attributed to the generative model
+(hypothesis H2-c). All families see the same exact-state observations, use the same action
+encoding and parameter budget, and receive the same number of tuning trials; all are
+selected by the same rule on validation rollouts and tested once on held-out initial
+states after a committed freeze.
+
+\paragraph{Contributions.} The contribution is empirical and methodological, not a new
+algorithm:
+\begin{itemize}
+\item a preregistered, paired, closed-loop comparison of BC and diffusion policies on Lift
+  and Can, with a chunked deterministic control, a held-out test run once, and every
+  null result reported (Sections~\ref{sec:results}--\ref{sec:robustness});
+\item preregistered robustness sets and ablations (exponential moving average, sampler,
+  observation history), analysed with the same hierarchical paired bootstrap;
+\item two separately frozen observation-modality extensions on Lift: a visual BC versus
+  visual diffusion comparison, and a DP3-inspired point-cloud diffusion policy against
+  the frozen RGB diffusion policy under a cube-placement shift
+  (Section~\ref{sec:perception});
+\item a reproducible pipeline: every number in this report is generated from hash-pinned
+  frozen result files (Appendix~\ref{app:repro});
+\item an independent audit of the code and frozen files after the results were frozen,
+  whose findings are disclosed with their consequences (Section~\ref{sec:limitations}),
+  including a seed-level sensitivity check of every declared success comparison, an analysis
+  that was not preregistered and is labelled as such.
+\end{itemize}
+We make no claim of a new diffusion method, of real-robot performance, or of superiority
+beyond what the preregistered paired intervals show.

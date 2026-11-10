@@ -270,6 +270,9 @@ def main(argv: list[str] | None = None) -> int:
     a = p.parse_args(argv)
     configs = {k: REPO_ROOT / v for k, v in (c.split("=", 1) for c in a.config)}
     out_dir = evidence_reports_dir("robustness")
+    # Run once (audit B-12): never overwrite a frozen analysis.
+    if (out_dir / "analysis.json").exists():
+        raise SystemExit(f"{repo_relative(out_dir / 'analysis.json')} exists: analysed once")
     ev = Evals(out_dir / "evals")
     n = int(rb.robustness_config()["base"]["n_states"])
     res: dict[str, Any] = {"schema": "roboforge.robustness_analysis/1",

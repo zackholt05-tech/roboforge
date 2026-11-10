@@ -1,0 +1,132 @@
+\section{Robustness and ablations (Level 1)}
+\label{sec:robustness}
+
+\paragraph{Design.} H4 tests two perturbations defined, validated and committed before the
+first robustness rollout. \emph{Cube shift} (Lift only) moves the cube's centre to a radius
+drawn uniformly between \rf{rob.cube.rmin} and \rf{rob.cube.rmax}\,cm from the table centre,
+at a uniform angle; the demonstrations place it within $\pm$\rf{rob.cube.train}\,cm in each
+direction, so every shifted cube lies outside the training square. \emph{Arm offset} (Lift
+and Can) adds $\pm$\rf{rob.arm.rad}\,rad with independent random signs to every arm joint,
+\rf{rob.arm.ratio} times the standard deviation (\rf{rob.arm.sigma}\,rad) of robosuite's own
+joint noise. Can has no placement set because its can is already sampled over the whole source
+bin. Each perturbed state is derived from the base state with the same index and passes
+validity checks (exact restore, no success at the start, joint limits, no new contacts or
+penetration, and passive settling). The \rf{proto.nseeds} selected checkpoints of each family
+run every base and perturbed start once. Since the base starts selected nothing, these results
+are not biased by selection, but they were run before the held-out test and are not part of
+it. Differences are paired by base index, and the bootstrap is the one of
+Section~\ref{sec:protocol}.
+
+\begin{table}[t]
+\centering\small
+\caption{Success (\%) on the robustness base starts and the two perturbation sets, mean over
+seeds with the bootstrap \rf{proto.level}\,\% interval.}
+\label{tab:robustness}
+\resizebox{\linewidth}{!}{\input{generated/tables/robustness_success.tex}}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{generated/figures/robustness.pdf}
+\caption{Success per family on the base starts and under each perturbation (mean over seeds
+with the \rf{proto.level}\,\% interval).}
+\label{fig:robustness}
+\end{figure}
+
+\paragraph{Lift.} All four families succeed on at least \rf{rob.lift.bcmlp.base.succ}\,\% of
+the base starts (Table~\ref{tab:robustness}, Figure~\ref{fig:robustness}). Under cube shift,
+BC-MLP and BC-MLP-chunk fall to \rf{rob.lift.bcmlp.cube.succ} and
+\rf{rob.lift.chunk.cube.succ}\,\%, diffusion to \rf{rob.lift.diff.cube.succ}\,\%, and BC-RNN
+holds at \rf{rob.lift.bcrnn.cube.succ}\,\%. Under arm offset, diffusion keeps
+\rf{rob.lift.diff.arm.succ}\,\%, against \rf{rob.lift.bcrnn.arm.succ}\,\% for BC-RNN,
+\rf{rob.lift.chunk.arm.succ}\,\% for BC-MLP-chunk and \rf{rob.lift.bcmlp.arm.succ}\,\% for
+BC-MLP. Diffusion exceeds BC-MLP-chunk on both sets (\rf{rob.lift.cube.diff-chunk.d} and
+\rf{rob.lift.arm.diff-chunk.d}\,pp, both separated) and BC-RNN under arm offset
+(\rf{rob.lift.arm.diff-bcrnn.d}\,pp, separated), while BC-RNN is ahead under cube shift
+(diffusion minus BC-RNN \rf{rob.lift.cube.diff-bcrnn.d}\,pp, not separated).
+
+\paragraph{Can.} The Lift pattern does not carry over. Under arm offset on Can, BC-MLP-chunk
+keeps \rf{rob.can.chunk.arm.succ}\,\% and diffusion \rf{rob.can.diff.arm.succ}\,\%; their
+difference (\rf{rob.can.arm.diff-chunk.d}\,pp [\rf{rob.can.arm.diff-chunk.lo},
+\rf{rob.can.arm.diff-chunk.hi}]) is not separated. Diffusion does exceed BC-MLP
+(\rf{rob.can.arm.diff-bcmlp.d}\,pp) and BC-RNN (\rf{rob.can.arm.diff-bcrnn.d}\,pp).
+
+\paragraph{Reading H4.} Each Lift and Can analysis reports \rf{rob.lift.contrasts} and
+\rf{rob.can.contrasts} differences and contrasts, unadjusted for multiplicity. The seed-level
+sensitivity analysis (Table~\ref{tab:sens-rob} in the appendix) changes
+\rf{sens.rob.changed} of \rf{sens.rob.n} robustness verdicts, all from separated to not
+separated. Among them is diffusion's advantage over BC-MLP-chunk under Lift cube shift
+([\rf{sens.rob.lift.cube.diff-chunk.lo}, \rf{sens.rob.lift.cube.diff-chunk.hi}]), whereas its
+advantage under Lift arm offset stays separated under both methods. Two further
+cautions apply. First, the diffusion sampler bounds every action to the range of the
+training actions, while the BC heads are bounded only by the controller limits. In BC
+episodes that fail under perturbation most motion actions lie outside that range, which
+diffusion cannot do, so the between-family robustness gaps combine the generative model with
+this output bound (Section~\ref{sec:limitations}). This is a correlation, not a mechanism:
+the out-of-range actions start only after a grasp is missed, and BC-RNN rarely leaves the
+range yet keeps only \rf{rob.lift.bcrnn.arm.succ}\,\% under arm offset. Second, the results hold
+only for these two perturbations. We therefore read H4 as: on Lift, diffusion degrades least
+under a large joint offset, and under cube shift BC-RNN degrades least, with diffusion not
+separated from it; on Can, diffusion's drop under arm offset is not separated from the
+chunked MLP's (\rf{rob.can.dd.arm.diff-chunk.d}\,pp [\rf{rob.can.dd.arm.diff-chunk.lo},
+\rf{rob.can.dd.arm.diff-chunk.hi}]), whose point estimate is smaller.
+
+\paragraph{Ablations.} Table~\ref{tab:ablations} reports the three preregistered diffusion
+ablations on the robustness base starts. A1 evaluates the raw trained weights instead of
+the EMA weights of the same checkpoints; A2 samples with DDPM over all \rf{diff.T} steps
+instead of DDIM with \rf{diff.ddim}; A3 (Can only) trains a diffusion policy with one
+observation instead of two (\rf{abl.A3.params.to1} instead of \rf{abl.A3.params.to2}
+parameters, three new seeds, selected by the same rule). Checkpoints were selected with EMA
+weights and DDIM-\rf{diff.ddim}, which favours the primary arm in A1 and A2, and all three
+ablations share the primary arm's evaluations on the base starts, so they are not
+independent of each other or of H4. None of the five differences is separated, by the
+bootstrap or by the seed-level analysis. DDIM-\rf{diff.ddim} was not separated from DDPM over
+all \rf{diff.T} steps, although both point estimates favour DDPM (\rf{abl.lift.A2.d} and
+\rf{abl.can.A2.d}\,pp). No ablation of the action horizons ($T_p$, $T_a$) was run; the only comparison
+that changes them is BC-MLP against BC-MLP-chunk, which also changes the observation window
+and is not a declared comparison.
+
+\begin{table}[t]
+\centering\small
+\caption{Diffusion ablations on the robustness base starts (\rf{proto.nseeds} seeds,
+\rf{proto.nstates} starts each). A1 and A2 re-evaluate the selected checkpoints; A3 trains
+separately. Primary: EMA weights, DDIM-10, $T_o = 2$.}
+\label{tab:ablations}
+\resizebox{\linewidth}{!}{\input{generated/tables/ablations.tex}}
+\end{table}
+
+\paragraph{Failure modes.} Table~\ref{tab:taxonomy} and Figure~\ref{fig:taxonomy} classify
+every held-out and Level~2 failure, and Table~\ref{tab:taxonomy-rob} every failure of the
+robustness evaluations. Under Lift arm offset, BC-MLP's failures are mostly drifts
+(\rf{rob.lift.bcmlp.arm.tax.no-grasp-drift} of its episodes), while diffusion has
+\rf{rob.lift.diff.arm.tax.no-grasp-drift} drifts and fails mostly next to the cube
+(\rf{rob.lift.diff.arm.tax.no-grasp-near}). On the Level~1 held-out starts, BC-MLP's Lift failures are mostly drifts away
+from the cube without a grasp (\rf{l1.lift.bcmlp.tax.no-grasp-drift} of
+\rf{l1.lift.n}$\times$\rf{proto.nseeds} episodes), while diffusion's few failures end near the
+cube or after a drop. On Can, BC-MLP fails in several ways, most often by never closing the
+gripper (\rf{l1.can.bcmlp.tax.gripper-never-closed} episodes). The point-cloud policy's
+failures under cube shift are mostly misses near the cube (\rf{l2.pcdiff.cube.tax.no-grasp-near})
+and drops (\rf{l2.pcdiff.cube.tax.dropped}), not drifts.
+
+\begin{table}[t]
+\centering\small
+\caption{Failure taxonomy: episodes per category, summed over the three seeds (one run of
+\rf{proto.nstates} episodes for the random baseline).}
+\label{tab:taxonomy}
+\input{generated/tables/taxonomy.tex}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Failure taxonomy of the robustness evaluations (validation regime), summed over the
+three seeds.}
+\label{tab:taxonomy-rob}
+\input{generated/tables/taxonomy_robustness.tex}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{generated/figures/taxonomy.pdf}
+\caption{Failure categories of the Level~1 held-out episodes per family (successes omitted).}
+\label{fig:taxonomy}
+\end{figure}

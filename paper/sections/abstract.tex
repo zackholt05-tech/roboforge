@@ -1,0 +1,34 @@
+\begin{abstract}
+We ask whether a conditional diffusion policy over action chunks controls a simulated
+articulated robot more reliably than deterministic and recurrent behavior cloning when all
+of them learn from the same demonstrations. On the robosuite Lift and PickPlaceCan tasks
+(MuJoCo physics, a Panda arm with operational-space control) we train four policy families
+on the robomimic proficient-human demonstrations with exact simulator state as input: a
+one-step MLP, an LSTM, an MLP that predicts action chunks, and a 1D temporal U-Net
+diffusion policy, with matched parameter counts (\rf{params.bcmlp} to \rf{params.chunk}),
+\rf{proto.nseeds} training seeds
+and a matched, preregistered tuning budget. Checkpoints are chosen on validation rollouts,
+and the frozen protocol is then run once on \rf{proto.nstates} held-out initial states per
+task. On Can, diffusion succeeds in \rf{l1.can.diff.succ}\pct{} of held-out episodes against
+\rf{l1.can.bcmlp.succ}\pct{} for the one-step MLP (paired difference
+\rf{l1.can.diff-bcmlp.d}\pp, \rf{proto.level}\pct{} interval
+[\rf{l1.can.diff-bcmlp.lo}, \rf{l1.can.diff-bcmlp.hi}]), although a seed-level $t$
+interval, computed after the audit and not preregistered, includes zero; on Lift the same
+difference is not separated by the preregistered bootstrap (the seed-level interval does
+separate it). Diffusion is not separated from the recurrent policy or from the
+chunked MLP on either task, so these data give no evidence that the generative model adds to
+observation history and action chunking, while diffusion costs
+\rf{l1.ratio.cpu.lo}--\rf{l1.ratio.cpu.hi}$\times$ the chunked MLP's training time.
+Under preregistered perturbations of the initial arm configuration, diffusion degrades least
+on Lift, but on Can its drop is not separated from the chunked MLP's
+(\rf{rob.can.dd.arm.diff-chunk.d}\pp{} [\rf{rob.can.dd.arm.diff-chunk.lo},
+\rf{rob.can.dd.arm.diff-chunk.hi}]); the diffusion sampler's bound on its actions is a
+confound in these comparisons. Two separately frozen extensions follow: on Lift, visual diffusion and visual
+chunked BC from two cameras both reach the task's ceiling, and a DP3-inspired point-cloud
+diffusion policy generalizes worse than the frozen RGB diffusion policy (same head and
+training, different encoder and augmentation) to cube placements
+outside the demonstrations' range (\rf{l2.h5.d}\pp{} [\rf{l2.h5.lo}, \rf{l2.h5.hi}]). The
+main limitation is resolution: \rf{proto.nseeds} seeds and \rf{proto.nstates} starts per
+task cannot resolve differences of a few points near the ceiling, and everything here is
+simulation.
+\end{abstract}

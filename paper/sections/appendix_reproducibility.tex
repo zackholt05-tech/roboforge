@@ -1,0 +1,70 @@
+\section{Reproducibility}
+\label{app:repro}
+
+\paragraph{Software and data.} Simulation: robosuite \rf{ver.robosuite} (commit
+\texttt{\rf{ver.robosuite.commit}}), MuJoCo \rf{ver.mujoco}; learning: robomimic
+\rf{ver.robomimic} (commit \texttt{\rf{ver.robomimic.commit}}), PyTorch \rf{ver.torch}, NumPy
+\rf{ver.numpy}, diffusers \rf{ver.diffusers} (scheduler reference only); Python
+\rf{ver.python}. All versions are pinned in the repository's \file{uv.lock}. Every reported
+rollout ran in the container image \code{sha256:}\rf{plat.image}. The demonstrations are the
+Hugging Face \code{robomimic/robomimic_datasets} files at revision \rf{data.hf.revision}, with
+the SHA-256 prefixes of Section~\ref{sec:setup}, released under the \rf{data.license} license
+according to the dataset card; \code{make download} fetches and verifies them, and they are
+not redistributed. The RoboForge code is released under the license Apache-2.0; robosuite,
+robomimic and MuJoCo keep their own licenses.
+
+\paragraph{Splits and initial states.} The training and validation episode IDs are in
+\file{data/splits/lift_ph.json} and \file{data/splits/can_ph.json} (Table~\ref{tab:sources}).
+Each evaluation suite is a manifest with per-state hashes under
+\file{data/eval_states/<task>/<suite>/}; the held-out manifests' content SHA-256 prefixes are
+\texttt{\rf{l1.lift.heldout.manifest}} (Lift) and \texttt{\rf{l1.can.heldout.manifest}} (Can), as
+recorded in the Level~1 freeze. The robustness sets are derived deterministically from the
+base starts by \file{configs/eval/robustness.yaml}.
+
+\paragraph{Frozen results.} The Level~1 held-out analysis ran at commit \texttt{\rf{l1.git}},
+the robustness analysis at \texttt{\rf{rob.git}}, the RGB analysis at \texttt{\rf{rgb.git}} and the
+Level~2 analysis at \texttt{\rf{l2.git}}. Each study's freeze document, committed before its
+first governed run, lists the SHA-256 of every code and configuration file it depends on; a
+repository check compares those hashes with the working tree. Table~\ref{tab:sources} lists
+every frozen file this report reads, with its SHA-256 prefix. The evaluation summaries that a
+results file cites are read only after their hash matches the one recorded in that file.
+
+\paragraph{Regenerating this report.} Every table, figure and number in the text is generated
+from those files by \code{scripts/paper_assets.py}; the prose uses only generated macros. The
+generator never reads the interactive viewer's summaries or the training-run directories.
+\begin{itemize}
+\item \code{make paper-assets} regenerates \file{paper/generated/}, including an index with
+  the SHA-256 of every output and of every source it read.
+\item \code{make paper-check} confirms that the committed generated files equal a fresh build
+  byte for byte and lints the sections for typed numbers, placeholders and undefined macros.
+\item \code{make paper-bibcheck} resolves every DOI and arXiv identifier of the bibliography
+  and compares titles and first authors (it needs network access).
+\item \code{make paper} builds \file{paper/main.pdf} with Tectonic from its cached bundle,
+  without network access, and with a fixed source date so that the PDF is byte-identical
+  across builds.
+\end{itemize}
+
+\paragraph{Commands and budgets.} Training runs through \code{make train} and the suite
+orchestrator \code{make suite} with the committed plans
+(\file{configs/experiments/level1_core_lift.yaml} and \file{level1_core_can.yaml}): every
+run \rf{train.steps} steps, a checkpoint every \rf{train.ckpt} steps, every checkpoint on the
+\rf{proto.nstates} validation starts. Every rollout is capped at the \rf{proto.horizon}-step
+horizon. The held-out tests and their analyses (\code{make eval-final},
+\code{make analyze-final}, \code{make rgb-heldout}, \code{make pc-placement},
+\code{make pc-heldout}, \code{make level2-analyze}) each ran once, after the freeze that governs it was
+committed, and must never be rerun. Each paid GPU launch was limited to one
+hour and ran under a committed approval with a dollar cap (Table~\ref{tab:spend}).
+
+\paragraph{What is not redistributed.} Trained checkpoints, rollout records and per-episode
+arrays live in the training-run directories, which are not part of the repository. The
+committed evaluation summaries, selections and analyses suffice to regenerate every number
+here, but not to re-run a policy without retraining it. Retraining follows the committed
+configurations; Level~1 runs train on a CPU, and the RGB and Level~2 runs need one NVIDIA L4
+GPU.
+
+\begin{table}[p]
+\centering\scriptsize
+\caption{Frozen sources read by the report generator, with their SHA-256 prefixes.}
+\label{tab:sources}
+\input{generated/tables/sources.tex}
+\end{table}

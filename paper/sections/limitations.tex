@@ -1,0 +1,122 @@
+\section{Limitations and threats to validity}
+\label{sec:limitations}
+
+An independent audit of the code and the frozen files, run after every result was frozen,
+produced the findings below; the full list, with evidence and the disposition of each, is in
+\file{docs/AUDIT.md}. No finding changed a frozen file. Where a finding could be addressed from
+committed data without a new rollout, it is addressed in this report and labelled.
+
+\paragraph{Few seeds, and verdicts that depend on the method.} Each family has
+\rf{proto.nseeds} training seeds. The seed-level sensitivity analysis
+(Tables~\ref{tab:sens-main} and~\ref{tab:sens-rob}) changes
+\rf{sens.l1.changed} of \rf{sens.l1.n} Level~1 verdicts, \rf{sens.rob.changed} of
+\rf{sens.rob.n} robustness and ablation verdicts, and \rf{sens.ext.changed} of
+\rf{sens.ext.n} verdicts of the two extensions; it is undefined for
+\rf{sens.l1.undefined}, \rf{sens.rob.undefined} and \rf{sens.ext.undefined} of them because
+the seeds do not vary. The separated Can H2 and H3 results, and several robustness
+separations, are among the verdicts that change. The audit also found two verdicts that change
+with the bootstrap's random seed. Of the \rf{sens.all.n} differences in the sensitivity
+tables (the declared ones and one context row), \rf{sens.all.boundary} have a frozen interval
+with a bound at exactly zero or of zero width; with \rf{proto.nstates} binary outcomes per seed the bootstrap distribution is
+discrete, so these verdicts rest on ties. A policy that succeeds on all \rf{proto.nstates}
+starts has a Wilson interval of [\rf{wilson.full.lo}, \rf{wilson.full.hi}]\,\%, so near the
+ceiling the test separates only large differences.
+
+\paragraph{Multiplicity.} No interval is adjusted for multiplicity. Each Level~1 task has
+\rf{proto.ncomparisons} success comparisons and \rf{l1.lift.nlen} length comparisons, and
+the robustness analyses report \rf{rob.lift.contrasts} (Lift) and \rf{rob.can.contrasts}
+(Can) differences and contrasts. A Bonferroni correction within each analysis would remove several separations, among them
+Can H2; the audit (\file{docs/AUDIT.md}, B-1 and B-6) gives the corrected intervals and the
+count.
+
+\paragraph{The diffusion sampler bounds its actions.} The sampler clips the predicted clean
+action chunk to $[-1, 1]$ in min--max normalized space, so every diffusion action lies within
+the range of the training actions on each dimension. The BC heads are clipped only to the
+controller limits, which are wider. The audit found that in BC episodes that fail under perturbation most motion actions lie
+outside the training range, while diffusion's never can. This is a correlation, not a shown
+mechanism: the out-of-range actions begin only after a grasp is missed, BC-MLP leaves the
+range on many base starts that it still solves, and BC-RNN rarely leaves it yet loses half
+its success under the Lift arm offset. This bound is part of what H2-c compares: diffusion and BC-MLP-chunk differ in the
+generative head \emph{and} in this output bound, so neither the Level~1 nor the robustness
+differences between them isolate the generative model. Clamping BC outputs to the training
+range would test this without retraining; it was not run in this report, because it would be
+a new evaluation after the freeze.
+
+\paragraph{Selection and its bias.} Validation success, which chose among \rf{train.K}
+checkpoints and \rf{train.trials} trials, is optimistic: Table~\ref{tab:selection} shows it
+beside success on the fresh base starts and on the held-out starts (for example BC-MLP on
+Can: \rf{sel.can.bcmlp.val}\,\% on validation, \rf{l1.can.bcmlp.succ}\,\% held out).
+Of the \rf{l1.bc.nruns} BC runs, \rf{l1.bc.first-ckpt} selected their first checkpoint, and two
+diffusion runs their last, so the checkpoint grid may have been too coarse for BC and the
+budget too short for those diffusion runs. In the RGB and Level~2 studies most checkpoints succeeded on
+every validation start, so selection there was decided by tiny differences in episode length
+and carries almost no information about the quantities those studies test; one RGB diffusion
+run and one point-cloud run selected their final checkpoint. Each family had only
+\rf{train.trials} tuning trials, and the extensions none, so no family is tuned to its best. Before the Lift
+search space was committed, a short pipeline rehearsal (a few hundred training steps) had
+evaluated the default and the higher-learning-rate configurations of BC-MLP and diffusion on
+the validation suite; the higher learning rate was later chosen for Lift diffusion. The trial
+list was the same for every family, but BC-RNN and BC-MLP-chunk had no such early look.
+
+\paragraph{One rollout per start.} With $R = \rf{proto.repeats}$, a start's difficulty and the
+diffusion noise drawn on it are confounded, so diffusion's interval mixes policy stochasticity
+with start difficulty, unlike the deterministic BC families (KI-028).
+
+\paragraph{Reuse of starts across studies.} The same \rf{proto.nstates} Lift held-out starts
+served the Level~1 test, the RGB test and the Level~2 held-out check, and the robustness base
+and cube-shift starts served both H4 and H5. No model, checkpoint or configuration was ever
+selected on them. However, the three studies were designed in sequence and later designs were
+informed by earlier outcomes on these starts: H5's primary set was chosen after the Level~1
+robustness and RGB held-out results were known. The Level~2 held-out comparison, with both
+arms at the ceiling, could not have favoured the point-cloud arm and is a replication-type
+check, not a test.
+
+\paragraph{Scale of the diffusion policy.} The diffusion family was matched to BC in
+parameters (about a million) and in its optimizer recipe. robomimic's default U-Net is wider
+and deeper and is trained with a warm-up cosine schedule, so these results speak to
+diffusion at this scale and recipe only.
+
+\paragraph{In-distribution starts.} The evaluation starts come from the same reset
+distribution as the demonstrations; on Lift each start lies within a few millimetres of a
+demonstration start (KI-011), so Lift held-out success measures in-distribution performance.
+Open-loop replay of the Can demonstrations diverges at contacts by several centimetres
+(KI-004), so the simulator reproduces the recorded dynamics only approximately.
+
+\paragraph{Privilege, features and platform.} Every Level~1 result uses exact object poses.
+The Can input recomputes the gripper-to-object vector from the current step, unlike
+robomimic's stored feature, so Can numbers are not comparable with robomimic's. The data are
+the robosuite~v1.5 repackaging of the robomimic datasets, so no number here should be compared
+with the original benchmark. All rollouts ran in simulation on one platform. Our success
+predicate is evaluated on the current step's kinematics, while robosuite's own predicate reads
+the previous substep; in a small fraction of episodes ours fires one control step earlier,
+which shifts first-success steps but not success. The point cloud uses noise-free depth, exact
+camera calibration and a crop box whose lower edge removes the table at its known height.
+
+\paragraph{Declared quantities not reported, and quantities not declared.} The protocol's
+secondary metrics (gripper sign changes, action smoothness) were computed per episode but
+never aggregated by the frozen analysis; Table~\ref{tab:secondary} reports them post hoc. The diffusion-specific plan-diversity metric was measured only in a pilot and is not
+reported, and the point-cloud throughput listed in the Level~2 freeze is not in its results.
+Validation success at every checkpoint, declared for the RGB study, and the point-cloud
+per-checkpoint rates listed in the Level~2 freeze are in the committed selection files but
+not in this report. The H4 analysis
+compares four of the six family pairs, a choice fixed in code before any robustness rollout.
+The optional DiT and GMM-BC families and the Square task were not run, to stay within the
+project's time and compute budget; the declared hypotheses did not depend on them.
+
+\paragraph{Analysis code, records and cost figures.} The Level~1 analysis script was
+hash-frozen; the robustness, RGB and Level~2 analysis scripts were not, and each received a
+small fix after its data existed. The fixes touched input reading and training-time accounting
+only, not pairing, resampling or which evaluations enter. The validation summaries of one RGB
+training run were recorded from a working tree with uncommitted changes; the next commit
+changed only documentation, logs and reports, and the frozen code hashes match. The Level~2 analysis misreported one training time (KI-049), and one RGB run's
+hours leave out a preempted attempt (Table~\ref{tab:cost}). Billed amounts are Modal's usage
+report at list price before credits, not invoices; one early approval allowed one GPU probe
+and two probe launches ran before the owner amended it.
+
+\paragraph{Scope of the claims.} The comparison covers two tasks, privileged state for
+Level~1, \rf{data.lift.train} training demonstrations per task from one operator channel, one training budget and one
+platform. Within that scope the evidence supports an advantage of BC-RNN over BC-MLP on Lift under
+both interval methods and on Can under the preregistered bootstrap only, gives no evidence
+that a diffusion head adds to a deterministic head with the same horizons, and shows that our point-cloud policy generalizes worse than our RGB
+policy to unseen cube positions. It supports no claim about real robots, other tasks, larger
+datasets or DP3 itself.

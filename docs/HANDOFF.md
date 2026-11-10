@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 10 STOP, updated 2026-11-09) -->
+<!-- parsable handoff header (real values; Session 11 STOP, updated 2026-11-09) -->
 ```yaml
 project: roboforge-3d
-current_session: 10
-session_status: PASS          # Session 10: RoboForge Observatory, local only (no hosting, D-090); see the Session 10 handoff below
-next_session: 11              # research paper, reproducibility, independent critical audit; Session 10 handoff §10, fresh context
-last_verified_commit: f0c3552   # Session 10 code (Python unchanged since 4348244): lint clean, 492 tests passed (alone), freeze-check OK, RGB + Level 2 gates open; site build, vitest 49, E2E 7/7, viewer verification 18/18; the STOP commit adds docs only
+current_session: 11
+session_status: PASS          # Session 11: paper/main.pdf from hash-pinned frozen files, independent audit docs/AUDIT.md (A-D), reproducibility docs; local only, $0
+next_session: 12              # fresh-clone reproduction, final QA, public release only with owner authorization; Session 11 handoff §10, fresh context
+last_verified_commit: "Session 11 STOP commit (hash recorded by the follow-up commit)"   # lint clean, full suite (alone) 513 passed, freeze-check OK, RGB + Level 2 gates open; paper-check, paper lint, make paper byte-identical; site build, vitest 49
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -76,10 +76,177 @@ heldout_results:                      # family success %, 3 seeds x 50 held-out 
 modal: {gate_a: done, A-01: "closed, $0.148", A-02: "closed, $0.0317", A-03: "closed, $8.06", A-04: "Level 2, closed, $2.37 (5 launches; KI-047; detached launches since D-085)", open_approvals: none, month_to_date: "$15.89 of $30 (2026-11-09)", egl_vs_osmesa: "PENDING (KI-001, KI-033)"}
 final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081); Level 2 TESTED ONCE (Session 9, D-086 gate, a031e88; analysis 620c541). Session 10 re-rendered recorded episodes only. All three locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1, RGB or Level 2 configuration, ever"
 disk: "about 17 GB free at the end of Session 10 (KI-008); the Observatory export is about 19 MB in git; the Modal runs Volume keeps every checkpoint"
-next_required_owner_approval: "none for Session 11 unless paid compute or hosting is proposed (needs a new approval row); a paper toolchain or any new dependency needs a recorded decision"
+next_required_owner_approval: "Session 12: any public repository, release, push or hosting needs explicit owner authorization and credentials; paid compute needs a new approval row"
 observatory: {decisions: "D-087-D-091", site: website/, export: "reports/session10/observatory/ (37 clips from clean b5fc2ee, canonical container; ebfd0c3)", findings: "findings.json, 8 frozen sources (c73a080)", verification: "viewer_verification.json: 18/18 frames pass (robot IoU >= 0.9998, centroid <= 0.04 px)", hosting: "none (owner, D-090); no deployed or staging URL", meshes: "extracted at build time by make web-assets, gitignored (D-090)", provenance: docs/VISUAL_PROVENANCE.md}
 level2_study: {freeze: "docs/LEVEL2_EXPERIMENT_FREEZE.md @ b93c50c (sha256 ffe5a03e...)", gate: "D-086 @ b1f4da2, amended 08c3aa8", runs: [s9_pc_diffusion_dp3_lift_seed0_8fd35613, s9_pc_diffusion_dp3_lift_seed1_a66a2758, s9_pc_diffusion_dp3_lift_seed2_402a1f24], selections: "30000 / 40000 / 60000 (reports/session9/pc_selection/)", placement: "reports/session9/level2_placement/ @ 4ebebc1", heldout: "reports/session9/pc_heldout/ @ a031e88", results: "reports/session9/level2_results/ @ 620c541 (+ ERRATA.md)", h5: "pc - rgb on ood_cube_shift -41.3 pp [-54.0, -28.0], separated (-)", heldout_success: {pc_diffusion: 100.0, rgb_diffusion: 100.0}, label: DP3-inspired, privilege: sensor-like}
+paper: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, build: "make paper (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400)", generated: "paper/generated/ (35 files, index.json)", audit: docs/AUDIT.md, decisions: "D-092-D-096", label: "local build, not peer reviewed"}
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 378ea43", selections: reports/session8/rgb_selection/, heldout: "reports/session8/rgb_heldout/ @ bc054bc", results: "reports/session8/rgb_results/ @ 3b23255", success: {rgb_diffusion: 100.0, rgb_bc_chunk: 99.3}, diffusion_minus_bc: "+0.7 pp [+0.0, +4.0], not separated", videos: reports/session8/rgb_videos/}
+```
+
+# Session 11 Handoff
+
+Do not trust this file blindly: re-run the checks in "Exact starting instructions".
+
+## 1. Session completed
+Session 11 (MASTER_SPEC §11 and Session 11: research paper, reproducibility and independent
+critical audit). Status **PASS, local only, $0**.
+- **Paper:** `paper/main.pdf` (23 pages, SHA-256
+  `c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f`), a local build, labelled
+  "not peer reviewed". Every number in the prose is a macro generated from hash-pinned frozen
+  files; a lint fails on any typed number or placeholder.
+- **Audit:** four fresh-context passes (`docs/AUDIT.md`). Each finding has a disposition: an
+  engineering correction or a limitation disclosed in the paper. No frozen file changed.
+- **No training, no evaluation, no paid or remote compute, no hosting.**
+
+## 2. Completed work
+- **Decisions:** D-092 (Makefile defaults s11; `OBS_OUT` pinned to Session 10), D-093 (Tectonic
+  toolchain, reproducible PDF, no new dependency), D-094 (generator contract: pinned sources,
+  provenance index, lint), D-095 (seed-level sensitivity analysis, not preregistered, beside
+  every frozen interval; censored-length success/speed split), D-096 (audit dispositions;
+  declared secondary metrics reported post hoc from hash-chained summaries; the A-6 clamp test
+  not run; DiT, GMM-BC and Square not run, with the reason).
+- **Generator** (`src/roboforge/paper/`, `scripts/paper_assets.py`): `sources` (30 pinned
+  files, `chained_json` for files whose hash a pinned file records), `numbers` (1,503
+  macros), `tables` (17), `figures` (6, plus 3 renders located by SHA-256), `sensitivity`,
+  `secondary`, `lint`, `build` (byte-for-byte `check`).
+- **Bibliography:** `paper/references.bib` (31 entries from DOI and arXiv metadata),
+  `scripts/verify_bibliography.py`, `paper/bibliography_check.json` (31/31 resolved).
+- **Paper:** `paper/main.tex`, `paper/sections/*.tex` (abstract, 10 sections, reproducibility
+  appendix, additional tables).
+- **Audit fixes:** run-once guard in `scripts/analyze_robustness.py` (B-12, with a test);
+  existence-before-hash in `scripts/analyze_level2.py` (B-13); RGB preemption footnote (C-6);
+  D-086 and E9-11 record errors annotated (C-20); every paper claim corrected per audit D.
+- **Docs:** `docs/AUDIT.md` (new), `docs/REPRODUCIBILITY.md` (rewritten for the current state),
+  KNOWN_ISSUES KI-052–KI-057 and the missing summary rows KI-044–KI-051, ledger E11-01–E11-07.
+
+## 3. Files created or changed (Session 11)
+- New: `docs/AUDIT.md`; `paper/` (`main.tex`, `sections/`, `references.bib`,
+  `bibliography_check.json`, `generated/`, `main.pdf`); `src/roboforge/paper/`;
+  `scripts/paper_assets.py`, `scripts/verify_bibliography.py`;
+  `tests/unit/test_paper_assets.py`, `tests/unit/test_paper_tex.py`.
+- Changed: `Makefile` (defaults, `paper-assets`, `paper-check`, `paper-bibcheck`, `paper`),
+  `scripts/analyze_robustness.py`, `scripts/analyze_level2.py`,
+  `tests/unit/test_analyze_robustness.py`, `docs/{DECISIONS,KNOWN_ISSUES,EXPERIMENT_LEDGER,
+  REPRODUCIBILITY,STATUS,HANDOFF}.md`.
+- Unchanged: every frozen result, freeze, `LEVEL1_COMPLETE`, `LEVEL2_GO_NO_GO`, data, suites,
+  `uv.lock`, `pyproject.toml`, `website/`.
+
+## 4. Executed commands and results
+| Command | Result |
+|---|---|
+| `make lint` | All checks passed |
+| `make test` (alone, no container job) | **513 passed** (520 s) |
+| `make freeze-check` (before and after the two analysis-script fixes, and at STOP) | frozen code unchanged |
+| `uv run --frozen python scripts/run_rgb_heldout.py gate` / `run_pc_heldout.py gate` | `"open": true, "problems": []` (both) |
+| `make paper-assets`, `make paper-check` | 35 files; matches a fresh build; lint clean |
+| `make paper-bibcheck` (network) | 31/31 resolved |
+| `make paper` (twice) | no undefined reference or citation, no overfull box; identical SHA-256 |
+| `make web-build`, `make web-test` | within budgets; vitest 49/49 |
+
+## 5. Key results (nothing here is a new experimental result)
+- The paper restates the frozen results, with the post-hoc D-095 and D-096 analyses labelled.
+- Audit HIGH findings: A-6 (the diffusion sampler bounds actions to the training range; BC
+  heads are not bounded; a confound for H2-c and H4, KI-052); B-1/B-2 (Can H2, Can H3 and six
+  robustness separations depend on the interval method, KI-053); D-1 ("not separated" had
+  been written as equality in the draft; corrected).
+- Spend reconciles launch by launch to $10.61436 over 24 launches (audit C-1).
+
+## 6. Decisions and issues
+- D-092–D-096 (above).
+- New issues: KI-052 (MEDIUM, documented), KI-053 (MEDIUM, documented), KI-054 (MEDIUM, fixed by
+  reporting), KI-055 (LOW, fixed), KI-056 (LOW, documented), KI-057 (LOW, documented).
+
+## 7. Budget
+$0 this session (local only). Total billed stays $10.61; no approval is open.
+
+## 8. Outstanding items (none blocks Session 12)
+- **KI-052 clamp test:** an evaluation-only exploratory test of BC with outputs clamped to the
+  training range would resolve the A-6 confound. It is a new post-freeze evaluation: it needs
+  its own decision, a clean tree and the label "exploratory, after the freeze", and it is not
+  part of MASTER_SPEC Session 12.
+- **No remote:** the repository has no git remote. Publication needs owner authorization and
+  credentials (MASTER_SPEC Session 12).
+- **Tectonic bundle:** a fresh machine needs one networked Tectonic build before
+  `make paper` works offline (D-093; `docs/REPRODUCIBILITY.md`).
+- **Open from earlier sessions:** KI-001/KI-033 (EGL vs OSMesa), KI-008 (disk), KI-034 (Lift
+  saturation) and the other open KIs in STATUS.
+
+## 9. What Session 12 can use
+- `docs/REPRODUCIBILITY.md` (current commands), `docs/AUDIT.md` (findings and dispositions),
+  `paper/main.pdf` and `make paper-check` (a reproducible table and figure build from frozen
+  files), the Observatory site (`make web-build`; no hosting).
+- A representative reproduction target: `make paper-check` regenerates every table and figure
+  from the committed frozen files and compares them byte for byte.
+
+## 10. Exact starting instructions for Session 12
+Paste into a fresh Claude Code session:
+
+```text
+Implement RoboForge 3D SESSION 12 ONLY from MASTER_SPEC.md (fresh-clone reproduction, final
+quality assurance, public release). Begin by reading all of MASTER_SPEC.md (especially §11,
+§11.2, §11.3 and the Session 12 section), docs/STATUS.md, docs/HANDOFF.md
+"# Session 11 Handoff", docs/AUDIT.md, docs/DECISIONS.md (D-013, D-090, D-092–D-096),
+docs/KNOWN_ISSUES.md (every open item; KI-052–KI-057), docs/EXPERIMENT_LEDGER.md (Sessions
+10–11 and the approvals table: no approval is open), docs/REPRODUCIBILITY.md, README.md,
+CITATION.cff, LICENSE and paper/main.tex.
+
+Inspect the real state first:
+- git log --format=fuller -n 8; git status; git remote -v (Session 11 found no remote);
+- make lint; make freeze-check; make paper-check;
+- `uv run --frozen python scripts/run_rgb_heldout.py gate` and
+  `uv run --frozen python scripts/run_pc_heldout.py gate` (both must print open);
+- never run the full test suite alongside a container job (KI-043).
+
+1. Record decisions before acting: Session 12 Makefile defaults (PREFIX ?= s12, evidence
+   session 12; the D-092 pattern); the fresh-clone environment (for example a clean clone in a
+   temporary directory and the canonical container); what "release" means here. Ask the owner
+   before any public repository, push, tag, release or hosting, and never claim one happened
+   without verifying it.
+2. Fresh-clone reproduction in a separate clean directory: install the pinned environment
+   (uv sync --frozen on the host only, never inside the image), run the tests, a small
+   simulator smoke, `make paper-check` (regenerates every paper table and figure from the
+   frozen files), `make paper` (note the one-time networked Tectonic bundle build, D-093) and
+   `make web-build`. Record every command and result. Checkpoints are not in git; state that.
+3. Verify data download links and exact commands, and scan for dead placeholders, private
+   paths, secrets, copyrighted dataset copies and broken citations.
+4. Verify every commit's author and committer name and email, the absence of AI co-author
+   trailers in the whole history, and CITATION.cff (Zackary Holt as project author). Do not
+   rewrite history without owner approval.
+5. Run the full test matrix: Python (alone), simulator, research-integrity, website (vitest,
+   E2E), lint, type checks if configured, a security and license scan. Document any skipped
+   test with its precise reason.
+6. README per MASTER_SPEC §11.2 from real artifacts only: key findings from the frozen tables
+   (with the audit's caveats: the Can H2 separation is method-dependent, H2-c not separated,
+   the diffusion action bound KI-052), links to the paper (it exists, labelled not peer
+   reviewed) and no Observatory link unless a deployed site exists.
+7. Write docs/FINAL_RELEASE_AUDIT.md: pass/fail per check, the actual frozen results, executed
+   commands, release hashes (paper/main.pdf SHA-256 and the release commit) and outstanding
+   limitations.
+8. STOP (project complete): update STATUS, HANDOFF, DECISIONS, KNOWN_ISSUES and
+   EXPERIMENT_LEDGER; run lint, the full test suite (alone), freeze-check, both gates,
+   make paper-check, make web-build and make web-test; commit verified work as Zackary Holt
+   <zackholt05@gmail.com> with no AI co-author trailers; inspect git log --format=fuller -n 5;
+   write the project completion summary (no next-session prompt); STOP. Do not start new
+   phases.
+
+Boundaries (binding):
+- Level 1, the RGB study and Level 2 are frozen. Never rerun make eval-final, make
+  analyze-final, make rgb-heldout, scripts/analyze_rgb_heldout.py, make pc-heldout, make
+  pc-placement, make level2-analyze or scripts/analyze_robustness.py. Never edit
+  reports/session6-10 results, the freezes, LEVEL1_COMPLETE or LEVEL2_GO_NO_GO's executed
+  outcome. Never prune or move frozen runs.
+- The paper's numbers come only from `make paper-assets`; never type a number into
+  paper/sections/. Any change to paper/ is followed by make paper-check and make paper.
+- Run make freeze-check before and after touching any simulator, evaluation or analysis code,
+  and tests/research_integrity/ on new code.
+- No training. No new evaluation (the KI-052 clamp test is out of scope unless the owner asks
+  for it and a decision is recorded first). No paid or remote compute, push or hosting without
+  explicit owner authorization (and an approval row for paid compute).
+- No changes to data, eval suites, uv.lock or Python dependencies without a decision.
+- Never uv sync or uv run inside the image.
+- Use EVIDENCE_SESSION=12. Any container job runs via run_sim_cpu.sh with
+  ROBOFORGE_EVIDENCE_SESSION=12, from a clean tree.
+- Label every estimate as an estimate.
 ```
 
 # Session 10 Handoff

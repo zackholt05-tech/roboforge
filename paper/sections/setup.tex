@@ -1,0 +1,54 @@
+\section{Benchmark setup and data}
+\label{sec:setup}
+
+\paragraph{Tasks and simulator.} Both tasks run in robosuite \rf{ver.robosuite} (commit
+\rf{ver.robosuite.commit}) on MuJoCo \rf{ver.mujoco} with a Panda arm and robosuite's
+OSC\_POSE operational-space controller at \rf{ctrl.hz}\,Hz. In \emph{Lift} the robot grasps a
+cube and raises it above a height threshold. In \emph{Can} (robosuite PickPlaceCan) it picks
+a can from a source bin and places it in its target compartment of a second bin. Success is
+robosuite's task predicate, evaluated on the current kinematics after every control step
+(Section~\ref{sec:limitations}); an episode ends
+at the first success or after \rf{proto.horizon} control steps. Initial states are
+serialized MuJoCo snapshots (model XML, time, joint positions and velocities) that are
+restored exactly for every policy, so no evaluation depends on a random reset.
+
+\paragraph{Demonstrations.} We use the robomimic proficient-human (PH) low-dimensional
+datasets for both tasks, in the version repackaged for robosuite~v1.5
+(Hugging Face \code{robomimic/robomimic_datasets}, revision \rf{data.hf.revision}; file
+SHA-256 prefixes \rf{data.lift.lowdim.sha} for Lift and \rf{data.can.lowdim.sha} for
+Can)~\citep{mandlekar2021robomimic}. Each task has \rf{data.lift.demos} successful
+demonstrations: Lift episodes last \rf{data.lift.len.min}--\rf{data.lift.len.max} control
+steps (mean \rf{data.lift.len.mean}) and Can episodes
+\rf{data.can.len.min}--\rf{data.can.len.max} (mean \rf{data.can.len.mean}). The data were
+recorded through one teleoperation channel, so no claim about held-out operators is
+possible.
+
+\paragraph{Split.} Demonstrations are split by whole episode with robomimic's upstream
+masks into \rf{data.lift.train} training and \rf{data.lift.valid} validation episodes, with
+identical ID lists for both tasks. Normalization statistics are fit on the training episodes
+only. Training windows never cross an episode boundary, and no observation after the
+decision time is ever an input. The validation demonstrations give offline losses only: no
+model, configuration or checkpoint is chosen with them. There is no demonstration test
+split; the test is a set of held-out simulator initial states (Section~\ref{sec:protocol}).
+
+\paragraph{Observations and privilege.} Every Level~1 policy receives the same
+\rf{dim.obs}-dimensional vector per step: end-effector position and orientation
+(quaternion), the two gripper finger joint positions, the object's position and orientation,
+and the relative position of gripper and object. The object entries are exact simulator
+poses, so every Level~1 result is a \emph{privileged-state} result and is never compared
+causally with camera-based policies. For Can we compute the relative position from the
+current step's poses; the dataset's stored relative-pose features lag by one step at the
+first frame, so our Can input is not robomimic's default feature set and our Can numbers are
+not comparable with numbers obtained on that set.
+
+\paragraph{Actions.} The action is the controller's \rf{dim.act}-dimensional command: a
+position delta, an axis-angle orientation delta and a gripper command, each scaled to
+$[-1, 1]$ by the controller limits. The demonstrations' gripper commands are exactly
+$\pm 1$. Every family predicts min--max normalized actions; predictions are mapped back with
+the inverse transform and clipped to the action bounds by one shared decoder.
+
+\paragraph{Platform.} Every reported rollout ran on one canonical evaluation platform: a
+Linux aarch64 container (image \code{sha256:}\rf{plat.image}, Python \rf{ver.python}, OSMesa
+rendering) on an Apple M1 Pro host, with policy inference on the CPU with one thread so that
+rollouts are deterministic given their seeds. Physics is not bit-identical across platforms,
+so native macOS rollouts were used for development only and never reported.

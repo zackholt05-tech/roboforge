@@ -27,7 +27,8 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement \
 	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
-	web-build web-test web-e2e web-verify web-dev visual-provenance
+	web-build web-test web-e2e web-verify web-dev visual-provenance \
+	paper-assets paper-check paper-bibcheck paper
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -142,12 +143,12 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 10 (DECISIONS D-087; Session 9: D-082; Session 8: D-073; Session 7:
-# D-060; Session 6: D-053; Session 5: D-048) so that no Session 10 command can write into
-# Session 6-9 evidence or reuse the s9 run prefix by omission.
-PREFIX ?= s10
+# Defaults bumped to Session 11 (DECISIONS D-092; Session 10: D-087; Session 9: D-082; Session 8:
+# D-073; Session 7: D-060; Session 6: D-053; Session 5: D-048) so that no Session 11 command can
+# write into Session 6-10 evidence or reuse the s10 run prefix by omission.
+PREFIX ?= s11
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),10)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),11)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -346,8 +347,9 @@ cost-estimate:  ## Main-suite cost/time projection from the measured numbers (es
 # ---------------------------------------------------------------- Session 10: Observatory
 # RoboForge Observatory (MASTER_SPEC §8; DECISIONS D-087-D-090). Exports read frozen evidence
 # only; the container export runs from a clean tree (D-089). website/ is its own npm package
-# (D-088); website/public/{data,assets} are generated and gitignored.
-OBS_OUT ?= reports/session$(EVIDENCE_SESSION)/observatory
+# (D-088); website/public/{data,assets} are generated and gitignored. The committed export is
+# Session 10 evidence, so OBS_OUT stays pinned there when the session defaults move on (D-092).
+OBS_OUT ?= reports/session10/observatory
 NPM ?= npm
 observatory-select:  ## Host: apply the D-089 selection rules to the frozen manifests -> $(OBS_OUT)/selection.json
 	$(RUN_S) python scripts/export_observatory.py select --out-dir $(OBS_OUT)
@@ -386,3 +388,25 @@ web-dev:  ## Vite dev server (local only)
 
 visual-provenance:  ## Host: docs/VISUAL_PROVENANCE.md from the committed export (generated)
 	$(RUN_S) python scripts/visual_provenance.py --out-dir $(OBS_OUT)
+
+# --- Session 11: research paper (DECISIONS D-092 to D-096) ---
+# Fixed SOURCE_DATE_EPOCH (2026-11-09 00:00 UTC) so paper/main.pdf is byte-identical across
+# builds on this host and Tectonic bundle (D-093).
+PAPER_EPOCH ?= 1794182400
+
+paper-assets:  ## Regenerate paper/generated/ from the hash-pinned frozen files (D-094)
+	$(RUN) python scripts/paper_assets.py build
+
+paper-check:  ## paper/generated/ equals a fresh build, and the paper lint passes (D-094)
+	$(RUN) python scripts/paper_assets.py check
+	$(RUN) python scripts/paper_assets.py lint
+
+paper-bibcheck:  ## Resolve every DOI/arXiv id of paper/references.bib (needs network); writes paper/bibliography_check.json
+	$(RUN) python scripts/verify_bibliography.py
+
+paper: paper-check  ## Build paper/main.pdf with Tectonic (cached bundle only, fixed SOURCE_DATE_EPOCH); fails on undefined references
+	cd paper && SOURCE_DATE_EPOCH=$(PAPER_EPOCH) tectonic -X compile --only-cached --keep-logs main.tex
+	@if grep -nE "(Reference|Citation).*undefined|There were undefined|multiply defined" paper/main.log; then \
+		rm -f paper/main.log; echo "paper: undefined or duplicate references or citations"; exit 1; fi
+	@rm -f paper/main.log paper/main.blg
+	shasum -a 256 paper/main.pdf

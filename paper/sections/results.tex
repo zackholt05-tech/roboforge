@@ -1,0 +1,160 @@
+\section{Held-out results (Level 1)}
+\label{sec:results}
+
+Table~\ref{tab:heldout} and Figure~\ref{fig:heldout} give the held-out success of every
+family; Table~\ref{tab:differences} gives every declared difference, and
+Figure~\ref{fig:differences} plots the comparisons that bear on H2, H2-c and H3. Each family
+ran \rf{l1.lift.n} held-out starts per training seed on each task, once, after the Level~1
+freeze (commit \texttt{\rf{l1.git}}).
+
+\begin{table}[t]
+\centering\small
+\caption{Held-out success (\%) per family: successes over episodes, the mean over the three
+training seeds with the hierarchical bootstrap's \rf{proto.level}\,\% interval, and the per-seed rates.}
+\label{tab:heldout}
+\resizebox{\linewidth}{!}{\input{generated/tables/heldout_success.tex}}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{generated/figures/heldout_success.pdf}
+\caption{Held-out success per family and task. Filled markers: mean over seeds with the
+bootstrap \rf{proto.level}\,\% interval; open markers: the three training seeds.}
+\label{fig:heldout}
+\end{figure}
+
+\paragraph{H1.} Every trained family separates from the random-action baseline, which never
+succeeds, on both tasks (Table~\ref{tab:differences}).
+
+\paragraph{Lift.} Lift is close to saturated: BC-RNN succeeds on every held-out start
+(\rf{l1.lift.bcrnn.succ}\,\%), BC-MLP-chunk on \rf{l1.lift.chunk.succ}\,\% and diffusion on
+\rf{l1.lift.diff.succ}\,\%. The only separated learned comparison is H3: BC-RNN exceeds BC-MLP
+by \rf{l1.lift.bcrnn-bcmlp.d}\,pp [\rf{l1.lift.bcrnn-bcmlp.lo}, \rf{l1.lift.bcrnn-bcmlp.hi}].
+Diffusion's advantage over BC-MLP (\rf{l1.lift.diff-bcmlp.d}\,pp
+[\rf{l1.lift.diff-bcmlp.lo}, \rf{l1.lift.diff-bcmlp.hi}]) is not separated, although the
+declared secondary outcome, censored episode length, is (\rf{l1.lift.len.diff-bcmlp.d} steps
+[\rf{l1.lift.len.diff-bcmlp.lo}, \rf{l1.lift.len.diff-bcmlp.hi}], mostly from success), nor is its
+difference from BC-RNN (\rf{l1.lift.diff-bcrnn.d}\,pp) or from BC-MLP-chunk
+(\rf{l1.lift.diff-chunk.d}\,pp).
+
+\paragraph{Can.} On Can, BC-MLP is the clear outlier (\rf{l1.can.bcmlp.succ}\,\%), while the
+other three families lie within one point of each other (\rf{l1.can.bcrnn.succ},
+\rf{l1.can.chunk.succ} and \rf{l1.can.diff.succ}\,\%). The primary H2 comparison is separated:
+diffusion exceeds BC-MLP by \rf{l1.can.diff-bcmlp.d}\,pp [\rf{l1.can.diff-bcmlp.lo},
+\rf{l1.can.diff-bcmlp.hi}]. The H2-c control does not support attributing that advantage to
+the generative model: diffusion minus BC-MLP-chunk is \rf{l1.can.diff-chunk.d}\,pp
+[\rf{l1.can.diff-chunk.lo}, \rf{l1.can.diff-chunk.hi}], is not separated (which is not evidence of equality). BC-RNN
+also separates from BC-MLP (H3: \rf{l1.can.bcrnn-bcmlp.d}\,pp [\rf{l1.can.bcrnn-bcmlp.lo},
+\rf{l1.can.bcrnn-bcmlp.hi}]), although it differs from BC-MLP in its architecture as well as in
+its history. With privileged state on these two tasks, these data therefore give no evidence
+that the generative head adds to observation history and chunking. That BC-MLP-chunk
+(\rf{l1.can.chunk.succ}\,\%) also exceeds BC-MLP (\rf{l1.can.bcmlp.succ}\,\%) is visible in
+Table~\ref{tab:heldout}, but it is not a declared comparison and is exploratory. A further difference between the heads, the diffusion sampler's bound on
+its actions, is discussed in Section~\ref{sec:limitations}.
+
+\begin{table}[t]
+\centering\small
+\caption{Declared held-out differences $A - B$ with the hierarchical paired bootstrap's
+\rf{proto.level}\,\% interval. Success in percentage points; censored episode length in control steps,
+with failures counted at the horizon (negative is faster). Intervals are not adjusted for
+the \rf{proto.ncomparisons} success comparisons per task.}
+\label{tab:differences}
+\resizebox{\linewidth}{!}{\input{generated/tables/heldout_differences.tex}}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{generated/figures/differences.pdf}
+\caption{The H2, H2-c and H3 differences in held-out success with their \rf{proto.level}\,\% intervals.
+Filled markers are separated (the interval excludes zero).}
+\label{fig:differences}
+\end{figure}
+
+\paragraph{How much the verdicts depend on the interval method.} The seed-level sensitivity
+analysis (Section~\ref{sec:protocol}; Table~\ref{tab:sens-main}; not preregistered) changes
+\rf{sens.l1.changed} of the \rf{sens.l1.n} Level~1 verdicts. Both separated Can comparisons
+among learned families lose separation: diffusion minus BC-MLP becomes
+[\rf{sens.l1.can.diff-bcmlp.lo}, \rf{sens.l1.can.diff-bcmlp.hi}] with
+\rf{sens.l1.can.diff-bcmlp.df} degrees of freedom, and BC-RNN minus BC-MLP
+[\rf{sens.l1.can.bcrnn-bcmlp.lo}, \rf{sens.l1.can.bcrnn-bcmlp.hi}], because BC-MLP's three
+Can seeds differ widely (Table~\ref{tab:heldout}). Lift's diffusion minus BC-MLP, not
+separated by the bootstrap, becomes separated ([\rf{sens.l1.lift.diff-bcmlp.lo},
+\rf{sens.l1.lift.diff-bcmlp.hi}]). The frozen verdicts stand as the preregistered result, but
+the Can H2 and H3 separations rest on three BC-MLP seeds and should be read as fragile. No
+H2-c verdict changes under either method.
+
+\paragraph{Censored episode length.} Length differences are dominated by failures, which
+count \rf{proto.horizon} steps. We split each difference exactly into a success part,
+$-(p_A - p_B)(H - \bar T_B)$, and a speed part, $p_A(\bar T_A - \bar T_B)$, where $p$ is the
+success rate, $\bar T$ the mean first-success step of successes and $H$ the horizon (D-095;
+not preregistered). Diffusion's separated length advantage over BC-MLP on Can
+(\rf{l1.can.len.diff-bcmlp.d} steps) is almost all success (\rf{l1.can.len.diff-bcmlp.succpart}
+from success, \rf{l1.can.len.diff-bcmlp.speedpart} from speed). Its separated length
+\emph{disadvantage} against BC-RNN on Lift (\rf{l1.lift.len.diff-bcrnn.d} steps) is also
+mostly success (\rf{l1.lift.len.diff-bcrnn.succpart} from diffusion's few failures, against
+\rf{l1.lift.len.diff-bcrnn.speedpart} from speed). Censored length therefore restates the
+success comparison and adds little independent evidence about speed.
+
+\paragraph{Selected checkpoints.} The selected training steps are listed per run in
+Table~\ref{tab:checkpoints}. Of the \rf{l1.bc.nruns} BC runs, \rf{l1.bc.first-ckpt} selected
+their first checkpoint, so for them the budget was more than enough and earlier checkpoints
+were not examined; two diffusion runs (the first Lift seed and the second Can seed) selected their final
+checkpoint (\rf{l1.lift.diff.step.s0} and \rf{l1.can.diff.step.s1} steps), so a longer budget
+might have helped them.
+
+\paragraph{Secondary metrics.} Table~\ref{tab:secondary} reports the protocol's declared
+secondary metrics, which every held-out summary computed per episode but no frozen analysis
+aggregated (audit C-9; D-096). They are descriptive only, without intervals. The mean absolute
+step-to-step change of the executed motion command is \rf{sec.lift.diff.delta} for diffusion
+and \rf{sec.lift.chunk.delta} for BC-MLP-chunk on Lift; BC-MLP has the largest clip fraction
+(\rf{sec.lift.bcmlp.clip}\,\% on Lift), and diffusion's is zero by construction of its sampler
+(Section~\ref{sec:limitations}).
+
+\begin{table}[t]
+\centering\small
+\caption{Declared secondary metrics on the held-out starts, aggregated after the frozen
+analysis (D-096; plain means, no intervals). Gripper sign changes per episode, with the range
+of the per-seed means; mean absolute step-to-step change of the executed motion command; and
+the clip fraction, the frozen mean over the six motion dimensions of the share of actions
+clipped to the controller limits. All depend on episode length, which ends at first success.}
+\label{tab:secondary}
+\resizebox{\linewidth}{!}{\input{generated/tables/secondary.tex}}
+\end{table}
+
+\paragraph{Cost and latency.} Table~\ref{tab:cost} lists training cost and inference latency.
+On the CPU, a diffusion run costs \rf{l1.ratio.cpu.lo}--\rf{l1.ratio.cpu.hi} times the CPU
+hours of a BC-MLP-chunk run, and a diffusion decision (\rf{diff.ddim} DDIM steps) takes
+\rf{l1.ratio.lat.lo}--\rf{l1.ratio.lat.hi} times as long, for no measured gain in held-out
+success over that control (it did gain under the Lift arm offset;
+Section~\ref{sec:robustness}). Every Level~1 run trained locally at no billed cost. The table's latencies come
+from two methods (a dedicated benchmark for Level~1, medians recorded during the held-out
+rollouts for the GPU-trained studies) and are comparable only within a block. The step time of the first
+Level~2 training seed printed by the frozen analysis was wrong; the table shows the frozen value
+beside the corrected one (KI-049). Table~\ref{tab:spend} reconciles all paid compute: \rf{spend.launches}
+launches, \$\rf{spend.total} in total, each under a committed approval and within its dollar
+cap; one approval's launch count was exceeded before it was amended
+(Section~\ref{sec:limitations}).
+
+\begin{table}[t]
+\centering\small
+\caption{Training cost and inference latency. Level~1 CPU hours are per training seed;
+latency is the median time of one decision (observation to action or action chunk); chunked policies decide every \rf{hor.exec} control steps. Billed amounts are Modal's usage report at list price
+before credits.}
+\label{tab:cost}
+\resizebox{\linewidth}{!}{\input{generated/tables/cost_latency.tex}}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Paid compute by approval, reconciled with the cost ledger's billing events.}
+\label{tab:spend}
+\input{generated/tables/spend.tex}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{generated/figures/latency_success.pdf}
+\caption{Held-out success against the median latency of one decision (log scale) for the
+Level~1 families, with the bootstrap interval. Filled circles: Lift; open squares: Can.}
+\label{fig:latency}
+\end{figure}

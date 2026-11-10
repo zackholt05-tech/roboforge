@@ -1,0 +1,51 @@
+% RoboForge paper (MASTER_SPEC §11.1). Build: make paper (Tectonic, DECISIONS D-093).
+% Every number in the prose is a generated macro \rf{key} (paper/generated/numbers.tex) and
+% every table and figure is generated (paper/generated/, DECISIONS D-094).
+\documentclass[10pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,array,graphicx,xcolor}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{placeins}
+
+% Generated results: \rf{key} expands a frozen value; an undefined key is an error.
+\input{generated/numbers.tex}
+\newcommand{\rf}[1]{\ifcsname rf@#1\endcsname\csname rf@#1\endcsname\else
+  \PackageError{roboforge}{Undefined result key #1}{Run make paper-assets}\textbf{??}\fi}
+% Repository paths and code identifiers (typewriter, breakable).
+\newcommand{\file}[1]{\nolinkurl{#1}}
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\pp}{\,pp}
+\newcommand{\pct}{\,\%}
+\setlength{\emergencystretch}{2em}
+
+\title{Learning 3D Robotic Manipulation from Demonstrations:\\
+A Controlled Comparison of Behavior Cloning and Diffusion Policies}
+\author{Zackary Holt}
+\date{RoboForge technical report (local build, not peer reviewed)}
+
+\begin{document}
+\maketitle
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/related}
+\input{sections/setup}
+\input{sections/methods}
+\input{sections/protocol}
+\input{sections/results}
+\input{sections/robustness}
+\input{sections/perception}
+\input{sections/limitations}
+\input{sections/conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\clearpage
+\appendix
+\input{sections/appendix_reproducibility}
+\input{sections/appendix_tables}
+\end{document}

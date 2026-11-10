@@ -208,10 +208,11 @@ def _heldout(sels: dict[str, list[dict[str, Any]]], labels: list[dict[str, Any]]
                 p = evidence_reports_dir("pc_heldout") / f"{sel['run_id']}.json"
             else:
                 p = REPO_ROOT / ph.RGB_HELDOUT_DIR_REL / f"{sel['run_id']}.json"
-                if sha256_file(p) != ph.RGB_HELDOUT_REPORTS[sel["run_id"]]:
-                    raise SystemExit(f"{repo_relative(p)}: not the frozen RGB held-out report")
             if not p.exists():
                 raise SystemExit(f"{repo_relative(p)} is missing: all 3 held-out reports first")
+            # Existence first, then the hash (audit B-13).
+            if arm != "pc_diffusion" and sha256_file(p) != ph.RGB_HELDOUT_REPORTS[sel["run_id"]]:
+                raise SystemExit(f"{repo_relative(p)}: not the frozen RGB held-out report")
             s = json.loads(p.read_text())
             bad = _check(s, p, sel, ph.HELDOUT_MANIFEST_SHA256, "records_manifest_sha256")
             if s["suite"] != es.LOCKED_SUITE or s.get("rehearsal") is not False:

@@ -12,7 +12,7 @@ torch 2.15.0 · numpy 2.4.6 · h5py 3.16.0 · diffusers 0.11.1 · transformers 4
 `libegl-dev`; for headless rendering also `libosmesa6` (`MUJOCO_GL=osmesa`) or an NVIDIA EGL
 driver (`MUJOCO_GL=egl`).
 
-## Session 0 evidence commands
+## Session 0 evidence commands (historical)
 | Command | What it proves | Output |
 |---|---|---|
 | `make download` | official files fetched; SHA-256 equals manifest (= HF LFS oid) | `data/raw/...` (gitignored) |
@@ -31,10 +31,57 @@ Every JSON report embeds `environment_snapshot()`: Python, platform, package ver
 - Random actions in smoke tests: `np.random.default_rng(seed)`.
 - Torch: `torch.manual_seed` in tests. Training determinism settings are defined in Session 3.
 
-## What is not reproducible yet
-- linux/x86_64 installation and EGL rendering are unverified. linux/aarch64 with OSMesa is
-  verified in Docker (KI-001).
+## Canonical evaluation platform (Sessions 2–11)
+Every reported rollout ran in the Linux aarch64 container `roboforge-sim-cpu`
+(image `sha256:1f685638f28c…`, Python 3.11.18, OSMesa), started through
+`infra/containers/run_sim_cpu.sh` with `ROBOFORGE_EVIDENCE_SESSION=<N>` from a clean tree.
+Policy inference uses one CPU thread, so a rollout is deterministic given its seeds. Native
+macOS rollouts are development only (KI-013). Never run `uv sync` or `uv run` inside the image.
+
+## Frozen results and how to check them
+- Level 1 (`docs/FINAL_TEST_FREEZE.md`, `docs/LEVEL1_COMPLETE.md`), the RGB study
+  (`docs/RGB_EXPERIMENT_FREEZE.md`) and Level 2 (`docs/LEVEL2_EXPERIMENT_FREEZE.md`,
+  `docs/LEVEL2_GO_NO_GO.md`) are frozen; their results live in `reports/session7/results/`,
+  `reports/session7/robustness/`, `reports/session8/rgb_results/` and
+  `reports/session9/level2_results/` (with `ERRATA.md`, KI-049).
+- `make freeze-check` compares the Level 1 freeze's code hashes with the working tree;
+  `uv run --frozen python scripts/run_rgb_heldout.py gate` and
+  `uv run --frozen python scripts/run_pc_heldout.py gate` print the state of the two later
+  held-out gates. The frozen evaluation and analysis targets (`make eval-final`,
+  `make analyze-final`, `make rgb-heldout`, `make pc-heldout`, `make pc-placement`,
+  `make level2-analyze`) must never be rerun.
+- The independent audit of all frozen work, with the disposition of every finding, is
+  `docs/AUDIT.md`.
+
+## The paper (Session 11)
+| Command | What it does |
+|---|---|
+| `make paper-assets` | regenerates `paper/generated/` (tables, figures with data sidecars, `numbers.tex`, `index.json`) from hash-pinned frozen files; summaries cited inside a pinned file are read only after their recorded SHA-256 matches (D-094, D-096) |
+| `make paper-check` | the committed `paper/generated/` equals a fresh build byte for byte (except `index.json`'s git field), and the paper lint passes (no typed numbers, no placeholders, every macro defined) |
+| `make paper-bibcheck` | resolves every DOI and arXiv id of `paper/references.bib` and writes `paper/bibliography_check.json` (needs network; never part of `make test`) |
+| `make paper` | `paper-check`, then Tectonic 0.17.0 with `--only-cached` and `SOURCE_DATE_EPOCH=$(PAPER_EPOCH)`; fails on undefined or duplicate references; prints the PDF's SHA-256 |
+
+Tectonic fetches its TeX bundle on first use. A fresh machine runs one networked build first
+(for example `cd paper && tectonic -X compile --outdir /tmp/x main.tex`); after that
+`make paper` never reaches the network. Two `make paper` builds on this host and bundle give
+byte-identical PDFs; byte equality is not claimed across Tectonic versions, bundles or
+platforms (D-093).
+
+## Paid and remote compute
+All paid compute ran on Modal under four committed approvals (A-01 to A-04): 24 launches,
+$10.61 billed at list price before credits, reconciled launch by launch with Modal's billing
+snapshots (`reports/compute/cost_ledger.jsonl`; `docs/AUDIT.md` C-1). The RGB and Level 2
+policies trained on one NVIDIA L4 with deterministic CUDA kernels; their evaluation ran on the
+canonical CPU platform. Level 1 trained on the local CPU at no cost.
+
+## What is not reproducible, or not redistributed
 - Physics is not bit-identical across platforms: macOS and Linux give the same pass/fail
   outcomes but different trajectories (KI-013). Reproduce rollouts on the platform recorded
   in the run manifest.
-- Remote (Modal) execution: none performed.
+- EGL vs OSMesa on Modal is unverified (KI-001); every reported rollout used OSMesa.
+- Trained checkpoints, rollout records and per-episode arrays live in `runs/` (gitignored) and
+  are not redistributed. The committed summaries, selections and analyses regenerate every
+  reported number, but re-running a policy requires retraining it from the committed
+  configurations.
+- The datasets are downloaded by `make download` and verified by SHA-256; they are not
+  redistributed.

@@ -1,0 +1,42 @@
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Behavior cloning.} Fitting a policy to demonstrated actions goes back to
+ALVINN~\citep{pomerleau1991}; surveys of learning from demonstration cover the wider
+field~\citep{argall2009survey}. Compounding error under distribution shift motivates
+interactive methods such as DAgger~\citep{ross2011dagger}; here, as in most offline
+benchmarks, no interaction with an expert is available. Recurrent policies over observation
+histories, trained with LSTMs~\citep{hochreiter1997lstm}, are a strong baseline on the
+robomimic tasks~\citep{mandlekar2021robomimic}. Predicting chunks of future actions and
+executing them open loop for a few steps, as in ACT~\citep{zhao2023act}, reduces the
+effective decision horizon of a deterministic policy.
+
+\paragraph{Multimodal and generative policies.} Implicit (energy-based)
+BC~\citep{florence2021ibc} and Behavior Transformers~\citep{shafiullah2022bet} model
+multimodal action distributions without diffusion. Diffusion Policy~\citep{chi2023diffusion}
+applies denoising diffusion~\citep{ho2020ddpm} with DDIM sampling~\citep{song2021ddim} to
+action chunks, using a 1D temporal U-Net in the style of Diffuser~\citep{janner2022diffuser},
+itself derived from the U-Net~\citep{ronneberger2015unet}, with FiLM
+conditioning~\citep{perez2018film}. Our diffusion family adapts that architecture and its
+noise schedule~\citep{nichol2021improved} from the robomimic reference implementation and
+the diffusers library~\citep{diffusers}.
+
+\paragraph{Benchmarks and simulators.} robomimic~\citep{mandlekar2021robomimic} provides the
+demonstrations and baseline recipes; robosuite~\citep{zhu2020robosuite} provides the tasks,
+robot and controllers on the MuJoCo physics engine~\citep{todorov2012mujoco}. We use the
+proficient-human datasets as repackaged for robosuite~v1.5, which the dataset maintainers
+note may not reproduce the original benchmark numbers exactly; none of our numbers should
+be compared with the original paper's.
+
+\paragraph{3D perception for policies.} 3D Diffusion Policy (DP3)~\citep{ze2024dp3}
+conditions a diffusion policy on a compact encoding of a point cloud and reports better
+generalization than image-based policies. Its encoder descends from
+PointNet~\citep{qi2017pointnet}. Our point-cloud arm is DP3-inspired: it follows the idea of
+a per-point MLP with max pooling, but it is not a reproduction of DP3's implementation,
+tasks or protocol.
+
+\paragraph{Evaluation practice.} Reports of learned control are sensitive to seeds and to
+how uncertainty is summarized~\citep{henderson2018matters,agarwal2021precipice}. We
+resample both training seeds and initial states in a hierarchical
+bootstrap~\citep{efron1979bootstrap,field2007clustered}, pair every comparison by initial
+state, and report per-checkpoint Wilson intervals~\citep{wilson1927}.

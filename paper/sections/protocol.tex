@@ -1,0 +1,67 @@
+\section{Evaluation protocol}
+\label{sec:protocol}
+
+The protocol, its hypotheses and its analysis were committed before the runs they govern;
+every later amendment is dated in the repository, and no amendment changed an analysis
+method after its data existed. Three analysis scripts received input-reading fixes after their
+data existed (Section~\ref{sec:limitations}; Appendix~\ref{app:repro}).
+
+\paragraph{Initial-state suites.} Each task has disjoint suites of
+\rf{proto.nstates} serialized initial states drawn from robosuite's standard reset
+distribution with reserved seed blocks: a \emph{validation} suite, which selects every
+checkpoint and configuration; a \emph{held-out test} suite, locked in code until a freeze
+document was committed and then run once per selected checkpoint; and a fresh
+\emph{robustness base} suite (seeds from \rf{rob.seedbase}) for the perturbation study. No
+two suites share a state or a seed.
+
+\paragraph{Hypotheses.} H1: every trained family beats a uniform random-action baseline.
+H2 (primary): diffusion versus BC-MLP and versus BC-RNN. H2-c: diffusion versus
+BC-MLP-chunk, required before any diffusion advantage over BC-MLP is attributed to the
+generative model rather than to chunking. H3: observation history, BC-RNN versus BC-MLP (and,
+in ablation A3, diffusion with one versus two observations). H4: robustness under two
+implemented perturbations (Section~\ref{sec:robustness}). H5 belongs to the separately frozen
+point-cloud study (Section~\ref{sec:perception}) and is never pooled with H1 to H4. Each task
+has \rf{proto.ncomparisons} declared success differences.
+
+\paragraph{Selection.} Each training run's checkpoint is the one with the most validation
+successes; ties go to the lower mean first-success step and then to the earlier checkpoint.
+The same rule chose each family's tuning trial. Because the validation suite chose among
+\rf{train.K} checkpoints and \rf{train.trials} trials, validation success is biased upward;
+it is never reported as a test result (Table~\ref{tab:selection} in the appendix compares it
+with success on fresh and held-out starts).
+
+\paragraph{Rollouts.} Every start runs once ($R = 1$) with policy seed \rf{proto.policyseed}.
+For the diffusion family the initial noise of each decision is a deterministic function of
+the start, the policy seed and the decision index, so a rerun reproduces every action. With
+$R = 1$ the difficulty of a start and the diffusion noise drawn on it cannot be separated
+(Section~\ref{sec:limitations}).
+
+\paragraph{Statistics.} The primary metric is the success rate. Families are compared by a
+hierarchical paired bootstrap~\citep{efron1979bootstrap,field2007clustered} with
+$B$\,=\,\rf{proto.B} replicates and seed \rf{proto.bootseed}: each replicate resamples the
+\rf{proto.nseeds} training seeds of each family with replacement, then resamples the
+\rf{proto.nstates} starts once and shares them across families, so every difference is
+paired by start. A difference is \emph{separated} when its \rf{proto.level}\,\% percentile
+interval excludes zero, and \emph{not separated} otherwise; not separated is not evidence of
+equality. Intervals are not adjusted for multiplicity, and the counts of declared comparisons
+are reported with each analysis. Per-checkpoint rates carry Wilson
+intervals~\citep{wilson1927}. The secondary metric is the censored episode length: the
+first-success step, or the horizon \rf{proto.horizon} for a failure. Because a failure
+contributes the full horizon, a difference in censored length mixes a difference in success
+with a difference in speed; we decompose it in Section~\ref{sec:results}.
+
+\paragraph{Sensitivity analysis (not preregistered).} With \rf{proto.nseeds} seeds per family
+the seed component of each bootstrap interval rests on very few values. After the audit
+(Section~\ref{sec:limitations}) we recomputed every declared difference with a seed-level
+$t$ interval on the frozen per-seed rates: Welch's interval for separately trained families,
+a paired $t$ interval for the same checkpoints under two conditions, and Welch's interval on
+the per-seed drops for a difference of drops. It treats per-seed means as the units, ignores
+pairing by start, and is undefined when the seeds do not vary. It was not preregistered, it
+changes no frozen verdict, and it is reported beside the frozen result as a check of how much
+each verdict depends on the method.
+
+\paragraph{Failure taxonomy.} Every failed episode is assigned, by a rule fixed before the
+test and computed from recorded states, to one of seven failure categories: engineering
+error, gripper never closed, no grasp with the gripper near the object, no grasp after
+drifting away, object dropped, holding the object at timeout, and (Can) object in the goal
+bin without success.

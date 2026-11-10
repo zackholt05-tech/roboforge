@@ -19,8 +19,8 @@ the owner picks which runs next at the end of Session 13.
 - results in `reports/session13/x1_clamp/tables.md`.
 With the diffusion sampler's bound on its executed actions, BC's outcomes are unchanged and the
 H4 gap stays separated. The diffusion side of KI-052 (the sampler clips at every step; a
-`clip_sample=False` arm) was not tested. The exact Session 14 prompts for X2 and X3 are in `docs/HANDOFF.md` (# Session 13
-Handoff §6).
+`clip_sample=False` arm) was not tested. The owner chose X3 for Session 14 (D-108). The exact prompt is in `docs/HANDOFF.md`
+(# Session 13 Handoff §6).
 
 ## Rules shared by every extension
 

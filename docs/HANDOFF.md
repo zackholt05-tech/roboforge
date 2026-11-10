@@ -3,7 +3,7 @@
 project: roboforge-3d
 current_session: 13
 session_status: PASS          # Session 13: X1, the evaluation-only action-clamp test (D-107); exploratory, after the freeze; $0
-next_session: 14              # X2 or X3, the owner's choice; both exact prompts in # Session 13 Handoff §6
+next_session: 14              # X3, more training seeds (owner, D-108); exact prompt in # Session 13 Handoff §6 ("If the owner chooses X3")
 last_verified_commit: c2a9ae6   # code as ab02469; STOP checks in # Session 13 Handoff §4
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
@@ -76,7 +76,7 @@ heldout_results:                      # family success %, 3 seeds x 50 held-out 
 modal: {gate_a: done, A-01: "closed, $0.148", A-02: "closed, $0.0317", A-03: "closed, $8.06", A-04: "Level 2, closed, $2.37 (5 launches; KI-047; detached launches since D-085)", open_approvals: none, month_to_date: "$15.89 of $30 (2026-11-09)", egl_vs_osmesa: "PENDING (KI-001, KI-033)"}
 final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081); Level 2 TESTED ONCE (Session 9, D-086 gate, a031e88; analysis 620c541). Session 10 re-rendered recorded episodes only. All three locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1, RGB or Level 2 configuration, ever. Session 13 (X1) stepped only the Session 7 robustness sets"
 disk: "about 17 GB free at the end of Session 10 (KI-008); the Observatory export is about 19 MB in git; the Modal runs Volume keeps every checkpoint"
-next_required_owner_approval: "the choice of X2 or X3 for Session 14; whether X1 is published (v1.1) is the owner's decision (D-105). No paid compute is open; any Modal job needs a new approval row"
+next_required_owner_approval: "Session 14 (X3) first asks the owner to confirm the task(s) and the number of extra seeds; whether X1 is published (v1.1) is the owner's decision (D-105). No paid compute is open; any Modal job needs a new approval row"
 observatory: {decisions: "D-087-D-091", site: website/, export: "reports/session10/observatory/ (37 clips from clean b5fc2ee, canonical container; ebfd0c3)", findings: "findings.json, 8 frozen sources (c73a080)", verification: "viewer_verification.json: 18/18 frames pass (robot IoU >= 0.9998, centroid <= 0.04 px)", hosting: "none (owner, D-090); no deployed or staging URL", meshes: "extracted at build time by make web-assets, gitignored (D-090)", provenance: docs/VISUAL_PROVENANCE.md}
 level2_study: {freeze: "docs/LEVEL2_EXPERIMENT_FREEZE.md @ b93c50c (sha256 ffe5a03e...)", gate: "D-086 @ b1f4da2, amended 08c3aa8", runs: [s9_pc_diffusion_dp3_lift_seed0_8fd35613, s9_pc_diffusion_dp3_lift_seed1_a66a2758, s9_pc_diffusion_dp3_lift_seed2_402a1f24], selections: "30000 / 40000 / 60000 (reports/session9/pc_selection/)", placement: "reports/session9/level2_placement/ @ 4ebebc1", heldout: "reports/session9/pc_heldout/ @ a031e88", results: "reports/session9/level2_results/ @ 620c541 (+ ERRATA.md)", h5: "pc - rgb on ood_cube_shift -41.3 pp [-54.0, -28.0], separated (-)", heldout_success: {pc_diffusion: 100.0, rgb_diffusion: 100.0}, label: DP3-inspired, privilege: sensor-like}
 paper: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, build: "make paper (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400)", generated: "paper/generated/ (35 files, index.json)", audit: docs/AUDIT.md, decisions: "D-092-D-096", label: "local build, not peer reviewed", fresh_clone: "byte-identical rebuild (Session 12)"}
@@ -85,7 +85,7 @@ rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 37
 x1_study: {decision: D-107, label: "exploratory, after the freeze", code: 09d1a90, preregistration: "docs/extensions/X1_PREREGISTRATION.md @ ab02469", evaluations: "45 once from ab02469 (reports/session13/x1_clamp/evals/, runs/x1_clamp/)", analysis: "reports/session13/x1_clamp/ @ c2a9ae6", primary: "Lift ood_arm_offset drop(diffusion) - drop(clamped BC-MLP-chunk) -40.0 pp [-54.0, -25.3], separated (-) (frozen -40.0 [-54.0, -26.0]); reading R1", clamped_minus_unclamped: "0 of 15 separated; largest |diff| 0.7 pp", engineering_checks: "logs/session13/x1_checks/ (all PASS)"}
 ```
 
-# Next: Session 14, X2 or X3 (the owner chooses)
+# Next: Session 14, X3 more training seeds (owner, D-108)
 
 Session 13 ran X1 (# Session 13 Handoff below). Read `docs/extensions/README.md`, then the
 chosen study's file. The exact prompts are in §6 below. Every Session 12 boundary still
@@ -94,8 +94,8 @@ applies, and X1 is now frozen too: never rerun `make x1-run` or `make x1-analyze
 | Study | File | Session |
 |---|---|---|
 | X1 evaluation-only action-clamp test (KI-052) | `docs/extensions/X1_action_clamp.md` | 13, DONE |
-| X2 a harder or multimodal task (owner chooses Can MH, Square PH or Square MH) | `docs/extensions/X2_harder_task.md` | 14 if chosen |
-| X3 more training seeds, on a fresh held-out suite | `docs/extensions/X3_more_seeds.md` | 14 if chosen |
+| X2 a harder or multimodal task (owner chooses Can MH, Square PH or Square MH) | `docs/extensions/X2_harder_task.md` | not scheduled |
+| X3 more training seeds, on a fresh held-out suite | `docs/extensions/X3_more_seeds.md` | 14 (owner, D-108) |
 
 # Session 13 Handoff (X1)
 
@@ -153,7 +153,8 @@ Session 13: post-release extension X1, the evaluation-only action-clamp test of 
 On the Session 13 tree (code as `ab02469`; documents only after `c2a9ae6`), host, no container running: `make lint` clean; full suite alone **550 passed** (8:28; the 526 of the baseline plus 24 new X1 tests; `logs/session13/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged", also before every code change); `tests/research_integrity` 50 passed; `make release-check` PASS (136 disclosed local-path files, D-100). No frozen file, freeze, result or executed outcome changed; nothing was pushed, tagged, released or deployed.
 
 ## 5. Owner decisions pending
-1. **X2 or X3 for Session 14**, asked at the end of this session.
+1. Done: the owner chose **X3** for Session 14 (D-108). Session 14 asks the owner to confirm the
+   task(s) and the number of extra seeds.
 2. Whether to publish X1 (for example a v1.1 with a short addendum to the paper, README and
    Observatory). Not done; nothing was pushed, tagged or deployed (D-105).
 3. Optional, not approved: the diffusion side of KI-052. That is the 6 frozen diffusion
@@ -164,6 +165,8 @@ On the Session 13 tree (code as `ab02469`; documents only after `c2a9ae6`), host
    cache, DNS) are unchanged. Disk: 15 GB free after X1 (KI-008).
 
 ## 6. Exact prompts for Session 14
+The owner chose X3 (D-108): **use the X3 prompt.** The X2 prompt is kept for a later session;
+update its session number and evidence session before using it.
 
 ### If the owner chooses X2
 
@@ -220,7 +223,7 @@ tests/research_integrity, make release-check; commit verified work as Zackary Ho
 write the exact prompt for X2-b; STOP. Do not proceed automatically.
 ```
 
-### If the owner chooses X3
+### If the owner chooses X3 (CHOSEN, D-108: the Session 14 prompt)
 
 ```text
 Implement RoboForge 3D SESSION 14 ONLY: post-release extension X3, a separate replication

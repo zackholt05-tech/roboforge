@@ -2,7 +2,7 @@
 ```yaml
 CURRENT_SESSION: 13
 SESSION_STATUS: PASS            # Session 13: post-release extension X1 (KI-052 clamp test), 45 evaluations once, analysis once; exploratory, after the freeze; $0
-NEXT_SESSION: 14                # X2 (harder or multimodal task) or X3 (more seeds), the owner's choice; both prompts in docs/HANDOFF.md
+NEXT_SESSION: 14                # X3, more training seeds (owner, D-108); exact prompt in docs/HANDOFF.md # Session 13 Handoff §6
 BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-053, KI-056, KI-057; KI-052 tested by X1 (Session 13); accepted: KI-009 (D-100), KI-060; partial: KI-061
 LAST_VERIFIED_COMMIT: c2a9ae6   # code as ab02469 (X1 code 09d1a90 + analysis amendment); STOP checks below ran on the Session 13 tree; later commits are records only
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c, x1_preregistration: ab02469}
@@ -19,11 +19,11 @@ UPDATED: 2026-11-10
 
 # RoboForge Status
 
-## Next: Session 14, X2 or X3 (the owner's choice)
-v1.0.0 stays as published. X1 ran in Session 13 (below). The owner picks the next study:
-**X2**, a harder or multimodal task (`docs/extensions/X2_harder_task.md`), or **X3**, more
-training seeds as a separate replication (`docs/extensions/X3_more_seeds.md`). The exact
-prompt for each is in `docs/HANDOFF.md`. Whether X1 is published (for example a v1.1 addendum)
+## Next: Session 14, X3 more training seeds (owner, D-108)
+v1.0.0 stays as published. X1 ran in Session 13 (below). The owner chose **X3**, more training
+seeds as a separate replication (`docs/extensions/X3_more_seeds.md`); X2 stays specified and
+unscheduled. The exact Session 14 prompt is in `docs/HANDOFF.md` (# Session 13 Handoff §6,
+"If the owner chooses X3"). Whether X1 is published (for example a v1.1 addendum)
 is the owner's decision (D-105); nothing was pushed.
 
 ## Session 13: post-release extension X1, the action-clamp test (PASS; exploratory, after the freeze)

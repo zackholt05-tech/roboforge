@@ -2469,3 +2469,11 @@ controller limits. Do the frozen H4 and H2-c contrasts survive when BC gets the 
     run. KI-052 stays half-open.
   - The preregistration, the evaluations and the analysis are unchanged by this correction;
     only the interpretation in the records is rescoped.
+
+### D-108 Session 14 runs X3, more training seeds (OWNER, 2026-11-10, at the Session 13 STOP)
+The owner was asked once, with the facts: X1's outcome; X3 at 1–2 sessions, about 5 CPU-hours
+and 2.3 GB per extra Can seed, so about 6 seeds fit in the 15 GB free (estimates); X2 at 3 or
+more sessions. The owner chose **"X3: more seeds"**. Session 14 runs X3
+(`docs/extensions/X3_more_seeds.md`), a separate replication. Its first step is to measure disk
+and per-seed cost and to ask the owner to confirm the task(s) and the number of extra seeds.
+X2 stays specified and unscheduled.

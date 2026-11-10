@@ -27,7 +27,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement \
 	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
-	web-build web-test web-e2e web-verify web-dev
+	web-build web-test web-e2e web-verify web-dev visual-provenance
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -383,3 +383,6 @@ web-verify:  ## Viewer vs MuJoCo reference frames (silhouette IoU), writes $(OBS
 
 web-dev:  ## Vite dev server (local only)
 	cd website && $(NPM) run dev
+
+visual-provenance:  ## Host: docs/VISUAL_PROVENANCE.md from the committed export (generated)
+	$(RUN_S) python scripts/visual_provenance.py --out-dir $(OBS_OUT)

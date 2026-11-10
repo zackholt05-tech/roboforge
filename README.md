@@ -8,13 +8,39 @@ cloning, recurrent behavior cloning and a conditional diffusion action policy on
 robomimic proficient-human demonstrations, and evaluated by closed-loop simulator rollouts
 from paired, held-out initial states.
 
-> **Status: Session 4 (conditional diffusion policy and denoising instrumentation) complete.
-> Only short validation pilots of BC-MLP, BC-RNN, BC-MLP-chunk and the diffusion policy have
-> been run; no held-out test exists yet.**
-> Key findings: Results pending. Validation pilots are development numbers, not results. See
-> [docs/STATUS.md](docs/STATUS.md), [docs/RESEARCH_PROTOCOL.md](docs/RESEARCH_PROTOCOL.md),
-> [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) and
-> [reports/feasibility/STACK_REPORT.md](reports/feasibility/STACK_REPORT.md).
+> **Status: Session 10.** Level 1 (Lift and Can; four learned families and a random baseline;
+> three seeds each), the RGB study and the Level 2 point-cloud study are complete, each tested
+> once on held-out starts under a frozen protocol. Session 10 builds the RoboForge Observatory, an interactive 3D site
+> drawn only from that frozen evidence (below). Results, with denominators and intervals:
+> [docs/STATUS.md](docs/STATUS.md), [docs/LEVEL1_COMPLETE.md](docs/LEVEL1_COMPLETE.md),
+> `reports/session7/results/`, `reports/session8/rgb_results/` and
+> `reports/session9/level2_results/` (with its `ERRATA.md`).
+
+## The Observatory (Session 10)
+
+A local, static site (`website/`, React Three Fiber) that tells the study's story from
+recorded evidence only:
+
+- recorded held-out rollouts, reconstructed in 3D from the simulator's saved states;
+- the diffusion policy's real denoising steps, with clone-simulated candidate paths;
+- the frozen results with their intervals, including the Level 2 point-cloud result and its
+  erratum.
+
+It is not hosted (DECISIONS D-090). To build and check it:
+
+```bash
+make observatory-findings web-data web-assets   # site data from reports/session10/observatory
+make web-install web-build                      # npm ci; type-check, build, asset budgets
+make web-test web-e2e web-verify                # schemas and kinematics; E2E; viewer vs MuJoCo
+cd website && npm run preview                   # http://127.0.0.1:4173
+```
+
+The robot meshes are read from the local robosuite install at build time and never committed.
+Every visual output and its source run is listed in
+[docs/VISUAL_PROVENANCE.md](docs/VISUAL_PROVENANCE.md). A ground-truth preview of the hero
+rollout, a MuJoCo render of the recorded states, is
+`reports/session10/observatory/media/lift-diffusion_unet-s0-lift_final_test_0000_frontview.mp4`
+(diffusion U-Net, seed 0, Lift, held-out start 0, success).
 
 ## What has been verified (Session 0)
 
@@ -117,6 +143,8 @@ reports/session4/    Session 4 evidence (diffusion reference, pilot, equivalence
 reports/session5/    Session 5 evidence (Modal probe, simulations, profiles, cost projection)
 reports/compute/     cumulative paid-compute cost ledger (launch, result and billing events)
 runs/                training and evaluation runs (gitignored; manifests + checkpoints)
+reports/session10/   Session 10 Observatory export (clips, media, reference frames, traces)
+website/             the Observatory site (own package and lockfile; D-088)
 docs/                status, handoff, decisions, known issues, research protocol
 ```
 

@@ -244,3 +244,34 @@ def test_every_reading_covers_every_verdict() -> None:
     ax = _script("analyze_x1_clamp")
     for r in ax.READINGS.values():
         assert set(r) == {"separated (-)", "not separated", "separated (+)"}
+
+
+def _episode(d: Path, raw: np.ndarray, executed: np.ndarray) -> None:
+    d.mkdir(parents=True)
+    np.savez_compressed(d / "arrays.npz", raw_policy_action=raw, executed_action=executed)
+
+
+def test_clamp_effect_counts_only_changed_executed_actions(tmp_path: Path) -> None:
+    ax = _script("analyze_x1_clamp")
+    codec = _codec("lift")
+    raw = np.zeros((4, 7))
+    raw[1, 6] = 1.7   # gripper outside [-1, 1]: the controller clips it anyway, no change
+    raw[2, 3] = 1.5   # drot_x outside: the clamp binds, the executed action changes
+    raw[3, 1] = -0.5  # inside the bound
+    executed = codec.decode(np.clip(raw, -1, 1))[0]
+    _episode(tmp_path / "rec" / "episodes" / "e0", raw, executed)
+    eff = ax.clamp_effect(tmp_path / "rec", "lift")
+    assert eff["n_actions"] == 4 and eff["n_actions_changed"] == 1
+    assert eff["fraction_entries_changed_per_dim"][3] == 0.25
+    assert eff["fraction_entries_changed_per_dim"][6] == 0.0
+    _episode(tmp_path / "bad" / "episodes" / "e0", raw, codec.decode(raw)[0])  # unclamped
+    with pytest.raises(SystemExit):
+        ax.clamp_effect(tmp_path / "bad", "lift")
+
+
+def test_the_preregistration_states_every_reading_verbatim() -> None:
+    ax = _script("analyze_x1_clamp")
+    text = " ".join((REPO_ROOT / xc.PREREGISTRATION).read_text().split())
+    for verdicts in ax.READINGS.values():
+        for reading in verdicts.values():
+            assert reading in text, reading

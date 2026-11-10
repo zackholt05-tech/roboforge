@@ -40,9 +40,16 @@ from typing import Any
 
 import numpy as np
 
+from roboforge.data.normalization import ActionCodec
 from roboforge.eval import taxonomy as tx
 from roboforge.eval.statistics import hierarchical_paired_bootstrap, wilson_interval
-from roboforge.exploratory.clamp import LABEL, PREREGISTRATION, SCHEMA
+from roboforge.exploratory.clamp import (
+    LABEL,
+    PREREGISTRATION,
+    SCHEMA,
+    clamp_bounds,
+    committed_action_normalizer,
+)
 from roboforge.paths import REPO_ROOT, evidence_reports_dir, repo_relative
 from roboforge.provenance import git_revision, sha256_file
 from roboforge.sim import robustness as rb
@@ -64,9 +71,9 @@ TAIL = " Exploratory, after the freeze; the frozen numbers stand."
 # The readings, verbatim from the preregistration (§6), keyed by the interval's verdict.
 READINGS = {
     "primary": {
-        "separated (-)": "R1. The bound does not explain the frozen H4 gap: with the same "
-                         "action bound, BC-MLP-chunk still degrades more than diffusion under "
-                         "the arm offset on Lift.",
+        "separated (-)": "R1. The bound does not account for all of the frozen H4 gap: with "
+                         "the same action bound, BC-MLP-chunk still degrades more than "
+                         "diffusion under the arm offset on Lift.",
         "not separated": "R2. With the same action bound, the drop difference between "
                          "diffusion and BC-MLP-chunk under the arm offset on Lift is not "
                          "separated: X1 cannot attribute the frozen H4 advantage to the "
@@ -156,14 +163,52 @@ def load_x1(directory: Path, n: int) -> tuple[dict[tuple, dict[str, Any]], dict[
     return out, {"sha": sha, "contains_preregistration": True}
 
 
+def clamp_effect(records_dir: Path, task: str) -> dict[str, Any]:
+    """Which executed actions the clamp changed, recomputed exactly from the records.
+
+    For every step, the frozen decode of the recorded ``raw_policy_action`` is compared with
+    the clamped decode. The recorded ``executed_action`` must equal the clamped decode bitwise:
+    this checks that the clamp was applied as preregistered. A clamped entry on a dimension
+    where the clamp cannot bind (for example the gripper) changes nothing and is not counted.
+    """
+    norm, _ = committed_action_normalizer(task)
+    b = clamp_bounds(task)
+    frozen = ActionCodec(norm, np.asarray(b["controller_low"]), np.asarray(b["controller_high"]))
+    n, changed, per_dim = 0, 0, np.zeros(norm.dim, dtype=np.int64)
+    for ep in sorted(p for p in (Path(records_dir) / "episodes").iterdir() if p.is_dir()):
+        with np.load(ep / "arrays.npz") as z:
+            raw, ex = z["raw_policy_action"], z["executed_action"]
+        if len(raw) == 0:
+            continue
+        f = frozen.decode(raw)[0]
+        c = frozen.decode(np.clip(raw, -1.0, 1.0))[0]
+        if not np.array_equal(ex, c):
+            raise SystemExit(f"{ep}: executed actions are not the clamped decode")
+        d = f != c
+        n += len(raw)
+        changed += int(d.any(axis=1).sum())
+        per_dim += d.sum(axis=0)
+    return {"n_actions": n, "n_actions_changed": changed,
+            "fraction_actions_changed": changed / n if n else 0.0,
+            "fraction_entries_changed_per_dim": (per_dim / n).tolist() if n else None}
+
+
 def _clamp_activity(entries: list[dict[str, Any]]) -> dict[str, Any]:
     dec = sum(e["summary"]["x1_clamp"]["counts"]["n_actions_decoded"] for e in entries)
     acts = sum(e["summary"]["x1_clamp"]["counts"]["n_actions_clamped"] for e in entries)
     per = np.sum([e["summary"]["x1_clamp"]["counts"]["entries_clamped_per_dim"]
                   for e in entries], axis=0)
+    eff = [e["effect"] for e in entries]
+    n = sum(x["n_actions"] for x in eff)
+    ch = sum(x["n_actions_changed"] for x in eff)
+    per_ch = np.sum([np.asarray(x["fraction_entries_changed_per_dim"]) * x["n_actions"]
+                     for x in eff], axis=0)
     return {"n_actions_decoded": int(dec), "n_actions_clamped": int(acts),
             "fraction_actions_clamped": acts / dec if dec else 0.0,
-            "fraction_entries_clamped_per_dim": (per / dec).tolist() if dec else None}
+            "fraction_entries_clamped_per_dim": (per / dec).tolist() if dec else None,
+            "n_actions_executed": int(n), "n_actions_changed": int(ch),
+            "fraction_actions_changed": ch / n if n else 0.0,
+            "fraction_entries_changed_per_dim": (per_ch / n).tolist() if n else None}
 
 
 def frozen_outcomes(task: str, a7: dict[str, Any], n: int) -> dict[str, Any]:
@@ -259,6 +304,7 @@ def task_analysis(task: str, a7: dict[str, Any], x1: dict[tuple, dict[str, Any]]
                 if sum(x["category"] == "success" for x in labs) != summ["successes"]:
                     raise SystemExit(f"{e['path']}: taxonomy and summary disagree on successes")
                 labels[summ["eval_run_id"]] = labs
+                e["effect"] = clamp_effect(REPO_ROOT / summ["records_dir"], task)
                 mat.append(vector(summ, n))
                 lo, hi = wilson_interval(summ["successes"], summ["n_episodes"])
                 evals.append({"family": fam, "seed": sd["seed"], "suite": s,
@@ -380,12 +426,17 @@ def tables(res: dict[str, Any]) -> str:
         for c in t["bootstrap"]["frozen_contrasts"]:
             out.append(f"| {c['name']} | {100 * c['estimate']:+.1f} | {_ci(c['ci95'])} | "
                        f"{c['separation']} |")
-        out += ["", "Clamp activity (fraction of decoded actions with at least one clamped "
-                "entry; per dimension, fraction of entries clamped):", "",
-                "| Arm:set | Actions clamped | Per dimension |", "|---|---|---|"]
+        out += ["", "Clamp activity. *Changed*: fraction of executed actions the clamp changed "
+                "(recomputed from the records), and per dimension the fraction of entries it "
+                "changed. *Outside [−1, 1]*: fraction of decoded actions with any normalized "
+                "entry outside the bound, including dimensions where the clamp equals the "
+                "controller clip and changes nothing (e.g. the gripper).", "",
+                "| Arm:set | Changed | Changed per dimension | Outside [−1, 1] |",
+                "|---|---|---|---|"]
         for k, v in t["clamp_activity"].items():
-            per = ", ".join(f"{x:.3f}" for x in v["fraction_entries_clamped_per_dim"])
-            out.append(f"| {k} | {v['fraction_actions_clamped']:.3f} | {per} |")
+            per = ", ".join(f"{x:.3f}" for x in v["fraction_entries_changed_per_dim"])
+            out.append(f"| {k} | {v['fraction_actions_changed']:.3f} | {per} | "
+                       f"{v['fraction_actions_clamped']:.3f} |")
         cats = tx.taxonomy_config()["categories"]
         out += ["", "| Arm:set (clamped) | " + " | ".join(cats) + " |",
                 "|---" * (len(cats) + 1) + "|"]

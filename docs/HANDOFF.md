@@ -3,7 +3,7 @@
 project: roboforge-3d
 current_session: 12
 session_status: PASS          # Session 12: fresh-clone reproduction, final QA, release v1.0.0 (D-097-D-104); $0 paid compute
-next_session: none            # PROJECT COMPLETE (MASTER_SPEC Session 12 STOP); no next-session prompt
+next_session: 13              # post-release extension X1 (D-105); exact prompt in docs/extensions/README.md
 last_verified_commit: ee1e574   # code as ab17fb2; STOP checks in # Session 12 Handoff §4; CI on Linux aarch64 passed on it
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
@@ -83,6 +83,20 @@ paper: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd9
 release: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097-D-104", repository: "https://github.com/zackholt05-tech/roboforge", observatory: "GitHub Pages (D-102)", ci: ".github/workflows (D-101)", state: "see # Session 12 Handoff §5 (publication record, verified)"}
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 378ea43", selections: reports/session8/rgb_selection/, heldout: "reports/session8/rgb_heldout/ @ bc054bc", results: "reports/session8/rgb_results/ @ 3b23255", success: {rgb_diffusion: 100.0, rgb_bc_chunk: 99.3}, diffusion_minus_bc: "+0.7 pp [+0.0, +4.0], not separated", videos: reports/session8/rgb_videos/}
 ```
+
+# Next: post-release extensions (D-105, 2026-11-10)
+
+v1.0.0 is complete and published (# Session 12 Handoff below). The owner asked to continue
+with three follow-up studies; read `docs/extensions/README.md` first, then the study's file:
+
+| Study | File | Session |
+|---|---|---|
+| X1 evaluation-only action-clamp test (KI-052) | `docs/extensions/X1_action_clamp.md` | 13 |
+| X2 a harder or multimodal task (owner chooses Can MH, Square PH or Square MH) | `docs/extensions/X2_harder_task.md` | assigned when it starts |
+| X3 more training seeds, on a fresh held-out suite | `docs/extensions/X3_more_seeds.md` | assigned when it starts |
+
+The exact prompt for Session 13 is in `docs/extensions/README.md`. Every Session 12 boundary
+still applies; the frozen studies are never rerun or edited.
 
 # Session 12 Handoff (project complete)
 

@@ -2,7 +2,7 @@
 ```yaml
 CURRENT_SESSION: 12
 SESSION_STATUS: PASS            # Session 12: fresh-clone reproduction, final QA, release v1.0.0 published (tag 82f3219 on 7b394fa; publication record below); $0 paid compute
-NEXT_SESSION: none              # project complete (MASTER_SPEC Session 12 STOP); no further phase is started
+NEXT_SESSION: 13                # post-release extension X1 (D-105, docs/extensions/X1_action_clamp.md); v1.0.0 complete and published
 BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-052, KI-053, KI-056, KI-057; accepted: KI-009 (D-100), KI-060; fixed in Session 12: KI-058, KI-059; partial: KI-061 (root cause found, test harness fixed)
 LAST_VERIFIED_COMMIT: ee1e574   # code as ab17fb2 (STOP checks below); CI on Linux aarch64 passed on it; later commits are records only
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c}
@@ -17,6 +17,13 @@ UPDATED: 2026-11-10
 ```
 
 # RoboForge Status
+
+## Next: post-release extensions (D-105, owner request 2026-11-10)
+v1.0.0 is complete and published. The owner asked to continue with three follow-up studies,
+specified in `docs/extensions/`: **X1** the evaluation-only action-clamp test (KI-052),
+Session 13; **X2** a harder or multimodal task; **X3** more training seeds (a separate
+replication). The exact Session 13 prompt is in `docs/extensions/README.md`. Nothing has run
+yet; no frozen study changes.
 
 ## Session 12: fresh-clone reproduction, final QA, release (PASS)
 | Step (Session 12 prompt) | Status | Evidence |

@@ -2269,3 +2269,30 @@ file.
   refuse automated requests; those are listed, not hidden). Dependency vulnerability and license
   scans (`pip-audit` on the exported lock, `npm audit`, a license inventory) are run separately
   and recorded in `reports/session12/`.
+
+## Post-release extensions (2026-11-10 onward)
+
+### D-105 Three follow-up studies after v1.0.0 (OWNER, 2026-11-10)
+- **Owner request (2026-11-10):** continue building with three follow-up studies, each prepared
+  as handoff material before any work starts: X1, the evaluation-only action-clamp test
+  (KI-052, deferred by D-096); X2, a harder or multimodal task; X3, more training seeds.
+  Specifications: `docs/extensions/` (README and one file per study). Session 13 runs X1;
+  later session numbers are assigned when each study starts.
+- **Boundaries:** Level 1, the RGB study and Level 2 stay frozen and tested once; no frozen
+  file, freeze, result, label or executed outcome changes; `make freeze-check` passes before and
+  after every code change, and new behavior goes into new files. Each study records its own
+  design decision and commits a preregistration before its first reported rollout. Labels: X1
+  "exploratory, after the freeze"; X2 a separate study with its own freeze and held-out suite;
+  X3 "separate replication". None replaces a frozen number.
+- **Publication:** the published v1.0.0 (tag, paper, README, Observatory) stays as released.
+  Whether extension results are published (for example a v1.1 with an addendum) is the owner's
+  decision, asked when results exist. Nothing is pushed, tagged, released or deployed without
+  asking.
+- **Compute:** local CPU and the local container ($0) by default; any Modal job needs a new
+  approval row with a cost cap first. Disk is the binding local limit (KI-008).
+- **Planning facts recorded in `docs/extensions/` (2026-11-10):** the Level 1 freeze pins
+  nearly every file under `src/roboforge/` and three held-out scripts; the 45 BC robustness
+  evaluations X1 repeats recorded 3.12 container-hours in Session 7; Square PH is in the data
+  manifest with SHA-256 but has no simulator contract; Can, Lift and Square MH files exist at
+  the pinned Hugging Face revision but are not in the manifest; one extra seed of the four
+  families used 2.3 GB of disk on Can and 1.5 GB on Lift.

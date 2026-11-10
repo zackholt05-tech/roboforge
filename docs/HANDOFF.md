@@ -4,7 +4,7 @@ project: roboforge-3d
 current_session: 10
 session_status: PASS          # Session 10: RoboForge Observatory, local only (no hosting, D-090); see the Session 10 handoff below
 next_session: 11              # research paper, reproducibility, independent critical audit; Session 10 handoff §10, fresh context
-last_verified_commit: 4348244   # Session 10 code: lint clean, 492 tests passed (alone), freeze-check OK, RGB + Level 2 gates open; site build, vitest 49, E2E 7/7, viewer verification 18/18; the STOP commit adds docs only
+last_verified_commit: f0c3552   # Session 10 code (Python unchanged since 4348244): lint clean, 492 tests passed (alone), freeze-check OK, RGB + Level 2 gates open; site build, vitest 49, E2E 7/7, viewer verification 18/18; the STOP commit adds docs only
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -130,7 +130,7 @@ only**.
     tensors.
   - **C. The lab:** task and policy selectors, scrubber, camera presets.
   - **D. Head to head:** two seed-matched recorded rollouts from the same start, on a shared
-    clock.
+    clock, each with its outcome, steps, end-effector trail and recorded control commands.
   - **E. Inside the policy:** scheduler slider; normalized chunks and environment-space
     actions; observation window; clone-simulated candidate paths; 16 extra seeds; the
     measured path spread.

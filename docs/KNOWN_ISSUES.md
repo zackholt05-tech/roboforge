@@ -1047,8 +1047,8 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   failing test was `tests/research_integrity/test_final_test_lock.py::test_no_other_code_names_the_locked_suite`.
   `src/roboforge/viz/obs_select.py` (from `d12729f`) wrote the held-out partition label as a
   string literal. Only the suite module and its generator may name the locked suite.
-- **Why it was late:** two earlier full-suite runs in this session were stopped before they
-  finished, so the failure first showed at STOP.
+- **Why it was late:** no full-suite run on Session 10 code finished before STOP (one was
+  stopped so the final code could be tested instead), so the failure first showed at STOP.
 - **Fix (`4348244`):** the label is read from `configs/eval/suites.yaml` through
   `eval_states.LOCKED_SUITE`. The value is unchanged, and `build_selection()` reproduces the
   committed `selection.json` exactly (apart from its git and time stamps), so no evidence is

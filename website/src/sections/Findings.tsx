@@ -59,7 +59,9 @@ function Robustness({ f, task }: { f: F; task: string }) {
   const abl = Object.entries(R.ablations).flatMap(([name, a]) => a.bootstrap.differences.map((d) => ({ ...d, hypothesis: name })));
   const ARM: Record<string, string> = { primary: "primary", "trained-weights": "raw weights", ddpm100: "DDPM-100",
     "T_o=2": "T_o = 2", "T_o=1": "T_o = 1" };
-  const evals = [...R.h4.evaluations, ...Object.values(R.ablations).flatMap((a) => a.evaluations)];
+  // The ablations reuse the primary arm's evaluations: list each evaluation summary once.
+  const evals = [...new Map([...R.h4.evaluations, ...Object.values(R.ablations).flatMap((a) => a.evaluations)]
+    .map((e) => [e.eval_run_id, e])).values()];
   return (
     <div className="robustness">
       <div className="robustness-head">

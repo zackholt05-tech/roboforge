@@ -2296,3 +2296,145 @@ file.
   manifest with SHA-256 but has no simulator contract; Can, Lift and Square MH files exist at
   the pinned Hugging Face revision but are not in the manifest; one extra seed of the four
   families used 2.3 GB of disk on Can and 1.5 GB on Lift.
+
+## Session 13 (2026-11-10): post-release extension X1
+Level 1, the RGB study and Level 2 stay frozen and tested once. Session 13 runs X1, the
+evaluation-only action-clamp test of KI-052, under D-105. Every X1 result is labelled
+"exploratory, after the freeze" and never replaces a frozen number. No training, no held-out
+rollout, no paid or remote compute.
+
+### D-106 Makefile defaults bumped to Session 13; X1 targets (FIXED, before any code change)
+- `EVIDENCE_SESSION` falls back to 13 and `PREFIX` to `s13` (the D-092/D-097 pattern). Evidence
+  goes to `reports/session13/` and `logs/session13/` with `ROBOFORGE_EVIDENCE_SESSION=13`.
+- `OBS_OUT` stays pinned to `reports/session10/observatory` (D-092).
+- New targets: `make x1-run` (`scripts/run_x1_clamp.py`, the 45 clamped evaluations, once) and
+  `make x1-analyze` (`scripts/analyze_x1_clamp.py`, once). The engineering checks are run by
+  their logged commands (E13 rows), not by a target.
+- The held-out, placement and analysis targets of the three frozen studies are never run again.
+
+### D-107 X1 design: BC with the diffusion sampler's action bound on the robustness sets (FIXED, Session 13, before any X1 rollout)
+**Question (KI-052, audit A-6, D-096).** The diffusion sampler clamps its predicted clean chunk
+to [−1, 1] in min–max normalized space (`_Sampler._x0`, `clip_sample=True`). The last DDIM step
+returns that clamped chunk unchanged (`abar_prev = 1`, direction coefficient 0), so every
+diffusion action lies in each dimension's training range. BC heads are clipped only to the
+controller limits. Do the frozen H4 and H2-c contrasts survive when BC gets the same bound?
+
+**The clamp.**
+- Each normalized action of the BC policy's executed chunk is clipped to [−1, 1] *before* the
+  frozen `ActionCodec.decode`, which then runs unchanged. This is the sampler's bound bit for
+  bit.
+- Statistics: the committed action normalizer of each task,
+  `data/normalization/<task>_ph_lowdim_v1.json` (content SHA-256 `253bfc7e…` Lift,
+  `e0437cd7…` Can), mode `minmax`. It was fit on the training split. It is the only
+  normalization any Level 1 checkpoint can load (`check_committed_contract` compares
+  `normalization_sha256`), so BC and diffusion share it exactly.
+- In environment units the bound is [min_i, max_i] of the training split, up to float64
+  rounding: max |decode(±1) − stats| = 1.1e-16 (measured).
+- The controller limits are ±1 on every dimension. The clamp can bind only where the training
+  range is narrower:
+  - Lift dims 1, 3, 4, 5, both sides: dy [−0.560, 0.652], drot_x [−0.151, 0.119],
+    drot_y [−0.140, 0.305], drot_z [−0.518, 0.465];
+  - Can dim 3 on both sides ([−0.556, 0.730]), and dims 4 and 5 on the upper side only
+    (≤ 0.450, ≤ 0.745).
+- On every other dimension the training range equals the controller bounds, so clamping and the
+  controller clip give bitwise-identical executed actions. That includes the gripper on both
+  tasks: **the gripper clamp is a no-op** on executed actions. The record's `clip_mask` still
+  marks it, as the controller clip did before.
+- Can's clamp is weaker by construction.
+
+**Implementation: new files only.** No file pinned by `docs/FINAL_TEST_FREEZE.md` changes, and
+`make freeze-check` runs before and after.
+- `src/roboforge/exploratory/clamp.py`: `ClampedCodec` and `ClampedPolicy` wrap the frozen
+  `LearnedPolicy`, and `evaluate_x1` reuses the frozen `validation.run_states`.
+- Scripts:
+  - `scripts/eval_x1_clamp.py`: one checkpoint × one set, in the container;
+  - `scripts/run_x1_clamp.py`: host orchestrator; ≤ 4 containers, host-wide slots, clean tree
+    at every launch;
+  - `scripts/check_x1_engineering.py`: the engineering checks;
+  - `scripts/analyze_x1_clamp.py`: the analysis, run once.
+- Tests: `tests/unit/test_x1_clamp.py` and `tests/research_integrity/test_x1_scope.py`.
+- **What the records keep:**
+  - `raw_policy_action` keeps the network's own output, with the meaning it has in every
+    earlier record;
+  - `executed_action` is the clamped and decoded action;
+  - `clip_mask` marks the controller clip or the clamp;
+  - per-episode clamp counts go into `policy_episode`, outside `physics_sha256`.
+- The container does not mount `reports/session6`/`7` (KI-048 class). The host therefore
+  resolves each checkpoint from the frozen test-configuration records and passes the train
+  run, step, family and checkpoint SHA-256 in. The container checks the hash against the
+  training manifest and again when it loads the file.
+
+**Evaluations (45, each once).**
+- **Checkpoints:** the 9 frozen BC checkpoints per task (BC-MLP, BC-RNN, BC-MLP-chunk × seeds
+  0–2) of `reports/session6/lift_test_configuration.json` (SHA-256 `38ac3c29…`) and
+  `reports/session7/can_test_configuration.json` (`116f10a4…`). These are the SHA-256 values
+  recorded by the Session 7 robustness analysis.
+- **Sets, 50 starts each:**
+  - Lift `robustness_base` (content SHA-256 `b1ffb682…`), `ood_cube_shift` (`c6083afc…`) and
+    `ood_arm_offset` (`43c7c3d2…`);
+  - Can `robustness_base` (`b91082ea…`) and `ood_arm_offset` (`32388f79…`).
+  Lift 9 × 3 + Can 9 × 2 = 45 evaluations.
+- **Run settings:** canonical container, R = 1, policy seed 0, first success or 400 steps, the
+  first 3 episodes re-simulated (`verify_record`), from the preregistration commit on a clean
+  tree.
+- **Out of reach:** the code admits only `rb.sets_for(task)`, so the validation suite and the
+  locked held-out suite are refused (research-integrity test). Diffusion checkpoints are refused
+  on these sets. Their unclamped Session 7 evaluations already carry the bound.
+
+**Outputs.**
+- Records: `runs/x1_clamp/<eval_id>/`. The ID is the Session 7 ID of the same checkpoint and set
+  plus `__x1-clamp`. The precedent for a subdirectory is `runs/level2_eval/`.
+- Summaries: `reports/session13/x1_clamp/evals/<eval_id>.json`, schema
+  `roboforge.x1_clamp_eval/1`.
+- Logs: `logs/session13/x1_clamp/`.
+- No existing directory is written into. The writer refuses an existing record directory and
+  creates summaries exclusively.
+- Engineering checks: records in `runs/x1_checks/`, results in `logs/session13/x1_checks/`.
+  The analysis never reads either.
+
+**Engineering checks, before the preregistration (not results).**
+1. **Reproduction, clamp disabled:** the wrapper with the clamp disabled must reproduce a
+   recorded Session 7 summary exactly, with equal per-episode `physics_sha256`, success,
+   first-success step and step count on all 50 starts. The targets are heavily clipped OOD
+   evaluations:
+   - Lift BC-MLP-chunk seed 0 on `ood_arm_offset` (26/50);
+   - Can BC-MLP seed 0 on `ood_arm_offset` (13/50).
+   Each Session 7 summary is read only after its SHA-256 equals the value in the Session 7
+   analysis, whose own hash is pinned.
+2. **No-op on diffusion:** the clamp applied to the seed-0 diffusion checkpoint of each task, on
+   5 development starts (seeds 13,000,000 + i, partition `eval_adhoc`, outside every reserved
+   block), must leave `physics_sha256`, raw and executed actions identical, with zero clamped
+   entries. The same run on the seed-0 BC-MLP-chunk checkpoints records how often the clamp
+   acts and checks that executed actions lie inside the bounds.
+3. **Isolation:** before the 45 evaluations, none of their record directories exists. A content
+   digest of every file in the 60 Session 7 H4 record directories, and the `runs/` top-level
+   listing, are taken before and after. The digests must be equal, and the only new top-level
+   entries may be `x1_clamp` and `x1_checks`.
+
+**Analysis (fixed now; the preregistration repeats it).**
+- One §9 hierarchical paired bootstrap per task (B = 10,000, seed 20261106).
+  - Keys: the frozen `family:set` matrices, in the frozen order, then `<bc>+clamp:set`.
+  - Every key's seed group is its family. The draws are therefore those of the frozen analysis,
+    and the script asserts that every frozen estimate, difference and contrast equals
+    `analysis.json` exactly before it reports anything new.
+  - Clamped − unclamped is paired by seed and start; diffusion − clamped BC by start.
+- **Primary:** Lift `ood_arm_offset`, drop(diffusion) − drop(clamped BC-MLP-chunk), against the
+  frozen −40.0 pp [−54.0, −26.0], separated (−).
+- **Secondary:** every other X1 difference and contrast. See the preregistration for the count.
+- The readings are fixed verbatim in the preregistration, in separated / not-separated terms
+  only. "Not separated" is never read as equality.
+
+**Not done, by decision.**
+- No held-out revisit. The owner may choose one later, as an exploratory revisit with its own
+  decision.
+- No `clip_sample=False` diffusion arm. The audit named it as optional; it would be a second
+  question, and the diffusion no-op check already shows the bound is all the sampler adds.
+- No change to the paper, README or Observatory (D-105).
+
+**Estimates, from measured Session 7 times.**
+- The same 45 evaluations recorded 3.12 container-hours (Lift 1.41, Can 1.71). With ≤ 4
+  containers that is about 0.8 h of wall-clock time (estimate). The clamp may lengthen
+  episodes; a success ends an episode early.
+- The engineering checks take about 15 min (estimate).
+- Disk about 0.5 GB (estimate); 17 GB are free.
+- $0.

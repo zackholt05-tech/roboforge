@@ -25,7 +25,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	cost-estimate train-main suite suite-plan figures rgb-feasibility rgb-feasibility-native \
 	rgb-dataset rgb-dataset-install rgb-validate rgb-heldout rgb-heldout-rehearse rgb-heldout-gate \
 	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement \
-	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze \
+	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze x1-run x1-analyze \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
 	web-build web-test web-e2e web-verify web-dev visual-provenance \
 	paper-assets paper-check paper-bibcheck paper \
@@ -144,12 +144,13 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 12 (DECISIONS D-097; Session 11: D-092; Session 10: D-087; Session 9:
-# D-082; Session 8: D-073; Session 7: D-060; Session 6: D-053; Session 5: D-048) so that no
-# Session 12 command can write into Session 6-11 evidence or reuse the s11 run prefix by omission.
-PREFIX ?= s12
+# Defaults bumped to Session 13 (DECISIONS D-106; Session 12: D-097; Session 11: D-092; Session 10:
+# D-087; Session 9: D-082; Session 8: D-073; Session 7: D-060; Session 6: D-053; Session 5: D-048)
+# so that no Session 13 command can write into Session 6-12 evidence or reuse the s12 run prefix by
+# omission.
+PREFIX ?= s13
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),12)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),13)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -309,6 +310,15 @@ pc-heldout-gate:  ## Level 2: print the Level 2 held-out gate status inside the 
 
 level2-analyze:  ## Host: the ONE Level 2 analysis (Level 2 freeze §8), after every placement and held-out report
 	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN) python scripts/analyze_level2.py
+
+# ---------------------------------------------------------------- Session 13: X1 (D-106, D-107)
+# Exploratory, after the freeze: the frozen BC checkpoints with the diffusion sampler's action
+# bound, on the Session 7 robustness sets only. Each target runs once.
+x1-run:  ## X1: the 45 clamped BC evaluations on the robustness sets, once (<= 4 containers, clean tree)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/run_x1_clamp.py
+
+x1-analyze:  ## X1: the one analysis of the 45 clamped evaluations vs the frozen Session 7 results
+	$(RUN_S) python scripts/analyze_x1_clamp.py
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

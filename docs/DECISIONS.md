@@ -2477,3 +2477,183 @@ more sessions. The owner chose **"X3: more seeds"**. Session 14 runs X3
 (`docs/extensions/X3_more_seeds.md`), a separate replication. Its first step is to measure disk
 and per-seed cost and to ask the owner to confirm the task(s) and the number of extra seeds.
 X2 stays specified and unscheduled.
+
+## Session 14 (2026-11-10): post-release extension X3
+Level 1, the RGB study, Level 2 and X1 stay frozen. Session 14 runs X3, more training seeds on
+Can, under D-105 and D-108. Every X3 result is labelled "separate replication" and is reported
+beside, never instead of, the frozen results. No paid or remote compute; no rollout on any
+frozen held-out suite.
+
+### D-109 X3 scope: Can only, seeds 3–5, npm cache cleared first (OWNER, 2026-11-10, Session 14)
+The owner was asked once, with facts measured at the start of Session 14:
+- free disk 12.1–13.8 GiB, moving with swap (16.8 of 17.4 GB in use); the orchestrators stop
+  launching below 4 GiB (D-069);
+- per extra Can seed, from the recorded seed 1–2 runs: 5.18 CPU-h of training (diffusion
+  3.98, BC-RNN 0.85, BC-MLP-chunk 0.18, BC-MLP 0.16; diffusion 4.1 h of wall time), 6.39
+  container-hours of validation, 2.33 GiB of disk (training run plus 20 validation records);
+- the seed-level interval half-width for Can diffusion − BC-MLP, estimated from the frozen
+  per-seed spread (SD 10.3 pp BC-MLP, 3.1 pp diffusion): ±23.1 pp with 3 seeds (the frozen
+  value), ±12.5 with 5, ±10.8 with 6, ±8.7 with 8 (estimates);
+- elapsed time, estimated from the Session 7 throughput: about 4.5 h for 2 extra seeds,
+  5.5 h for 3, 9 h for 5.
+
+Answers: **Can only** (Lift saturates; KI-034); **3 extra seeds (3, 4, 5), 6 in all**;
+**clear the npm cache first**. Done before anything else: `npm cache clean --force` (a
+regenerable cache outside the repository): free disk 16.24 → 34.07 GiB (measured). Nothing
+under `runs/` was touched.
+
+### D-110 Makefile defaults bumped to Session 14; X3 targets (FIXED, before any code change)
+- `EVIDENCE_SESSION` falls back to 14 and `PREFIX` to `s14` (the D-092/D-097/D-106 pattern).
+  Evidence goes to `reports/session14/` and `logs/session14/` with
+  `ROBOFORGE_EVIDENCE_SESSION=14`. `OBS_OUT` stays pinned to Session 10 (D-092).
+- New targets: `make x3-states` (the X3 held-out starts, on the canonical container, once),
+  `make check-x3-states` (host check), `make x3-plan` (resolve the X3 plan, launches nothing),
+  `make x3-train` (the X3 training suite). The evaluation and analysis targets (`make x3-run`,
+  `make x3-analyze`) are added with their code, before the first rollout on the X3 suite.
+- The held-out, placement and analysis targets of the frozen studies and of X1 are never run.
+
+### D-111 X3 design: the frozen Can configurations with 3 new seeds, on fresh held-out starts (FIXED, Session 14, before any X3 training run or rollout)
+**Question (KI-053, audit B-1/B-2, D-095).** With 3 training seeds per family, two Can
+separations of the preregistered bootstrap (H2 diffusion − BC-MLP +18.7 pp; H3 BC-RNN −
+BC-MLP +19.3 pp) are not separated by a seed-level t interval ([−4.5, +41.8], [−2.8, +41.5]).
+Do the declared Can contrasts H2, H2-c and H3 hold with 6 seeds, on fresh held-out starts?
+
+**Label.** "Separate replication". The frozen Level 1 result (3 seeds × 50 frozen starts,
+`reports/session7/results/results.json`, SHA-256 `b8b097c3…`) stays the reported result. X3
+is shown beside it, never pooled with it, and never replaces, reranks or relabels it.
+
+**Training (new seeds only, no retuning).**
+- Each family trains its frozen chosen Can configuration (`docs/FINAL_TEST_FREEZE.md` §3):
+  diffusion trial 2 (cosine), BC-MLP trial 2 (cosine), BC-MLP-chunk trial 4 (weight decay
+  0.1), BC-RNN trial 2 (cosine), with seeds 3, 4 and 5.
+- The suite plan admits only an unchanged trial 1 per family, so each chosen configuration is
+  written out as a base config in `configs/extensions/x3/`: the frozen base config with that
+  override applied, nothing else (the A3 precedent). With seeds 0–2 these configs resolve to
+  the frozen config SHA-256 and run ID of all 12 frozen Can runs. With seeds 3–5 they differ
+  from them in the seed alone (`tests/unit/test_x3_configs.py`). So each new run's
+  configuration hash equals the frozen one except for the seed.
+- Plan `configs/experiments/x3_can.yaml`: prefix `s14`, tuning seed 3, replicate seeds 4 and
+  5, `replicates_with_tuning: true` (D-068). The one-trial "tuning" record chooses trivially;
+  it is not a tuning step. The 12 run IDs are fixed by the plan and listed in the
+  preregistration.
+- Budget as in Session 7: 100,000 steps, batch 100, checkpoints every 5,000 (K = 20), 1 torch
+  thread. Every checkpoint is evaluated on the 50 Can validation starts on the canonical
+  container and selected by the RESEARCH_PROTOCOL §7 rule (`scripts/select_checkpoint.py`).
+  Selection uses validation starts only.
+- Training runs on the macOS host (KI-061), through the frozen `scripts/run_suite.py`, from a
+  clean tree. At most 6 training runs at a time: the 3 diffusion runs (the critical path) and 3
+  BC runs. That is enough, because every BC run finishes well inside a diffusion run, and it
+  keeps memory below the Session 7 load (KI-035). At most 4 containers through the host-wide
+  slots, and no launch below 4 GiB free (D-069).
+- The training path is unchanged since the frozen runs. Between `f0715c4` (the seed 1–2 runs)
+  and now, `src/roboforge/train`, `models` and `data` gained new files only, and the base
+  model configs are unchanged; `scripts/run_suite.py` and `train/suite.py` changed in
+  orchestration only (slots, disk guard). The `.venv` package versions equal the frozen
+  manifests'.
+- Nothing is committed while the suite runs: any new or modified tracked file makes the tree
+  dirty, and the orchestrator then refuses its next launch.
+
+**The X3 held-out suite.**
+- Name `x3_heldout`, task Can, **100 starts**, seeds 14,000,000 + i (i = 0…99), reserved block
+  [14,000,000, 15,000,000). It is drawn exactly as the frozen suites are
+  (`roboforge.sim.snapshot.generate`: seed `np.random` and `random`, then `env.reset()`), and
+  each start is checked to restore exactly and not to succeed at t = 0. Config
+  `configs/extensions/x3.yaml`; module `src/roboforge/replication/x3_states.py`; script
+  `scripts/generate_x3_states.py`.
+- **Why 100 starts.** The frozen suite has 50. Doubling it halves the state-sampling variance
+  of every per-seed rate (about 6 pp binomial SD at 50 starts for BC-MLP's 77 %). The extra
+  cost is about 1.7 container-hours and 0.5 GiB (estimates).
+- **Disjoint by construction and by test.** The block lies outside the validation
+  [100,000, 200,000), held-out [900,000, 1,000,000) and robustness [300,000, 400,000) blocks,
+  and outside X1's development seeds 13,000,000 + i. The starts are checked against every
+  committed Can suite's open manifest by state hash (`tests/research_integrity/test_x3_scope.py`).
+- **Format and files.** The suite uses the frozen format (`roboforge.eval_suite/1`), so the
+  frozen `eval_states.load_suite` reads it unchanged:
+  `data/eval_states/can/x3_heldout.{json,data.jsonl.xz}`. `partitions.json` (existing data)
+  is not edited.
+- **Partition label `eval_adhoc`.** The frozen vocabulary (`snapshot.PARTITIONS`, pinned) has
+  no X3 label. The frozen code itself files these seeds as ad hoc:
+  `eval_states.suite_of_seed(14_000_000)` returns `None`, and
+  `check_seed_allowed('can', 14_000_000)` returns `eval_adhoc` (test). `eval_final_test` would
+  make X3 records look like a revisit of the frozen held-out test, and `eval_robustness` means
+  the H4 validation regime. The manifest's `role`, `decision` (D-111) and `label` fields and
+  every X3 summary carry the X3 meaning. X3 analyses select by suite name and manifest content
+  hash, never by partition.
+- **Generated on the canonical container** (`ROBOFORGE_WRITE_EVAL_STATES=1`, `make
+  x3-states`), then checked by regeneration: bitwise in the container, and on the host within
+  `CROSS_PLATFORM_STATE_ATOL` with identical XML. Committed with its content hash **before any
+  rollout on it**.
+- The frozen lock does not cover these seeds, so discipline must: no X3 start is stepped
+  before the preregistration and the evaluator are committed, not even by a smoke test. The
+  evaluator's engineering check runs on validation starts.
+
+**Evaluations (24, each once, on all 100 X3 starts).**
+- Checkpoints:
+  - the 12 frozen Can checkpoints, 4 families × seeds 0–2, read from the committed freeze
+    (`docs/FINAL_TEST_FREEZE.md`, blob `bfdb4b77…`) with their SHA-256. This is a new suite,
+    not a revisit of the frozen held-out suite;
+  - the 12 new checkpoints, the §7 selections of the 12 X3 runs.
+- Settings as frozen: canonical container, R = 1, policy seed 0, diffusion noise from
+  `SeedSequence([0, sha256(state_id)[:8], 0])`, first success or 400 steps, resets only from
+  the stored snapshots, the first 3 episodes re-simulated (`verify_record`).
+- **No random baseline.** H1 is not replicated: every frozen H1 difference is separated by
+  ≥ 76.7 pp, and nothing in KI-053 concerns it.
+- **Evaluator, in new files only** (`src/roboforge/replication/x3.py`, `scripts/eval_x3.py`,
+  `scripts/run_x3.py`, `scripts/analyze_x3.py`). These are written after the preregistration,
+  during training, outside the repository. They are committed, tested and given a dated ledger
+  row with their SHA-256 before the first rollout on the X3 suite, and they implement the
+  preregistration exactly.
+  - The evaluator reuses the frozen `LearnedPolicy` and `validation.run_states`. It admits only
+    the X3 suite, except in an engineering-check mode that admits only the validation suite and
+    writes to `runs/x3_checks/` and `logs/session14/x3_checks/`.
+  - The host orchestrator launches at most 4 containers through the host-wide slots, on a clean
+    tree. It refuses unless the preregistration is committed unmodified and names the suite's
+    content hash, and every new run's selection record is committed unmodified.
+  - No evaluation is ever rerun, except one engineering rerun under the frozen §14.6 rule.
+- **Engineering check (not a result), before the first X3 rollout:** in check mode, the
+  evaluator must reproduce two committed Session 7 Can validation summaries exactly, with equal
+  per-episode `physics_sha256`, success and first-success step on all 50 starts. They are
+  BC-MLP seed 0 at step 55,000 and diffusion seed 0 at step 65,000; the diffusion one checks
+  the noise seeding.
+- **Outputs.** Records go to `runs/x3/<eval_id>/`, where `<eval_id>` follows the frozen pattern
+  with suite tag `x3_heldout`. Summaries go to `reports/session14/x3/evals/<eval_id>.json`
+  (schema `roboforge.x3_eval/1`), logs to `logs/session14/x3/`, and the analysis to
+  `reports/session14/x3/`. Nothing is overwritten.
+
+**Analysis (fixed now; the preregistration states it in full and verbatim).**
+- Outcome matrices per family: 6 seeds (0–5) × 100 starts, in the manifest's state order.
+- **Primary interval:** the frozen §9 hierarchical paired bootstrap,
+  `roboforge.eval.statistics.hierarchical_paired_bootstrap`, unchanged: B = 10,000, seed
+  20261106, draw order states, bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet; 95 % percentile
+  intervals.
+- **Seed-level check, co-primary for robustness:** the D-095 Welch t 95 % interval on the 6 + 6
+  per-seed success rates (`roboforge.paper.sensitivity.welch`).
+- **Declared contrasts (Can):** H2 diffusion − BC-MLP, H2 diffusion − BC-RNN, H2-c diffusion −
+  BC-MLP-chunk, H3 BC-RNN − BC-MLP.
+- **Verdict per contrast:**
+  - **separated, robust (±):** both intervals exclude 0 on the same side;
+  - **separated by the bootstrap only:** method-dependent, as in KI-053;
+  - **separated by the seed-level interval only:** method-dependent;
+  - **not separated:** neither interval excludes 0. This is not evidence of equality.
+- **Secondary:** the censored episode length (first-success step, else 400) for the 4
+  contrasts, with the same bootstrap. The contrasts are also computed on the frozen seeds 0–2
+  alone (same checkpoints, new starts) and on the new seeds 3–5 alone (new checkpoints, new
+  starts), to tell the start draw from the seed count. Descriptive only: per-seed rates, family
+  means and the frozen failure taxonomy counts.
+- **Side by side:** each contrast is shown with the frozen value and verdict beside the
+  replication. The frozen side (3 × 50) is read through the pinned SHA-256 of `results.json`,
+  and its seed-level interval is recomputed from that file's `per_seed` values with the same
+  Welch function, as D-095 did. The two are never pooled.
+- **Engineering incompleteness:** the frozen rule of `docs/FINAL_TEST_FREEZE.md` §4.
+- The readings are fixed verbatim in the preregistration, in separated / not-separated terms
+  only.
+
+**Estimates, from measured Session 7 times.**
+- Training: 15.5 CPU-h (3 × 5.18), about 4.2 h of wall time.
+- Validation: 19.2 container-hours.
+- X3 evaluations: about 3.4 container-hours (24 × about 0.14 h at 100 starts).
+- In all, about 6.5 h elapsed and about 8 GiB of disk (34 GiB free).
+- $0.
+
+**Not done, by decision:** Lift; more than 3 new seeds; H1 and the robustness sets (H4); the
+diffusion side of KI-052; any change to the paper, README or Observatory (D-105).

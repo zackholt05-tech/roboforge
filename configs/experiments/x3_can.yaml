@@ -1,0 +1,35 @@
+# X3 (DECISIONS D-111): a separate replication of the Level 1 Can comparison with three more
+# training seeds (3, 4, 5; owner, D-109). No tuning and no retuning: each family trains its
+# frozen chosen Can configuration (docs/FINAL_TEST_FREEZE.md §3; the Session 7 tuning records),
+# written out in configs/extensions/x3/ because a plan's trial 1 must be its base config
+# unchanged. Budget identical to Session 7 (100,000 steps, batch 100, checkpoints every 5,000,
+# K = 20); every checkpoint is evaluated on the 50 Can validation starts and selected by the
+# RESEARCH_PROTOCOL §7 rule (scripts/select_checkpoint.py). One trial per family, so the
+# seeds train together (replicates_with_tuning, the A3 mechanism of D-068); the one-trial
+# "tuning" record chooses trivially and is not a tuning step. Launch order as in Session 7:
+# diffusion first (the critical path), then the BC families. Run on the macOS host (KI-061)
+# by scripts/run_suite.py; resolved run IDs in docs/extensions/X3_PREREGISTRATION.md.
+schema: roboforge.suite_plan/1
+task: can
+prefix: s14
+budget: [train.max_steps=100000, train.ckpt_every=5000]
+tuning_seed: 3
+replicate_seeds: [4, 5]
+replicates_with_tuning: true
+families:
+  - family: diffusion_unet
+    config: configs/extensions/x3/diffusion_unet_cos_can.yaml
+    trials:
+      - {trial: 1, overrides: []}
+  - family: bc_mlp
+    config: configs/extensions/x3/bc_mlp_cos_can.yaml
+    trials:
+      - {trial: 1, overrides: []}
+  - family: bc_mlp_chunk
+    config: configs/extensions/x3/bc_mlp_chunk_wd1e1_can.yaml
+    trials:
+      - {trial: 1, overrides: []}
+  - family: bc_rnn
+    config: configs/extensions/x3/bc_rnn_cos_can.yaml
+    trials:
+      - {trial: 1, overrides: []}

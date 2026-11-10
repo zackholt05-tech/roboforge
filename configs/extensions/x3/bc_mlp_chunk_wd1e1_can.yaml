@@ -1,0 +1,17 @@
+# X3 (DECISIONS D-111, separate replication): the frozen chosen Can configuration of
+# bc_mlp_chunk, trial 4 (optim.weight_decay=0.1) of the Session 7 search (tuning record reports/session7/tuning/bc_mlp_chunk_can.json;
+# docs/FINAL_TEST_FREEZE.md §3), written out so that a one-trial suite plan can train it
+# with new seeds. It equals configs/models/bc_mlp_chunk.yaml with that override applied, nothing else.
+# With seed 0 and the plan's budget and task it resolves to the config of s7_bc_mlp_chunk_wd1e1_can_seed0_0c2f9d4b
+# (config SHA-256 0c2f9d4b3f6cf927...; tests/unit/test_x3_configs.py).
+schema: roboforge.train_config/1
+name: bc_mlp_chunk_wd1e1
+family: bc_mlp
+task: lift
+seed: 0
+horizons: {obs: 2, pred: 16, exec: 8}
+model: {hidden: [1024, 1024], activation: relu, layer_norm: false, dropout: 0.0}
+loss: {kind: mse}
+optim: {name: adamw, lr: 1.0e-4, betas: [0.9, 0.999], weight_decay: 0.1, schedule: constant}
+train: {max_steps: 30000, batch_size: 100, ckpt_every: 5000, val_every: 1000, log_every: 100,
+        num_threads: 1, grad_clip: null}

@@ -1,0 +1,20 @@
+# X3 (DECISIONS D-111, separate replication): the frozen chosen Can configuration of
+# diffusion_unet, trial 2 (optim.schedule=cosine) of the Session 7 search (tuning record reports/session7/tuning/diffusion_unet_can.json;
+# docs/FINAL_TEST_FREEZE.md §3), written out so that a one-trial suite plan can train it
+# with new seeds. It equals configs/models/diffusion_unet.yaml with that override applied, nothing else.
+# With seed 0 and the plan's budget and task it resolves to the config of s7_diffusion_unet_cos_can_seed0_99251da3
+# (config SHA-256 99251da35f085281...; tests/unit/test_x3_configs.py).
+schema: roboforge.train_config/1
+name: diffusion_unet_cos
+family: diffusion_unet
+task: lift
+seed: 0
+horizons: {obs: 2, pred: 16, exec: 8}
+model: {down_dims: [64, 128], step_embed_dim: 64, kernel_size: 5, n_groups: 8,
+        num_train_timesteps: 100, beta_schedule: squaredcos_cap_v2, prediction_type: epsilon,
+        clip_sample: true, sampler: ddim, inference_steps: 10, ddim_eta: 0.0,
+        ema: true, ema_power: 0.75, ema_max_decay: 0.9999}
+loss: {kind: denoising_mse}
+optim: {name: adamw, lr: 1.0e-4, betas: [0.9, 0.999], weight_decay: 0.0, schedule: cosine}
+train: {max_steps: 30000, batch_size: 100, ckpt_every: 5000, val_every: 1000, log_every: 100,
+        num_threads: 1, grad_clip: null}

@@ -26,6 +26,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	rgb-dataset rgb-dataset-install rgb-validate rgb-heldout rgb-heldout-rehearse rgb-heldout-gate \
 	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement \
 	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze x1-run x1-analyze \
+	x3-states check-x3-states x3-plan x3-train \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
 	web-build web-test web-e2e web-verify web-dev visual-provenance \
 	paper-assets paper-check paper-bibcheck paper \
@@ -144,13 +145,13 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 13 (DECISIONS D-106; Session 12: D-097; Session 11: D-092; Session 10:
-# D-087; Session 9: D-082; Session 8: D-073; Session 7: D-060; Session 6: D-053; Session 5: D-048)
-# so that no Session 13 command can write into Session 6-12 evidence or reuse the s12 run prefix by
-# omission.
-PREFIX ?= s13
+# Defaults bumped to Session 14 (DECISIONS D-110; Session 13: D-106; Session 12: D-097; Session 11:
+# D-092; Session 10: D-087; Session 9: D-082; Session 8: D-073; Session 7: D-060; Session 6: D-053;
+# Session 5: D-048) so that no Session 14 command can write into Session 6-13 evidence or reuse the
+# s13 run prefix by omission.
+PREFIX ?= s14
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),13)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),14)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -319,6 +320,24 @@ x1-run:  ## X1: the 45 clamped BC evaluations on the robustness sets, once (<= 4
 
 x1-analyze:  ## X1: the one analysis of the 45 clamped evaluations vs the frozen Session 7 results
 	$(RUN_S) python scripts/analyze_x1_clamp.py
+
+# ---------------------------------------------------------------- Session 14: X3 (D-110, D-111)
+# X3, a separate replication: the frozen Can configurations with seeds 3-5, on fresh held-out
+# starts. The evaluation and analysis targets are added with their code (D-110).
+X3_PLAN := configs/experiments/x3_can.yaml
+x3-states:  ## X3: the 100 X3 held-out Can starts ON THE CANONICAL CONTAINER, once (D-111)
+	ROBOFORGE_WRITE_EVAL_STATES=1 ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM) \
+		python scripts/generate_x3_states.py
+
+check-x3-states:  ## X3: regenerate the X3 starts in memory and compare (bitwise on their platform)
+	$(RUN_S) python scripts/generate_x3_states.py --check
+
+x3-plan:  ## X3: resolve the X3 training plan and print run IDs (launches nothing)
+	$(RUN_S) python scripts/run_suite.py --plan $(X3_PLAN) --dry-run
+
+x3-train:  ## X3: seeds 3-5 of the frozen Can configurations; validate, select (<= 6 trainings, <= 4 containers)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/run_suite.py \
+		--plan $(X3_PLAN) --max-train 6
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

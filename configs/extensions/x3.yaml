@@ -1,0 +1,24 @@
+# X3 held-out starts (DECISIONS D-111; docs/extensions/X3_more_seeds.md). A separate
+# replication's own held-out suite: fresh starts from robosuite's standard reset distribution,
+# drawn exactly like the frozen suites (roboforge.sim.snapshot.generate: seed np.random and
+# random, then env.reset()), from a seed block outside every reserved block. Read by
+# roboforge.replication.x3_states. Changing anything here changes the suite hash and needs a
+# dated decision before any rollout on the suite.
+schema: roboforge.x3_suite/1
+decision: D-111
+label: separate replication
+task: can
+suite: x3_heldout
+role: "X3 held-out starts: one rollout per checkpoint after docs/extensions/X3_PREREGISTRATION.md; never used for development or selection"
+# The frozen vocabulary (roboforge.sim.snapshot.PARTITIONS, pinned by the Level 1 freeze) has
+# no X3 label. The frozen code itself files these seeds under eval_adhoc
+# (eval_states.check_seed_allowed and suite_of_seed), so that label is used; the suite name,
+# this role and the X3 summaries carry the meaning. Analyses select by suite name and manifest
+# content hash, never by partition (D-111).
+partition: eval_adhoc
+seed_base: 14000000           # state i uses global seed seed_base + i
+n_states: 100
+reserved_seeds: [14000000, 15000000]
+# Seed blocks the X3 block must avoid (checked by tests/research_integrity/test_x3_scope.py):
+# validation [100000, 200000), held-out [900000, 1000000), robustness [300000, 400000),
+# X1 development starts 13,000,000 + i (D-107).

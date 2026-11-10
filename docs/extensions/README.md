@@ -14,6 +14,13 @@ Observatory.
 Order: X1 first (cheapest, no training, resolves a named confound). X2 and X3 are independent;
 the owner picks which runs next at the end of Session 13.
 
+**Status (2026-11-10).** X1 ran in Session 13 (PASS; exploratory, after the freeze):
+- preregistration `X1_PREREGISTRATION.md` (`ab02469`);
+- results in `reports/session13/x1_clamp/tables.md`.
+With the diffusion sampler's bound, BC outcomes are unchanged and the H4 gap stays separated
+(KI-052). The exact Session 14 prompts for X2 and X3 are in `docs/HANDOFF.md` (# Session 13
+Handoff §6).
+
 ## Rules shared by every extension
 
 1. **Frozen means frozen.** Level 1, the RGB study and Level 2 stay as tested. Never rerun

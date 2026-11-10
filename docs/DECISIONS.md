@@ -2438,3 +2438,20 @@ controller limits. Do the frozen H4 and H2-c contrasts survive when BC gets the 
 - The engineering checks take about 15 min (estimate).
 - Disk about 0.5 GB (estimate); 17 GB are free.
 - $0.
+- **Amendment (Session 13, after the engineering checks, before the preregistration commit
+  `ab02469`).** Check 3 showed that most normalized BC entries outside [−1, 1] lie on dimensions
+  where the clamp cannot bind (the gripper, and dimensions whose training range is ±1). There
+  the clamp changes nothing. Counting them alone would overstate what the clamp does. The
+  analysis therefore also:
+  - recomputes from the records the fraction of executed actions the clamp **changed** (the
+    frozen decode vs the clamped decode of `raw_policy_action`), and reports it beside the
+    out-of-bound fraction;
+  - stops unless every recorded `executed_action` equals the clamped decode bitwise. Its record
+    checks were verified on the 100 clamp-disabled reproduction records first.
+  Reading R1 was worded "does not account for all of the frozen H4 gap", so that it cannot
+  contradict the supporting leg. The preregistration states these readings verbatim, and a
+  unit test keeps them equal to the script's. Renaming a partial record directory to
+  `.incomplete-1` (§14.6 rerun) is a manual, logged step; the orchestrator only refuses it.
+  Nothing here was changed after any X1 rollout.
+- **Outcome (exploratory, after the freeze):** see KI-052 and LEDGER E13-04, E13-05.
+  `reports/session13/x1_clamp/` is analysed once and is not rerun.

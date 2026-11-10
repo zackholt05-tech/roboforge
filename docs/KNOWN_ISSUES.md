@@ -56,7 +56,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-049 | LOW | DOCUMENTED (Session 9) | One generated training row of the Level 2 analysis was miscomputed |
 | KI-050 | LOW | FIXED (Session 10) | The first Observatory export stopped on the random baseline; its reference masks counted sites |
 | KI-051 | LOW | FIXED (Session 10) | Observatory selection code named the locked suite; the lock test failed at STOP |
-| KI-052 | MEDIUM | DOCUMENTED (Session 11, audit A-6) | The diffusion sampler bounds its actions to the training range; BC heads are not bounded, a confound for H2-c and H4 |
+| KI-052 | MEDIUM | DOCUMENTED (Session 11, audit A-6); TESTED by X1 (Session 13, exploratory, after the freeze) | The diffusion sampler bounds its actions to the training range; BC heads are not bounded, a confound for H2-c and H4. X1: with the same bound, BC outcomes are unchanged and every H4 verdict stands (primary −40.0 pp [−54.0, −25.3], separated) |
 | KI-053 | MEDIUM | DOCUMENTED (Session 11, audit B-1 to B-4, D-095) | Several separations depend on the interval method, the bootstrap seed or ties (3 seeds, 50 binary outcomes) |
 | KI-054 | MEDIUM | FIXED by reporting (Session 11, audit C-9, D-096) | Declared secondary metrics were computed per episode but never aggregated by the frozen analyses |
 | KI-055 | LOW | FIXED (Session 11, audit B-12, B-13) | `analyze_robustness.py` had no run-once guard; `analyze_level2.py` hashed a report before checking it exists |
@@ -1085,7 +1085,7 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Handling:** for a session's own new code, run the research-integrity tests
   (`tests/research_integrity/`) before the first evidence export, not only at STOP.
 
-### KI-052 The diffusion sampler bounds its actions to the training range; BC heads are not (MEDIUM, DOCUMENTED; Session 11)
+### KI-052 The diffusion sampler bounds its actions to the training range; BC heads are not (MEDIUM, DOCUMENTED; Session 11; tested by X1 in Session 13: the bound does not explain the H4 gaps)
 - **Mechanism:** the samplers' shared `_Sampler._x0` (`src/roboforge/models/noise_schedule.py`) clamps the predicted clean chunk to [−1, 1] in min–max
   normalized space (`clip_sample=True`) and the last DDIM step returns it, so every diffusion
   action lies inside each dimension's training range. BC outputs are clipped only to the
@@ -1098,6 +1098,32 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   bound; neither isolates the generative model. The measured differences stand.
 - **Handling:** disclosed in the paper (§4, §6, §7, §9). An evaluation-only clamp test of the BC
   checkpoints would resolve it; it needs its own decision before any rollout (D-096).
+- **X1 outcome (Session 13; exploratory, after the freeze; D-107,
+  `docs/extensions/X1_PREREGISTRATION.md`, `reports/session13/x1_clamp/`).**
+  - **Design.** The 18 frozen BC checkpoints were re-run on the Session 7 robustness sets
+    with the diffusion sampler's exact bound: each normalized action clipped to [−1, 1] before
+    the frozen decoder. That is 45 evaluations, once, from the preregistration commit
+    `ab02469`.
+  - **Primary.** Lift `ood_arm_offset`, drop(diffusion) − drop(clamped BC-MLP-chunk):
+    **−40.0 pp [−54.0, −25.3], separated (−)**. The frozen value is −40.0 pp [−54.0, −26.0].
+    Reading R1: the bound does not account for all of the frozen H4 gap.
+  - **Supporting leg.** drop(BC-MLP-chunk) − drop(clamped) = +0.0 pp [−4.0, +4.0], not
+    separated.
+  - **Base legs.** Clamped − unclamped BC-MLP-chunk on `robustness_base` = +0.0 pp [+0.0, +0.0]
+    on both tasks: no separated effect of the bound in distribution. H2-c parity stands as
+    measured.
+  - **The clamp acted, but changed no outcome.** It changed 52–54 % of BC-MLP-chunk's and
+    64–73 % of BC-MLP's executed actions on the Lift OOD sets, recomputed from the records.
+    Yet no clamped − unclamped success difference separated (0 of 15; largest |Δ| 0.7 pp).
+    Every between-family OOD difference and drop contrast kept its frozen verdict on both
+    tasks.
+  - **Reading.** The training-range bound is not what makes diffusion more robust here. This
+    is consistent with A-6's counter-evidence: out-of-range BC actions follow failures rather
+    than cause them.
+  - **Scope.** One bound, three seeds, two perturbations, robustness starts only (no held-out
+    revisit).
+  - **Status.** The confound named here is tested for H4 and found not to explain the gaps. The
+    measured frozen differences stand unchanged.
 
 ### KI-053 Several separations depend on the interval method (MEDIUM, DOCUMENTED; Session 11)
 - **Evidence (audit B-1 to B-4):** with 3 training seeds, Can H2 and H3 are separated by the

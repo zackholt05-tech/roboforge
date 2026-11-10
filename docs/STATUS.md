@@ -1,29 +1,63 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 12
-SESSION_STATUS: PASS            # Session 12: fresh-clone reproduction, final QA, release v1.0.0 published (tag 82f3219 on 7b394fa; publication record below); $0 paid compute
-NEXT_SESSION: 13                # post-release extension X1 (D-105, docs/extensions/X1_action_clamp.md); v1.0.0 complete and published
-BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-052, KI-053, KI-056, KI-057; accepted: KI-009 (D-100), KI-060; fixed in Session 12: KI-058, KI-059; partial: KI-061 (root cause found, test harness fixed)
-LAST_VERIFIED_COMMIT: ee1e574   # code as ab17fb2 (STOP checks below); CI on Linux aarch64 passed on it; later commits are records only
-PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c}
-EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b]}
+CURRENT_SESSION: 13
+SESSION_STATUS: PASS            # Session 13: post-release extension X1 (KI-052 clamp test), 45 evaluations once, analysis once; exploratory, after the freeze; $0
+NEXT_SESSION: 14                # X2 (harder or multimodal task) or X3 (more seeds), the owner's choice; both prompts in docs/HANDOFF.md
+BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-053, KI-056, KI-057; KI-052 tested by X1 (Session 13); accepted: KI-009 (D-100), KI-060; partial: KI-061
+LAST_VERIFIED_COMMIT: c2a9ae6   # code as ab02469 (X1 code 09d1a90 + analysis amendment); STOP checks below ran on the Session 13 tree; later commits are records only
+PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c, x1_preregistration: ab02469}
+EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b], x1_code: 09d1a90, x1_preregistration: ab02469, x1_results: c2a9ae6}
 PAPER: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400 (D-093)", fresh_clone_rebuild: "byte-identical (Session 12)", label: "local build, not peer reviewed"}
 RELEASE: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097-D-104", repository: "https://github.com/zackholt05-tech/roboforge (public, per D-099; verified state in the publication record)", observatory: "GitHub Pages per D-102 (verified state in the publication record)"}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only; no start was stepped"
-RESOURCE_SPEND: {usd_billed_total: 10.61, session12_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-12 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
+FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only. Session 13 (X1) ran on the Session 7 robustness sets only; no held-out or validation start was stepped"
+RESOURCE_SPEND: {usd_billed_total: 10.61, session13_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-13 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
 APPROVED_LIMIT: {A-03: "closed, $8.06 of $15", A-04: "closed, $2.37 of $9", open: none, local: "$0"}
+X1: {decision: D-107, preregistration: "docs/extensions/X1_PREREGISTRATION.md @ ab02469 (sha256 7405dc3d...)", evaluations: "45/45 once, reports/session13/x1_clamp/evals/, runs/x1_clamp/", analysis: "reports/session13/x1_clamp/results.json (sha256 ad503686...) @ c2a9ae6", primary: "Lift ood_arm_offset drop(diffusion) - drop(clamped BC-MLP-chunk) -40.0 pp [-54.0, -25.3], separated (-); reading R1", label: "exploratory, after the freeze"}
 UPDATED: 2026-11-10
 ```
 
 # RoboForge Status
 
-## Next: post-release extensions (D-105, owner request 2026-11-10)
-v1.0.0 is complete and published. The owner asked to continue with three follow-up studies,
-specified in `docs/extensions/`: **X1** the evaluation-only action-clamp test (KI-052),
-Session 13; **X2** a harder or multimodal task; **X3** more training seeds (a separate
-replication). The exact Session 13 prompt is in `docs/extensions/README.md`. Nothing has run
-yet; no frozen study changes.
+## Next: Session 14, X2 or X3 (the owner's choice)
+v1.0.0 stays as published. X1 ran in Session 13 (below). The owner picks the next study:
+**X2**, a harder or multimodal task (`docs/extensions/X2_harder_task.md`), or **X3**, more
+training seeds as a separate replication (`docs/extensions/X3_more_seeds.md`). The exact
+prompt for each is in `docs/HANDOFF.md`. Whether X1 is published (for example a v1.1 addendum)
+is the owner's decision (D-105); nothing was pushed.
+
+## Session 13: post-release extension X1, the action-clamp test (PASS; exploratory, after the freeze)
+| Step (Session 13 prompt) | Status | Evidence |
+|---|---|---|
+| Prerequisites, by executable checks | DONE: `make freeze-check` unchanged; the pinned image is present; the 60 Session 7 H4 summaries match their recorded SHA-256; baseline full suite alone 526 passed | `logs/session13/baseline_full_suite.log` |
+| 1. Decisions before acting | DONE: D-106 (Makefile s13, evidence session 13, `x1-run`, `x1-analyze`); D-107 (the clamp, new files, 45 evaluations, outputs, checks, analysis) and its pre-preregistration amendment | DECISIONS, E13-01 |
+| 2. Engineering checks before any reported rollout | DONE, all PASS: the clamp-disabled wrapper reproduces 2 Session 7 summaries exactly (50/50 episodes each); the clamp changes no diffusion action (5 development starts per task); the analysis's record checks hold on real records; isolation snapshot taken | E13-02, `logs/session13/x1_checks/` |
+| 3. Preregistration committed before the first reported rollout | DONE: `ab02469`; the commit order shows it | `docs/extensions/X1_PREREGISTRATION.md` |
+| 4. The 45 clamped BC evaluations, once, canonical container | DONE: 45/45, 0 failed; canonical, n = 50, 0 errors, audits PASS, from clean `ab02469`; isolation PASS | E13-04 |
+| 5. Analysis, new script, Session 7 summaries through their SHA-256 | DONE: `make x1-analyze` once; the frozen bootstrap reproduced exactly; `reports/session13/x1_clamp/` | E13-05 |
+| 6. KI-052 updated, labelled "exploratory, after the freeze" | DONE | KNOWN_ISSUES KI-052 |
+| STOP | see below | |
+
+**Result (exploratory, after the freeze; `reports/session13/x1_clamp/tables.md`).**
+- **Setup.** The 18 frozen BC checkpoints were re-run on the Session 7 robustness sets with
+  the diffusion sampler's exact action bound.
+- **Primary.** Lift arm offset, drop(diffusion) − drop(clamped BC-MLP-chunk) =
+  **−40.0 pp [−54.0, −25.3], separated (−)**. The frozen value is −40.0 [−54.0, −26.0].
+  Reading R1: the bound does not account for all of the frozen H4 gap.
+- **The clamp acted, but changed no outcome.** It changed 52–54 % (BC-MLP-chunk) and
+  64–73 % (BC-MLP) of the executed actions on the Lift OOD sets, yet no clamped − unclamped
+  success difference separated (0 of 15; largest |Δ| 0.7 pp). On Can every BC outcome was
+  unchanged.
+- **Verdicts.** Every between-family OOD difference and drop contrast keeps its frozen
+  verdict.
+- **H2-c.** Clamped − unclamped BC-MLP-chunk on `robustness_base` = +0.0 pp on both tasks,
+  so H2-c parity stands as measured.
+- **Interpretation.** Diffusion's robustness advantage over BC here is not explained by the
+  training-range action bound.
+- **Scope.** One bound, three seeds, two perturbations, robustness starts only. The frozen
+  numbers are unchanged.
+
+**STOP checks.** On the Session 13 tree (code as `ab02469`; documents only after `c2a9ae6`), host, no container running: `make lint` clean; full suite alone **550 passed** (8:28; the 526 of the baseline plus 24 new X1 tests; `logs/session13/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged", also before every code change); `tests/research_integrity` 50 passed; `make release-check` PASS (136 disclosed local-path files, D-100). No frozen file, freeze, result or executed outcome changed; nothing was pushed, tagged, released or deployed.
 
 ## Session 12: fresh-clone reproduction, final QA, release (PASS)
 | Step (Session 12 prompt) | Status | Evidence |

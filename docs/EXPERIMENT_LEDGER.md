@@ -446,6 +446,27 @@ clone, an estimate from the logged times); no paid or remote compute other than 
 runs of D-101. KI-061 added about 20 minutes of container runs and one 8-minute host suite
 (estimate from the logged times).
 
+### Session 13 (2026-11-10): post-release extension X1, the evaluation-only action-clamp test
+Exploratory, after the freeze (D-105, D-107). No training, no held-out or validation rollout,
+no paid or remote compute. Every reported rollout ran on the canonical container from the
+preregistration commit, on a clean tree.
+
+| ID | Date | Session | Type | What | Outcome | Evidence | Cost |
+|---|---|---|---|---|---|---|---|
+| E13-01 | 2026-11-10 | 13 | decision, baseline | **Decisions:** D-106 (Makefile defaults s13 and evidence session 13; `x1-run` and `x1-analyze` targets) and D-107 (the X1 design), recorded before any code change. **Baseline:** the full suite alone before any change. The X1 code, in new files only, committed in `09d1a90` | **Baseline:** 526 passed (9:00). **Code:** `make freeze-check` unchanged before and after; lint clean; the new unit and research-integrity tests pass | `logs/session13/baseline_full_suite.log`, DECISIONS D-106, D-107 | $0 |
+| E13-02 | 2026-11-10 | 13 | engineering checks (not results) | From clean `09d1a90`, canonical container, 06:46–06:54 UTC (4 + 2 containers): **(1) reproduction**, the wrapper with the clamp disabled on Lift BC-MLP-chunk s0 and Can BC-MLP s0 `ood_arm_offset`, compared on the host with the hash-checked Session 7 summaries; **(2)** the clamp on the seed-0 diffusion checkpoint of each task, on 5 development starts (seeds 13,000,000 + i, `eval_adhoc`); **(3)** the same on seed-0 BC-MLP-chunk; **(4)** the analysis's record checks on the 100 reproduction records; **(5)** isolation snapshot before | **(1) PASS:** 26/26 and 13/13; all 50 episodes equal in `physics_sha256`, success, first-success step, steps and stop reason. **(2) PASS:** identical physics, raw and executed actions; 0 clamped entries. **(3) PASS:** executed actions inside the bounds; most out-of-bound entries are on non-binding dimensions. The analysis therefore also reports "actions changed", recomputed from the records (D-107 amendment). **(4) PASS.** **(5)** 1,246 top-level entries; 60 Session 7 H4 directories digested | `logs/session13/x1_checks/` | $0 |
+| E13-03 | 2026-11-10 | 13 | preregistration | `docs/extensions/X1_PREREGISTRATION.md` committed in `ab02469`, before the first clamped rollout. It fixes the checkpoints, suites, clamp bounds, execution, the hash-chained bootstrap, 1 primary and 56 secondary comparisons, and the verbatim readings | SHA-256 `7405dc3d…`; the readings equal the analysis script's (unit test) | the file | $0 |
+| E13-04 | 2026-11-10 | 13 | **X1 evaluations** | `ROBOFORGE_EVIDENCE_SESSION=13 make x1-run` from `ab02469` (clean), 06:58:49–07:41:46 UTC, ≤ 4 containers: the 18 frozen BC checkpoints × the Session 7 robustness sets (Lift 27, Can 18) with the clamp | **45/45 finished**, 0 failed, 0 not launched. Every summary: canonical, n = 50, 0 errors, `verify_record` PASS, git `ab02469` dirty false. **Compute:** 2.60 container-hours (Lift 1.16, Can 1.44); Session 7's unclamped runs took 3.12 for the same set. **Isolation:** PASS; only `x1_clamp` and `x1_checks` added; 0 of 60 Session 7 directories changed. **Disk:** 528 MB + 39 MB | `reports/session13/x1_clamp/evals/`, `runs/x1_clamp/`, `logs/session13/x1_clamp/`, `logs/session13/x1_checks/isolation_*.json` | $0 |
+| E13-05 | 2026-11-10 | 13 | **X1 analysis** (exploratory, after the freeze) | `make x1-analyze` once, from `ab02469`: hash chain from `reports/session7/robustness/analysis.json` (`8cca66a8…`); one bootstrap per task with the frozen draws | **Frozen bootstrap reproduced exactly** on both tasks. **Primary:** Lift `ood_arm_offset`, drop(diffusion) − drop(clamped BC-MLP-chunk) = −40.0 pp [−54.0, −25.3], separated (−); frozen −40.0 [−54.0, −26.0]. Reading R1. **Supporting:** +0.0 [−4.0, +4.0], not separated. **Base legs:** +0.0 [+0.0, +0.0] on both tasks. **Clamp activity:** changed 52–54 % (BC-MLP-chunk) and 64–73 % (BC-MLP) of the executed actions on the Lift OOD sets, but no clamped − unclamped difference separated (0/15; largest \|Δ\| 0.7 pp). Every between-family OOD difference and drop contrast keeps its frozen verdict | `reports/session13/x1_clamp/{results.json,tables.md,taxonomy.json}` (`c2a9ae6`) | $0 |
+| E13-06 | 2026-11-10 | 13 | STOP checks | `make lint`; full suite alone (no container running, KI-043); `make freeze-check`; `tests/research_integrity`; `make release-check` | lint clean; **550 passed** (8:28); freeze unchanged; 50 passed; release-check PASS | `logs/session13/stop_full_suite.log` | $0 |
+
+**Session 13 compute:** local only.
+- Engineering checks: about 8 minutes of wall time (6 container jobs).
+- The 45 evaluations: 2.60 container-hours, 43 minutes of wall time.
+- Tests: the baseline suite (9 minutes) and the STOP suite.
+
+No paid or remote compute, $0.
+
 ## Owner approvals for paid compute
 Machine-read by `roboforge.compute.approval` (D-049): a paid Modal launch is refused unless a
 `granted` row below covers its function and the committed spend plus the launch's upper-bound

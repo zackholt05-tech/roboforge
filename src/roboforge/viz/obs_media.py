@@ -80,7 +80,7 @@ def reference_frames(shadow: Any, kin: Any, model: Any, states: np.ndarray,
         for cam_name in REF_CAMERAS:
             s = states[k]
             rgb = shadow.rgb(s, cam_name, REF_SIZE, REF_SIZE)
-            seg = shadow.segmentation(s, cam_name, REF_SIZE, REF_SIZE)
+            seg = shadow.segmentation(s, cam_name, REF_SIZE, REF_SIZE, sites=False)  # D-091
             mask = class_mask(model, seg, robot, obj)
             cam = kin.camera(s, cam_name, REF_SIZE, REF_SIZE)
             rgb_p = out_dir / f"{stem}_t{k:03d}_{cam_name}_rgb.png"
@@ -91,6 +91,8 @@ def reference_frames(shadow: Any, kin: Any, model: Any, states: np.ndarray,
                         "rgb": rgb_p.name, "mask": mask_p.name,
                         "mask_classes": {"0": "background", "1": "robot", "2": "task object",
                                          "3": "other visual geom"},
+                        "mask_render": "MuJoCo segmentation, robosuite visual geom groups, "
+                                       "sites hidden (D-091)",
                         "pixels": {"robot": int((mask == CLASS_ROBOT).sum()),
                                    "object": int((mask == CLASS_OBJECT).sum())},
                         "camera_pose": {"pos": [float(x) for x in cam["pos"]],

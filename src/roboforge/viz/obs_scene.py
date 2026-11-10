@@ -194,8 +194,10 @@ def require_provenance(meta: dict[str, Any], manifest: dict[str, Any]) -> None:
         "physics_sha256": meta.get("physics_sha256"),
         "arrays_sha256": meta.get("arrays_sha256"),
         "policy.autonomous": meta.get("policy", {}).get("autonomous") is not None,
-        "checkpoint_sha256": manifest.get("checkpoint", {}).get("sha256")
-        or meta.get("policy", {}).get("name") == "random_uniform",
+        # A checkpoint hash is required unless the policy is non-learned (the random baseline,
+        # whose manifest has ``checkpoint: null``).
+        "checkpoint_sha256": (manifest.get("checkpoint") or {}).get("sha256")
+        or meta.get("policy", {}).get("learned") is False,
         "platform_id": meta.get("platform", {}).get("platform_id"),
         "simulator.packages": meta.get("simulator", {}).get("packages"),
         "initial_state.model_xml_sha256": meta.get("episode", {}).get("initial_state", {})

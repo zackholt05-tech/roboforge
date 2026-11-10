@@ -1878,3 +1878,31 @@ selection, label, result or finding of any study, and no held-out start is rolle
   The site's credits name robosuite and its MIT license. If a later hosting approval ships the
   build, the MIT notice ships with it. THIRD_PARTY_NOTICES' "RoboForge does not redistribute
   meshes" stays true for the repository.
+
+### D-091 Viewer verification: fixed thresholds; reference masks drawn without sites; the export restarts from one commit (FIXED, before the committed export and verification)
+- **Thresholds**, fixed in `website/src/verify/VerifyPage.tsx` before any committed
+  verification run, per reference frame at 480²:
+  - robot IoU ≥ 0.95;
+  - task-object IoU ≥ 0.85 (when the object is visible);
+  - robot centroid offset ≤ 1.5 px.
+
+  Every frame must pass. The browser renders the clip's flat-colour silhouette through the
+  exported MuJoCo camera (pose and vertical field of view) and compares it with the class mask
+  of MuJoCo's segmentation render of the same recorded state. `npm run verify` writes
+  `reports/session10/observatory/viewer_verification.json` and a review montage.
+- **Reference masks hide sites (KI-050).** A development comparison (uncommitted export of the
+  Can case (b) clip, 6 frames) measured:
+  - robot IoU 0.971–0.998;
+  - object IoU 0.994–1.000;
+  - two frames over the centroid limit (1.86 px and 1.61 px).
+
+  Coloring each viewer geom uniquely located the viewer-only robot pixels under thin lines
+  where the mask said "background". MuJoCo's segmentation draws sites whatever their alpha,
+  including robosuite's transparent `grip_site_cylinder` (radius 5 mm, half-length 10 m). This
+  is the same cause as KI-046 for depth. `ShadowRenderer.segmentation(..., sites=False)` now
+  hides every site group, and `reference_frames` uses it. RGB references are unchanged. The
+  thresholds were not changed.
+- **One export, one commit.** The first evidence export (from `5f398d7`) stopped at clip 19 of
+  37: the random baseline's manifest has `checkpoint: null` (KI-050). It wrote 18 clips and no
+  `index.json`. Its partial output is discarded. After the fix, the whole export reruns from a
+  single clean commit, so every committed file has one provenance.

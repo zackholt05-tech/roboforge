@@ -1022,3 +1022,18 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   count is affected.
 - **Handling:** the analysis is never rerun or overwritten. The erratum sits beside it, and
   the script is fixed for the record.
+
+### KI-050 The first Observatory export stopped on the random baseline; its reference masks counted sites (LOW, FIXED; Session 10)
+- **Stop:** `require_provenance` read `manifest.get("checkpoint", {})`. The random baseline's
+  manifest has `checkpoint: null`, so the call returned `None` and the first export failed at
+  clip 19 of 37 (`can-random_uniform-s0-can_final_test_0000`). It had written 18 clips and no
+  index. The unit test used `checkpoint: {}` and missed it.
+- **Fix:** a missing checkpoint is accepted only when the record says the policy is
+  non-learned (`learned: false`). A test covers `checkpoint: null` for both cases.
+- **Masks:** the viewer-verification reference masks came from MuJoCo segmentation with sites
+  drawn. robosuite's transparent `grip_site_cylinder` (10 m long) covered robot pixels, which
+  the mask then counted as background (as KI-046 found for depth). The masks now hide sites
+  (D-091), with a render test.
+- **Handling:** the partial export is discarded and the export reruns from one clean commit
+  (D-091). Before any long container run, a development pass must cover one clip of every
+  kind, including the non-learned baseline.

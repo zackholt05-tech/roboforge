@@ -69,6 +69,20 @@ def test_clip_refuses_missing_provenance(episode) -> None:
                    env.kinematics, env.model)
 
 
+def test_only_a_non_learned_policy_may_lack_a_checkpoint(episode) -> None:
+    # KI-050: the random baseline's manifest has ``checkpoint: null``; that must be accepted
+    # for a non-learned policy and refused for a learned one.
+    env, init, rec = episode
+    env.reset(init)
+    man = {"eval_run_id": "t", "checkpoint": None}
+    assert rec.meta["policy"]["learned"] is False
+    clip = build_clip(_request(init), rec.meta, rec.arrays, man, env.kinematics, env.model)
+    assert clip["checkpoint"]["sha256"] is None
+    learned = {**rec.meta, "policy": {**rec.meta["policy"], "learned": True}}
+    with pytest.raises(ValueError, match="checkpoint_sha256"):
+        build_clip(_request(init), learned, rec.arrays, man, env.kinematics, env.model)
+
+
 def test_scene_geoms_compose_to_mujoco_world_poses(episode) -> None:
     import mujoco
 

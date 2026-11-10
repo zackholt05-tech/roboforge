@@ -121,6 +121,10 @@ def test_an_rgb_heldout_run_is_refused_before_any_state_is_read(
         mp.setattr(rh, "gate_status", lambda: (False, ["shut for the test"]))
         with pytest.raises(rh.RGBHeldoutError, match="gate is shut"):
             rh.evaluate_selected(run, out_root=tmp_path)
+    if not (REPO_ROOT / "runs" / run / "manifest.json").is_file():
+        # Fresh clone or CI: the gitignored training record is absent, and the frozen code
+        # reads it before the platform check (Session 12 fresh-clone finding).
+        pytest.skip(f"frozen run record runs/{run} not present (gitignored)")
     with pytest.raises(rh.RGBHeldoutError, match="canonical platform"):  # host platform
         rh.evaluate_selected(run, out_root=tmp_path)
     with pytest.raises(rh.RGBHeldoutError, match="not one of the 6"):
@@ -165,8 +169,10 @@ def test_level1_evaluate_entry_still_refuses_every_level1_configuration(
         with pytest.raises(heldout.HeldoutError, match="canonical platform"):
             heldout.evaluate_entry(entry)
     runs = REPO_ROOT / "runs"
-    if not runs.is_dir():
-        pytest.skip("local runs/ not present")
+    first = heldout.eval_id(entries[0], CANONICAL["platform_id"], rehearsal=False)
+    if not (runs / first / "manifest.json").is_file():
+        # runs/ is gitignored; a fresh clone has only runs/README.md (Session 12 finding).
+        pytest.skip("frozen held-out records (runs/) not present")
     monkeypatch.setattr(heldout, "evaluation_platform", lambda: CANONICAL)
     monkeypatch.setattr(es, "load_suite", lambda task, suite: [])
     monkeypatch.setattr(heldout, "_policy", lambda entry, frozen: (None, None))

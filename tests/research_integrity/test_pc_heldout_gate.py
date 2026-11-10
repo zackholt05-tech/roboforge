@@ -24,6 +24,7 @@ import pytest
 
 from roboforge.eval import pc_heldout as ph
 from roboforge.eval import rgb_heldout as rh
+from roboforge.paths import REPO_ROOT
 from roboforge.sim import eval_states as es
 
 CANONICAL = {"platform_id": "linux-aarch64-container-1f685638f28c"}
@@ -134,6 +135,10 @@ def test_a_level2_heldout_run_is_refused_before_any_state_is_read(
         mp.setattr(ph, "gate_status", lambda: (False, ["shut for the test"]))
         with pytest.raises(ph.PCHeldoutError, match="gate is shut"):
             ph.evaluate_selected(run, out_root=tmp_path)
+    if not (REPO_ROOT / "runs" / run / "manifest.json").is_file():
+        # Fresh clone or CI: the gitignored training record is absent, and the frozen code
+        # reads it before the platform check (Session 12 fresh-clone finding).
+        pytest.skip(f"frozen run record runs/{run} not present (gitignored)")
     with pytest.raises(ph.PCHeldoutError, match="canonical platform"):  # host platform
         ph.evaluate_selected(run, out_root=tmp_path)
     with pytest.raises(ph.PCHeldoutError, match="not one of the 3"):
@@ -187,8 +192,6 @@ def test_the_session8_checks_run_on_the_host_and_make_runs_them_first(
     monkeypatch.setenv("ROBOFORGE_GIT_SHA", "x" * 40)
     monkeypatch.setenv("ROBOFORGE_GIT_DIRTY", "0")
     assert ph.gate_status() == (True, []) and not called  # container: not reachable there
-    from roboforge.paths import REPO_ROOT
-
     lines = (REPO_ROOT / "Makefile").read_text().split("pc-heldout:", 1)[1].splitlines()[1:4]
     host = next(i for i, x in enumerate(lines) if "run_pc_heldout.py gate" in x)
     run = next(i for i, x in enumerate(lines) if "run_pc_heldout.py run" in x)

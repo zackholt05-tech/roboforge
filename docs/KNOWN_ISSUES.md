@@ -65,7 +65,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-058 | LOW | FIXED (Session 12) | A fresh clone without datasets failed 9 RGB and point-cloud trainer unit tests that read the processed Lift data without skipping |
 | KI-059 | LOW | FIXED (Session 12) | A fresh clone failed 4 held-out gate tests: their "runs/ not present" skip tested the directory, which a clone has (README.md) |
 | KI-060 | LOW | ACCEPTED (Session 12) | The locked diffusers 0.11.1 and transformers 4.41.2 (pinned by robomimic) carry published security advisories |
-| KI-061 | MEDIUM | OPEN (Session 12) | On GitHub's Linux x86_64 runner the locked environment segfaults importing triton, and compiled meshes differ from the canonical export by 7.45e-9 m |
+| KI-061 | MEDIUM | PARTIAL (Session 12) | Linux: triton segfaults when loaded after Mesa's LLVM (root cause found; test harness fixed); on Linux x86_64 compiled meshes differ from the canonical export by 7.45e-9 m |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -1176,7 +1176,7 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - robosuite and robomimic are installed from git, so `pip-audit` cannot audit them; `npm audit`
   finds no vulnerability in the site's packages (`reports/session12/npm_audit_*.json`).
 
-### KI-061 Linux x86_64: triton import segfault and sub-nanometre mesh differences (MEDIUM, OPEN; Session 12)
+### KI-061 Linux: triton segfault after Mesa's LLVM is loaded; x86_64 sub-nanometre mesh differences (MEDIUM, PARTIAL; Session 12)
 - **Found by** the first CI run on the public repository (commit `b4bd070`, GitHub Actions
   `ubuntu-24.04`, x86_64, `uv sync --frozen`, uv-managed CPython 3.11):
   - **python-tests** (run 42755805869): `Fatal Python error: Segmentation fault` while loading
@@ -1194,7 +1194,38 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - **research-integrity** (run 42755805851) passed on x86_64: held-out lock tests, freeze-check,
     both gates, `make paper-check` (generated tables and figures byte-identical on Linux x86_64)
     and `make release-check`.
-- **Handling:** CI runs on `ubuntu-24.04-arm`, the canonical platform's architecture (D-101
-  amendment). No test or tolerance was changed. Linux x86_64 use of this lock is unverified: a
-  user on x86_64 Linux should expect to investigate the triton import (for example with a
-  system CPython) before training.
+- **Handling (first):** CI moved to `ubuntu-24.04-arm`, the canonical platform's architecture
+  (D-101 amendment). No test or tolerance was changed.
+- **The triton crash is not x86_64-specific.** The next run on `ubuntu-24.04-arm` (commit
+  `e11ad04`, python-tests run 42756519847) crashed the same way, and the crash then reproduced
+  in the canonical aarch64 container with the CI's test order
+  (`run_sim_cpu.sh python -m pytest tests/unit -m "not sim and not data and not render and not slow and not web"`).
+  The earlier 10/10 had run `test_diffusion_policy.py` alone.
+- **Root cause (isolated in the container, one process per probe):** with `MUJOCO_GL=osmesa`,
+  `import mujoco` imports PyOpenGL's OSMesa platform, which loads `libOSMesa` with
+  `RTLD_GLOBAL`. That puts Mesa's `libLLVM-15` into the process's global symbol scope.
+  triton 3.9.0's `libtriton` bundles its own LLVM, and loading it afterwards segfaults. Probe
+  results (exit code 139 = segfault, 0 = clean), each followed by a first `torch.optim.AdamW`:
+  `import mujoco` 139; `import OpenGL.GL` 139; `ctypes.CDLL('libOSMesa.so.8', RTLD_GLOBAL)` 139;
+  `ctypes.CDLL('libLLVM-15.so.1', RTLD_GLOBAL)` 139; the same `libOSMesa` load without
+  `RTLD_GLOBAL` 0; `import torch`, `h5py`, `PIL`, `yaml` 0. In the unit tests,
+  `test_analyze_robustness.py` imports `roboforge.sim.robustness`, which imports mujoco, and the
+  next test that builds an optimizer imports `torch._dynamo` → triton. macOS has no triton, so
+  the host suite never showed it.
+- **Fix (Session 12):** `tests/conftest.py` imports `torch._dynamo` before any test can import
+  mujoco, so triton's LLVM loads before Mesa's. (Running the selection with `MUJOCO_GL=disable` was tried
+  first and is refused by `roboforge.sim.backend` on Linux, `logs/session12/ci_selection_container_gl_disabled.log`.) No test was skipped or changed. Verified in the
+  canonical container: the CI selection runs to the end (289 passed; the 25 failures/errors
+  are files the container does not mount: `paper/`, Session 6–9 reports and
+  `reports/data_audit.json`; `logs/session12/ci_selection_container.log`), and OSMesa
+  rendering still works with triton loaded first (`tests/simulator/test_env_adapter.py` and
+  `test_rgb_alignment.py`, 36 passed, `logs/session12/render_after_dynamo_container.log`).
+  Host full suite after the fix: 526 passed (`logs/session12/stop_full_suite_2.log`).
+- **What it does not affect:** a segfault stops the process; it cannot change a number. The
+  recorded evaluations ran in the container without importing `torch._dynamo` after mujoco,
+  and the frozen training ran to completion on Modal (`MUJOCO_GL=egl`, `infra/modal_app.py`).
+- **Still open:** any other Linux process that imports mujoco with `MUJOCO_GL=osmesa` and only
+  then builds its first torch optimizer, for example training inside the CPU container, would
+  crash the same way. Workaround: `import torch._dynamo` before mujoco. `src/` was not changed
+  at release (simulator code; the frozen evaluation code stays as tested). The x86_64 mesh
+  difference stays: Linux x86_64 use of this lock is unverified (KI-001).

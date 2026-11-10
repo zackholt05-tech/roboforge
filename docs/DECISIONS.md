@@ -2195,6 +2195,13 @@ file.
   `ubuntu-24.04-arm`, Linux aarch64, the architecture of the canonical evaluation platform
   (D-017). No test, tolerance or check was changed; Linux x86_64 stays unverified (KI-001,
   KI-061).
+- **Amendment 2 (Session 12, after the run on `e11ad04`):** python-tests crashed the same way
+  on `ubuntu-24.04-arm`, so the triton crash was not architectural. Its root cause, isolated in
+  the canonical container (KI-061), is Mesa's `libLLVM-15` in the global symbol scope (loaded by
+  PyOpenGL's OSMesa platform on `import mujoco`) before triton loads its bundled LLVM. Fix: the
+  test harness (`tests/conftest.py`) imports `torch._dynamo` before any test imports mujoco. No
+  test skipped or changed; `src/` unchanged. The aarch64 runners stay: the web-build mesh check
+  needs them (KI-061).
 
 ### D-102 GitHub Pages deployment of the Observatory (FIXED, after the owner's choice in D-099)
 - **Method:** a `gh-pages` branch holding the static build, published by GitHub Pages from that

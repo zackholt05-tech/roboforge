@@ -1,0 +1,44 @@
+# The Observatory site: data and meshes from the committed export and the locked robosuite,
+# type-check, build with its size budgets, and the vitest schema and kinematics tests
+# (DECISIONS D-101). Playwright E2E is not run here (it needs a GPU-backed Chrome, D-088).
+name: web-build
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  site:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      MUJOCO_GL: osmesa
+      PYOPENGL_PLATFORM: osmesa
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: System packages (egl_probe build, OSMesa)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake build-essential libegl-dev libosmesa6
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.11"
+          enable-cache: true
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Locked environment
+        run: uv sync --frozen
+      - name: Site data and meshes (hash-checked)
+        run: make web-data web-assets
+      - name: Install, type-check, build with budgets, unit tests
+        run: make web-install web-build web-test

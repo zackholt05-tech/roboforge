@@ -2096,3 +2096,155 @@ frozen intervals with a bound at exactly zero or zero width; audit B-4).
   paper's cost table (C-6). The D-086 amendment time and the E9-11 order are annotated in place
   (C-20).
 
+
+## Session 12 (2026-11-09 onward)
+Level 1, the RGB study and Level 2 are frozen and tested once; the paper is built. Session 12
+reproduces the project from a fresh clone, runs the release checks and publishes the
+repository as the owner authorized. Nothing below trains, evaluates, or changes a
+configuration, selection, label, result or finding of any study.
+
+### D-097 Makefile defaults bumped to Session 12; release targets (FIXED)
+- `EVIDENCE_SESSION` falls back to 12 and `PREFIX` to `s12` (the D-092 pattern). Evidence goes
+  to `reports/session12/` and `logs/session12/` with `ROBOFORGE_EVIDENCE_SESSION=12`.
+- `OBS_OUT` stays pinned to `reports/session10/observatory` (D-092).
+- New targets: `make readme-findings` (regenerates the README findings block, D-103),
+  `make readme-preview` (the README preview GIF, D-103), `make release-check` (the offline
+  release scans, D-104), `make pages-bundle` (the GitHub Pages staging directory, D-102).
+- The held-out, placement and analysis targets of all three studies are never run again.
+
+### D-098 Fresh-clone reproduction environment (FIXED, before the clone)
+- **Where:** `git clone --no-local` of the committed tree into the session scratch directory
+  (outside the repository, so the clone shares no object store, `.venv`, `data/`, `runs/` or
+  `node_modules` with the working repository). The clone is never committed to; its logs are
+  copied into `logs/session12/fresh_clone/`.
+- **Host environment:** `uv sync --frozen` (`make setup`) on the host only, never inside the
+  image (KI-020). `make download` fetches the datasets from the pinned Hugging Face revision and
+  checks SHA-256 (this also checks the download links). `make check-data` and `make build-data`
+  rebuild the processed data, which must equal the committed manifests.
+- **Container:** a small simulator smoke on the canonical image through
+  `infra/containers/run_sim_cpu.sh` from the clone, with `ROBOFORGE_EVIDENCE_SESSION=12`, writing
+  only `reports/session12/` of the clone. It runs before any host command that rewrites committed
+  files, and never at the same time as a full test suite (KI-043).
+- **Checks in the clone:** lint, the full test suite (alone), `make smoke-sim` with its output
+  sent to scratch, `make freeze-check`, both held-out gates, `make paper-check`, `make paper`
+  (the PDF's SHA-256 is compared with the committed one and any difference is reported as found),
+  `make web-install web-data web-assets web-build web-test web-e2e`.
+- **Checkpoints:** not in git (gitignored `runs/`, not redistributed). One frozen checkpoint
+  from the working repository's `runs/` is hash-checked against the freeze and loaded with the
+  clone's code. No rollout, no policy evaluation.
+- **Limits stated, not hidden:** the Tectonic bundle cache already exists on this host (E11-07),
+  so the clone does not test a first networked Tectonic build; the clone runs on the same host
+  and OS as development, so platform independence is tested only by CI (D-101) and the
+  canonical container.
+
+### D-099 What "release" means (OWNER, 2026-11-09, Session 12)
+The owner chose, when asked once with the facts (gh logged in as `zackholt05-tech`, repo scope;
+`github.com/zackholt05-tech/roboforge` absent; ~65 MB, 140+ commits including evidence logs):
+- **"Public repo + tag + release":** create the public repository
+  `github.com/zackholt05-tech/roboforge`, push `main`, create the annotated tag `v1.0.0` and a
+  GitHub release with `paper/main.pdf` attached. Each step is done only after every check passes
+  and is verified (`git ls-remote`, `gh repo view`, `gh release view`, a download of the
+  attached PDF compared by SHA-256). Nothing is reported as published unless verified.
+- **"GitHub Pages":** host the Observatory on GitHub Pages (D-102). This supersedes the hosting
+  part of D-090 ("no hosting"); D-090's mesh rule (extracted at build time, never committed to
+  `main`) still holds.
+- **"Add CI, run on push":** GitHub Actions on push (D-101).
+- **History:** never rewritten (D-100). Commits, the tag, the release text, the `gh-pages`
+  branch and the repository description carry no AI co-author trailer or AI byline
+  (MASTER_SPEC §0.2), whatever a tool's default footer says.
+- **Versions:** the release is `v1.0.0` (tag, `CITATION.cff`). `pyproject.toml` keeps
+  `version = "0.0.1"` because the root package version is recorded in `uv.lock`, a hash-pinned
+  paper source (D-094) and the frozen environment record; `website/package.json` keeps
+  `0.10.0` for the same reason with its lockfile. The Python and npm package metadata versions
+  are not release identifiers.
+- **Push identity:** before the first push, the credential git uses is confirmed to be the
+  `zackholt05-tech` account. If GitHub rejects the push (for example an email-privacy rule),
+  stop and ask; author emails are never rewritten.
+
+### D-100 Local absolute paths in committed evidence are disclosed, not scrubbed (OWNER, 2026-11-09)
+135 committed files (logs of Sessions 0–9, `reports/feasibility/` and `reports/session5/`
+evidence, `docs/KNOWN_ISSUES.md`) contain absolute local paths under the developer's home directory (`/Users/<user>/…`), and every
+commit in history has them (KI-009). No secret was found. The owner chose **"Disclose, no
+rewrite"**: the evidence bytes stay unchanged (some logs are hash-pinned paper sources), and the
+paths, which reveal only the local username, are listed as an accepted item in
+`docs/FINAL_RELEASE_AUDIT.md`. `make release-check` fails if such a path appears in any other
+file.
+
+### D-101 Continuous integration (OWNER "Add CI, run on push", 2026-11-09)
+- Workflows in `.github/workflows/`: `python-tests.yml` (lint, unit tests that need no
+  simulator, dataset, renderer, node or long run), `research-integrity.yml`
+  (`tests/research_integrity/`, `make freeze-check`, both held-out gates, `make paper-check`,
+  `make release-check`), `web-build.yml` (`make web-data web-assets`, `npm ci`, build with its
+  budgets, vitest).
+- Runner `ubuntu-24.04` (Linux x86_64, unverified for this project before CI, KI-001). The
+  workflows install `cmake`, `build-essential` and `libegl-dev` for `egl_probe`, then
+  `uv sync --frozen`. No dataset download, no paid compute, no secrets, no publishing of
+  numbers, no pushes (`permissions: contents: read`). Actions are pinned by commit SHA. The
+  workflows are linted with `actionlint` before commit.
+- Not in CI, with the reason: simulator, dataset, render and slow tests (no dataset in CI, and
+  physics is not bitwise across platforms, KI-013); Playwright E2E (needs a GPU-backed Chrome,
+  D-088); `make paper` (Tectonic is not pinned in CI); every evaluation target.
+- A failure on the first GitHub run is recorded as found. Tests are never weakened to pass; a
+  fix is a code change and is rechecked.
+
+### D-102 GitHub Pages deployment of the Observatory (FIXED, after the owner's choice in D-099)
+- **Method:** a `gh-pages` branch holding the static build, published by GitHub Pages from that
+  branch. The build is made locally from a clean, verified commit with `make web-data web-assets
+  web-build` and staged by `make pages-bundle` into a scratch directory, which adds:
+  - `.nojekyll`;
+  - `THIRD_PARTY_LICENSES.txt`: robosuite's MIT license text (from the pinned install; it covers
+    the Panda, cube and can meshes in `assets/`), the SIL Open Font License 1.1 texts of the
+    bundled fontsource fonts, and the license texts of every npm package bundled into the
+    JavaScript;
+  - `deploy.json`: the source commit, its dirty flag, and the SHA-256 of every staged file.
+- **Consequence for the mesh rule:** `main` never contains meshes (D-090); the `gh-pages`
+  branch does, under robosuite's MIT license with its notice. `THIRD_PARTY_NOTICES.md` and the
+  site's credits say so.
+- **Base path:** the site already uses a relative base (`base: "./"`, D-088) and fetches through
+  `import.meta.env.BASE_URL`, so it works under `/roboforge/` without a code change.
+- **Verification:** after GitHub reports the build as `built`, every staged file is fetched from
+  the live URL and its SHA-256 compared with `deploy.json`; the site E2E is also run against the
+  live URL when its config allows. The Pages URL is linked from the README only after this
+  passes.
+- The `gh-pages` commit is authored by Zackary Holt, with no AI trailer.
+
+### D-103 README content generated from frozen files (FIXED, before the README is rewritten)
+- **Findings block:** the README's key-findings block (between `<!-- BEGIN GENERATED: findings
+  -->` and `<!-- END GENERATED: findings -->`) is written by `scripts/readme_findings.py` from
+  `paper/generated/numbers.tex`, which `make paper-check` proves equal to a fresh build from the
+  hash-pinned frozen files (D-094). No number in that block is typed by hand.
+  `make release-check` fails if the block differs from a fresh generation. Numbers in the rest
+  of the README are limited to counts and identifiers checked by the same rule.
+- **Caveats carried with the numbers:** the Can H2 separation is fragile (a seed-level interval,
+  not preregistered, includes 0; KI-053); H2-c is not separated on either task; the diffusion
+  sampler bounds its actions to the training range and the BC heads are not bounded (KI-052);
+  Lift saturates (KI-034); H5 is negative; the paper is a local build, not peer reviewed.
+- **Preview:** `scripts/readme_preview.py` builds `docs/media/readme_preview.gif` from the
+  committed Session 10 MP4s of the D-089 rule 3(a) head-to-head pair on Can (seed 0 diffusion
+  U-Net and seed 0 BC-MLP on the same held-out start, the first start where both succeed,
+  labelled "representative"). The state ID is read from `selection.json`, never written in
+  code. Transformations: decode, resize, place side by side, add labels (task, policy, seed,
+  start, outcome, source), hold the shorter clip's last frame. A JSON sidecar records the
+  source paths and SHA-256, the selection rule and the transformation.
+
+### D-104 The release checks (FIXED, before they are run)
+`make release-check` (offline, also in CI) and `scripts/release_check.py --network` (manual):
+- **History:** every commit on every ref has author and committer `Zackary Holt
+  <zackholt05@gmail.com>`; no message contains a co-author trailer or an AI byline; every
+  annotated tag's tagger is the same identity.
+- **Secrets:** regular expressions for common key and token formats (AWS, GitHub, Slack, Google,
+  OpenAI- and Anthropic-style keys, private-key blocks, Modal token variables with values) over
+  `git log -p --all` and the working tree. `gitleaks` is not installed; this is a pattern scan,
+  stated as such.
+- **Private paths:** no absolute home path outside the D-100 disclosed set.
+- **Tracked content:** no dataset (`*.hdf5`, `*.h5`), checkpoint (`*.pt`, `*.pth`, `*.ckpt`,
+  `*.safetensors`) or mesh file; no tracked file over 50 MB; `.env` and key files ignored.
+- **Docs:** no placeholder (`TODO`, `TBD`, `FIXME`, `<repo>`, lorem ipsum) in the public-facing
+  documents; every relative link in tracked Markdown resolves; `CITATION.cff` names Zackary Holt
+  as the only author, with version, date and license; the README findings block equals a fresh
+  generation (D-103).
+- **Network (`--network`, not in `make test` or CI):** every external URL in the README,
+  `CITATION.cff`, `THIRD_PARTY_NOTICES.md` and the docs answers with HTTP < 400 (some hosts
+  refuse automated requests; those are listed, not hidden). Dependency vulnerability and license
+  scans (`pip-audit` on the exported lock, `npm audit`, a license inventory) are run separately
+  and recorded in `reports/session12/`.

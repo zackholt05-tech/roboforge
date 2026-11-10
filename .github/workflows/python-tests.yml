@@ -1,0 +1,40 @@
+# Lint and the unit tests that need no simulator, dataset, renderer, node or long run
+# (DECISIONS D-101). No dataset download, no paid compute, no secrets, no pushes.
+name: python-tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      MUJOCO_GL: osmesa
+      PYOPENGL_PLATFORM: osmesa
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: System packages (egl_probe build, OSMesa)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake build-essential libegl-dev libosmesa6
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.11"
+          enable-cache: true
+      - name: Locked environment
+        run: uv sync --frozen
+      - name: Lint
+        run: make lint
+      - name: Unit tests
+        run: >-
+          uv run --frozen pytest tests/unit
+          -m "not sim and not data and not render and not slow and not web"

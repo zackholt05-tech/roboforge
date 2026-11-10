@@ -28,7 +28,8 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
 	web-build web-test web-e2e web-verify web-dev visual-provenance \
-	paper-assets paper-check paper-bibcheck paper
+	paper-assets paper-check paper-bibcheck paper \
+	readme-findings readme-preview release-check pages-bundle
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -143,12 +144,12 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 11 (DECISIONS D-092; Session 10: D-087; Session 9: D-082; Session 8:
-# D-073; Session 7: D-060; Session 6: D-053; Session 5: D-048) so that no Session 11 command can
-# write into Session 6-10 evidence or reuse the s10 run prefix by omission.
-PREFIX ?= s11
+# Defaults bumped to Session 12 (DECISIONS D-097; Session 11: D-092; Session 10: D-087; Session 9:
+# D-082; Session 8: D-073; Session 7: D-060; Session 6: D-053; Session 5: D-048) so that no
+# Session 12 command can write into Session 6-11 evidence or reuse the s11 run prefix by omission.
+PREFIX ?= s12
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),11)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),12)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -410,3 +411,17 @@ paper: paper-check  ## Build paper/main.pdf with Tectonic (cached bundle only, f
 		rm -f paper/main.log; echo "paper: undefined or duplicate references or citations"; exit 1; fi
 	@rm -f paper/main.log paper/main.blg
 	shasum -a 256 paper/main.pdf
+
+# --- Session 12: release (DECISIONS D-097 to D-104) ---
+readme-findings:  ## Rewrite README.md's generated key-findings block from paper/generated/numbers.tex (D-103)
+	$(RUN) python scripts/readme_findings.py
+
+readme-preview:  ## Build docs/media/readme_preview.gif from the recorded Can head-to-head renders (D-103)
+	$(RUN) python scripts/readme_preview.py
+
+release-check:  ## Offline release checks: identity, trailers, secrets, paths, content, docs, README (D-104)
+	$(RUN) python scripts/release_check.py
+
+PAGES_DIR ?= logs/tmp/pages
+pages-bundle:  ## Stage website/dist for GitHub Pages with licenses, .nojekyll and deploy.json (D-102)
+	$(RUN) python scripts/pages_bundle.py stage --out $(PAGES_DIR)

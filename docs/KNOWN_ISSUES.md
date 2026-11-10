@@ -5,7 +5,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 
 | ID | Severity | Status | Summary |
 |---|---|---|---|
-| KI-001 | LOW | PARTIAL | Linux aarch64 OSMesa verified; x86_64 install and EGL unverified |
+| KI-001 | LOW | PARTIAL | Linux aarch64 OSMesa verified; x86_64 install and EGL unverified (x86_64 findings: KI-061) |
 | KI-002 | HIGH | MITIGATED | robosuite seeding does not control reset randomness |
 | KI-003 | HIGH | RESOLVED (Session 1) | Can relative-pose observations are lagged / wrong at t=0 |
 | KI-004 | MEDIUM | ACCEPTED | Open-loop demo replay is not exact |
@@ -65,6 +65,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-058 | LOW | FIXED (Session 12) | A fresh clone without datasets failed 9 RGB and point-cloud trainer unit tests that read the processed Lift data without skipping |
 | KI-059 | LOW | FIXED (Session 12) | A fresh clone failed 4 held-out gate tests: their "runs/ not present" skip tested the directory, which a clone has (README.md) |
 | KI-060 | LOW | ACCEPTED (Session 12) | The locked diffusers 0.11.1 and transformers 4.41.2 (pinned by robomimic) carry published security advisories |
+| KI-061 | MEDIUM | OPEN (Session 12) | On GitHub's Linux x86_64 runner the locked environment segfaults importing triton, and compiled meshes differ from the canonical export by 7.45e-9 m |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -1174,3 +1175,26 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   equivalence. Anyone reusing this environment for other work should upgrade.
 - robosuite and robomimic are installed from git, so `pip-audit` cannot audit them; `npm audit`
   finds no vulnerability in the site's packages (`reports/session12/npm_audit_*.json`).
+
+### KI-061 Linux x86_64: triton import segfault and sub-nanometre mesh differences (MEDIUM, OPEN; Session 12)
+- **Found by** the first CI run on the public repository (commit `b4bd070`, GitHub Actions
+  `ubuntu-24.04`, x86_64, `uv sync --frozen`, uv-managed CPython 3.11):
+  - **python-tests** (run 42755805869): `Fatal Python error: Segmentation fault` while loading
+    `triton/_C/libtriton` (triton 3.9.0, `triton/knobs.py` line 15). The chain is
+    `torch.optim.AdamW` → `torch._compile` → `torch._dynamo` → `has_triton_package()` →
+    `import triton`, in `tests/unit/test_diffusion_policy.py::test_resume_is_bitwise_identical_including_noise_rng_and_ema`;
+    the run stopped there (14 % of the selection). The same file passes 10/10 in the canonical
+    aarch64 container (`run_sim_cpu.sh python -m pytest tests/unit/test_diffusion_policy.py`).
+    The cause was not isolated (candidates: the uv-managed standalone CPython, or the runner's
+    libraries). Modal's x86_64 L4 image trained with the same lock in Sessions 5, 8 and 9.
+  - **web-build** (run 42755806070): `make web-assets` stopped with "host meshes differ from the
+    container's by 7.45e-09 m". MuJoCo's compile-time mesh processing differs at float rounding
+    across architectures (the KI-013 class); the check requires exact equality and refused, as
+    designed.
+  - **research-integrity** (run 42755805851) passed on x86_64: held-out lock tests, freeze-check,
+    both gates, `make paper-check` (generated tables and figures byte-identical on Linux x86_64)
+    and `make release-check`.
+- **Handling:** CI runs on `ubuntu-24.04-arm`, the canonical platform's architecture (D-101
+  amendment). No test or tolerance was changed. Linux x86_64 use of this lock is unverified: a
+  user on x86_64 Linux should expect to investigate the triton import (for example with a
+  system CPython) before training.

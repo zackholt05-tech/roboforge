@@ -2186,6 +2186,15 @@ file.
   D-088); `make paper` (Tectonic is not pinned in CI); every evaluation target.
 - A failure on the first GitHub run is recorded as found. Tests are never weakened to pass; a
   fix is a code change and is rechecked.
+- **Amendment (Session 12, after the first GitHub run on `b4bd070`):** on `ubuntu-24.04`
+  (x86_64), research-integrity passed, but python-tests and web-build failed for platform
+  reasons, recorded in KI-061: loading triton 3.9.0's native library segfaults when
+  `torch.optim.AdamW` imports `torch._dynamo` (the same test passes in the canonical aarch64
+  container), and the meshes compiled on x86_64 differ from the canonical export by 7.45e-9 m,
+  so the exact-equality mesh check refuses, as designed. The workflows now run on
+  `ubuntu-24.04-arm`, Linux aarch64, the architecture of the canonical evaluation platform
+  (D-017). No test, tolerance or check was changed; Linux x86_64 stays unverified (KI-001,
+  KI-061).
 
 ### D-102 GitHub Pages deployment of the Observatory (FIXED, after the owner's choice in D-099)
 - **Method:** a `gh-pages` branch holding the static build, published by GitHub Pages from that

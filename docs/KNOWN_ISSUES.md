@@ -56,7 +56,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-049 | LOW | DOCUMENTED (Session 9) | One generated training row of the Level 2 analysis was miscomputed |
 | KI-050 | LOW | FIXED (Session 10) | The first Observatory export stopped on the random baseline; its reference masks counted sites |
 | KI-051 | LOW | FIXED (Session 10) | Observatory selection code named the locked suite; the lock test failed at STOP |
-| KI-052 | MEDIUM | DOCUMENTED (Session 11, audit A-6); TESTED by X1 (Session 13, exploratory, after the freeze) | The diffusion sampler bounds its actions to the training range; BC heads are not bounded, a confound for H2-c and H4. X1: with the same bound, BC outcomes are unchanged and every H4 verdict stands (primary −40.0 pp [−54.0, −25.3], separated) |
+| KI-052 | MEDIUM | DOCUMENTED (Session 11, audit A-6); BC side TESTED by X1 (Session 13, exploratory, after the freeze); diffusion side OPEN | The diffusion sampler bounds its actions to the training range; BC heads are not bounded, a confound for H2-c and H4. X1: with the same bound on its executed actions, BC's outcomes are unchanged and every H4 verdict stands (primary −40.0 pp [−54.0, −25.3], separated). Open: whether the sampler's per-step clipping contributes to diffusion's own robustness (a `clip_sample=False` arm, not run) |
 | KI-053 | MEDIUM | DOCUMENTED (Session 11, audit B-1 to B-4, D-095) | Several separations depend on the interval method, the bootstrap seed or ties (3 seeds, 50 binary outcomes) |
 | KI-054 | MEDIUM | FIXED by reporting (Session 11, audit C-9, D-096) | Declared secondary metrics were computed per episode but never aggregated by the frozen analyses |
 | KI-055 | LOW | FIXED (Session 11, audit B-12, B-13) | `analyze_robustness.py` had no run-once guard; `analyze_level2.py` hashed a report before checking it exists |
@@ -1085,7 +1085,7 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Handling:** for a session's own new code, run the research-integrity tests
   (`tests/research_integrity/`) before the first evidence export, not only at STOP.
 
-### KI-052 The diffusion sampler bounds its actions to the training range; BC heads are not (MEDIUM, DOCUMENTED; Session 11; tested by X1 in Session 13: the bound does not explain the H4 gaps)
+### KI-052 The diffusion sampler bounds its actions to the training range; BC heads are not (MEDIUM, DOCUMENTED; Session 11; BC side tested by X1 in Session 13; diffusion side open)
 - **Mechanism:** the samplers' shared `_Sampler._x0` (`src/roboforge/models/noise_schedule.py`) clamps the predicted clean chunk to [−1, 1] in min–max
   normalized space (`clip_sample=True`) and the last DDIM step returns it, so every diffusion
   action lies inside each dimension's training range. BC outputs are clipped only to the
@@ -1117,13 +1117,21 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
     Yet no clamped − unclamped success difference separated (0 of 15; largest |Δ| 0.7 pp).
     Every between-family OOD difference and drop contrast kept its frozen verdict on both
     tasks.
-  - **Reading.** The training-range bound is not what makes diffusion more robust here. This
-    is consistent with A-6's counter-evidence: out-of-range BC actions follow failures rather
-    than cause them.
+  - **Reading (BC side).** Bounding BC's executed actions to the training range leaves BC's
+    outcomes unchanged. The H4 gaps are therefore not caused by BC executing out-of-range
+    actions. This is consistent with A-6's counter-evidence: out-of-range BC actions follow
+    failures rather than cause them.
+  - **Not tested (diffusion side).** The sampler clamps x̂₀ at *every* DDIM step, and the
+    clamped value feeds the next step. The bound therefore shapes diffusion's whole sampling
+    path, not only its final action. X1's no-op check shows only that diffusion's final
+    actions already lie in the bound. Whether in-sampler clipping contributes to diffusion's
+    own robustness needs a `clip_sample=False` arm of the 6 diffusion checkpoints on the same
+    sets. That arm was not run: 15 evaluations; the unclipped Session 7 runs took 1.59
+    container-hours for the same 15 (estimate).
   - **Scope.** One bound, three seeds, two perturbations, robustness starts only (no held-out
     revisit).
-  - **Status.** The confound named here is tested for H4 and found not to explain the gaps. The
-    measured frozen differences stand unchanged.
+  - **Status: half-resolved.** BC's lack of a bound does not explain the H4 gaps. The diffusion
+    side stays open. The measured frozen differences stand unchanged.
 
 ### KI-053 Several separations depend on the interval method (MEDIUM, DOCUMENTED; Session 11)
 - **Evidence (audit B-1 to B-4):** with 3 training seeds, Can H2 and H3 are separated by the

@@ -2455,3 +2455,17 @@ controller limits. Do the frozen H4 and H2-c contrasts survive when BC gets the 
   Nothing here was changed after any X1 rollout.
 - **Outcome (exploratory, after the freeze):** see KI-052 and LEDGER E13-04, E13-05.
   `reports/session13/x1_clamp/` is analysed once and is not rerun.
+- **Correction (Session 13, at STOP, after the analysis).** The "Not done" item above says
+  that "the diffusion no-op check already shows the bound is all the sampler adds". That
+  reasoning is wrong.
+  - `clip_sample` clamps x̂₀ at every DDIM step, and the clamped value feeds the next sample,
+    so the bound shapes diffusion's whole sampling path. The no-op check shows only that the
+    final actions already lie in [−1, 1].
+  - X1 therefore tests the BC side of KI-052, and finds that BC's missing bound does not
+    explain the H4 gaps. It does not test whether in-sampler clipping contributes to
+    diffusion's own robustness.
+  - That needs a `clip_sample=False` arm of the 6 diffusion checkpoints on the same sets: 15
+    evaluations, about 1.6 container-hours (an estimate from the Session 7 times). It was not
+    run. KI-052 stays half-open.
+  - The preregistration, the evaluations and the analysis are unchanged by this correction;
+    only the interpretation in the records is rescoped.

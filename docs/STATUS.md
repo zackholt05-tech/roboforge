@@ -52,8 +52,11 @@ is the owner's decision (D-105); nothing was pushed.
   verdict.
 - **H2-c.** Clamped − unclamped BC-MLP-chunk on `robustness_base` = +0.0 pp on both tasks,
   so H2-c parity stands as measured.
-- **Interpretation.** Diffusion's robustness advantage over BC here is not explained by the
-  training-range action bound.
+- **Interpretation (BC side).** Bounding BC's executed actions to the training range leaves
+  BC's outcomes unchanged, so the H4 gaps are not caused by BC executing out-of-range actions.
+- **Not tested (diffusion side).** The sampler clips x̂₀ at every DDIM step. Whether that
+  in-sampler clipping contributes to diffusion's own robustness needs a `clip_sample=False`
+  arm, which was not run. KI-052 is half-resolved.
 - **Scope.** One bound, three seeds, two perturbations, robustness starts only. The frozen
   numbers are unchanged.
 

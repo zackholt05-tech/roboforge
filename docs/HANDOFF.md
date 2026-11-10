@@ -143,8 +143,11 @@ Session 13: post-release extension X1, the evaluation-only action-clamp test of 
 - **The clamp acted, but changed no outcome.** It changed most out-of-distribution BC actions
   on Lift (52–54 % for BC-MLP-chunk, 64–73 % for BC-MLP), but no clamped − unclamped
   difference separated (0 of 15). Every between-family verdict is the frozen one.
-- **Reading.** Diffusion's robustness advantage is not explained by the training-range action
-  bound. The frozen numbers stand.
+- **Reading (BC side).** Bounding BC's executed actions to the training range leaves BC's
+  outcomes unchanged, so the H4 gaps are not caused by BC executing out-of-range actions.
+- **Not tested (diffusion side).** The sampler clips x̂₀ at every DDIM step, so the bound shapes
+  its sampling path. Whether that contributes to diffusion's own robustness needs a
+  `clip_sample=False` arm, which was not run (KI-052, half-resolved). The frozen numbers stand.
 
 ## 4. STOP checks
 On the Session 13 tree (code as `ab02469`; documents only after `c2a9ae6`), host, no container running: `make lint` clean; full suite alone **550 passed** (8:28; the 526 of the baseline plus 24 new X1 tests; `logs/session13/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged", also before every code change); `tests/research_integrity` 50 passed; `make release-check` PASS (136 disclosed local-path files, D-100). No frozen file, freeze, result or executed outcome changed; nothing was pushed, tagged, released or deployed.
@@ -153,7 +156,11 @@ On the Session 13 tree (code as `ab02469`; documents only after `c2a9ae6`), host
 1. **X2 or X3 for Session 14**, asked at the end of this session.
 2. Whether to publish X1 (for example a v1.1 with a short addendum to the paper, README and
    Observatory). Not done; nothing was pushed, tagged or deployed (D-105).
-3. The standing optional items of the Session 12 handoff (Modal workspace budget, Docker build
+3. Optional, not approved: the diffusion side of KI-052. That is the 6 frozen diffusion
+   checkpoints with `clip_sample=False` on the same robustness sets, 15 evaluations; about
+   1.6 container-hours (an estimate from the Session 7 times). It is exploratory, after the
+   freeze, and needs its own decision and preregistration.
+4. The standing optional items of the Session 12 handoff (Modal workspace budget, Docker build
    cache, DNS) are unchanged. Disk: 15 GB free after X1 (KI-008).
 
 ## 6. Exact prompts for Session 14

@@ -17,8 +17,9 @@ the owner picks which runs next at the end of Session 13.
 **Status (2026-11-10).** X1 ran in Session 13 (PASS; exploratory, after the freeze):
 - preregistration `X1_PREREGISTRATION.md` (`ab02469`);
 - results in `reports/session13/x1_clamp/tables.md`.
-With the diffusion sampler's bound, BC outcomes are unchanged and the H4 gap stays separated
-(KI-052). The exact Session 14 prompts for X2 and X3 are in `docs/HANDOFF.md` (# Session 13
+With the diffusion sampler's bound on its executed actions, BC's outcomes are unchanged and the
+H4 gap stays separated. The diffusion side of KI-052 (the sampler clips at every step; a
+`clip_sample=False` arm) was not tested. The exact Session 14 prompts for X2 and X3 are in `docs/HANDOFF.md` (# Session 13
 Handoff §6).
 
 ## Rules shared by every extension

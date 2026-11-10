@@ -30,6 +30,7 @@ from typing import Any
 
 from roboforge.paths import REPO_ROOT, repo_relative
 from roboforge.provenance import sha256_file
+from roboforge.sim import eval_states as es
 
 SELECTION_SCHEMA = "roboforge.observatory_selection/1"
 L1_RESULTS = "reports/session7/results/results.json"
@@ -64,6 +65,14 @@ RULES = {
 def _load(rel: str) -> Any:
     return json.loads((REPO_ROOT / rel).read_text())
 
+
+def heldout_partition() -> str:
+    """Partition label of the locked held-out suite, read from the suite config.
+
+    The research-integrity lock test allows only the suite module to name that suite, so the
+    label comes from ``eval_states`` rather than a literal here.
+    """
+    return str(es.suites_config()["suites"][es.LOCKED_SUITE]["partition"])
 
 def source(rel: str) -> dict[str, str]:
     """``{"path", "sha256"}`` of a committed evidence file."""
@@ -257,7 +266,7 @@ def build_selection() -> dict[str, Any]:  # noqa: PLR0912 - one pass per rule
                 roles.append("hero")
             clips.append(clip("level1_heldout", task, p["family"], p["seed"], p["eval_run_id"],
                               _records_dir(p["eval_run_id"]), p["state_id"],
-                              "eval_final_test", roles))
+                              heldout_partition(), roles))
         h = head_to_head(task, l1t)
         doc["head_to_head"][task] = h
         for case in ("a_both_succeed", "b_only_diffusion", "c_only_bc_mlp"):
@@ -266,7 +275,7 @@ def build_selection() -> dict[str, Any]:  # noqa: PLR0912 - one pass per rule
             for fam in h["pair"]:
                 eid = h["eval_run_ids"][fam]
                 clips.append(clip("level1_heldout", task, fam, 0, eid, _records_dir(eid),
-                                  h[case]["state_id"], "eval_final_test",
+                                  h[case]["state_id"], heldout_partition(),
                                   [f"h2h:{task}:{case}"]))
         d = denoise_episodes(task)
         doc["denoise"][task] = d

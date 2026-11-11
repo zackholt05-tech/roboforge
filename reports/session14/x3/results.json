@@ -1,0 +1,1886 @@
+{
+ "schema": "roboforge.x3_results/1",
+ "label": "separate replication",
+ "decision": "D-111",
+ "preregistration": "docs/extensions/X3_PREREGISTRATION.md",
+ "preregistration_sha256": "b5e54125696c163cd892abb04e6b77d1ef90710cd6822b7cdc683671b706f378",
+ "suite": {
+  "task": "can",
+  "name": "x3_heldout",
+  "content_sha256": "9c199e19f69708872a01665cf1367d2e34741388c2f546ef96d3ffc900a2b34d",
+  "n_states": 100
+ },
+ "frozen_source": {
+  "path": "reports/session7/results/results.json",
+  "sha256": "b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c"
+ },
+ "frozen_families": {
+  "bc_mlp": {
+   "estimate": 0.7666666666666667,
+   "per_seed": [
+    0.68,
+    0.88,
+    0.74
+   ],
+   "n_seeds": 3,
+   "n_states": 50,
+   "ci95": [
+    0.6266666666666666,
+    0.9
+   ]
+  },
+  "bc_rnn": {
+   "estimate": 0.96,
+   "per_seed": [
+    0.92,
+    1.0,
+    0.96
+   ],
+   "n_seeds": 3,
+   "n_states": 50,
+   "ci95": [
+    0.8933333333333332,
+    1.0
+   ]
+  },
+  "bc_mlp_chunk": {
+   "estimate": 0.96,
+   "per_seed": [
+    0.96,
+    0.92,
+    1.0
+   ],
+   "n_seeds": 3,
+   "n_states": 50,
+   "ci95": [
+    0.8866666666666667,
+    1.0
+   ]
+  },
+  "diffusion_unet": {
+   "estimate": 0.9533333333333334,
+   "per_seed": [
+    0.92,
+    0.98,
+    0.96
+   ],
+   "n_seeds": 3,
+   "n_states": 50,
+   "ci95": [
+    0.8933333333333332,
+    1.0
+   ]
+  },
+  "random_uniform": {
+   "estimate": 0.0,
+   "per_seed": [
+    0.0
+   ],
+   "n_seeds": 1,
+   "n_states": 50,
+   "ci95": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "primary": {
+  "seeds": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "families": [
+   "bc_mlp",
+   "bc_rnn",
+   "bc_mlp_chunk",
+   "diffusion_unet"
+  ],
+  "bootstrap": {
+   "method": "hierarchical paired bootstrap (RESEARCH_PROTOCOL \u00a79)",
+   "B": 10000,
+   "seed": 20261106,
+   "level": 0.95,
+   "draw_order": [
+    "states",
+    "bc_mlp",
+    "bc_rnn",
+    "bc_mlp_chunk",
+    "diffusion_unet"
+   ],
+   "interval": "percentile, numpy linear interpolation",
+   "families": {
+    "bc_mlp": {
+     "estimate": 0.7233333333333334,
+     "per_seed": [
+      0.75,
+      0.93,
+      0.66,
+      0.54,
+      0.64,
+      0.82
+     ],
+     "n_seeds": 6,
+     "n_states": 100,
+     "ci95": [
+      0.605,
+      0.84
+     ]
+    },
+    "bc_rnn": {
+     "estimate": 0.9616666666666667,
+     "per_seed": [
+      0.94,
+      0.98,
+      0.94,
+      0.97,
+      0.97,
+      0.97
+     ],
+     "n_seeds": 6,
+     "n_states": 100,
+     "ci95": [
+      0.9316666666666666,
+      0.985
+     ]
+    },
+    "bc_mlp_chunk": {
+     "estimate": 0.9666666666666667,
+     "per_seed": [
+      0.95,
+      0.93,
+      1.0,
+      0.98,
+      0.97,
+      0.97
+     ],
+     "n_seeds": 6,
+     "n_states": 100,
+     "ci95": [
+      0.9316666666666666,
+      0.9900000000000001
+     ]
+    },
+    "diffusion_unet": {
+     "estimate": 0.95,
+     "per_seed": [
+      0.98,
+      0.93,
+      0.96,
+      0.93,
+      0.95,
+      0.95
+     ],
+     "n_seeds": 6,
+     "n_states": 100,
+     "ci95": [
+      0.91,
+      0.9816666666666668
+     ]
+    }
+   },
+   "differences": [
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp",
+     "difference": 0.22666666666666657,
+     "ci95": [
+      0.10499999999999998,
+      0.35
+     ],
+     "separation": "separated (+)"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_rnn",
+     "difference": -0.011666666666666714,
+     "ci95": [
+      -0.05666666666666664,
+      0.030000000000000027
+     ],
+     "separation": "not separated"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp_chunk",
+     "difference": -0.01666666666666672,
+     "ci95": [
+      -0.06166666666666687,
+      0.02833333333333332
+     ],
+     "separation": "not separated"
+    },
+    {
+     "a": "bc_rnn",
+     "b": "bc_mlp",
+     "difference": 0.23833333333333329,
+     "ci95": [
+      0.12000000000000022,
+      0.3600000000000001
+     ],
+     "separation": "separated (+)"
+    }
+   ]
+  },
+  "contrasts": [
+   {
+    "hypothesis": "H2",
+    "a": "diffusion_unet",
+    "b": "bc_mlp",
+    "name": "H2 diffusion \u2212 BC-MLP",
+    "status": "computed",
+    "n_seeds": {
+     "diffusion_unet": 6,
+     "bc_mlp": 6
+    },
+    "difference": 0.22666666666666657,
+    "bootstrap_ci95": [
+     0.10499999999999998,
+     0.35
+    ],
+    "bootstrap_separation": "separated (+)",
+    "seed_level_ci95": [
+     0.0804693134326642,
+     0.372864019900669
+    ],
+    "seed_level_df": 5.18486828252113,
+    "seed_level_separation": "separated (+)",
+    "verdict": "robust",
+    "sign": "+",
+    "relation": "holds, robust",
+    "reading": "H2 diffusion \u2212 BC-MLP: separated (+) under both the bootstrap and the seed-level interval, with 6 seeds on 100 fresh starts. In this replication the difference does not rest on 3 seeds or on the 50 frozen starts. The frozen separation holds in this replication, now under both interval methods. Separate replication; the frozen result stands as reported.",
+    "frozen": {
+     "difference": 0.18666666666666665,
+     "bootstrap_ci95": [
+      0.046666666666666634,
+      0.32666666666666666
+     ],
+     "bootstrap_separation": "separated (+)",
+     "seed_level_ci95": [
+      -0.04463266848890082,
+      0.4179660018222341
+     ],
+     "seed_level_df": 2.3516693163751983,
+     "seed_level_separation": "not separated",
+     "n_seeds": 3,
+     "n_states": 50
+    }
+   },
+   {
+    "hypothesis": "H2",
+    "a": "diffusion_unet",
+    "b": "bc_rnn",
+    "name": "H2 diffusion \u2212 BC-RNN",
+    "status": "computed",
+    "n_seeds": {
+     "diffusion_unet": 6,
+     "bc_rnn": 6
+    },
+    "difference": -0.011666666666666714,
+    "bootstrap_ci95": [
+     -0.05666666666666664,
+     0.030000000000000027
+    ],
+    "bootstrap_separation": "not separated",
+    "seed_level_ci95": [
+     -0.035005921039908634,
+     0.01167258770657565
+    ],
+    "seed_level_df": 9.907837630839934,
+    "seed_level_separation": "not separated",
+    "verdict": "not separated",
+    "sign": null,
+    "relation": "unchanged, not separated",
+    "reading": "H2 diffusion \u2212 BC-RNN: not separated under either interval, with 6 seeds on 100 fresh starts. This replication gives no evidence of a difference; that is not evidence of equality. As in the frozen result, not separated. Separate replication; the frozen result stands as reported.",
+    "frozen": {
+     "difference": -0.006666666666666599,
+     "bootstrap_ci95": [
+      -0.08000000000000007,
+      0.06666666666666665
+     ],
+     "bootstrap_separation": "not separated",
+     "seed_level_ci95": [
+      -0.08960033961492067,
+      0.07626700628158725
+     ],
+     "seed_level_df": 3.7409326424870453,
+     "seed_level_separation": "not separated",
+     "n_seeds": 3,
+     "n_states": 50
+    }
+   },
+   {
+    "hypothesis": "H2c",
+    "a": "diffusion_unet",
+    "b": "bc_mlp_chunk",
+    "name": "H2-c diffusion \u2212 BC-MLP-chunk",
+    "status": "computed",
+    "n_seeds": {
+     "diffusion_unet": 6,
+     "bc_mlp_chunk": 6
+    },
+    "difference": -0.01666666666666672,
+    "bootstrap_ci95": [
+     -0.06166666666666687,
+     0.02833333333333332
+    ],
+    "bootstrap_separation": "not separated",
+    "seed_level_ci95": [
+     -0.04487325834462536,
+     0.011539925011292147
+    ],
+    "seed_level_df": 9.457786116322698,
+    "seed_level_separation": "not separated",
+    "verdict": "not separated",
+    "sign": null,
+    "relation": "unchanged, not separated",
+    "reading": "H2-c diffusion \u2212 BC-MLP-chunk: not separated under either interval, with 6 seeds on 100 fresh starts. This replication gives no evidence of a difference; that is not evidence of equality. As in the frozen result, not separated. Separate replication; the frozen result stands as reported.",
+    "frozen": {
+     "difference": -0.006666666666666599,
+     "bootstrap_ci95": [
+      -0.08666666666666656,
+      0.07333333333333325
+     ],
+     "bootstrap_separation": "not separated",
+     "seed_level_ci95": [
+      -0.08960033961492067,
+      0.07626700628158725
+     ],
+     "seed_level_df": 3.7409326424870453,
+     "seed_level_separation": "not separated",
+     "n_seeds": 3,
+     "n_states": 50
+    }
+   },
+   {
+    "hypothesis": "H3",
+    "a": "bc_rnn",
+    "b": "bc_mlp",
+    "name": "H3 BC-RNN \u2212 BC-MLP",
+    "status": "computed",
+    "n_seeds": {
+     "bc_rnn": 6,
+     "bc_mlp": 6
+    },
+    "difference": 0.23833333333333329,
+    "bootstrap_ci95": [
+     0.12000000000000022,
+     0.3600000000000001
+    ],
+    "bootstrap_separation": "separated (+)",
+    "seed_level_ci95": [
+     0.09210403833671446,
+     0.3845626283299517
+    ],
+    "seed_level_df": 5.152361874343021,
+    "seed_level_separation": "separated (+)",
+    "verdict": "robust",
+    "sign": "+",
+    "relation": "holds, robust",
+    "reading": "H3 BC-RNN \u2212 BC-MLP: separated (+) under both the bootstrap and the seed-level interval, with 6 seeds on 100 fresh starts. In this replication the difference does not rest on 3 seeds or on the 50 frozen starts. The frozen separation holds in this replication, now under both interval methods. Separate replication; the frozen result stands as reported.",
+    "frozen": {
+     "difference": 0.19333333333333325,
+     "bootstrap_ci95": [
+      0.05333333333333323,
+      0.33999999999999997
+     ],
+     "bootstrap_separation": "separated (+)",
+     "seed_level_ci95": [
+      -0.028219560119902676,
+      0.4148862267865694
+     ],
+     "seed_level_df": 2.59389193422083,
+     "seed_level_separation": "not separated",
+     "n_seeds": 3,
+     "n_states": 50
+    }
+   }
+  ]
+ },
+ "secondary": {
+  "subsets": {
+   "seeds 0-2 (frozen checkpoints, new starts)": {
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "families": [
+     "bc_mlp",
+     "bc_rnn",
+     "bc_mlp_chunk",
+     "diffusion_unet"
+    ],
+    "bootstrap": {
+     "method": "hierarchical paired bootstrap (RESEARCH_PROTOCOL \u00a79)",
+     "B": 10000,
+     "seed": 20261106,
+     "level": 0.95,
+     "draw_order": [
+      "states",
+      "bc_mlp",
+      "bc_rnn",
+      "bc_mlp_chunk",
+      "diffusion_unet"
+     ],
+     "interval": "percentile, numpy linear interpolation",
+     "families": {
+      "bc_mlp": {
+       "estimate": 0.78,
+       "per_seed": [
+        0.75,
+        0.93,
+        0.66
+       ],
+       "n_seeds": 3,
+       "n_states": 100,
+       "ci95": [
+        0.64,
+        0.92
+       ]
+      },
+      "bc_rnn": {
+       "estimate": 0.9533333333333334,
+       "per_seed": [
+        0.94,
+        0.98,
+        0.94
+       ],
+       "n_seeds": 3,
+       "n_states": 100,
+       "ci95": [
+        0.91,
+        0.9899999999999999
+       ]
+      },
+      "bc_mlp_chunk": {
+       "estimate": 0.96,
+       "per_seed": [
+        0.95,
+        0.93,
+        1.0
+       ],
+       "n_seeds": 3,
+       "n_states": 100,
+       "ci95": [
+        0.91,
+        1.0
+       ]
+      },
+      "diffusion_unet": {
+       "estimate": 0.9566666666666667,
+       "per_seed": [
+        0.98,
+        0.93,
+        0.96
+       ],
+       "n_seeds": 3,
+       "n_states": 100,
+       "ci95": [
+        0.91,
+        0.9899999999999999
+       ]
+      }
+     },
+     "differences": [
+      {
+       "a": "diffusion_unet",
+       "b": "bc_mlp",
+       "difference": 0.17666666666666664,
+       "ci95": [
+        0.033333333333333215,
+        0.32008333333333217
+       ],
+       "separation": "separated (+)"
+      },
+      {
+       "a": "diffusion_unet",
+       "b": "bc_rnn",
+       "difference": 0.0033333333333332993,
+       "ci95": [
+        -0.04999999999999993,
+        0.05666666666666664
+       ],
+       "separation": "not separated"
+      },
+      {
+       "a": "diffusion_unet",
+       "b": "bc_mlp_chunk",
+       "difference": -0.0033333333333332993,
+       "ci95": [
+        -0.06333333333333335,
+        0.05999999999999994
+       ],
+       "separation": "not separated"
+      },
+      {
+       "a": "bc_rnn",
+       "b": "bc_mlp",
+       "difference": 0.17333333333333334,
+       "ci95": [
+        0.026666666666666727,
+        0.31333333333333324
+       ],
+       "separation": "separated (+)"
+      }
+     ]
+    },
+    "contrasts": [
+     {
+      "hypothesis": "H2",
+      "a": "diffusion_unet",
+      "b": "bc_mlp",
+      "name": "H2 diffusion \u2212 BC-MLP",
+      "status": "computed",
+      "n_seeds": {
+       "diffusion_unet": 3,
+       "bc_mlp": 3
+      },
+      "difference": 0.17666666666666664,
+      "bootstrap_ci95": [
+       0.033333333333333215,
+       0.32008333333333217
+      ],
+      "bootstrap_separation": "separated (+)",
+      "seed_level_ci95": [
+       -0.1504585517534131,
+       0.5037918850867462
+      ],
+      "seed_level_df": 2.133888457355911,
+      "seed_level_separation": "not separated"
+     },
+     {
+      "hypothesis": "H2",
+      "a": "diffusion_unet",
+      "b": "bc_rnn",
+      "name": "H2 diffusion \u2212 BC-RNN",
+      "status": "computed",
+      "n_seeds": {
+       "diffusion_unet": 3,
+       "bc_rnn": 3
+      },
+      "difference": 0.0033333333333332993,
+      "bootstrap_ci95": [
+       -0.04999999999999993,
+       0.05666666666666664
+      ],
+      "bootstrap_separation": "not separated",
+      "seed_level_ci95": [
+       -0.05157791184188386,
+       0.05824457850855068
+      ],
+      "seed_level_df": 3.970826580226906,
+      "seed_level_separation": "not separated"
+     },
+     {
+      "hypothesis": "H2c",
+      "a": "diffusion_unet",
+      "b": "bc_mlp_chunk",
+      "name": "H2-c diffusion \u2212 BC-MLP-chunk",
+      "status": "computed",
+      "n_seeds": {
+       "diffusion_unet": 3,
+       "bc_mlp_chunk": 3
+      },
+      "difference": -0.0033333333333332993,
+      "bootstrap_ci95": [
+       -0.06333333333333335,
+       0.05999999999999994
+      ],
+      "bootstrap_separation": "not separated",
+      "seed_level_ci95": [
+       -0.07724742771817907,
+       0.07058076105151247
+      ],
+      "seed_level_df": 3.57492029755579,
+      "seed_level_separation": "not separated"
+     },
+     {
+      "hypothesis": "H3",
+      "a": "bc_rnn",
+      "b": "bc_mlp",
+      "name": "H3 BC-RNN \u2212 BC-MLP",
+      "status": "computed",
+      "n_seeds": {
+       "bc_rnn": 3,
+       "bc_mlp": 3
+      },
+      "difference": 0.17333333333333334,
+      "bootstrap_ci95": [
+       0.026666666666666727,
+       0.31333333333333324
+      ],
+      "bootstrap_separation": "separated (+)",
+      "seed_level_ci95": [
+       -0.1558385616045191,
+       0.5025052282711853
+      ],
+      "seed_level_df": 2.1127849694633953,
+      "seed_level_separation": "not separated"
+     }
+    ]
+   },
+   "seeds 3-5 (new checkpoints, new starts)": {
+    "seeds": [
+     3,
+     4,
+     5
+    ],
+    "families": [
+     "bc_mlp",
+     "bc_rnn",
+     "bc_mlp_chunk",
+     "diffusion_unet"
+    ],
+    "bootstrap": {
+     "method": "hierarchical paired bootstrap (RESEARCH_PROTOCOL \u00a79)",
+     "B": 10000,
+     "seed": 20261106,
+     "level": 0.95,
+     "draw_order": [
+      "states",
+      "bc_mlp",
+      "bc_rnn",
+      "bc_mlp_chunk",
+      "diffusion_unet"
+     ],
+     "interval": "percentile, numpy linear interpolation",
+     "families": {
+      "bc_mlp": {
+       "estimate": 0.6666666666666666,
+       "per_seed": [
+        0.54,
+        0.64,
+        0.82
+       ],
+       "n_seeds": 3,
+       "n_states": 100,
+       "ci95": [
+        0.5199999999999999,
+        0.81
+       ]
+      },
+      "bc_rnn": {
+       "estimate": 0.97,
+       "per_seed": [
+        0.97,
+        0.97,
+        0.97
+       ],
+       "n_seeds": 3,
+       "n_states": 100,
+       "ci95": [
+        0.94,
+        0.9933333333333333
+       ]
+      },
+      "bc_mlp_chunk": {
+       "estimate": 0.9733333333333334,
+       "per_seed": [
+        0.98,
+        0.97,
+        0.97
+       ],
+       "n_seeds": 3,
+       "n_states": 100,
+       "ci95": [
+        0.9465833333333341,
+        0.9933333333333333
+       ]
+      },
+      "diffusion_unet": {
+       "estimate": 0.9433333333333334,
+       "per_seed": [
+        0.93,
+        0.95,
+        0.95
+       ],
+       "n_seeds": 3,
+       "n_states": 100,
+       "ci95": [
+        0.8966666666666666,
+        0.9833333333333334
+       ]
+      }
+     },
+     "differences": [
+      {
+       "a": "diffusion_unet",
+       "b": "bc_mlp",
+       "difference": 0.2766666666666667,
+       "ci95": [
+        0.1233333333333334,
+        0.43000000000000005
+       ],
+       "separation": "separated (+)"
+      },
+      {
+       "a": "diffusion_unet",
+       "b": "bc_rnn",
+       "difference": -0.026666666666666616,
+       "ci95": [
+        -0.07999999999999985,
+        0.020000000000000018
+       ],
+       "separation": "not separated"
+      },
+      {
+       "a": "diffusion_unet",
+       "b": "bc_mlp_chunk",
+       "difference": -0.030000000000000027,
+       "ci95": [
+        -0.07999999999999985,
+        0.01000000000000012
+       ],
+       "separation": "not separated"
+      },
+      {
+       "a": "bc_rnn",
+       "b": "bc_mlp",
+       "difference": 0.30333333333333334,
+       "ci95": [
+        0.15333333333333332,
+        0.45000000000000007
+       ],
+       "separation": "separated (+)"
+      }
+     ]
+    },
+    "contrasts": [
+     {
+      "hypothesis": "H2",
+      "a": "diffusion_unet",
+      "b": "bc_mlp",
+      "name": "H2 diffusion \u2212 BC-MLP",
+      "status": "computed",
+      "n_seeds": {
+       "diffusion_unet": 3,
+       "bc_mlp": 3
+      },
+      "difference": 0.2766666666666667,
+      "bootstrap_ci95": [
+       0.1233333333333334,
+       0.43000000000000005
+      ],
+      "bootstrap_separation": "separated (+)",
+      "seed_level_ci95": [
+       -0.07258469605524132,
+       0.6259180293885748
+      ],
+      "seed_level_df": 2.0264889044820626,
+      "seed_level_separation": "not separated"
+     },
+     {
+      "hypothesis": "H2",
+      "a": "diffusion_unet",
+      "b": "bc_rnn",
+      "name": "H2 diffusion \u2212 BC-RNN",
+      "status": "computed",
+      "n_seeds": {
+       "diffusion_unet": 3,
+       "bc_rnn": 3
+      },
+      "difference": -0.026666666666666616,
+      "bootstrap_ci95": [
+       -0.07999999999999985,
+       0.020000000000000018
+      ],
+      "bootstrap_separation": "not separated",
+      "seed_level_ci95": [
+       -0.055351018198329674,
+       0.0020176848649962192
+      ],
+      "seed_level_df": 2.0,
+      "seed_level_separation": "not separated"
+     },
+     {
+      "hypothesis": "H2c",
+      "a": "diffusion_unet",
+      "b": "bc_mlp_chunk",
+      "name": "H2-c diffusion \u2212 BC-MLP-chunk",
+      "status": "computed",
+      "n_seeds": {
+       "diffusion_unet": 3,
+       "bc_mlp_chunk": 3
+      },
+      "difference": -0.030000000000000027,
+      "bootstrap_ci95": [
+       -0.07999999999999985,
+       0.01000000000000012
+      ],
+      "bootstrap_separation": "not separated",
+      "seed_level_ci95": [
+       -0.05399121021752834,
+       -0.006008789782471487
+      ],
+      "seed_level_df": 2.9411764705882444,
+      "seed_level_separation": "separated (-)"
+     },
+     {
+      "hypothesis": "H3",
+      "a": "bc_rnn",
+      "b": "bc_mlp",
+      "name": "H3 BC-RNN \u2212 BC-MLP",
+      "status": "computed",
+      "n_seeds": {
+       "bc_rnn": 3,
+       "bc_mlp": 3
+      },
+      "difference": 0.30333333333333334,
+      "bootstrap_ci95": [
+       0.15333333333333332,
+       0.45000000000000007
+      ],
+      "bootstrap_separation": "separated (+)",
+      "seed_level_ci95": [
+       -0.04914587944608034,
+       0.6558125461127473
+      ],
+      "seed_level_df": 2.0,
+      "seed_level_separation": "not separated"
+     }
+    ]
+   }
+  },
+  "censored_episode_length": {
+   "method": "hierarchical paired bootstrap (RESEARCH_PROTOCOL \u00a79)",
+   "B": 10000,
+   "seed": 20261106,
+   "level": 0.95,
+   "draw_order": [
+    "states",
+    "bc_mlp",
+    "bc_rnn",
+    "bc_mlp_chunk",
+    "diffusion_unet"
+   ],
+   "interval": "percentile, numpy linear interpolation",
+   "families": {
+    "bc_mlp": {
+     "estimate": 203.22666666666666,
+     "per_seed": [
+      193.98,
+      140.91,
+      218.89,
+      257.78,
+      232.22,
+      175.58
+     ],
+     "n_seeds": 6,
+     "n_states": 100,
+     "ci95": [
+      168.4679166666667,
+      238.15008333333333
+     ]
+    },
+    "bc_rnn": {
+     "estimate": 125.31666666666666,
+     "per_seed": [
+      132.58,
+      121.88,
+      128.36,
+      120.59,
+      120.18,
+      128.31
+     ],
+     "n_seeds": 6,
+     "n_states": 100,
+     "ci95": [
+      117.72324999999998,
+      134.5704583333333
+     ]
+    },
+    "bc_mlp_chunk": {
+     "estimate": 118.585,
+     "per_seed": [
+      122.5,
+      130.61,
+      111.35,
+      111.95,
+      117.05,
+      118.05
+     ],
+     "n_seeds": 6,
+     "n_states": 100,
+     "ci95": [
+      110.774875,
+      129.19379166666667
+     ]
+    },
+    "diffusion_unet": {
+     "estimate": 127.31333333333333,
+     "per_seed": [
+      119.75,
+      130.26,
+      123.39,
+      132.65,
+      132.07,
+      125.76
+     ],
+     "n_seeds": 6,
+     "n_states": 100,
+     "ci95": [
+      117.04429166666668,
+      139.87375
+     ]
+    }
+   },
+   "differences": [
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp",
+     "difference": -75.91333333333333,
+     "ci95": [
+      -113.16858333333333,
+      -39.02224999999999
+     ],
+     "separation": "separated (-)"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_rnn",
+     "difference": 1.9966666666666697,
+     "ci95": [
+      -10.860124999999984,
+      15.54675
+     ],
+     "separation": "not separated"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp_chunk",
+     "difference": 8.728333333333339,
+     "ci95": [
+      -5.520708333333324,
+      22.965374999999984
+     ],
+     "separation": "not separated"
+    },
+    {
+     "a": "bc_rnn",
+     "b": "bc_mlp",
+     "difference": -77.91,
+     "ci95": [
+      -114.30329166666667,
+      -42.91175000000005
+     ],
+     "separation": "separated (-)"
+    }
+   ]
+  }
+ },
+ "engineering": {
+  "families": {
+   "bc_mlp": "complete",
+   "bc_rnn": "complete",
+   "bc_mlp_chunk": "complete",
+   "diffusion_unet": "complete"
+  },
+  "incomplete": {},
+  "failed_training_runs": [],
+  "n_errors_total": 0,
+  "validation_and_selection": {
+   "decision": "D-112",
+   "known_issue": "KI-062",
+   "summary": "reports/session14/suite/x3_validation.json",
+   "summary_sha256": "8ff6c4531ef0923efd19394a3078ae61674c7b04ae46fcc6fe3e6b7061e898eb"
+  }
+ },
+ "seeds_per_family": {
+  "bc_mlp": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "bc_rnn": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "bc_mlp_chunk": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "diffusion_unet": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ]
+ },
+ "evaluations": [
+  {
+   "family": "diffusion_unet",
+   "seed": 0,
+   "train_run_id": "s7_diffusion_unet_cos_can_seed0_99251da3",
+   "step": 65000,
+   "checkpoint_sha256": "41dd66ddaf7b54d7114cbfda8058ede8270abbd83eefe715d679aa8645c35c1d",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_diffusion_unet_cos_can_seed0_99251da3__x3_heldout_step0065000__linux-aarch64-container-1f685638f28c__ps0r0",
+   "summary": "reports/session14/x3/evals/s7_diffusion_unet_cos_can_seed0_99251da3__x3_heldout_step0065000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "summary_sha256": "b88f445350c6d730ee0b125c255204954a0f6810385daacd18423e5544d4f7a5",
+   "successes": 98,
+   "n_episodes": 100,
+   "wilson95": [
+    0.929988209271456,
+    0.9944980324498376
+   ],
+   "n_errors": 0,
+   "wall_s": 552.9688966270005,
+   "taxonomy": {
+    "success": 98,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 0,
+    "dropped": 1
+   }
+  },
+  {
+   "family": "diffusion_unet",
+   "seed": 1,
+   "train_run_id": "s7_diffusion_unet_cos_can_seed1_51f8481d",
+   "step": 100000,
+   "checkpoint_sha256": "a687d9fbadf65410cc768ee63b901c248099d9de1b13bf65384433df58f74fab",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_diffusion_unet_cos_can_seed1_51f8481d__x3_heldout_step0100000__linux-aarch64-container-1f685638f28c__ps0r0",
+   "summary": "reports/session14/x3/evals/s7_diffusion_unet_cos_can_seed1_51f8481d__x3_heldout_step0100000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "summary_sha256": "fe0317263489aa7d4c28194c43a3db511cdc779179a84ac9dbad7fe0e1c28ec4",
+   "successes": 93,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8625048526092651,
+    0.9656807389327273
+   ],
+   "n_errors": 0,
+   "wall_s": 593.5928858539992,
+   "taxonomy": {
+    "success": 93,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 2,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 1,
+    "dropped": 3
+   }
+  },
+  {
+   "family": "diffusion_unet",
+   "seed": 2,
+   "train_run_id": "s7_diffusion_unet_cos_can_seed2_9b0fde56",
+   "step": 90000,
+   "checkpoint_sha256": "49d73c93ed0a70b79a433892808468005004f89f8c923685c4cb342e3a456e27",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_diffusion_unet_cos_can_seed2_9b0fde56__x3_heldout_step0090000__linux-aarch64-container-1f685638f28c__ps0r0",
+   "summary": "reports/session14/x3/evals/s7_diffusion_unet_cos_can_seed2_9b0fde56__x3_heldout_step0090000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "summary_sha256": "4588d48380e54ab9047c8541378c3b9e565914e90aa2e66efc52ff301cc194f8",
+   "successes": 96,
+   "n_episodes": 100,
+   "wilson95": [
+    0.9016292856411208,
+    0.9843366960084523
+   ],
+   "n_errors": 0,
+   "wall_s": 568.8295108429993,
+   "taxonomy": {
+    "success": 96,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 1,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 1,
+    "dropped": 2
+   }
+  },
+  {
+   "family": "diffusion_unet",
+   "seed": 3,
+   "train_run_id": "s14_diffusion_unet_cos_can_seed3_a6116493",
+   "step": 60000,
+   "checkpoint_sha256": "1e8d1eed412cbfa81698d17e39b83c2cc97917e59650aa3e3e122f3cf5f7611c",
+   "source": "reports/session14/selection/s14_diffusion_unet_cos_can_seed3_a6116493.json",
+   "eval_run_id": "s14_diffusion_unet_cos_can_seed3_a6116493__x3_heldout_step0060000__linux-aarch64-container-1f685638f28c__ps0r0",
+   "summary": "reports/session14/x3/evals/s14_diffusion_unet_cos_can_seed3_a6116493__x3_heldout_step0060000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "summary_sha256": "ea4fa4355a12ce99fe8aa1bba0d922e3d96a69ccbafe4c58968aec97dfb4f0ce",
+   "successes": 93,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8625048526092651,
+    0.9656807389327273
+   ],
+   "n_errors": 0,
+   "wall_s": 601.0570379410001,
+   "taxonomy": {
+    "success": 93,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 1,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 2,
+    "dropped": 3
+   }
+  },
+  {
+   "family": "diffusion_unet",
+   "seed": 4,
+   "train_run_id": "s14_diffusion_unet_cos_can_seed4_de04fdae",
+   "step": 75000,
+   "checkpoint_sha256": "e8bb4e5777c51a0c62794cb7746b7783f1d6a72981ae841debd273b941f76b56",
+   "source": "reports/session14/selection/s14_diffusion_unet_cos_can_seed4_de04fdae.json",
+   "eval_run_id": "s14_diffusion_unet_cos_can_seed4_de04fdae__x3_heldout_step0075000__linux-aarch64-container-1f685638f28c__ps0r0",
+   "summary": "reports/session14/x3/evals/s14_diffusion_unet_cos_can_seed4_de04fdae__x3_heldout_step0075000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "summary_sha256": "da3be7a3c5d2241021e3f3f76b3884e0f723ff0e78a37795c9746742ab3ad9b7",
+   "successes": 95,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8882495307680808,
+    0.9784563208456319
+   ],
+   "n_errors": 0,
+   "wall_s": 573.933684263,
+   "taxonomy": {
+    "success": 95,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 0,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 3,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "diffusion_unet",
+   "seed": 5,
+   "train_run_id": "s14_diffusion_unet_cos_can_seed5_9119b2ec",
+   "step": 85000,
+   "checkpoint_sha256": "96cb187be93367f9b45f1e940bc64884fe23787a32c0cf4d3cc169a9cc50e286",
+   "source": "reports/session14/selection/s14_diffusion_unet_cos_can_seed5_9119b2ec.json",
+   "eval_run_id": "s14_diffusion_unet_cos_can_seed5_9119b2ec__x3_heldout_step0085000__linux-aarch64-container-1f685638f28c__ps0r0",
+   "summary": "reports/session14/x3/evals/s14_diffusion_unet_cos_can_seed5_9119b2ec__x3_heldout_step0085000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "summary_sha256": "7636fbcda7abdb17f39840336314281d07b545124705058789a31a8e1069b1d7",
+   "successes": 95,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8882495307680808,
+    0.9784563208456319
+   ],
+   "n_errors": 0,
+   "wall_s": 549.6549248349984,
+   "taxonomy": {
+    "success": 95,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 1,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 1,
+    "dropped": 2
+   }
+  },
+  {
+   "family": "bc_mlp",
+   "seed": 0,
+   "train_run_id": "s7_bc_mlp_cos_can_seed0_ae8152e3",
+   "step": 55000,
+   "checkpoint_sha256": "b8fa2d06c19ae9d4830cf6b2a50b272e6fc91f3ab8668c68aae17092a16dc081",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_bc_mlp_cos_can_seed0_ae8152e3__x3_heldout_step0055000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s7_bc_mlp_cos_can_seed0_ae8152e3__x3_heldout_step0055000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "8d155063619a6f404184bb50d0384d51569c02ff8a66a01cbd17070664defa08",
+   "successes": 75,
+   "n_episodes": 100,
+   "wilson95": [
+    0.656955364519384,
+    0.8245478863771232
+   ],
+   "n_errors": 0,
+   "wall_s": 525.2254863240014,
+   "taxonomy": {
+    "success": 75,
+    "engineering_error": 0,
+    "gripper_never_closed": 7,
+    "no_grasp_drift": 7,
+    "no_grasp_near": 1,
+    "timeout_holding": 3,
+    "in_goal_bin_not_success": 5,
+    "dropped": 2
+   }
+  },
+  {
+   "family": "bc_mlp",
+   "seed": 1,
+   "train_run_id": "s7_bc_mlp_cos_can_seed1_00564355",
+   "step": 15000,
+   "checkpoint_sha256": "cbf55c0d0656506c8457519024dee360d52f06abf3e92a485a2ef38ee03a34e2",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_bc_mlp_cos_can_seed1_00564355__x3_heldout_step0015000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s7_bc_mlp_cos_can_seed1_00564355__x3_heldout_step0015000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "3743ae480afad0cb9651e73d8517b5f7d49985d297b8c85c3bdd849e1401d4e6",
+   "successes": 93,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8625048526092651,
+    0.9656807389327273
+   ],
+   "n_errors": 0,
+   "wall_s": 398.0170601409991,
+   "taxonomy": {
+    "success": 93,
+    "engineering_error": 0,
+    "gripper_never_closed": 5,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 1,
+    "dropped": 1
+   }
+  },
+  {
+   "family": "bc_mlp",
+   "seed": 2,
+   "train_run_id": "s7_bc_mlp_cos_can_seed2_7359a97f",
+   "step": 55000,
+   "checkpoint_sha256": "3c1535918fb744fca9594da6e11220922db759f72fa09c984ec00006f0e4647a",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_bc_mlp_cos_can_seed2_7359a97f__x3_heldout_step0055000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s7_bc_mlp_cos_can_seed2_7359a97f__x3_heldout_step0055000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "499af66da49929125b30ebe6503fd89278caf040648cd92ddf37c2de7414a420",
+   "successes": 66,
+   "n_episodes": 100,
+   "wilson95": [
+    0.5627772885472462,
+    0.7453847920265184
+   ],
+   "n_errors": 0,
+   "wall_s": 556.0142491279985,
+   "taxonomy": {
+    "success": 66,
+    "engineering_error": 0,
+    "gripper_never_closed": 12,
+    "no_grasp_drift": 11,
+    "no_grasp_near": 5,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 2,
+    "dropped": 3
+   }
+  },
+  {
+   "family": "bc_mlp",
+   "seed": 3,
+   "train_run_id": "s14_bc_mlp_cos_can_seed3_04223e1b",
+   "step": 75000,
+   "checkpoint_sha256": "9f5a1c0e81078919eb640bda7b4e724cc47eaae331a30571462872a59af8c500",
+   "source": "reports/session14/selection/s14_bc_mlp_cos_can_seed3_04223e1b.json",
+   "eval_run_id": "s14_bc_mlp_cos_can_seed3_04223e1b__x3_heldout_step0075000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s14_bc_mlp_cos_can_seed3_04223e1b__x3_heldout_step0075000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "34159ce08fca80bdbe6ebbe2ee0dfd093843a2641363ada1a6300b6bfa3f1320",
+   "successes": 54,
+   "n_episodes": 100,
+   "wilson95": [
+    0.44264860323368227,
+    0.6343919169097589
+   ],
+   "n_errors": 0,
+   "wall_s": 635.6365496229992,
+   "taxonomy": {
+    "success": 54,
+    "engineering_error": 0,
+    "gripper_never_closed": 14,
+    "no_grasp_drift": 19,
+    "no_grasp_near": 6,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 2,
+    "dropped": 4
+   }
+  },
+  {
+   "family": "bc_mlp",
+   "seed": 4,
+   "train_run_id": "s14_bc_mlp_cos_can_seed4_7c8e5c7b",
+   "step": 25000,
+   "checkpoint_sha256": "ffeafd9a8eeb62fd995b78efc7b24f55f01306bfd452e95bb8c68db95b6684bc",
+   "source": "reports/session14/selection/s14_bc_mlp_cos_can_seed4_7c8e5c7b.json",
+   "eval_run_id": "s14_bc_mlp_cos_can_seed4_7c8e5c7b__x3_heldout_step0025000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s14_bc_mlp_cos_can_seed4_7c8e5c7b__x3_heldout_step0025000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "8c2b4d913ec2c5670ae524ded73e01a434fd1754841400d3e6cf6a0660167681",
+   "successes": 64,
+   "n_episodes": 100,
+   "wilson95": [
+    0.5423540245160874,
+    0.7272877959859567
+   ],
+   "n_errors": 0,
+   "wall_s": 584.5304000159995,
+   "taxonomy": {
+    "success": 64,
+    "engineering_error": 0,
+    "gripper_never_closed": 23,
+    "no_grasp_drift": 4,
+    "no_grasp_near": 1,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 6,
+    "dropped": 1
+   }
+  },
+  {
+   "family": "bc_mlp",
+   "seed": 5,
+   "train_run_id": "s14_bc_mlp_cos_can_seed5_c001f43c",
+   "step": 15000,
+   "checkpoint_sha256": "a4108aa5e0190b67d7babde388bc5250fa9ef18439e0e57cb215ca0e4b5ff267",
+   "source": "reports/session14/selection/s14_bc_mlp_cos_can_seed5_c001f43c.json",
+   "eval_run_id": "s14_bc_mlp_cos_can_seed5_c001f43c__x3_heldout_step0015000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s14_bc_mlp_cos_can_seed5_c001f43c__x3_heldout_step0015000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "70244327930a48831e8d6cc5be33cefb2cc633ba8de2f076df4b4e581cb8b796",
+   "successes": 82,
+   "n_episodes": 100,
+   "wilson95": [
+    0.7333264161369926,
+    0.8829977450105364
+   ],
+   "n_errors": 0,
+   "wall_s": 461.8931725020011,
+   "taxonomy": {
+    "success": 82,
+    "engineering_error": 0,
+    "gripper_never_closed": 10,
+    "no_grasp_drift": 2,
+    "no_grasp_near": 1,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 2,
+    "dropped": 2
+   }
+  },
+  {
+   "family": "bc_rnn",
+   "seed": 0,
+   "train_run_id": "s7_bc_rnn_cos_can_seed0_5ff5ce91",
+   "step": 30000,
+   "checkpoint_sha256": "5085d716f285631e749a9439151c3aafab6fb6c67baae78800b3a9a0014e6137",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_bc_rnn_cos_can_seed0_5ff5ce91__x3_heldout_step0030000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s7_bc_rnn_cos_can_seed0_5ff5ce91__x3_heldout_step0030000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "e817b1ec3941c01893841efdbcf143bf0a14bc8d9d9580c285cd20722959e272",
+   "successes": 94,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8752318455410406,
+    0.9722138760368118
+   ],
+   "n_errors": 0,
+   "wall_s": 430.2380491130025,
+   "taxonomy": {
+    "success": 94,
+    "engineering_error": 0,
+    "gripper_never_closed": 1,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 1,
+    "dropped": 3
+   }
+  },
+  {
+   "family": "bc_rnn",
+   "seed": 1,
+   "train_run_id": "s7_bc_rnn_cos_can_seed1_d34c6b99",
+   "step": 25000,
+   "checkpoint_sha256": "a69eef409a35adbcd6e393e3397fb5603670a254d1d2b05b6d68e677d39fd23a",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_bc_rnn_cos_can_seed1_d34c6b99__x3_heldout_step0025000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s7_bc_rnn_cos_can_seed1_d34c6b99__x3_heldout_step0025000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "14a792c9b0390b57c7aa4065063d15df3e7e4209d5812f83df1e0c508ea11663",
+   "successes": 98,
+   "n_episodes": 100,
+   "wilson95": [
+    0.929988209271456,
+    0.9944980324498376
+   ],
+   "n_errors": 0,
+   "wall_s": 397.54362963899985,
+   "taxonomy": {
+    "success": 98,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 1,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "bc_rnn",
+   "seed": 2,
+   "train_run_id": "s7_bc_rnn_cos_can_seed2_8452a37a",
+   "step": 35000,
+   "checkpoint_sha256": "7cda91e6881c5d9a71a8c4b4fc5e56b6d527887b049af91eb481d700e164a148",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_bc_rnn_cos_can_seed2_8452a37a__x3_heldout_step0035000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s7_bc_rnn_cos_can_seed2_8452a37a__x3_heldout_step0035000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "1b15d41fdee498a96b782eabfe9f04a770805dd9792591d4a313022ddc697481",
+   "successes": 94,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8752318455410406,
+    0.9722138760368118
+   ],
+   "n_errors": 0,
+   "wall_s": 417.33063373200275,
+   "taxonomy": {
+    "success": 94,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 4,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 1,
+    "dropped": 1
+   }
+  },
+  {
+   "family": "bc_rnn",
+   "seed": 3,
+   "train_run_id": "s14_bc_rnn_cos_can_seed3_24bd8478",
+   "step": 35000,
+   "checkpoint_sha256": "63b51818c6f5e00278f42836f3fadfcda916d12d63c2abb0bf954fc1cce30bd1",
+   "source": "reports/session14/selection/s14_bc_rnn_cos_can_seed3_24bd8478.json",
+   "eval_run_id": "s14_bc_rnn_cos_can_seed3_24bd8478__x3_heldout_step0035000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s14_bc_rnn_cos_can_seed3_24bd8478__x3_heldout_step0035000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "a0826c6d3017c6b515c8043485abc837ae06efba101b3966fb2990b1c65f6495",
+   "successes": 97,
+   "n_episodes": 100,
+   "wilson95": [
+    0.9154806357094724,
+    0.9897454759759611
+   ],
+   "n_errors": 0,
+   "wall_s": 401.0841095579999,
+   "taxonomy": {
+    "success": 97,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 2,
+    "no_grasp_near": 0,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 0,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "bc_rnn",
+   "seed": 4,
+   "train_run_id": "s14_bc_rnn_cos_can_seed4_bc40d865",
+   "step": 30000,
+   "checkpoint_sha256": "247545d1d112da2fe27e53f659b22a433656625683723d142fd414595e27e21e",
+   "source": "reports/session14/selection/s14_bc_rnn_cos_can_seed4_bc40d865.json",
+   "eval_run_id": "s14_bc_rnn_cos_can_seed4_bc40d865__x3_heldout_step0030000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s14_bc_rnn_cos_can_seed4_bc40d865__x3_heldout_step0030000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "33e8473e0363d8e68d064fe3b3ef4688977527a008989d33f9b3efa3e39529af",
+   "successes": 97,
+   "n_episodes": 100,
+   "wilson95": [
+    0.9154806357094724,
+    0.9897454759759611
+   ],
+   "n_errors": 0,
+   "wall_s": 427.1465209449998,
+   "taxonomy": {
+    "success": 97,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 1,
+    "dropped": 1
+   }
+  },
+  {
+   "family": "bc_rnn",
+   "seed": 5,
+   "train_run_id": "s14_bc_rnn_cos_can_seed5_ad65ce36",
+   "step": 20000,
+   "checkpoint_sha256": "7ab839c8f67b42473f3f00d12a1a68ea90ae07a586839181abbed7fa020312a4",
+   "source": "reports/session14/selection/s14_bc_rnn_cos_can_seed5_ad65ce36.json",
+   "eval_run_id": "s14_bc_rnn_cos_can_seed5_ad65ce36__x3_heldout_step0020000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s14_bc_rnn_cos_can_seed5_ad65ce36__x3_heldout_step0020000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "112ac0c1962d99345c47cd29c717cfdbb061e526c5a074f5b50e025ea36343c7",
+   "successes": 97,
+   "n_episodes": 100,
+   "wilson95": [
+    0.9154806357094724,
+    0.9897454759759611
+   ],
+   "n_errors": 0,
+   "wall_s": 451.1007429150013,
+   "taxonomy": {
+    "success": 97,
+    "engineering_error": 0,
+    "gripper_never_closed": 2,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 1,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "bc_mlp_chunk",
+   "seed": 0,
+   "train_run_id": "s7_bc_mlp_chunk_wd1e1_can_seed0_0c2f9d4b",
+   "step": 95000,
+   "checkpoint_sha256": "1968ad1148e4f20f82fffd6dfa57196f82ee3c7544e4e8c6eea5af2d7b367cd9",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_bc_mlp_chunk_wd1e1_can_seed0_0c2f9d4b__x3_heldout_step0095000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s7_bc_mlp_chunk_wd1e1_can_seed0_0c2f9d4b__x3_heldout_step0095000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "4f4d6ade790686f9c0030a60cafba0ab1a32612ea954f5ede42c96bf532eaa11",
+   "successes": 95,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8882495307680808,
+    0.9784563208456319
+   ],
+   "n_errors": 0,
+   "wall_s": 308.6684229750026,
+   "taxonomy": {
+    "success": 95,
+    "engineering_error": 0,
+    "gripper_never_closed": 1,
+    "no_grasp_drift": 3,
+    "no_grasp_near": 1,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 0,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "bc_mlp_chunk",
+   "seed": 1,
+   "train_run_id": "s7_bc_mlp_chunk_wd1e1_can_seed1_92a1f312",
+   "step": 85000,
+   "checkpoint_sha256": "3b306ad736f3b2df7e53928599b17125f834c1260224dbde97d57cdb23dc4fb2",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_bc_mlp_chunk_wd1e1_can_seed1_92a1f312__x3_heldout_step0085000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s7_bc_mlp_chunk_wd1e1_can_seed1_92a1f312__x3_heldout_step0085000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "5e3e767a30b7a72e6398a9a23d524e3dcf9227c1b3fcaa49555503accb42801e",
+   "successes": 93,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8625048526092651,
+    0.9656807389327273
+   ],
+   "n_errors": 0,
+   "wall_s": 317.90622239599907,
+   "taxonomy": {
+    "success": 93,
+    "engineering_error": 0,
+    "gripper_never_closed": 2,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 1,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 2,
+    "dropped": 1
+   }
+  },
+  {
+   "family": "bc_mlp_chunk",
+   "seed": 2,
+   "train_run_id": "s7_bc_mlp_chunk_wd1e1_can_seed2_63847bb4",
+   "step": 30000,
+   "checkpoint_sha256": "ebbff8e38a713c584cbef4058534d0377d108701457d79ac25814bc7ff24552f",
+   "source": "docs/FINAL_TEST_FREEZE.md",
+   "eval_run_id": "s7_bc_mlp_chunk_wd1e1_can_seed2_63847bb4__x3_heldout_step0030000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s7_bc_mlp_chunk_wd1e1_can_seed2_63847bb4__x3_heldout_step0030000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "69e7de8e4c4d4d4dbec98345d272aa0eb8c26943006dc1ffac5ddc48884439b9",
+   "successes": 100,
+   "n_episodes": 100,
+   "wilson95": [
+    0.9630065017930143,
+    1.0
+   ],
+   "n_errors": 0,
+   "wall_s": 288.5641741750005,
+   "taxonomy": {
+    "success": 100,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 0,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "bc_mlp_chunk",
+   "seed": 3,
+   "train_run_id": "s14_bc_mlp_chunk_wd1e1_can_seed3_2fec9f65",
+   "step": 40000,
+   "checkpoint_sha256": "26ee879337d3ac54af6a3169932276769717710df4b1ca9f67fe273686896d4a",
+   "source": "reports/session14/selection/s14_bc_mlp_chunk_wd1e1_can_seed3_2fec9f65.json",
+   "eval_run_id": "s14_bc_mlp_chunk_wd1e1_can_seed3_2fec9f65__x3_heldout_step0040000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s14_bc_mlp_chunk_wd1e1_can_seed3_2fec9f65__x3_heldout_step0040000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "d7221cbbc3c9677ecd205518b1775e30f9f0869a884b897d174aeb099c360cc5",
+   "successes": 98,
+   "n_episodes": 100,
+   "wilson95": [
+    0.929988209271456,
+    0.9944980324498376
+   ],
+   "n_errors": 0,
+   "wall_s": 288.03657308999755,
+   "taxonomy": {
+    "success": 98,
+    "engineering_error": 0,
+    "gripper_never_closed": 1,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 1,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 0,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "bc_mlp_chunk",
+   "seed": 4,
+   "train_run_id": "s14_bc_mlp_chunk_wd1e1_can_seed4_26a20b25",
+   "step": 30000,
+   "checkpoint_sha256": "fb3ad58188e0d7c24c78587da1f76f9f631ff9e06600833c58dd4a44076f2af6",
+   "source": "reports/session14/selection/s14_bc_mlp_chunk_wd1e1_can_seed4_26a20b25.json",
+   "eval_run_id": "s14_bc_mlp_chunk_wd1e1_can_seed4_26a20b25__x3_heldout_step0030000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s14_bc_mlp_chunk_wd1e1_can_seed4_26a20b25__x3_heldout_step0030000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "13e0776c30bd4dc687acdb82d43ae5208084e08e0b2b21bd90716459e910fbb3",
+   "successes": 97,
+   "n_episodes": 100,
+   "wilson95": [
+    0.9154806357094724,
+    0.9897454759759611
+   ],
+   "n_errors": 0,
+   "wall_s": 295.74020051000116,
+   "taxonomy": {
+    "success": 97,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 1,
+    "dropped": 1
+   }
+  },
+  {
+   "family": "bc_mlp_chunk",
+   "seed": 5,
+   "train_run_id": "s14_bc_mlp_chunk_wd1e1_can_seed5_4b41dda8",
+   "step": 25000,
+   "checkpoint_sha256": "f17ae8ee64af3c65c085189d6bad2438971bb04b2e844c54e14d14262b123afc",
+   "source": "reports/session14/selection/s14_bc_mlp_chunk_wd1e1_can_seed5_4b41dda8.json",
+   "eval_run_id": "s14_bc_mlp_chunk_wd1e1_can_seed5_4b41dda8__x3_heldout_step0025000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session14/x3/evals/s14_bc_mlp_chunk_wd1e1_can_seed5_4b41dda8__x3_heldout_step0025000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "5a8d25d3aa24bbffb4bc5de81bfb0ccd8a6e212d19c7da781f6bfd6775eae6d7",
+   "successes": 97,
+   "n_episodes": 100,
+   "wilson95": [
+    0.9154806357094724,
+    0.9897454759759611
+   ],
+   "n_errors": 0,
+   "wall_s": 293.6328135509975,
+   "taxonomy": {
+    "success": 97,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 0,
+    "dropped": 3
+   }
+  }
+ ],
+ "new_selections": [
+  {
+   "train_run_id": "s14_diffusion_unet_cos_can_seed3_a6116493",
+   "step": 60000,
+   "successes": 49,
+   "first_success_step_mean": 111.20408163265306,
+   "record": "reports/session14/selection/s14_diffusion_unet_cos_can_seed3_a6116493.json",
+   "record_sha256": "0acadb13e5f1a896e8298851c6a436be0b0d323a878eef7a6ce8cae2d84a2c8b"
+  },
+  {
+   "train_run_id": "s14_diffusion_unet_cos_can_seed4_de04fdae",
+   "step": 75000,
+   "successes": 48,
+   "first_success_step_mean": 108.83333333333333,
+   "record": "reports/session14/selection/s14_diffusion_unet_cos_can_seed4_de04fdae.json",
+   "record_sha256": "f8d665c876d944d0714db58daf5b5de8dfe9e114ab80a33e9165063a684298f2"
+  },
+  {
+   "train_run_id": "s14_diffusion_unet_cos_can_seed5_9119b2ec",
+   "step": 85000,
+   "successes": 48,
+   "first_success_step_mean": 109.04166666666667,
+   "record": "reports/session14/selection/s14_diffusion_unet_cos_can_seed5_9119b2ec.json",
+   "record_sha256": "fadf695acb90e67c50bd1125e0810a835b6a956e4953532d8a5ea7e7d187a2d7"
+  },
+  {
+   "train_run_id": "s14_bc_mlp_cos_can_seed3_04223e1b",
+   "step": 75000,
+   "successes": 37,
+   "first_success_step_mean": 121.8108108108108,
+   "record": "reports/session14/selection/s14_bc_mlp_cos_can_seed3_04223e1b.json",
+   "record_sha256": "cf7769f8c626006fc8538ecb288f8b195b85513b6afabb8676db14080aae90bd"
+  },
+  {
+   "train_run_id": "s14_bc_mlp_cos_can_seed4_7c8e5c7b",
+   "step": 25000,
+   "successes": 37,
+   "first_success_step_mean": 131.0810810810811,
+   "record": "reports/session14/selection/s14_bc_mlp_cos_can_seed4_7c8e5c7b.json",
+   "record_sha256": "51ad483bf523b87f2c170dd3d187415a323ae52d95a16b73e233e921e5342c05"
+  },
+  {
+   "train_run_id": "s14_bc_mlp_cos_can_seed5_c001f43c",
+   "step": 15000,
+   "successes": 41,
+   "first_success_step_mean": 113.02439024390245,
+   "record": "reports/session14/selection/s14_bc_mlp_cos_can_seed5_c001f43c.json",
+   "record_sha256": "7205af77293be31bea8427254d2a8694eb00614c2aa02295c24ca2a18ea7721c"
+  },
+  {
+   "train_run_id": "s14_bc_rnn_cos_can_seed3_24bd8478",
+   "step": 35000,
+   "successes": 50,
+   "first_success_step_mean": 110.6,
+   "record": "reports/session14/selection/s14_bc_rnn_cos_can_seed3_24bd8478.json",
+   "record_sha256": "e43117fa51c8f526907f2071722f72ba9f56c1be98200fa003c6362bfc59386d"
+  },
+  {
+   "train_run_id": "s14_bc_rnn_cos_can_seed4_bc40d865",
+   "step": 30000,
+   "successes": 49,
+   "first_success_step_mean": 108.04081632653062,
+   "record": "reports/session14/selection/s14_bc_rnn_cos_can_seed4_bc40d865.json",
+   "record_sha256": "ae1c835e62aa68c464364d5a46ccc6e08a3757f70dd8e06d7e176f7cf3450d35"
+  },
+  {
+   "train_run_id": "s14_bc_rnn_cos_can_seed5_ad65ce36",
+   "step": 20000,
+   "successes": 50,
+   "first_success_step_mean": 117.5,
+   "record": "reports/session14/selection/s14_bc_rnn_cos_can_seed5_ad65ce36.json",
+   "record_sha256": "1e03ee6123b247b762b1bacc3a968538b06ed31d54e6e3489f8325d6e5618e01"
+  },
+  {
+   "train_run_id": "s14_bc_mlp_chunk_wd1e1_can_seed3_2fec9f65",
+   "step": 40000,
+   "successes": 50,
+   "first_success_step_mean": 103.62,
+   "record": "reports/session14/selection/s14_bc_mlp_chunk_wd1e1_can_seed3_2fec9f65.json",
+   "record_sha256": "5c0072d51cba3df0c81c52c463c725fba9dc85b88fc694ba6d6ce7d56fabdd4b"
+  },
+  {
+   "train_run_id": "s14_bc_mlp_chunk_wd1e1_can_seed4_26a20b25",
+   "step": 30000,
+   "successes": 50,
+   "first_success_step_mean": 104.46,
+   "record": "reports/session14/selection/s14_bc_mlp_chunk_wd1e1_can_seed4_26a20b25.json",
+   "record_sha256": "889d56ab82f01291e1e5c2de53c54eee7e8b7db066aa7377a0dee736e3ec9507"
+  },
+  {
+   "train_run_id": "s14_bc_mlp_chunk_wd1e1_can_seed5_4b41dda8",
+   "step": 25000,
+   "successes": 50,
+   "first_success_step_mean": 106.76,
+   "record": "reports/session14/selection/s14_bc_mlp_chunk_wd1e1_can_seed5_4b41dda8.json",
+   "record_sha256": "e846bc086c7ccd9d9022ec97d7d3986169d1aeea992c0a598e4e9528ee29ad55"
+  }
+ ],
+ "taxonomy_categories": [
+  "success",
+  "engineering_error",
+  "gripper_never_closed",
+  "no_grasp_drift",
+  "no_grasp_near",
+  "timeout_holding",
+  "in_goal_bin_not_success",
+  "dropped"
+ ],
+ "taxonomy": {
+  "bc_mlp": {
+   "success": 434,
+   "engineering_error": 0,
+   "gripper_never_closed": 71,
+   "no_grasp_drift": 43,
+   "no_grasp_near": 14,
+   "timeout_holding": 7,
+   "in_goal_bin_not_success": 18,
+   "dropped": 13
+  },
+  "bc_rnn": {
+   "success": 577,
+   "engineering_error": 0,
+   "gripper_never_closed": 3,
+   "no_grasp_drift": 9,
+   "no_grasp_near": 0,
+   "timeout_holding": 1,
+   "in_goal_bin_not_success": 5,
+   "dropped": 5
+  },
+  "bc_mlp_chunk": {
+   "success": 580,
+   "engineering_error": 0,
+   "gripper_never_closed": 4,
+   "no_grasp_drift": 5,
+   "no_grasp_near": 3,
+   "timeout_holding": 0,
+   "in_goal_bin_not_success": 3,
+   "dropped": 5
+  },
+  "diffusion_unet": {
+   "success": 570,
+   "engineering_error": 0,
+   "gripper_never_closed": 0,
+   "no_grasp_drift": 4,
+   "no_grasp_near": 5,
+   "timeout_holding": 2,
+   "in_goal_bin_not_success": 8,
+   "dropped": 11
+  }
+ },
+ "taxonomy_sha256": "5a5d998f12b16f58457be87edc417eba0f65bc386c8ec1a29f84e829d64bd7f6",
+ "wall_s_total": 10918.345950696,
+ "evaluations_git": {
+  "sha": "13c5db2abe90032b9ef09f2540c541124a93d107",
+  "dirty": false,
+  "source": "host working tree (infra/containers/run_sim_cpu.sh)"
+ },
+ "git": {
+  "sha": "949a6d73fa0f06dd2ca352dcbf092f86f86af268",
+  "dirty": false
+ },
+ "generated_utc": "2026-11-11T10:49:55.024031+00:00"
+}

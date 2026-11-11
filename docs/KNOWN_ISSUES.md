@@ -39,7 +39,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-032 | LOW | RESOLVED (Session 5) | Paths under a symlinked mount were recorded absolute |
 | KI-033 | LOW | OPEN | The Modal image carries no evaluation suite; EGL vs OSMesa pending |
 | KI-034 | MEDIUM | OPEN | Lift validation is saturated: most §7 choices are decided by the first-success tiebreak |
-| KI-035 | LOW | ACCEPTED | Host contention during the Session 6 suite inflated wall times (results unaffected) |
+| KI-035 | LOW | ACCEPTED | Host contention inflated wall times in Session 6 and, through swap thrashing, Session 14 (results unaffected) |
 | KI-036 | MEDIUM | RESOLVED (Session 7, D-070) | The Can suite orchestrator crashed on a half-written evaluation summary |
 | KI-037 | LOW | RESOLVED (Session 7) | The robustness `--check` called equal Can manifests "not bitwise" |
 | KI-038 | LOW | RESOLVED (Session 7) | `analyze_robustness.py` read the checkpoint step from the wrong field |
@@ -756,6 +756,15 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
     separated" (E8-15).
 
 ### KI-035 — Host contention during the Session 6 suite inflated wall times (results unaffected)
+- **Session 14 recurrence (swap thrashing; D-113).** With 3 diffusion trainings, 4 X3
+  validation containers, the Docker VM (7.3 GB footprint) and desktop apps on the 16 GB host,
+  macOS swapped about 3,200 pages in and 6,800 out per second (`vm_stat`, 03:30 UTC
+  2026-11-11; load average about 100). Diffusion training fell from 4.0 to 0.9 steps/s, and
+  BC-MLP validation evaluations took 1,251–9,389 s (Session 7 median 404 s). The owner paused
+  validation until the diffusion runs finish (D-113); within 8 minutes diffusion was back to
+  about 4.8 steps/s. Results are unaffected (deterministic evaluations; the engineering check
+  reproduced Session 7 exactly under this load). Lesson: on this host, do not run 4
+  containers beside 3 or more training runs.
 - **Observed:** the suite itself ran up to 10 jobs at once (peak from its event log; limits
   8 training runs, 4 evaluation containers and 10 jobs in total, D-054) on an M1 Pro with 8 performance and 2
   efficiency cores.

@@ -2714,3 +2714,18 @@ X3 suite, the 24 evaluations and the analysis. The preregistration is not edited
 
 **Recorded** as a dated deviation in the ledger (E14-05) before the first X3 rollout, as the
 preregistration's §4 requires. The analysis's engineering section points here.
+
+### D-113 X3 validation paused while the diffusion runs train, after the host thrashed swap (OWNER, 2026-11-11, Session 14)
+- **Facts given to the owner (03:29 UTC):** with the Docker VM (7.3 GB footprint), 4
+  validation containers, the 3 diffusion trainings and the desktop apps on a 16 GB host, the
+  machine swapped about 3,200 pages in and 6,800 out per second (load average about 100).
+  Diffusion trained at 0.9 steps/s (35,900 → 45,500 in 3 h; 4.0 steps/s before validation
+  resumed), and a BC-MLP validation evaluation took 1.6–2.6 h instead of about 7 minutes
+  (Session 7 median 404 s).
+- **Decision (owner: "Pause validation"):** no new validation launches until the diffusion runs
+  finish training; running evaluations finish (nothing killed); then `make x3-validate` resumes
+  with 4 containers. The driver was stopped with SIGINT at 03:32:46 UTC and exited 3 at
+  03:40:11 after its 2 running evaluations finished (exit 0).
+- **Results-neutral:** scheduling only, as D-059. The driver is idempotent: evaluated
+  checkpoints are skipped and existing selections are kept. The evaluation code, starts,
+  settings and the §7 rule are unchanged.

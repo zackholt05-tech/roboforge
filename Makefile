@@ -26,7 +26,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	rgb-dataset rgb-dataset-install rgb-validate rgb-heldout rgb-heldout-rehearse rgb-heldout-gate \
 	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement \
 	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze x1-run x1-analyze \
-	x3-states check-x3-states x3-plan x3-train \
+	x3-states check-x3-states x3-plan x3-train x3-validate x3-check x3-run x3-analyze \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
 	web-build web-test web-e2e web-verify web-dev visual-provenance \
 	paper-assets paper-check paper-bibcheck paper \
@@ -323,7 +323,7 @@ x1-analyze:  ## X1: the one analysis of the 45 clamped evaluations vs the frozen
 
 # ---------------------------------------------------------------- Session 14: X3 (D-110, D-111)
 # X3, a separate replication: the frozen Can configurations with seeds 3-5, on fresh held-out
-# starts. The evaluation and analysis targets are added with their code (D-110).
+# starts. The evaluation and analysis targets came with their code, before the first X3 rollout.
 X3_PLAN := configs/experiments/x3_can.yaml
 x3-states:  ## X3: the 100 X3 held-out Can starts ON THE CANONICAL CONTAINER, once (D-111)
 	ROBOFORGE_WRITE_EVAL_STATES=1 ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM) \
@@ -338,6 +338,18 @@ x3-plan:  ## X3: resolve the X3 training plan and print run IDs (launches nothin
 x3-train:  ## X3: seeds 3-5 of the frozen Can configurations; validate, select (<= 6 trainings, <= 4 containers)
 	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/run_suite.py \
 		--plan $(X3_PLAN) --max-train 6
+
+x3-validate:  ## X3: validation evaluations and §7 selections the suite left after KI-062 (D-112)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/x3_validate.py
+
+x3-check:  ## X3: engineering reproduction on validation starts before the first X3 rollout (not a result)
+	$(RUN_S) python scripts/check_x3_engineering.py reproduce
+
+x3-run:  ## X3: the 24 evaluations on the X3 held-out starts, once (<= 4 containers, clean tree)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/run_x3.py
+
+x3-analyze:  ## X3: the one analysis of the X3 evaluations, beside the frozen Level 1 result
+	$(RUN_S) python scripts/analyze_x3.py
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

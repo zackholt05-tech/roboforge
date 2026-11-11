@@ -66,6 +66,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-059 | LOW | FIXED (Session 12) | A fresh clone failed 4 held-out gate tests: their "runs/ not present" skip tested the directory, which a clone has (README.md) |
 | KI-060 | LOW | ACCEPTED (Session 12) | The locked diffusers 0.11.1 and transformers 4.41.2 (pinned by robomimic) carry published security advisories |
 | KI-061 | MEDIUM | PARTIAL (Session 12) | Linux: triton segfaults when loaded after Mesa's LLVM (root cause found; test harness fixed); on Linux x86_64 compiled meshes differ from the canonical export by 7.45e-9 m |
+| KI-062 | MEDIUM | MITIGATED (Session 14, D-112) | `run_suite.py` stops at its first configuration choice when a one-trial plan uses a tuning seed other than 0; the dry run does not reach the chooser |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -1268,3 +1269,27 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   crash the same way. Workaround: `import torch._dynamo` before mujoco. `src/` was not changed
   at release (simulator code; the frozen evaluation code stays as tested). The x86_64 mesh
   difference stays: Linux x86_64 use of this lock is unverified (KI-001).
+
+### KI-062 A one-trial suite plan with a non-zero tuning seed stops at its first configuration choice (MEDIUM, MITIGATED; Session 14)
+- **Found by** the X3 training suite (`make x3-train`, plan `configs/experiments/x3_can.yaml`,
+  tuning seed 3, `replicates_with_tuning: true`), at 23:57:37 UTC on 2026-11-10, right after
+  the first run was selected: `ValueError: bc_mlp trial 1: task/seed can/3 != can/0`
+  (`logs/session14/suite/x3_can/events.jsonl`, event `suite_error`).
+- **Cause.** `roboforge.eval.tuning.choose_configuration` (frozen, pinned by
+  `make freeze-check`) requires every tuning trial to use seed 0 (RESEARCH_PROTOCOL §6.3).
+  With `replicates_with_tuning` (D-068) every run is launched at the start, so the choice only
+  writes the trivial one-trial record, but `run_suite.py` still calls the chooser. `make
+  x3-plan` (`--dry-run`) resolves the plan without reaching the chooser, so nothing caught it
+  before training. The X3 design (D-111) put seed 3 in the tuning slot to train seeds 3–5 only.
+- **Effect.** The suite launched nothing more and waited for its running jobs, as designed.
+  Training continued unharmed; no run failed; 23 of 240 validation evaluations and 1 of 12
+  selections were done. No data was lost or rewritten.
+- **Detection lag.** The suite does not rewrite `status.json` after an error, so the
+  status-staleness watchdog fired about 30 minutes later. The X3 validation driver's watchdog
+  also scans `events.jsonl` for `*_error` events.
+- **Mitigation (D-112).** An evaluation-only driver (`make x3-validate`) finishes the
+  validation evaluations and selections with the suite's own commands and rules. The frozen
+  chooser and `run_suite.py` are not changed.
+- **Still open.** Any future one-trial plan must use tuning seed 0, or bypass the chooser in
+  new code. The plan dry run should exercise the choice step on synthetic records.
+

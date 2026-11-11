@@ -2657,3 +2657,60 @@ is shown beside it, never pooled with it, and never replaces, reranks or relabel
 
 **Not done, by decision:** Lift; more than 3 new seeds; H1 and the robustness sets (H4); the
 diffusion side of KI-052; any change to the paper, README or Observatory (D-105).
+
+### D-112 X3 validation and selection finished by an evaluation-only driver after the suite stopped (FIXED, Session 14, 2026-11-11, before any X3 rollout)
+**What happened (KI-062).** `make x3-train` (the frozen `scripts/run_suite.py`, from clean
+`fb9f05e`, launched 21:37:25 UTC) trained the 12 X3 runs as preregistered. At 23:57:37 UTC,
+right after it selected BC-MLP seed 3 (step 75,000, 37/50), it stopped at its first
+configuration choice: `ValueError: bc_mlp trial 1: task/seed can/3 != can/0`. The frozen
+`roboforge.eval.tuning.choose_configuration` (pinned) admits only seed-0 tuning trials. The X3
+plan's one-trial "tuning" seed is 3, and `make x3-plan --dry-run` never reaches the chooser. The
+suite then launched nothing and waited for its running jobs: the 6 training runs went on (all 9
+BC runs complete; the 3 diffusion runs still training at this record), and the 3 BC-MLP seed 4
+evaluations in flight finished with exit 0. Nothing failed and nothing is lost: each family has
+one configuration, fixed before training (D-111), so the choice decides nothing.
+
+**Decision.** The remaining validation evaluations and §7 selections are run by a new
+evaluation-only driver, `scripts/x3_validate.py` with `src/roboforge/replication/x3_validation.py`
+(`make x3-validate`), committed and tested before its first launch:
+- It launches exactly what the suite would have launched: the frozen
+  `scripts/eval_policy.py` per checkpoint (50 Can validation starts, canonical container), then
+  the frozen `scripts/select_checkpoint.py` per run (RESEARCH_PROTOCOL §7), with the suite's
+  argv and environment. A unit test pins the evaluation argv to every evaluation the suite
+  logged, and the training-process match to every training launch it logged.
+- It mirrors the suite's rules: one eligible 50-start summary per checkpoint, more than one is
+  an error, an evaluation directory without an eligible summary stops it, clean tree and
+  ≥ 4 GiB free at every launch, ≤ 4 containers through the host-wide slots (D-069), diffusion
+  first, no automatic retry.
+- It never trains, resumes or reuses the suite orchestrator (research-integrity test). A run
+  without a final manifest is waited for while its `train.py` process lives; otherwise it stops
+  for a manual decision.
+- The BC-MLP seed 3 selection the suite wrote is checked against its 20 sources and kept, not
+  rewritten. The suite's 23 evaluation summaries are used as they are.
+- When all 12 runs are selected (or failed in training) it writes
+  `reports/session14/suite/x3_validation.json` (schema `roboforge.x3_validation/1`). The X3 gate
+  (`x3_jobs`) now requires that file committed and unmodified, and checks every new checkpoint
+  against it, in place of the suite summary `reports/session14/suite/x3_can.json`. The suite
+  still writes its own summary when its last training run ends; that partial file is committed
+  as the record of the stop, not used by the gate.
+
+**Unchanged:** the configurations, seeds, budget, run IDs, validation starts, the §7 rule, the
+X3 suite, the 24 evaluations and the analysis. The preregistration is not edited.
+
+**What this supersedes in `docs/extensions/X3_PREREGISTRATION.md` (§2, §4) and D-111:**
+- "The one-trial 'tuning' record chooses trivially; it is not a tuning step." No tuning record
+  exists (`reports/session14/tuning/` is empty): the frozen chooser refused the seed-3 trial.
+- "through `scripts/run_suite.py` (`make x3-train`)": true of training. Validation and selection
+  went through the suite for BC-MLP seed 3 (20 evaluations and its selection) and BC-MLP seed 4
+  steps 5,000–15,000 (3 evaluations), and through `make x3-validate` for the rest.
+- §4 "Code": the code list gains `src/roboforge/replication/x3_validation.py`,
+  `scripts/x3_validate.py` and their tests (`tests/unit/test_x3_validation.py`,
+  `tests/research_integrity/test_x3_validation_scope.py`). The orchestrator also refuses
+  unless the validation summary is committed unmodified.
+- D-111 "Estimates": the 4.2 h of training wall time was low. Diffusion trained at about
+  4 steps/s against Session 7's 6.7 while 6 runs and 4 containers shared 10 cores
+  (measured from `progress.json`). Validation evaluations took a median of 1,087 s per
+  BC-MLP checkpoint under that load, against 404 s in Session 7.
+
+**Recorded** as a dated deviation in the ledger (E14-05) before the first X3 rollout, as the
+preregistration's §4 requires. The analysis's engineering section points here.

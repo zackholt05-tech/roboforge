@@ -468,6 +468,33 @@ preregistration commit, on a clean tree.
 
 No paid or remote compute, $0.
 
+### Session 14 (2026-11-10 onward): post-release extension X3, more training seeds
+Separate replication, after the freeze (D-105, D-111). New seeds of the frozen Can
+configurations only; no rollout on a frozen held-out suite; no paid or remote compute.
+
+| ID | Date | Session | Type | What | Outcome | Evidence | Cost |
+|---|---|---|---|---|---|---|---|
+| E14-01 | 2026-11-10 | 14 | decision, baseline | **Owner (D-109):** Can only, seeds 3–5, npm cache cleared first. **Decisions:** D-110 (Makefile defaults s14 and evidence session 14; X3 targets), D-111 (the X3 design), recorded before any code change. **Baseline:** the full suite alone before any change. Configs, suite generator and tests committed in `e0b8a4e` | Free disk 16.24 → 34.07 GiB. **Baseline:** 550 passed (8:42). `make freeze-check` unchanged before and after; lint clean | `logs/session14/baseline_full_suite.log`, DECISIONS D-109–D-111 | $0 |
+| E14-02 | 2026-11-10 | 14 | eval suite | `make x3-states` on the canonical container (seeds 14,000,000 + i, 100 starts, `eval_adhoc`), checked by regeneration bitwise in the container (twice) and within tolerance on the host; committed in `81afa3b` before any rollout on it | Content SHA-256 `9c199e19f69708872a01665cf1367d2e34741388c2f546ef96d3ffc900a2b34d`; disjoint by hash from validation, the locked suite and the robustness sets (test) | `data/eval_states/can/x3_heldout.*`, `reports/session14/x3/states.json`, `logs/session14/x3/` | $0 |
+| E14-03 | 2026-11-10 | 14 | preregistration | `docs/extensions/X3_PREREGISTRATION.md` committed in `fb9f05e`, before the first X3 training run | SHA-256 `b5e54125696c163c…`; readings equal the analysis script's (unit test) | the file; `logs/session14/x3/plan_resolved_dryrun.json` | $0 |
+| E14-04 | 2026-11-10 | 14 | **training** (X3 seeds 3–5) | `make x3-train` (frozen `run_suite.py`) from clean `fb9f05e`, launched 21:37:25 UTC, ≤ 6 training runs and ≤ 4 containers | All 12 runs launched; the 9 BC runs complete; the 3 diffusion runs still training at E14-05. **Stopped at 23:57:37 UTC** at its first configuration choice (KI-062): `ValueError: bc_mlp trial 1: task/seed can/3 != can/0`. Before that, BC-MLP s3 was validated (20) and selected (step 75,000, 37/50); 3 BC-MLP s4 evaluations in flight then finished (exit 0). No run failed. Validation took a median of 1,087 s per checkpoint under the full load (Session 7: 404 s) | `logs/session14/suite/x3_can/`, `reports/session14/{validation,selection}/` | $0 |
+| E14-05 | 2026-11-11 | 14 | **deviation** (dated, before the first X3 rollout), code | **Deviation (D-112):** the remaining validation evaluations and §7 selections run through a new evaluation-only driver, `make x3-validate`, with the suite's commands, argv, environment and rules; no tuning record exists; the X3 gate reads `reports/session14/suite/x3_validation.json`. The preregistration is not edited; D-112 names each sentence it supersedes. **Code:** the stage-2 X3 code, written outside the repository while the runs trained, and the driver, committed with this row (SHA-256 below) | `make freeze-check` unchanged before and after; lint clean; the new unit and research-integrity tests pass (93); the driver's evaluation argv equals all 23 evaluations the suite logged (test); dry run: 157 evaluations queued, diffusion still training. **Incident:** a check with `make x3-plan` at 00:41:49 UTC rewrote the suite's `logs/session14/suite/x3_can/plan_resolved.json` (the dry run writes it too) with a dirty-tree record. Its plan, hash and run table are equal to the committed `logs/session14/x3/plan_resolved_dryrun.json`. The launch's clean git `fb9f05e` and plan hash survive in the suite's `start` event | DECISIONS D-112, KNOWN_ISSUES KI-062 | $0 |
+
+E14-05 files and SHA-256:
+  - `src/roboforge/replication/x3.py` `65dd506539a7e1bb9989040a751b50b034fae11c9b990b3dfd04bb3beb1c0542`
+  - `src/roboforge/replication/x3_jobs.py` `80f287ceb3bc6950c2058243b8132214a99eee65907809e0db7b5fa3b154a6cf`
+  - `src/roboforge/replication/x3_validation.py` `718316269e3b285fa1a7711a31992559505871f76c2638488f1770d376c3feeb`
+  - `scripts/eval_x3.py` `99871072156b705770a5f2de76f4e61e04291112ad15bd4e9d591cabbfe71950`
+  - `scripts/run_x3.py` `5189f78c020f5e2bae2d73ca52dee8cf84c61324eeb8898d413c9effff5859b5`
+  - `scripts/check_x3_engineering.py` `f928a3c6d06ed98a5b2b43cc7126d07814a68601ec2b9a77fb59bfe0bf2cf8b1`
+  - `scripts/analyze_x3.py` `78a4428858b6d5d9c33356250634c761d33119c1e2243864e546bab0ecce2d56`
+  - `scripts/x3_validate.py` `cfaa30ea3b971b551ede2875d5eea33c7c763163a30261785d25b1e429ba8edb`
+  - `tests/unit/test_x3_analysis.py` `13f3928c1b40b05349281ecaa08c28987d22965cb472311aad82fafd5523194b`
+  - `tests/unit/test_x3_validation.py` `5acc717ea0843aab48529f24551b1c4bcde3e96b0ad24128ed745861ec8afbde`
+  - `tests/research_integrity/test_x3_evaluator_scope.py` `28a5acf181ba6038b61ba8e9a3c33a875847be44c2aeccf0db09fc6417a77ea6`
+  - `tests/research_integrity/test_x3_validation_scope.py` `75a3af6618726a61b40c525c1dd2cccb290c69acfbc7c364c11705b6c0781355`
+  - `Makefile`: targets `x3-validate`, `x3-check`, `x3-run`, `x3-analyze`.
+
 ## Owner approvals for paid compute
 Machine-read by `roboforge.compute.approval` (D-049): a paid Modal launch is refused unless a
 `granted` row below covers its function and the committed spend plus the launch's upper-bound

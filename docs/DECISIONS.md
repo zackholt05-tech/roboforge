@@ -2828,3 +2828,92 @@ part of X2.
 - Nothing about the data is assumed: episode count and lengths, masks and filter keys,
   operator information, `env_args` and the registered evaluation horizon are read from the
   files and recorded before the split (D-119) and before any training.
+
+### D-119 X2 split: robomimic's operator-stratified upstream masks; operator identity recorded per episode (FIXED, Session 15, after the inspection and before any build or training)
+**What the files carry** (`reports/session15/x2/inspection.json`, from the hash-verified files):
+300 demos, 62,756 samples, lengths 98–1,050 control steps (median 178; Can PH 82–151). Six
+operator masks, `{better,okay,worse}_operator_{1,2}`, 50 demos each, contiguous index blocks;
+they partition all 300 demos, and each quality mask (`better`, `okay`, `worse`) is the union of
+its two operators. Each operator also has `_train`/`_valid` masks of 45/5, and the upstream
+`train` (270) and `valid` (30) masks are exactly their unions. The raw file's teleoperation
+arrays carry no identity: `interventions` and `policy_acting` are false at every step of every
+demo, `user_acting` true at every step; there is no `user_info`. So operator identity exists
+only as the six masks (an anonymous operator index within a quality tier).
+- **Split:** whole episodes, robomimic's upstream masks `train` (270) / `valid` (30), the D-019
+  precedent. They are operator-stratified: 45 train / 5 valid per operator, every operator in
+  both partitions. MASTER_SPEC §3.3's hash split would serve the same purpose; the upstream
+  masks are kept because they are already deterministic, operator-aware and published.
+- **Operator identity is recorded** per episode in the X2 task manifest (`operator`, `quality`),
+  from the masks only. Nothing else is inferred about the operators.
+- **Claims:** every family trains on all six operators, and closed-loop evaluation has no
+  operator. Every X2 result is therefore a within-operator result: no held-out-operator claim
+  is made. The `valid` demos give offline losses only, as in Level 1.
+- **Normalization:** per-dimension min-max on the 270 training episodes' per-step arrays only
+  (the frozen `Normalizer.fit`, `configs/data/can.yaml` settings).
+- **Features:** the frozen Can observation config `configs/data/can.yaml`, unchanged (19-D,
+  KI-003 correction included), so the observation and action specs must hash equal to the
+  committed Can PH specs.
+- **Flagged episodes:** the frozen sanity checks (`episode_issues`, the saved-final-state
+  success check) run on every demo. A flagged demo is listed with its reason in the split
+  manifest and is never silently dropped; X2 training refuses a split that contains one, as
+  `SequenceDataset.from_committed` does. Any flag stops the pipeline for a dated decision
+  before training.
+- **Training data for the pilot:** all 270 training episodes, all quality tiers (the natural MH
+  setting, and robomimic's MH benchmark setting). Training on a quality subset (for example
+  `better` only) is an X2-b design question, not decided here.
+
+### D-120 X2 episode horizon: 500 control steps, robomimic's registered Can MH horizon (FIXED, Session 15, before any X2 rollout)
+- **Facts:** robomimic@`d309eae` registers an evaluation horizon of 500 for every Can MH file
+  and 400 for Can PH (the value Level 1 adopted, D-026). 14 of the 300 MH demos are longer than
+  400 steps and 10 longer than 500, all from the two "worse" operators (p95 397, max 1,050).
+  The longest Can PH demo is 151 steps.
+- **Decision:** X2 episodes end at the first success or at **500** steps. This is the
+  principle that set Level 1's 400 (the dataset's registered horizon), applied to the MH files.
+  A 400-step limit would cut off slow, demonstrated behaviour of the slower operators and could
+  create failures the data do not imply.
+- **Where it lives:** the X2 task spec (`eval_horizon_steps: 500`), which the X2 evaluator's
+  environment reads (D-121). Everything else in the episode rule is the frozen one (first
+  success ends the scored episode; resets only from stored snapshots; R = 1, policy seed 0).
+- **Consequence:** X2 success rates are not on Level 1's 400-step scale and are never compared
+  with or pooled with Level 1 numbers. A failed X2 episode costs 500 steps of simulation.
+
+### D-121 X2 data artifacts and how frozen code is bound to them (FIXED, Session 15, before any X2 build, training or rollout)
+**Artifacts** (new paths; nothing under the `*_ph` names changes), built by a new module
+`src/roboforge/x2/data.py` from the hash-verified MH low-dim file with the frozen building
+blocks (`build_observation_spec`, `build_action_spec`, `build_task_spec`, `build_episodes`,
+`episode_issues`, `upstream_split`, `Normalizer`) and the frozen Can simulator config:
+- processed float32 file (gitignored): `processed/robomimic_v1.5_mh/can/lowdim_v1.hdf5`;
+- `data/splits/can_mh.json`, `data/normalization/can_mh_lowdim_v1.json`,
+  `data/manifests/tasks/can_mh.json` (schema `roboforge.task_manifest/1`, `dataset_id`
+  `robomimic_v1.5/can/mh`, per-episode operator and quality, task spec with the D-120 horizon).
+`make x2-data` writes them; `make check-x2-data` rebuilds in memory and requires equality, as
+`make check-data` does for PH.
+
+**Binding frozen code to X2 data.** The frozen training and evaluation code finds a task's
+data through `roboforge.data.pipeline.load_task_artifacts(task)`, which reads the `*_ph`
+paths; `roboforge.train.run.load_windows` builds the windows from the PH processed file; and
+`LearnedPolicy` refuses a checkpoint whose spec or normalization hashes differ from the
+committed Can PH ones. The frozen files stay byte-identical. A context manager in a new module
+(`roboforge.x2.binding.x2_bindings`) rebinds, for task `can` only and only inside the context,
+exactly these module attributes:
+- `load_task_artifacts` in `roboforge.data.pipeline` (so `load_specs` and
+  `SequenceDataset.from_committed` follow), `roboforge.train.run`, `roboforge.eval.learned` and
+  `roboforge.sim.env_adapter`, to the integrity-checked X2 loader;
+- `roboforge.train.run.load_windows`, to the X2 windows (the frozen `SequenceDataset` and
+  `WindowTensors` over the X2 processed file, refusing flagged episodes).
+Everything else runs unchanged: `train_run`, `Trainer`, checkpoints, `LearnedPolicy`,
+`run_states`, `run_episode`, `verify_record`. Inside the context the run manifest records the
+X2 data hashes and `dataset_id`, the environment records the X2 task spec (horizon 500), and
+`LearnedPolicy` checks a checkpoint against the X2 normalization and specs. Only new X2 entry
+scripts enter the context; nothing launched through the frozen scripts sees it.
+
+**Guards (tests, before first use):**
+- the X2 loader refuses unless the X2 observation and action spec hashes equal the committed
+  Can PH ones (read with the frozen loader), so "the validated Can contract applies" is an
+  enforced equality;
+- inside the context the rebound names resolve to the X2 functions; on exit (also on error) the
+  frozen ones are restored;
+- the frozen `LearnedPolicy` refuses an X2 checkpoint outside the context, and the X2 context
+  refuses a Can PH checkpoint (different normalization);
+- a short training run inside the context, with the X2 loader pointed at the Can PH artifacts,
+  is bitwise equal to the same run without the context: only the data source changes.

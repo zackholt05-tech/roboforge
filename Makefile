@@ -27,6 +27,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement \
 	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze x1-run x1-analyze \
 	x3-states check-x3-states x3-plan x3-train x3-validate x3-check x3-run x3-analyze \
+	x2-download x2-inspect \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
 	web-build web-test web-e2e web-verify web-dev visual-provenance \
 	paper-assets paper-check paper-bibcheck paper \
@@ -350,6 +351,15 @@ x3-run:  ## X3: the 24 evaluations on the X3 held-out starts, once (<= 4 contain
 
 x3-analyze:  ## X3: the one analysis of the X3 evaluations, beside the frozen Level 1 result
 	$(RUN_S) python scripts/analyze_x3.py
+
+# ---------------------------------------------------------------- Session 15: X2 (D-116 to D-121)
+# X2, a separate study: Can with mixed-human (MH) demonstrations. Targets are added with their
+# code (D-117). No held-out rollout of any kind in X2-a.
+x2-download:  ## X2: fetch + SHA-256-verify the Can MH files of data/manifests/robomimic_v1.5_mh.json
+	$(RUN) python scripts/x2_download.py
+
+x2-inspect:  ## X2: inspection report of the MH files (episodes, masks, operators, env_args, horizon)
+	$(RUN_S) python scripts/x2_inspect.py
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

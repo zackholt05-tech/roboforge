@@ -2917,3 +2917,55 @@ scripts enter the context; nothing launched through the frozen scripts sees it.
   refuses a Can PH checkpoint (different normalization);
 - a short training run inside the context, with the X2 loader pointed at the Can PH artifacts,
   is bitwise equal to the same run without the context: only the data source changes.
+
+### D-122 X2 data: one flagged demo, `demo_81`, is kept as an accepted flag (FIXED, Session 15, before any X2 data are written or any training)
+- **Found by** the first `scripts/x2_data.py` build: the frozen sanity check flags `demo_81`
+  (operator `worse_operator_2`, upstream `train` mask, 246 steps) with "final step has no
+  success reward/done". The stored reward is 1.0 at steps 241–244 and 0.0 at the last step
+  245 (`done` is 1 at all five). The simulator's own success predicate holds on the demo's
+  saved final state (`build_episodes`' `final_state_success` is true), and every recomputed
+  feature equals the stored observations. No other demo is flagged.
+- **Decision:** keep `demo_81` in the training split. It is a successful demonstration by the
+  simulator's predicate; the flag concerns only the stored reward label of its last step, and
+  no X2 model reads rewards or dones (inputs are the 19-D observations, targets the actions).
+  Dropping it would remove a valid demonstration of a slow operator.
+- **Mechanism:** the split manifest keeps the flag and its reason under `flagged` and adds
+  `accepted_flags: {demo_81: {reason, decision: D-122}}`. The X2 builder refuses to write, and
+  the X2 window loader refuses to train, unless every flagged episode is accepted with exactly
+  that reason; any new or different flag still stops for a dated decision (D-119).
+
+### D-123 X2 evaluation suites: `x2_validation` (50) and `x2_heldout` (100) from fresh seed blocks (FIXED, Session 15, before generation and before any X2 rollout)
+- **Suites** (config `configs/extensions/x2_suites.yaml`, module `src/roboforge/x2/states.py`,
+  script `scripts/generate_x2_states.py`, targets `make x2-states` / `make check-x2-states`):
+
+  | Suite | Task | n | Seeds | Reserved block | Role |
+  |---|---|---|---|---|---|
+  | `x2_validation` | Can | 50 | 15,000,000 + i | [15,000,000, 16,000,000) | X2 development and §7 checkpoint selection; the X2-a headroom pilot |
+  | `x2_heldout` | Can | 100 | 16,000,000 + i | [16,000,000, 17,000,000) | one rollout per selected checkpoint after `docs/extensions/X2_FREEZE.md` (X2-c); never stepped before |
+
+- **Why these sizes.** 50 validation starts keep the §7 selection cost and rule identical to
+  Level 1 and X3. 100 held-out starts halve the state-sampling variance of every per-seed rate
+  relative to 50 (the X3 precedent, D-111).
+- **Draw.** Exactly as the frozen suites (`roboforge.sim.snapshot.generate`: seed `np.random`
+  and `random` with `seed_base + i`, then `env.reset()` of the Can environment built from
+  `configs/simulator/can.yaml`), each start checked to restore exactly and not to succeed at
+  t = 0. The MH demonstrations come from the same environment and reset distribution, so the
+  starts are in distribution by construction.
+- **Disjoint by construction and by test.** Both blocks lie outside the validation
+  [100,000, 200,000), held-out [900,000, 1,000,000) and robustness [300,000, 400,000) blocks, X1's
+  development seeds 13,000,000 + i and X3's block [14,000,000, 15,000,000), and outside each
+  other. After generation each suite is checked disjoint by state hash from every committed Can
+  suite's open manifest and from the other X2 suite
+  (`tests/research_integrity/test_x2_scope.py`).
+- **Format and label.** The frozen format (`roboforge.eval_suite/1`) under
+  `data/eval_states/can/{x2_validation,x2_heldout}.{json,data.jsonl.xz}`; partition `eval_adhoc`
+  (the frozen vocabulary has no X2 label; the D-111 precedent); `partitions.json` is not edited.
+  Names are X2's own; no X2 file contains a locked suite's name.
+- **Generated on the canonical container** (`ROBOFORGE_WRITE_EVAL_STATES=1`, `make x2-states`),
+  checked by regeneration bitwise in the container (twice) and within
+  `CROSS_PLATFORM_STATE_ATOL` with identical XML on the host, and committed with their content
+  hashes before any rollout on them.
+- **Held-out protection.** The frozen lock does not cover these seeds, so discipline and tests
+  must: only the X2 suite module and its generator may name `x2_heldout` in `src/` or
+  `scripts/` (research-integrity test); the X2-a evaluator admits only `x2_validation`. No
+  X2-a step rolls out on `x2_heldout`, not even a smoke test.

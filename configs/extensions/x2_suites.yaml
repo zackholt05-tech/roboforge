@@ -1,0 +1,29 @@
+# X2 evaluation suites (DECISIONS D-123; docs/extensions/X2_harder_task.md). A separate study's
+# own validation and held-out starts: fresh Can starts from robosuite's standard reset
+# distribution, drawn exactly like the frozen suites (roboforge.sim.snapshot.generate: seed
+# np.random and random, then env.reset()), from seed blocks outside every reserved block. Read
+# by roboforge.x2.states. Changing anything here changes the suite hashes and needs a dated
+# decision before any rollout on the suites.
+schema: roboforge.x2_suites/1
+decision: D-123
+label: "X2, a separate study (Can MH)"
+task: can
+# The frozen vocabulary (roboforge.sim.snapshot.PARTITIONS, pinned) has no X2 label; the frozen
+# code files these seeds under eval_adhoc (eval_states.check_seed_allowed / suite_of_seed), so
+# that label is used. Suite names, roles and the X2 summaries carry the meaning; X2 analyses
+# select by suite name and manifest content hash, never by partition (the D-111 precedent).
+partition: eval_adhoc
+suites:
+  x2_validation:
+    role: "X2 development and checkpoint selection (RESEARCH_PROTOCOL §7 rule); the X2-a headroom pilot"
+    seed_base: 15000000       # state i uses global seed seed_base + i
+    n_states: 50
+    reserved_seeds: [15000000, 16000000]
+  x2_heldout:
+    role: "X2 held-out starts: one rollout per selected checkpoint after docs/extensions/X2_FREEZE.md (X2-c); never stepped before"
+    seed_base: 16000000
+    n_states: 100
+    reserved_seeds: [16000000, 17000000]
+# Blocks the X2 blocks must avoid (tests/research_integrity/test_x2_scope.py): validation
+# [100000, 200000), held-out [900000, 1000000), robustness [300000, 400000), X1 development
+# starts 13,000,000 + i (D-107), X3 held-out [14000000, 15000000) (D-111).

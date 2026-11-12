@@ -503,6 +503,14 @@ E14-05 files and SHA-256:
   - `tests/research_integrity/test_x3_validation_scope.py` `75a3af6618726a61b40c525c1dd2cccb290c69acfbc7c364c11705b6c0781355`
   - `Makefile`: targets `x3-validate`, `x3-check`, `x3-run`, `x3-analyze`.
 
+### Session 15 (2026-11-12 onward): post-release extension X2, phase X2-a (Can MH, data and contract)
+A separate study (D-105, D-116). Data, contract, suites and a headroom pilot on X2 validation
+starts only; no held-out rollout of any kind; no paid or remote compute.
+
+| ID | Date | Session | Type | What | Outcome | Evidence | Cost |
+|---|---|---|---|---|---|---|---|
+| E15-01 | 2026-11-12 | 15 | decision, baseline | **Owner (D-116):** X2 option A, Can MH. **Decisions:** D-117 (Makefile defaults s15 and evidence session 15; X2 targets with their code), D-118 (the data decision: new manifest `data/manifests/robomimic_v1.5_mh.json`, SHA-256 from the pinned revision's LFS ids, verified on download), recorded before any download or code change. **Baseline:** the full suite alone before any change | Free disk 30 GiB; swap 11.9 of 13.3 GB in use. **Baseline:** 603 passed (8:59). `make freeze-check` unchanged | `logs/session15/baseline_full_suite.log`, DECISIONS D-116–D-118 | $0 |
+
 ## Owner approvals for paid compute
 Machine-read by `roboforge.compute.approval` (D-049): a paid Modal launch is refused unless a
 `granted` row below covers its function and the committed spend plus the launch's upper-bound

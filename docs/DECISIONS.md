@@ -2762,3 +2762,69 @@ nothing pushed; options stop, a v1.1 addendum, or X2. The owner chose **"X2"**. 
 X2 (`docs/extensions/X2_harder_task.md`), under D-105 and its own decisions; the exact prompt is
 in `docs/HANDOFF.md` (# Session 14 Handoff). Whether X1 or X3 is published stays the owner's
 decision (D-105).
+
+## Session 15 (2026-11-12): post-release extension X2, phase X2-a (data and contract)
+Level 1, the RGB study, Level 2, X1 and X3 stay frozen. Session 15 runs phase X2-a of X2
+(`docs/extensions/X2_harder_task.md`) under D-105 and D-115. X2 is a separate study with its
+own decisions, freeze and held-out suite; none of its results replaces or revises a frozen
+number. No held-out rollout of any kind in X2-a: the headroom pilot steps X2 validation starts
+only. No paid or remote compute.
+
+### D-116 X2 option A: Can, mixed-human (MH) (OWNER, 2026-11-12, Session 15)
+The owner was asked once, with facts measured at the start of Session 15:
+- free disk 30 GiB (`df`), `runs/` 45 GB; swap 11.9 of 13.3 GB in use before any job;
+- file sizes and SHA-256 from the Hugging Face tree API at the pinned revision `74fa0184…`
+  (read 2026-11-12): Can MH `low_dim_v15.hdf5` 112,792,088 B (`c4a34c83…`) and `demo_v15.hdf5`
+  79,780,388 B (`6f5a0e96…`), not in any manifest; Square PH 51,145,256 / 68,982,198 B, already
+  in `data/manifests/robomimic_v1.5_ph.json` with SHA-256 equal to the LFS ids re-read now;
+  Square MH 123,300,120 / 73,913,499 B;
+- new infrastructure per option (X2_harder_task.md §2): A needs manifest entries, an
+  operator-aware split if the file carries operator identity, a demonstration that the
+  validated Can contract applies, new X2 suites and the pilot; B needs a full Session 0–2
+  contract for Square; C needs both;
+- downloads are < 0.25 GB in every case; the binding disk cost is later training (2.3 GB per
+  seed of the four families on Can PH).
+
+Answer: **"A: Can MH (Recommended)"**. X2 tests whether the generative head helps when the
+demonstrations come from several operators of different quality, on the task, simulator,
+controller and evaluation machinery already validated for Can. Square and Lift MH are not
+part of X2.
+
+### D-117 Makefile defaults bumped to Session 15; X2 targets (FIXED, before any code change)
+- `EVIDENCE_SESSION` falls back to 15 and `PREFIX` to `s15` (the D-092/D-097/D-106/D-110
+  pattern). Evidence goes to `reports/session15/` and `logs/session15/` with
+  `ROBOFORGE_EVIDENCE_SESSION=15`. `OBS_OUT` stays pinned to Session 10 (D-092).
+- X2 targets are added with their code, each before its first use: `x2-download` (fetch and
+  verify the MH files), `x2-inspect` (the inspection report), `x2-data` / `check-x2-data`
+  (build the X2 data artifacts; rebuild and compare), `x2-contract` (the Can-contract checks
+  and the open-loop replay), `x2-states` / `check-x2-states` (the X2 suites on the canonical
+  container; regenerate and compare), and the pilot targets (D-121).
+- The held-out, placement and analysis targets of the frozen studies, X1 and X3 are never run.
+
+### D-118 X2 data: the Can MH files enter a new manifest, SHA-256 from the pinned revision, verified on download (FIXED, before any download)
+- **New manifest file** `data/manifests/robomimic_v1.5_mh.json` (schema and source block of the
+  PH manifest: repository `robomimic/robomimic_datasets`, revision
+  `74fa018461f479cd9fd15b924a16103012096203`, license MIT, the robomimic citation). The PH
+  manifest is existing data and is not edited.
+- **Entries** (sizes and SHA-256 = the LFS object ids of the Hugging Face tree API at that
+  revision, read 2026-11-12):
+
+  | Task | Type | path_in_repo | Size (bytes) | SHA-256 |
+  |---|---|---|---|---|
+  | can | low_dim | `v1.5/can/mh/low_dim_v15.hdf5` | 112,792,088 | `c4a34c837913446d295c6ca38f2b31888d69812198478af470ecb84a99e9f7d7` |
+  | can | raw | `v1.5/can/mh/demo_v15.hdf5` | 79,780,388 | `6f5a0e96fc375468ae19ccac86a6dee3b4d3862ef0fe37ca2d02e93d9046fe6b` |
+
+  Local paths `raw/robomimic_v1.5/can/mh/{low_dim_v15,demo_v15}.hdf5` under
+  `$ROBOFORGE_DATA_ROOT` (gitignored, never redistributed).
+- **Download and verification** through the frozen `roboforge.data.fetch` (`load_manifest`
+  with the new manifest name, `fetch_file`, `verify_file`): a file is accepted only if its size
+  and SHA-256 equal the manifest; a mismatch deletes the partial file and stops. A new thin
+  script (`scripts/x2_download.py`, `make x2-download`) does this; it prints repository-relative
+  paths only. The frozen `scripts/download_data.py` and the PH manifest are unchanged.
+- **Why both files.** `low_dim` is the training source (as for PH, D-018). `raw` is downloaded
+  to look for operator identity in the teleoperation logs (`user_info`, `controller_info` and
+  related keys; X2_harder_task.md §3) and to check that its states, actions and model XML equal
+  the low-dim file's, as Session 1 did for PH.
+- Nothing about the data is assumed: episode count and lengths, masks and filter keys,
+  operator information, `env_args` and the registered evaluation horizon are read from the
+  files and recorded before the split (D-119) and before any training.

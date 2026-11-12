@@ -145,13 +145,13 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 14 (DECISIONS D-110; Session 13: D-106; Session 12: D-097; Session 11:
-# D-092; Session 10: D-087; Session 9: D-082; Session 8: D-073; Session 7: D-060; Session 6: D-053;
-# Session 5: D-048) so that no Session 14 command can write into Session 6-13 evidence or reuse the
-# s13 run prefix by omission.
-PREFIX ?= s14
+# Defaults bumped to Session 15 (DECISIONS D-117; Session 14: D-110; Session 13: D-106; Session 12:
+# D-097; Session 11: D-092; Session 10: D-087; Session 9: D-082; Session 8: D-073; Session 7: D-060;
+# Session 6: D-053; Session 5: D-048) so that no Session 15 command can write into Session 6-14
+# evidence or reuse the s14 run prefix by omission.
+PREFIX ?= s15
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),14)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),15)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke

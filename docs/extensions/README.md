@@ -30,6 +30,19 @@ With 6 seeds per family on 100 fresh Can starts, H2 diffusion − BC-MLP (+22.7 
 − BC-RNN and H2-c stay not separated. The frozen result stands as reported. The owner chose X2
 for Session 15 (D-115). The exact prompt is in `docs/HANDOFF.md` (# Session 14 Handoff §6).
 
+**Status (2026-11-12).** X2 phase X2-a ran in Session 15 (PASS; data and contract, development
+numbers only). The owner chose option A, Can MH (D-116):
+- data: the Can MH files in a new manifest, hash-verified; split by robomimic's
+  operator-stratified masks (D-119), so every X2 claim is within-operator; horizon 500 (D-120);
+  the validated Can contract applies (`reports/session15/x2/contract.json`);
+- suites `can/x2_validation` (50 starts, `47b889cd…`) and `can/x2_heldout` (100 starts,
+  `40b8228c…`), committed before any rollout (`4459c00`); no X2 held-out start was stepped;
+- headroom pilot (D-124; `reports/session15/x2/pilot/tables.md`): best of five checkpoints on
+  the 50 validation starts, diffusion 48, BC-MLP-chunk 48, BC-RNN 34, BC-MLP 6. Reading:
+  **headroom**, by one family; the top two are at the 50-start ceiling.
+X2-b (preregistered search, training and validation-only selection) needs the owner's
+decisions first (`docs/HANDOFF.md`, # Session 15 Handoff §5 and §6).
+
 ## Rules shared by every extension
 
 1. **Frozen means frozen.** Level 1, the RGB study and Level 2 stay as tested. Never rerun

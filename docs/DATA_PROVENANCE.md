@@ -56,3 +56,43 @@ Built by `make build-data` (`scripts/build_data.py`, converter `lowdim_v1`) from
 - Statistics and features computed from the data are derived works of MIT-licensed
   datasets. The processed HDF5 files are not redistributed; they are rebuilt locally.
 - Column meanings: `docs/DATA_DICTIONARY.md`. Audit: `reports/data_audit.json`.
+
+## X2: Can mixed-human (MH) files (Session 15; DECISIONS D-116, D-118 to D-122)
+Machine-readable source of truth: `data/manifests/robomimic_v1.5_mh.json` (a new manifest; the
+PH manifest above is unchanged). Same repository, revision, license and citation as the PH
+files. Used only by the X2 study (`docs/extensions/X2_harder_task.md`).
+
+| Task | Type | Size (bytes) | SHA-256 (HF LFS oid, verified on download 2026-11-12) |
+|---|---|---|---|
+| can | low_dim (`v1.5/can/mh/low_dim_v15.hdf5`) | 112,792,088 | `c4a34c837913446d295c6ca38f2b31888d69812198478af470ecb84a99e9f7d7` |
+| can | raw (`v1.5/can/mh/demo_v15.hdf5`) | 79,780,388 | `6f5a0e96fc375468ae19ccac86a6dee3b4d3862ef0fe37ca2d02e93d9046fe6b` |
+
+**Verified structure** (`reports/session15/x2/inspection.json`, `contract.json`):
+- 300 demos, 62,756 samples, lengths 98–1,050 control steps (median 178; 14 > 400, 10 > 500,
+  all from the two "worse" operators). States 71-D, actions 7-D; the same observation keys as
+  the PH file. `env_args` of the low-dim file are identical to Can PH's (env version 1.5.1;
+  the raw file says 1.5.0, as for PH); task kwargs equal `configs/simulator/can.yaml`.
+- Operator identity: six masks `{better,okay,worse}_operator_{1,2}` of 50 demos each,
+  partitioning the demos (contiguous index blocks). Each operator has `_train`/`_valid` masks of
+  45/5; the upstream `train`/`valid` (270/30) masks are their unions. The raw teleoperation
+  arrays carry no identity (`interventions` and `policy_acting` never true, `user_acting`
+  always true). Nothing else identifies an operator.
+- `low_dim` and `raw` carry identical states, actions, model XML and masks.
+- robomimic@`d309eae` registers an evaluation horizon of 500 for Can MH (400 for PH); X2 uses
+  500 (D-120).
+- One demo (`demo_81`) stores reward 0 at its last step although its saved final state
+  satisfies the success predicate; it is kept as an accepted flag (D-122, KI-063).
+
+**Derived X2 artifacts** (built by `make x2-data` from the hash-verified low-dim file;
+`make check-x2-data` rebuilds and requires equality):
+
+| Artifact | Location | Committed | SHA-256 |
+|---|---|---|---|
+| Processed features (float32) | `$ROBOFORGE_DATA_ROOT/processed/robomimic_v1.5_mh/can/lowdim_v1.hdf5` | no | `a9491e0792d11dd860969f88ff34eebb05b591b2e269e62c24c61ee7f2cc5b2f` |
+| Split (upstream masks, operator-stratified) | `data/splits/can_mh.json` | yes | `3f64844ec5cef0f029f9ee7d4d465cf6ee59bfac0b45c55039dbf8fdff92335a` |
+| Normalization (train only) | `data/normalization/can_mh_lowdim_v1.json` | yes | `a362fe47f1b2a5d58f930fda91557bb3a98e775361f0ca046b965b30d6eedd2e` |
+| Task manifest | `data/manifests/tasks/can_mh.json` | yes | `b0252839abdc7d180bb28250c8d8a4ee63e23b808286f662f53d3b6723d96e58` |
+
+The X2 observation and action specs hash equal to Can PH's (`71e89629…`, `bcae0b71…`); the X2
+task spec (`dd8a7da9…`) differs from Can PH's only in the horizon, the demo count, the sample
+count and the source hashes. The MH files are not redistributed.

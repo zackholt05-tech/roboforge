@@ -206,6 +206,15 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
   `reports/session6/` is 34 MB. Swap was 20.0 of 21.5 GB in use (KI-035). The Can suite
   (Session 7, episodes up to 400 steps) needs a similar or larger amount: check `df -h`
   before it.
+- **Session 15 (X2-a, measured):** 24 GiB free after the pilot (`df -g`, 2026-11-12; 4 GiB
+  floor kept). The Can MH files take 0.19 GB (raw and low-dim) plus the processed file; the
+  four pilot runs and 20 evaluations in `runs/x2/` take 1.63 GiB (diffusion run 0.34 GiB, BC
+  runs 0.25–0.28 GiB, evaluation records 26.5 MiB on average). X2-b as proposed needs about
+  17.5 GiB (estimate, biased low: early checkpoints that fail run 500-step episodes), within a
+  few GiB of the floor. Reclaimable without touching evidence, each the owner's call: the uv
+  cache (36 GB; `uv cache prune` removes only unused entries) and the Docker build cache
+  (2.4 GB reclaimable); frozen runs are never pruned or moved. A reclaim is a precondition of
+  X2-b training (HANDOFF # Session 15 Handoff §5).
 
 ### KI-009 — Evidence files contain absolute local paths
 Some files contain `/Users/zackaryholt/...` paths: `reports/feasibility/*.json`
@@ -762,6 +771,19 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
     separated" (E8-15).
 
 ### KI-035 — Host contention during the Session 6 suite inflated wall times (results unaffected)
+- **Session 15 (X2-a pilot; D-124).** Four X2 trainings, at most 2 evaluation containers while
+  diffusion trained (4 after), and another project's containers on the 16 GB host. Sampled
+  every 5 minutes (`logs/session15/x2/pilot/host.jsonl`, 56 samples): the swap rate peaked at
+  **4,874 pages/s at 06:38 UTC**, 3 minutes after launch, with 4 trainings and 2 evaluation
+  containers running, 16.9 of 17.4 GB of swap in use and 516 MB free. Two more samples were
+  above 1,000 (1,326 at 06:49; 1,898 at 08:20, with only the diffusion run and a third-party
+  container running). The pilot's 3,000 pages/s guard is checked only before a launch, so no
+  hold fired; the spike came after both evaluation slots were filled. Diffusion still trained
+  at 6.0 steps/s (4.62 h per 100k steps), and per-container throughput was 29–45 control
+  steps/s. Results are unaffected (deterministic evaluations, every verification passed).
+  Lesson for X2-b: the pilot's concurrency is the configuration that exceeded the guard; a
+  guard that samples while jobs run, fewer containers beside 4 trainings, or no third-party
+  containers are owner choices before X2-b (HANDOFF # Session 15 Handoff §5).
 - **Session 14 recurrence (swap thrashing; D-113).** With 3 diffusion trainings, 4 X3
   validation containers, the Docker VM (7.3 GB footprint) and desktop apps on the 16 GB host,
   macOS swapped about 3,200 pages in and 6,800 out per second (`vm_stat`, 03:30 UTC
@@ -1324,3 +1346,29 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Still open.** Any future one-trial plan must use tuning seed 0, or bypass the chooser in
   new code. The plan dry run should exercise the choice step on synthetic records.
 
+
+### KI-063 Can MH `demo_81` stores reward 0 at its last step although it succeeds (LOW, ACCEPTED; Session 15, D-122)
+- **Found by** the first X2 data build (`scripts/x2_data.py`): the frozen sanity check
+  `episode_issues` flags `demo_81` (operator `worse_operator_2`, train split, 246 steps) with
+  "final step has no success reward/done". Its stored reward is 1.0 at steps 241–244 and 0.0 at
+  step 245; `done` is 1 at all five. The simulator's success predicate holds on the saved final
+  state, and every recomputed feature equals the stored observation.
+- **Handling (D-122):** kept in training as an *accepted flag* with exactly that reason. The
+  split manifest lists it under `flagged` and `accepted_flags`; any other or different flag
+  still stops the X2 build and the X2 window loader. No X2 model reads rewards or dones.
+- No other MH demo is flagged; Can PH and Lift PH have none.
+
+### KI-064 The frozen CLIs and orchestrators cannot see the X2 data binding (MEDIUM, MITIGATED; Session 15, D-121)
+- **What:** X2 trains and evaluates with frozen code rebound to the Can MH artifacts by an
+  in-process context (`roboforge.x2.binding.x2_bindings`). Processes started by the frozen
+  scripts (`scripts/train.py`, `eval_policy.py`, `run_suite.py`, `select_checkpoint.py`,
+  `run_evals.py`) never enter that context: they would read the Can PH artifacts.
+- **Why it cannot silently mix data:** the frozen `LearnedPolicy` refuses an X2 checkpoint
+  outside the binding (its normalization and task spec differ from Can PH's), and the X2
+  binding refuses a Can PH checkpoint (tests in `tests/simulator/test_x2_binding_training.py`).
+  A frozen CLI given an X2 run fails loudly.
+- **Consequence for X2-b:** training, the validation sweep over every checkpoint, the §7
+  selection call and the configuration choice need X2 drivers (`scripts/x2_*.py`). The frozen
+  selection rule `roboforge.eval.selection.select_checkpoint` is a pure function over
+  summaries and can be called directly on X2 summaries (they carry `eligible_for_selection`).
+  If X2-b reuses the frozen `choose_configuration`, its tuning seed must be 0 (KI-062).

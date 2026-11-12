@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 14 STOP, X3 done, updated 2026-11-12) -->
+<!-- parsable handoff header (real values; Session 15 STOP, X2-a done, updated 2026-11-12) -->
 ```yaml
 project: roboforge-3d
-current_session: 14
-session_status: PASS          # Session 14: X3, more training seeds (D-111); separate replication; $0
-next_session: 15              # X2 phase X2-a (owner, D-115); exact prompt in # Session 14 Handoff §6
-last_verified_commit: 227cb26   # code as bd7c899; STOP checks in # Session 14 Handoff §4
+current_session: 15
+session_status: PASS          # Session 15: X2 phase X2-a, Can MH (D-116): data, contract, suites, headroom pilot (reading: headroom); $0
+next_session: 16              # X2 phase X2-b after the owner decisions in # Session 15 Handoff §5; exact prompt in §6
+last_verified_commit: fe9df74   # code; STOP checks ran on it plus the Session 15 records (# Session 15 Handoff §4)
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -18,7 +18,7 @@ robomimic_revision: d309eaecc18acf4152a830a895a6984b8ac71b05
 diffusers: 0.11.1
 torch: 2.15.0 (macOS) / 2.15.0+cu132 (container and Modal)
 evaluation_platform: {platform_id: linux-aarch64-container-1f685638f28c, image_id: "sha256:1f685638f28c720fbec7b084b8e5c2d68073d8f637450d5f6e0a34f0d123071c", runner: infra/containers/run_sim_cpu.sh}
-dataset_and_specs: "demonstrations, validation/held-out suites, uv.lock, pyproject unchanged since Session 2; Session 7 added data/eval_states/<task>/{robustness_base,ood_*} and configs/eval/{robustness,failure_taxonomy}.yaml (D-063, §14)"
+dataset_and_specs: "demonstrations, validation/held-out suites, uv.lock, pyproject unchanged since Session 2; Session 7 added data/eval_states/<task>/{robustness_base,ood_*} and configs/eval/{robustness,failure_taxonomy}.yaml (D-063, §14); Session 15 added X2 files only (data/manifests/robomimic_v1.5_mh.json, data/manifests/tasks/can_mh.json, data/splits/can_mh.json, data/normalization/can_mh_lowdim_v1.json, data/eval_states/can/x2_*; D-118 to D-123)"
 raw_rgb_source: "data/raw/robomimic_v1.5/{lift,can}/ph/demo_v15.hdf5 downloaded (states + model XML per demo; no images); Square not downloaded"
 main_suite:
   families: [bc_mlp, bc_rnn, bc_mlp_chunk, diffusion_unet]
@@ -75,8 +75,8 @@ heldout_results:                      # family success %, 3 seeds x 50 held-out 
   can:  {bc_mlp: 76.7, bc_rnn: 96.0, bc_mlp_chunk: 96.0, diffusion_unet: 95.3, random_uniform: 0.0}
 modal: {gate_a: done, A-01: "closed, $0.148", A-02: "closed, $0.0317", A-03: "closed, $8.06", A-04: "Level 2, closed, $2.37 (5 launches; KI-047; detached launches since D-085)", open_approvals: none, month_to_date: "$15.89 of $30 (2026-11-09)", egl_vs_osmesa: "PENDING (KI-001, KI-033)"}
 final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081); Level 2 TESTED ONCE (Session 9, D-086 gate, a031e88; analysis 620c541). Session 10 re-rendered recorded episodes only. All three locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1, RGB or Level 2 configuration, ever. Session 13 (X1) stepped only the Session 7 robustness sets. Session 14 (X3) stepped only the Can validation starts and the new can/x3_heldout suite (24 evaluations, once); isolation PASS"
-disk: "about 31 GiB free at the Session 14 STOP (KI-008); X3 runs, validation directories and runs/x3 take 7.1 GiB; the Observatory export is about 19 MB in git; the Modal runs Volume keeps every checkpoint"
-next_required_owner_approval: "Session 15 (X2-a) first asks the owner to choose option A (Can MH), B (Square PH) or C (Square MH); whether X1 and X3 are published (v1.1) is the owner's decision (D-105). No paid compute is open; any Modal job needs a new approval row"
+disk: "24 GiB free after the Session 15 pilot (KI-008); runs/x2 takes 1.63 GiB; X2-b needs about 17.5 GiB (estimate), so a reclaim precedes it (owner); X3 runs, validation directories and runs/x3 take 7.1 GiB; the Observatory export is about 19 MB in git; the Modal runs Volume keeps every checkpoint"
+next_required_owner_approval: "Session 16 (X2-b) first asks the owner: proceed on Can MH or not; how the pilot runs count; concurrency; the disk reclaim (# Session 15 Handoff §5); whether X1 and X3 are published (v1.1) is the owner's decision (D-105). No paid compute is open; any Modal job needs a new approval row"
 observatory: {decisions: "D-087-D-091", site: website/, export: "reports/session10/observatory/ (37 clips from clean b5fc2ee, canonical container; ebfd0c3)", findings: "findings.json, 8 frozen sources (c73a080)", verification: "viewer_verification.json: 18/18 frames pass (robot IoU >= 0.9998, centroid <= 0.04 px)", hosting: "none (owner, D-090); no deployed or staging URL", meshes: "extracted at build time by make web-assets, gitignored (D-090)", provenance: docs/VISUAL_PROVENANCE.md}
 level2_study: {freeze: "docs/LEVEL2_EXPERIMENT_FREEZE.md @ b93c50c (sha256 ffe5a03e...)", gate: "D-086 @ b1f4da2, amended 08c3aa8", runs: [s9_pc_diffusion_dp3_lift_seed0_8fd35613, s9_pc_diffusion_dp3_lift_seed1_a66a2758, s9_pc_diffusion_dp3_lift_seed2_402a1f24], selections: "30000 / 40000 / 60000 (reports/session9/pc_selection/)", placement: "reports/session9/level2_placement/ @ 4ebebc1", heldout: "reports/session9/pc_heldout/ @ a031e88", results: "reports/session9/level2_results/ @ 620c541 (+ ERRATA.md)", h5: "pc - rgb on ood_cube_shift -41.3 pp [-54.0, -28.0], separated (-)", heldout_success: {pc_diffusion: 100.0, rgb_diffusion: 100.0}, label: DP3-inspired, privilege: sensor-like}
 paper: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, build: "make paper (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400)", generated: "paper/generated/ (35 files, index.json)", audit: docs/AUDIT.md, decisions: "D-092-D-096", label: "local build, not peer reviewed", fresh_clone: "byte-identical rebuild (Session 12)"}
@@ -84,21 +84,213 @@ release: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 378ea43", selections: reports/session8/rgb_selection/, heldout: "reports/session8/rgb_heldout/ @ bc054bc", results: "reports/session8/rgb_results/ @ 3b23255", success: {rgb_diffusion: 100.0, rgb_bc_chunk: 99.3}, diffusion_minus_bc: "+0.7 pp [+0.0, +4.0], not separated", videos: reports/session8/rgb_videos/}
 x1_study: {decision: D-107, label: "exploratory, after the freeze", code: 09d1a90, preregistration: "docs/extensions/X1_PREREGISTRATION.md @ ab02469", evaluations: "45 once from ab02469 (reports/session13/x1_clamp/evals/, runs/x1_clamp/)", analysis: "reports/session13/x1_clamp/ @ c2a9ae6", primary: "Lift ood_arm_offset drop(diffusion) - drop(clamped BC-MLP-chunk) -40.0 pp [-54.0, -25.3], separated (-) (frozen -40.0 [-54.0, -26.0]); reading R1", clamped_minus_unclamped: "0 of 15 separated; largest |diff| 0.7 pp", engineering_checks: "logs/session13/x1_checks/ (all PASS)"}
 x3_study: {decisions: "D-109-D-115", label: "separate replication", preregistration: "docs/extensions/X3_PREREGISTRATION.md @ fb9f05e", heldout_suite: "can/x3_heldout, 100 starts, content 9c199e19 (81afa3b)", training: "12 runs s14_* (4 families x seeds 3-5), 0 failed", validation: "240 evaluations, 12 selections (reports/session14/suite/x3_validation.json @ 86e6c9b; KI-062, D-112)", evaluations: "24 once from 13c5db2 (reports/session14/x3/evals/, runs/x3/), isolation PASS", analysis: "reports/session14/x3/ @ 335c27c", primary: "H2 diffusion - BC-MLP +22.7 pp, H3 BC-RNN - BC-MLP +23.8 pp: separated under bootstrap and seed-level (holds, robust); H2 diffusion - BC-RNN -1.2, H2-c -1.7: not separated (unchanged)"}
+x2_study: {decisions: "D-116-D-124", option: "A, Can MH", phase: "X2-a done (Session 15); X2-b next", data: "data/manifests/robomimic_v1.5_mh.json (hash-verified); split data/splits/can_mh.json (operator-stratified, within-operator claims only)", suites: "can/x2_validation 50 starts 47b889cd, can/x2_heldout 100 starts 40b8228c (4459c00); no held-out start stepped", pilot: "reports/session15/x2/pilot/ from fe9df74; best of 5 of 50: diffusion 48, BC-MLP-chunk 48, BC-RNN 34, BC-MLP 6; reading headroom (D-124)", label: "development numbers on X2 validation starts; not a result"}
 ```
 
-# Next: Session 15, X2 a harder or multimodal task (owner, D-115)
+# Next: Session 16, X2 phase X2-b (owner decisions first)
 
-Session 14 ran X3 (# Session 14 Handoff below). Read `docs/extensions/README.md`, then
-`docs/extensions/X2_harder_task.md`. The exact Session 15 prompt is in # Session 14 Handoff §6.
-Every Session 12 boundary still applies, and X1 and X3 are now frozen too: never rerun
-`make x1-run`, `make x1-analyze`, `make x3-states`, `make x3-train`, `make x3-validate`,
-`make x3-check`, `make x3-run` or `make x3-analyze`.
+Session 15 ran X2 phase X2-a (# Session 15 Handoff below). Read `docs/extensions/README.md`,
+then `docs/extensions/X2_harder_task.md`. The exact Session 16 prompt is in # Session 15
+Handoff §6; it starts by asking the owner the decisions in §5. Every earlier boundary still
+applies, and the X2-a evidence is now fixed too: never rerun `make x2-download`,
+`make x2-states` or `make x2-pilot`, never rebuild the X2 data with `--update-committed`, and
+never edit `reports/session15` results or prune `runs/x2`.
 
 | Study | File | Session |
 |---|---|---|
 | X1 evaluation-only action-clamp test (KI-052) | `docs/extensions/X1_action_clamp.md` | 13, DONE |
-| X2 a harder or multimodal task (owner chooses Can MH, Square PH or Square MH) | `docs/extensions/X2_harder_task.md` | 15 (owner, D-115), phase X2-a |
+| X2 a harder or multimodal task: option A, Can MH (D-116) | `docs/extensions/X2_harder_task.md` | 15 X2-a DONE; X2-b next (owner) |
 | X3 more training seeds, on a fresh held-out suite | `docs/extensions/X3_more_seeds.md` | 14, DONE |
+
+# Session 15 Handoff (X2-a)
+
+Do not trust this file blindly. Every claim names its command and evidence
+(`logs/session15/`, `reports/session15/`, LEDGER E15-01 to E15-07).
+
+## 1. Session completed
+Session 15: post-release extension X2, phase X2-a (data and contract), option A, Can MH
+(`docs/extensions/X2_harder_task.md`, D-105, D-115, D-116). Status **PASS**. Every X2 number
+so far is a development number on X2 validation starts; no X2 held-out start was stepped.
+
+## 2. Completed work
+- **Owner decision.** D-116 (option A, Can MH).
+- **Fixed decisions.** D-117 (Makefile `PREFIX ?= s15`, evidence session 15, X2 targets);
+  D-118 (new manifest `data/manifests/robomimic_v1.5_mh.json`, SHA-256 from the pinned
+  revision, verified on download); D-119 (split by robomimic's operator-stratified masks);
+  D-120 (horizon 500); D-121 (X2 data artifacts and the in-process binding of frozen code);
+  D-122 (`demo_81` kept as an accepted flag); D-123 (the two X2 suites); D-124 (the pilot;
+  outcome note added).
+- **Data** (E15-02, E15-03): both MH files downloaded and hash-verified. 300 demos, 62,756
+  samples, lengths 98–1,050 (median 178). Six operator masks of 50 demos each
+  (`{better,okay,worse}_operator_{1,2}`), each split 45/5 by robomimic; nothing else
+  identifies an operator, so every X2 claim is within-operator (MASTER_SPEC §3.3).
+  Normalization on the 270 training demos only. `docs/DATA_PROVENANCE.md` has the section.
+- **Contract** (E15-03): the low-dim file's `env_args` equal Can PH's; the observation and
+  action specs hash equal; open-loop replay 285/300; `RoboForgeEnv('can')` carries the X2
+  task spec and horizon 500 only inside the binding
+  (`reports/session15/x2/contract.json`).
+- **Suites** (E15-04): `can/x2_validation` (50 starts, seeds 15,000,000 + i, `47b889cd…`) and
+  `can/x2_heldout` (100 starts, seeds 16,000,000 + i, `40b8228c…`), generated on the
+  canonical container, checked bitwise, committed before any rollout (`4459c00`), re-checked
+  from a clean tree.
+- **Headroom pilot** (E15-05, E15-06; D-124): once, from clean `fe9df74`; 4 trainings and 20
+  evaluations on `x2_validation`, every exit 0; isolation PASS.
+- **Code** (new files only; `make freeze-check` unchanged before and after every change):
+  `src/roboforge/x2/{data,binding,contract,inspect,states,pilot,evaluate}.py`,
+  `scripts/x2_*.py`, `scripts/generate_x2_states.py`, `configs/extensions/x2_pilot.yaml`, tests (E15-03 to E15-05 list SHA-256).
+- **Records.** KI-008 and KI-035 updated; KI-063 (`demo_81`) and KI-064 (the frozen CLIs
+  cannot see the X2 binding) new; LEDGER E15-01 to E15-07; STATUS;
+  `docs/extensions/README.md`.
+
+## 3. Results (development numbers on the 50 `x2_validation` starts; never a result)
+| Family | 20k | 40k | 60k | 80k | 100k | Best of 5 | Training wall h (steps/s) | Peak RSS GiB |
+|---|---|---|---|---|---|---|---|---|
+| diffusion | 25 | 38 | 42 | 46 | 48 | 48 | 4.62 (6.0) | 0.37 |
+| BC-MLP-chunk | 47 | 37 | 46 | 48 | 39 | 48 | 0.19 (146) | 0.39 |
+| BC-RNN | 0 | 5 | 29 | 31 | 34 | 34 | 1.11 (25) | 1.08 |
+| BC-MLP | 0 | 2 | 5 | 5 | 6 | 6 | 0.17 (165) | 0.33 |
+
+- **Reading (D-124 rule): headroom.** Two families reach 48 and the "saturated" label needs
+  three, so the margin is one family. The top two are at the 50-start ceiling on best-of-5
+  validation: X2-b may separate the single-step families (BC-MLP, BC-RNN) from the others but
+  may not separate diffusion from BC-MLP-chunk.
+- **Single-step stall (observation, cause open).** At 20k, BC-MLP and BC-RNN run every episode
+  to 500 steps: actions shrink after the first reach and the gripper rarely closes. Training
+  losses are normal. MH actions are about half as large as PH's (median |a_xyz| 0.146 vs
+  0.271), and 0.4 % of them are near zero.
+- **BC-MLP-chunk varies 37–48** across checkpoints 20k apart, so a §7 choice on 50 starts is
+  noisy.
+- **Cost, measured:** evaluations 2.8 container-hours (mean 503 s per 50 starts, 205–819 s);
+  disk 1.63 GiB; $0.
+- **Host:** the swap rate peaked at 4,874 pages/s, 3 minutes after launch, with 4 trainings
+  and 2 evaluation containers running. That is above the pilot's 3,000 guard, which is checked
+  only at launch, so no hold fired (KI-035).
+
+## 4. STOP checks
+On `fe9df74` plus the Session 15 records (documents and evidence only), host, no container running: `make lint` clean; full suite alone **631 passed** (9:03; 28 more than Session 14's 603; `logs/session15/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged", also before and after every code change); `tests/research_integrity` 64 passed; `make release-check` PASS (139 disclosed local-path files, D-100 and D-114; no new local path). No frozen file, freeze, result or executed outcome changed; no held-out start of any suite was stepped; nothing was pushed, tagged, released or deployed.
+
+## 5. Owner decisions pending (before any X2-b training)
+1. **Go or stop.** The reading is headroom, by one family. Options: proceed with X2-b on Can
+   MH as below; or go back to D-116's alternatives (Square PH or MH, new infrastructure).
+2. **The pilot runs.** D-124 says X2-b may count them as "tuning trial 1". In the Level 1
+   search space (D-055, D-061) they are the seed-0 runs of trial 2 (cosine: diffusion, BC-RNN,
+   BC-MLP) and trial 4 (weight decay 0.1: BC-MLP-chunk), not trial 1 (D-124 outcome note).
+   Choose: count each as the seed-0 run of the trial whose configuration it has (its other 15
+   checkpoints then evaluated like any trial's; saves 6.1 training-hours and 4.6 h of wall
+   time), or retrain all 4 trials per family under a new prefix.
+3. **Concurrency** (KI-035). The pilot's concurrency (4 trainings, 2 evaluation containers
+   while diffusion trains, 4 after, a third-party container) exceeded the swap guard once.
+   Choose one or more: a guard that samples while jobs run and holds launches; at most 1
+   evaluation container beside 4 trainings; no third-party containers during X2-b.
+4. **Disk** (KI-008). 24 GiB free with a 4 GiB floor. X2-b needs about 17.5 GiB (estimate,
+   biased low). A reclaim is a precondition: the uv cache (36 GB; `uv cache prune`) and/or the
+   Docker build cache (2.4 GB reclaimable). Frozen runs are never pruned or moved.
+5. Still open from Session 14: whether to publish X1 and X3 (v1.1, D-105); the optional
+   diffusion side of KI-052. Nothing was pushed, tagged or deployed.
+
+**Proposed X2-b design** (for the X2-b preregistration; the owner or the X2-b session
+decides, before any X2-b training):
+- **Search space:** Level 1's, unchanged (D-055, D-061). Per family: trial 1 is the base
+  configuration, trial 2 the cosine schedule, trial 3 lr 3e-4 and trial 4 AdamW weight decay
+  0.1. Architecture, horizons, parameter counts, batch and budget are fixed. It was chosen
+  before the pilot outcome.
+- **Budget:** the frozen one, equal for all families: 100,000 steps, batch 100, checkpoints
+  every 5,000 (K = 20), and every checkpoint on all 50 `x2_validation` starts. Then:
+  - §7 selection per run (`roboforge.eval.selection.select_checkpoint`, unchanged);
+  - §6.3 choice per family (`roboforge.eval.tuning.choose_configuration`, unchanged; tuning
+    seed 0, KI-062);
+  - the chosen configuration then trains seeds 1 and 2.
+- **New code (KI-064):**
+  - an X2 suite driver, which runs trial and replicate training inside the binding, the
+    validation sweep with the X2 evaluator, §7 and §6.3 by the frozen pure functions, and
+    host guards that sample while jobs run; it is resumable;
+  - an X2 latency benchmark (X2_harder_task §4).
+
+  Both go in new files only. A research-integrity test checks that no X2-b code path reaches
+  `x2_heldout`.
+- **Cost (estimates from the pilot's measured times, local CPU, $0; with the pilot runs
+  counted, 20 new runs and 460 new evaluations):**
+  - **Training:** 30.5 training-hours summed. Diffusion is 5 × 4.62 = 23.1, BC-RNN 5.6,
+    BC-MLP-chunk 1.0 and BC-MLP 0.9.
+  - **Evaluations:** 64 container-hours at the measured mean of 503 s. This is biased low:
+    the 5k–15k checkpoints were not measured and failing episodes run 500 steps (up to
+    819 s), and the 4-container rate was not measured.
+  - **Wall time:** about 21 h at the pilot's concurrency. The tuning phase takes 12.8 h:
+    three diffusion trials at once set the pace, with 2 evaluation containers while they train
+    and 4 after. The replicate phase takes 7.9 h. Fewer containers (item 3) make it longer.
+  - **Disk:** about 17.5 GiB: 5.6 GiB of runs and 11.9 GiB of evaluation records at
+    26.5 MiB each.
+  - **If retrained:** 24 runs and 480 evaluations, adding 6.1 training-hours and
+    2.8 container-hours.
+- **Labels:** development numbers on validation; X2-b steps no X2 held-out start. X2-c
+  (`docs/extensions/X2_FREEZE.md`, the held-out suite once, analysis once) is a later session.
+
+## 6. Exact prompt for Session 16 (X2, phase X2-b; owner decisions first)
+
+```text
+Implement RoboForge 3D SESSION 16 ONLY: post-release extension X2, phase X2-b (tuning,
+training, selection on validation starts; option A, Can MH), as specified in
+docs/extensions/X2_harder_task.md §4, under DECISIONS D-105 and D-115 to D-124 and the rules
+of MASTER_SPEC.md.
+
+Begin by reading all of MASTER_SPEC.md, docs/extensions/README.md,
+docs/extensions/X2_harder_task.md, docs/STATUS.md, docs/HANDOFF.md (# Session 15 Handoff),
+docs/DECISIONS.md (especially D-055, D-061, D-105, D-111 to D-124 and D-124's outcome note),
+docs/KNOWN_ISSUES.md (KI-008, KI-035, KI-043, KI-061 to KI-064), docs/EXPERIMENT_LEDGER.md
+(Sessions 14 and 15), docs/RESEARCH_PROTOCOL.md (§6, §7), docs/DATA_PROVENANCE.md and
+reports/session15/x2/pilot/tables.md, and inspect the actual repository and test state. Do not
+blindly trust handoff claims; confirm every prerequisite with executable checks (the X2 data,
+suites and pilot records verify against their committed hashes; make check-x2-data and make
+check-x2-states pass; runs/x2 is intact).
+
+First ask the owner the decisions of # Session 15 Handoff §5, with the facts measured now (free
+disk, swap use, running containers): (1) proceed with X2-b on Can MH, or go back to D-116's
+alternatives; (2) count each pilot run as the seed-0 run of the trial whose configuration it
+has, or retrain; (3) concurrency limits and the guard; (4) the disk reclaim (the owner runs or
+approves it). If the owner stops X2, record the decision and go to the STOP boundary.
+Otherwise, for the chosen answers only:
+1. Record decisions before acting: Makefile defaults PREFIX ?= s16 and evidence session 16;
+   the owner's answers.
+2. Write and commit docs/extensions/X2_PREREGISTRATION.md before the first X2-b training: the
+   search space (Level 1's trials, D-055/D-061, unless the owner decides otherwise), the equal
+   per-family budget, the frozen budget per run (100,000 steps, batch 100, K = 20, every
+   checkpoint on all 50 x2_validation starts), the §7 selection and §6.3 configuration rules
+   (the frozen pure functions; tuning seed 0, KI-062), the replicate seeds (1 and 2), how the
+   pilot runs count, the concurrency and disk limits, and what X2-c will test and report
+   (within-operator only; hypotheses and intervals fixed before X2-c).
+3. New code in new files only (KI-064): an X2 suite driver (training of trials and replicates
+   inside roboforge.x2.binding.x2_bindings, the validation sweep with the X2 evaluator, §7 and
+   §6.3 by the frozen pure functions, resumable, the guards: free disk, clean tree, a swap
+   guard that samples while jobs run) and an X2 latency benchmark. A research-integrity test
+   that no X2-b code path reaches x2_heldout. make freeze-check before and after every code
+   change; tests/research_integrity on the new code.
+4. Train and select on local CPU from a clean tree, as preregistered; checkpoint selection on
+   X2 validation starts only; record the X2 test configuration (selected checkpoints and
+   hashes) for X2-c. Measure and report cost against the estimates.
+
+Binding boundaries: Level 1, the RGB study, Level 2, X1, X3 and the X2-a evidence are frozen.
+Never rerun make eval-final, make analyze-final, make rgb-heldout,
+scripts/analyze_rgb_heldout.py, make pc-heldout, make pc-placement, make level2-analyze,
+scripts/analyze_robustness.py, make x1-run, make x1-analyze, make x3-states, make x3-train,
+make x3-validate, make x3-check, make x3-run, make x3-analyze, make x2-download,
+make x2-states or make x2-pilot, and never rebuild the X2 data with --update-committed. Never
+edit reports/session6-10, reports/session13, reports/session14 or reports/session15 results,
+the freezes, the X1 or X3 preregistration, LEVEL1_COMPLETE or LEVEL2_GO_NO_GO's executed
+outcome. Never prune or move frozen runs (runs/x1_clamp, runs/x1_checks, runs/x3,
+runs/x3_checks, runs/x2 and the s14_* runs included). Never edit a file that make freeze-check
+pins. No X2 held-out rollout of any kind in X2-b. No paid or remote compute, push, tag,
+release or deployment without explicit owner authorization. No changes to existing data, eval
+suites, uv.lock or Python dependencies without a decision. Never uv sync or uv run inside the
+image. Use EVIDENCE_SESSION=16; every container job runs via run_sim_cpu.sh with
+ROBOFORGE_EVIDENCE_SESSION=16, from a clean tree. Never run the full test suite alongside a
+container job (KI-043). Label every estimate as an estimate.
+
+At the SESSION 16 STOP boundary: update STATUS, HANDOFF, DECISIONS, KNOWN_ISSUES and
+EXPERIMENT_LEDGER; run make lint, the full suite alone, make freeze-check,
+tests/research_integrity, make release-check; commit verified work as Zackary Holt
+<zackholt05@gmail.com> with no AI co-author trailers; inspect git log --format=fuller -n 5;
+write the exact prompt for X2-c; STOP. Do not proceed automatically.
+```
 
 # Session 14 Handoff (X3)
 

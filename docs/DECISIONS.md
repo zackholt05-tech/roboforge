@@ -3021,3 +3021,23 @@ about 4.1 h of training at Session 7's 6.7 steps/s alone, up to about 7 h at Ses
 loaded 4 steps/s; BC-RNN 0.9–2.5 h; BC-MLP and BC-MLP-chunk about 0.2 h each; the 20
 evaluations about 2–3.5 container-hours (Session 7 Can median 353–404 s per 50 starts; MH
 failures run 500 steps); disk about 1.5–2 GB; $0.
+
+**Outcome (development numbers, not a result; Session 15, 2026-11-12; LEDGER E15-06).** The
+pilot ran once from clean `fe9df74`: 4 trainings and 20 evaluations, every exit 0, all 20
+summaries eligible and verified, no launch hold, `runs/` gained only `x2` (isolation hash
+unchanged). Best of five checkpoints out of 50: diffusion 48, BC-MLP-chunk 48, BC-RNN 34,
+BC-MLP 6. **Reading: headroom** (two families at 48, three needed for "saturated"). Headroom
+rests on one family margin: the top two are at the 50-start ceiling on best-of-5 validation,
+so X2-b may separate the single-step families from the rest but may not separate diffusion
+from BC-MLP-chunk. Measured against the estimates above: diffusion 4.62 h wall (6.0 steps/s,
+estimate 4.1–7), BC-RNN 1.11, BC-MLP-chunk 0.19, BC-MLP 0.17; the 20 evaluations 2.8
+container-hours (mean 503 s, range 205–819, estimate 2–3.5); disk 1.63 GiB (estimate
+1.5–2); $0. The 3,000 pages/s swap guard was exceeded once (4,874 pages/s sampled at 06:38 UTC,
+3 minutes after launch, with 4 trainings and 2 evaluation containers running and 516 MB of
+swap free); no hold fired because the guard is checked only at launch (KI-035).
+**Discrepancy, recorded and not resolved here:** the text above says X2-b may count these
+runs as "tuning trial 1" of each family. In the Level 1 search space (D-055, D-061) the frozen
+chosen configurations are trial 2 (cosine; diffusion, BC-RNN, BC-MLP) and trial 4 (weight
+decay 0.1; BC-MLP-chunk), not trial 1 (the base configuration). Whether X2-b counts each
+pilot run as the seed-0 run of the trial whose configuration it has, or retrains, is an
+owner decision for the X2-b preregistration (HANDOFF # Session 15 Handoff §5).

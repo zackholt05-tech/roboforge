@@ -86,6 +86,10 @@ def test_private_path_rules() -> None:
     assert not scan.path_disclosed("logs/session12/x.log")
     assert not scan.path_disclosed("README.md")
     assert scan.path_disclosed("docs/KNOWN_ISSUES.md")
+    # D-114: three named Session 14 evidence files, not the session's log prefix
+    assert scan.path_disclosed("logs/session14/suite/x3_can/events.jsonl")
+    assert scan.path_disclosed("logs/session14/x3/check_host.log")
+    assert not scan.path_disclosed("logs/session14/x3/events.jsonl")
 
 
 def test_placeholders_and_relative_links() -> None:

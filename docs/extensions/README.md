@@ -9,7 +9,7 @@ Observatory.
 |---|---|---|---|---|---|
 | X1 | [Evaluation-only action-clamp test](X1_action_clamp.md) | Is the diffusion policy's robustness advantage (and its parity with BC-MLP-chunk) due to the generative model or to its action bound (KI-052)? | none | none | 1 (Session 13) |
 | X2 | [A harder or multimodal task](X2_harder_task.md) | Does the generative head help where the data are multimodal or the task leaves headroom (the frozen tasks sit near the ceiling)? | yes | none planned (local CPU, as Level 1) | 3 or more |
-| X3 | [More training seeds](X3_more_seeds.md) | Do the separations that are fragile at the seed level (KI-053) hold with more seeds, on fresh held-out starts? | yes | none planned (local CPU, as Level 1) | 1 to 2 |
+| X3 | [More training seeds](X3_more_seeds.md) | Do the separations that are fragile at the seed level (KI-053) hold with more seeds, on fresh held-out starts? | yes | none planned (local CPU, as Level 1) | 1 to 2 (Session 14) |
 
 Order: X1 first (cheapest, no training, resolves a named confound). X2 and X3 are independent;
 the owner picks which runs next at the end of Session 13.
@@ -19,8 +19,16 @@ the owner picks which runs next at the end of Session 13.
 - results in `reports/session13/x1_clamp/tables.md`.
 With the diffusion sampler's bound on its executed actions, BC's outcomes are unchanged and the
 H4 gap stays separated. The diffusion side of KI-052 (the sampler clips at every step; a
-`clip_sample=False` arm) was not tested. The owner chose X3 for Session 14 (D-108). The exact prompt is in `docs/HANDOFF.md`
-(# Session 13 Handoff §6).
+`clip_sample=False` arm) was not tested.
+
+**Status (2026-11-11).** X3 ran in Session 14 (PASS; separate replication):
+- preregistration `X3_PREREGISTRATION.md` (`fb9f05e`); held-out suite `can/x3_heldout`
+  (100 starts, content `9c199e19…`);
+- results in `reports/session14/x3/tables.md` (`335c27c`).
+With 6 seeds per family on 100 fresh Can starts, H2 diffusion − BC-MLP (+22.7 pp) and H3 BC-RNN
+− BC-MLP (+23.8 pp) separate under both the bootstrap and the seed-level interval; H2 diffusion
+− BC-RNN and H2-c stay not separated. The frozen result stands as reported. The owner chose X2
+for Session 15 (D-115). The exact prompt is in `docs/HANDOFF.md` (# Session 14 Handoff §6).
 
 ## Rules shared by every extension
 

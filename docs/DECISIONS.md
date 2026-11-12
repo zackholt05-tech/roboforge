@@ -2658,6 +2658,17 @@ is shown beside it, never pooled with it, and never replaces, reranks or relabel
 **Not done, by decision:** Lift; more than 3 new seeds; H1 and the robustness sets (H4); the
 diffusion side of KI-052; any change to the paper, README or Observatory (D-105).
 
+**Outcome (separate replication; Session 14, 2026-11-11; LEDGER E14-08 to E14-12).** All 12
+new runs trained and were selected on validation starts only (D-112, D-113); the 24 X3
+evaluations ran once and the analysis once (`reports/session14/x3/results.json`, SHA-256
+`4299a149…`). H2 diffusion − BC-MLP +22.7 pp and H3 BC-RNN − BC-MLP +23.8 pp are separated
+under both the bootstrap and the seed-level interval (*holds, robust*); H2 diffusion − BC-RNN
+and H2-c are not separated (*unchanged*). The frozen result stands as reported. Measured
+against the estimates above: training 33.0 CPU-hours summed (12 runs; 8.1 h of wall time, with
+validation and swap contention) against 15.5; validation 35.5 container-hours against 19.2 (the
+211 evaluations of driver run 2 alone took 17.0); X3 evaluations 3.1 container-hours (47 min)
+against 3.4; 13.2 h elapsed against 6.5; 7.1 GiB of disk against 8; $0.
+
 ### D-112 X3 validation and selection finished by an evaluation-only driver after the suite stopped (FIXED, Session 14, 2026-11-11, before any X3 rollout)
 **What happened (KI-062).** `make x3-train` (the frozen `scripts/run_suite.py`, from clean
 `fb9f05e`, launched 21:37:25 UTC) trained the 12 X3 runs as preregistered. At 23:57:37 UTC,
@@ -2729,3 +2740,25 @@ preregistration's §4 requires. The analysis's engineering section points here.
 - **Results-neutral:** scheduling only, as D-059. The driver is idempotent: evaluated
   checkpoints are skipped and existing selections are kept. The evaluation code, starts,
   settings and the §7 rule are unchanged.
+
+### D-114 Three Session 14 evidence files with local paths are disclosed, not scrubbed (OWNER, 2026-11-11, Session 14 STOP)
+- **Facts given to the owner:** at the STOP, `make release-check` failed `private_paths` on 3
+  committed Session 14 evidence files outside the D-100 set:
+  `logs/session14/suite/stdout_x3.log` and `logs/session14/suite/x3_can/events.jsonl` (the
+  frozen `run_suite.py` traceback and argv when the suite stopped, KI-062) and
+  `logs/session14/x3/check_host.log` (a robosuite warning naming its install path). Each path
+  reveals only the local username, as in D-100.
+- **Decision (owner: "Disclose 3 files"):** these 3 files are added by name to
+  `DISCLOSED_PATH_FILES` in `src/roboforge/release/scan.py` (not pinned by `make
+  freeze-check`), with a unit test. The evidence bytes stay unchanged. Any other file with such
+  a path still fails the check; `logs/session14/` is not disclosed as a prefix.
+- `docs/FINAL_RELEASE_AUDIT.md` describes v1.0.0 and is not edited; a later release audit
+  would list these files. Nothing is pushed.
+
+### D-115 Session 15 runs X2 (OWNER, 2026-11-11, at the Session 14 STOP)
+The owner was asked once, with the facts: X3's outcome (both frozen Can separations hold under
+both interval methods with 6 seeds on 100 fresh starts; the two parity contrasts are unchanged);
+nothing pushed; options stop, a v1.1 addendum, or X2. The owner chose **"X2"**. Session 15 runs
+X2 (`docs/extensions/X2_harder_task.md`), under D-105 and its own decisions; the exact prompt is
+in `docs/HANDOFF.md` (# Session 14 Handoff). Whether X1 or X3 is published stays the owner's
+decision (D-105).

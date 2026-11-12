@@ -65,6 +65,10 @@ DISCLOSED_PATH_PREFIXES: tuple[str, ...] = tuple(f"logs/session{n}/" for n in ra
 DISCLOSED_PATH_FILES: frozenset[str] = frozenset(
     {
         "docs/KNOWN_ISSUES.md",
+        # D-114: Session 14 evidence (the suite's traceback and argv; a container check log).
+        "logs/session14/suite/stdout_x3.log",
+        "logs/session14/suite/x3_can/events.jsonl",
+        "logs/session14/x3/check_host.log",
         "reports/feasibility/data_report_can.json",
         "reports/feasibility/data_report_lift.json",
         "reports/session5/modal_sim/report.json",

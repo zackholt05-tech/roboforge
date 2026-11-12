@@ -13,7 +13,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-006 | LOW | MITIGATED | egl_probe does not build on macOS |
 | KI-007 | MEDIUM | RESOLVED (Session 3) | Local Claude Code plugin hooks blocked legitimate commands |
 | KI-008 | MEDIUM | OPEN | Local disk nearly full (Docker storage repaired) |
-| KI-009 | LOW | ACCEPTED (Session 12, D-100) | Evidence files contain absolute local paths |
+| KI-009 | LOW | ACCEPTED (Session 12, D-100; 3 Session 14 files, D-114) | Evidence files contain absolute local paths |
 | KI-010 | LOW | OPEN | Docker sim image is 8.7 GB |
 | KI-011 | MEDIUM | OPEN | Lift's initial-state distribution is narrow |
 | KI-012 | LOW | ACCEPTED | Repackaged v1.5 datasets ≠ CoRL 2021 numbers |
@@ -57,7 +57,7 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-050 | LOW | FIXED (Session 10) | The first Observatory export stopped on the random baseline; its reference masks counted sites |
 | KI-051 | LOW | FIXED (Session 10) | Observatory selection code named the locked suite; the lock test failed at STOP |
 | KI-052 | MEDIUM | DOCUMENTED (Session 11, audit A-6); BC side TESTED by X1 (Session 13, exploratory, after the freeze); diffusion side OPEN | The diffusion sampler bounds its actions to the training range; BC heads are not bounded, a confound for H2-c and H4. X1: with the same bound on its executed actions, BC's outcomes are unchanged and every H4 verdict stands (primary −40.0 pp [−54.0, −25.3], separated). Open: whether the sampler's per-step clipping contributes to diffusion's own robustness (a `clip_sample=False` arm, not run) |
-| KI-053 | MEDIUM | DOCUMENTED (Session 11, audit B-1 to B-4, D-095) | Several separations depend on the interval method, the bootstrap seed or ties (3 seeds, 50 binary outcomes) |
+| KI-053 | MEDIUM | DOCUMENTED (Session 11, audit B-1 to B-4, D-095); Can H2/H3 replicated by X3 (Session 14, separate replication) | Several separations depend on the interval method, the bootstrap seed or ties (3 seeds, 50 binary outcomes). X3: with 6 seeds on 100 fresh Can starts, H2 diffusion − BC-MLP and H3 separate under both methods; the frozen 3-seed verdicts are unchanged |
 | KI-054 | MEDIUM | FIXED by reporting (Session 11, audit C-9, D-096) | Declared secondary metrics were computed per episode but never aggregated by the frozen analyses |
 | KI-055 | LOW | FIXED (Session 11, audit B-12, B-13) | `analyze_robustness.py` had no run-once guard; `analyze_level2.py` hashed a report before checking it exists |
 | KI-056 | LOW | DOCUMENTED (Session 11, audit C-6) | One RGB run's training hours omit a preempted attempt that was billed |
@@ -222,6 +222,12 @@ public release (Session 12).
   local path. `make release-check` caught it on the next run, and the next commit replaced it
   with `~`, like the other Session 12 logs. The line stays in that commit's history: it holds
   the same information as the disclosed set, and history is not rewritten (D-100).
+- **Session 14 (owner decision D-114, "Disclose 3 files"):** at the STOP, `make release-check`
+  failed on 3 committed X3 evidence files: `logs/session14/suite/stdout_x3.log` and
+  `logs/session14/suite/x3_can/events.jsonl` (the frozen `run_suite.py` traceback and argv,
+  KI-062) and `logs/session14/x3/check_host.log` (a robosuite warning). They are disclosed by
+  name in `src/roboforge/release/scan.py`, bytes unchanged; 139 disclosed files in all. Nothing
+  was pushed.
 
 ### KI-010 — Docker sim image is 8.7 GB (25.6 GB unpacked)
 The PyPI torch wheels for linux-aarch64 (and x86_64) bundle CUDA libraries. CPU rollout
@@ -1152,6 +1158,22 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
 - **Handling:** the frozen verdicts stay the reported result. The paper reports the D-095
   sensitivity analysis beside every declared difference, labelled not preregistered, and
   calls the Can separations fragile.
+- **X3 (Session 14, separate replication; D-111, `reports/session14/x3/tables.md`).** The frozen
+  Can configurations were trained with 3 new seeds (3–5) and all 6 seeds per family were
+  evaluated once on 100 fresh held-out starts (`can/x3_heldout`, content `9c199e19…`):
+  - H2 diffusion − BC-MLP +22.7 pp, bootstrap [+10.5, +35.0], seed-level [+8.0, +37.3];
+    H3 BC-RNN − BC-MLP +23.8 pp, [+12.0, +36.0], [+9.2, +38.5]: separated under both
+    (*holds, robust*).
+  - H2 diffusion − BC-RNN −1.2 pp and H2-c diffusion − BC-MLP-chunk −1.7 pp: not separated
+    under either (*unchanged*).
+  - Declared secondary, no readings: on 3-seed subsets (seeds 0–2 on the new starts; seeds 3–5)
+    H2 and H3 separate under the bootstrap but not the seed-level interval, as in the frozen
+    result; only the 6-seed analysis separates them under both. On seeds 3–5 alone, H2-c separates (−) under
+    the seed-level interval only ([−5.4, −0.6]).
+  - Measured seed-level half-widths about ±14.7 pp (H2, H3) and ±2.9 pp (H2-c), against the
+    preregistered estimates ±10.8 and ±4.6.
+- **Status:** stays DOCUMENTED. The fragility is a property of the frozen 3-seed result, which
+  stands as reported; X3 is shown beside it and never pooled with it.
 
 ### KI-054 Declared secondary metrics were never aggregated (MEDIUM, FIXED by reporting; Session 11)
 - RESEARCH_PROTOCOL §8 declares gripper sign changes and action smoothness; every held-out

@@ -130,6 +130,10 @@ def evaluate_x2(train_run_dir: Path, step: int, *, family: str, expected_sha256:
         "suite": suite, "partition": manifest["partition"],
         "suite_manifest_content_sha256": manifest["content_sha256"],
         "platform": platform, "canonical_platform": canonical, "partial": False,
+        # Read by the frozen §7 rule (roboforge.eval.selection.select_checkpoint), a pure
+        # function over summaries: canonical, all 50 X2 validation starts, primary inference.
+        "eligible_for_selection": bool(canonical and len(episodes) == len(states)
+                                       == int(manifest["n_states"])),
         "git": git_revision(), "environment": environment_snapshot(),
         "episode_rules": run["episode_rules"], **_summarize(episodes, run["action_dim"]),
         "throughput_control_steps_per_s": sum(e["steps"] for e in episodes) / run["wall_s"],

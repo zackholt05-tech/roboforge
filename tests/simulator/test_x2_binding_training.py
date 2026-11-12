@@ -133,3 +133,7 @@ def test_x2_evaluator_runs_x2_validation_starts_with_the_x2_rules(runs, tmp_path
     assert s["suite"] == x2s.VALIDATION_SUITE and s["n_episodes"] == 2
     assert s["episode_rules"]["horizon"] == 500
     assert s["dataset_id"] == "robomimic_v1.5/can/mh" and s["verify_passed"]
+    assert s["eligible_for_selection"] is False  # 2 of 50 starts, native: never selectable
+    assert set(s) >= {"eligible_for_selection", "n_episodes", "partial", "checkpoint",
+                      "eval_run_id", "successes", "first_success_step", "wilson95", "platform",
+                      "train_run_id"}  # the fields roboforge.eval.selection reads

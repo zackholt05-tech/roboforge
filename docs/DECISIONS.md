@@ -2969,3 +2969,55 @@ scripts enter the context; nothing launched through the frozen scripts sees it.
   must: only the X2 suite module and its generator may name `x2_heldout` in `src/` or
   `scripts/` (research-integrity test); the X2-a evaluator admits only `x2_validation`. No
   X2-a step rolls out on `x2_heldout`, not even a smoke test.
+
+### D-124 X2-a headroom pilot: design, measurements and the reading rule (FIXED, Session 15, before the first pilot launch)
+**Question** (`docs/extensions/X2_harder_task.md` §3): with the frozen Level 1 configurations,
+is Can MH neither saturated nor at zero, so that X2 can rank the families? Development numbers
+only: one seed, the best of five checkpoints on the same 50 starts (biased upward, RESEARCH_PROTOCOL
+§7), never a result, never pooled with or compared to any frozen number.
+
+**Runs** (`configs/extensions/x2_pilot.yaml`, `src/roboforge/x2/pilot.py`): each family's frozen
+chosen Can configuration (`docs/FINAL_TEST_FREEZE.md` §3: diffusion trial 2 cosine, BC-RNN trial
+2 cosine, BC-MLP-chunk trial 4 weight decay 0.1, BC-MLP trial 2 cosine), as written out for X3
+(`configs/extensions/x3/`), with seed 0 and the frozen budget (100,000 steps, batch 100,
+checkpoints every 5,000, 1 torch thread). Each resolves to the frozen seed-0 Can configuration
+hash (test). Run IDs `s15x2_<name>_can_seed0_<hash>` under `runs/x2/`; they differ from the frozen
+`s7_*` IDs in the prefix only, and their manifests record the X2 dataset. Training on the macOS
+host (KI-061) through the frozen `train_run` inside the X2 binding (D-121), by
+`scripts/x2_train.py`.
+
+**Evaluations:** checkpoints 20k, 40k, 60k, 80k and 100k of each run (stride 4 of the 20; 20
+evaluations), each on the 50 `x2_validation` starts once, canonical container, policy seed 0,
+R = 1, 500-step episodes (D-120), by `scripts/x2_eval.py` (admits only `x2_validation`).
+Records `runs/x2/evals/<eval_id>/`; summaries `reports/session15/x2/pilot/evals/`. The other 15
+checkpoints per run stay unevaluated. X2-b may count these four runs as tuning trial 1 of each
+family only if its preregistration says so (they are exactly what a seed-0 trial 1 of the
+frozen configuration trains, KI-062); then their remaining checkpoints are evaluated like any
+trial's. No X2 held-out start is stepped.
+
+**Orchestration and limits** (`scripts/x2_pilot.py`, `make x2-pilot`): from a clean tree; the
+four trainings at once; evaluations as their checkpoints are indexed, at most 2 containers
+while the diffusion run trains and 4 after it ends (KI-035, D-113); no launch below 4 GiB free
+disk, on a dirty tree, or while the host swaps more than 3,000 pages/s (idle rate at launch
+about 390/s; swap 13.5 of 14.3 GB in use before the pilot); no automatic rerun. Nothing is
+committed while it runs.
+
+**Measured:** training steps/s, wall and CPU time (run manifests), peak RSS (`/usr/bin/time
+-l`), disk per run and per evaluation; evaluation wall time, control steps/s and latency;
+host swap rate, swap use, load, free disk and container memory every 5 minutes. Report:
+`reports/session15/x2/pilot/{pilot.json,tables.md}`.
+
+**Reading rule** (fixed now). Let b_f be the highest success count among family f's five
+evaluated checkpoints (of 50).
+- **saturated:** b_f ≥ 48 for at least 3 of the 4 families (the Can PH pattern: three families
+  at 95–100 % on validation cannot be ranked);
+- **at zero:** b_f ≤ 2 for all 4 families;
+- **headroom:** otherwise.
+Only "headroom" supports the X2-b design proposal as planned. "Saturated" or "at zero" goes
+back to the owner with options (for example Square, D-116's alternatives) before X2-b.
+
+**Estimates** (labelled estimates, from measured Session 7 and Session 14 times): diffusion
+about 4.1 h of training at Session 7's 6.7 steps/s alone, up to about 7 h at Session 14's
+loaded 4 steps/s; BC-RNN 0.9–2.5 h; BC-MLP and BC-MLP-chunk about 0.2 h each; the 20
+evaluations about 2–3.5 container-hours (Session 7 Can median 353–404 s per 50 starts; MH
+failures run 500 steps); disk about 1.5–2 GB; $0.

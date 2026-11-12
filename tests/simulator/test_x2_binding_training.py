@@ -106,3 +106,30 @@ def test_environment_horizon_follows_the_binding(data_ready) -> None:
                 "task_manifest"]["task_spec_sha256"]
         finally:
             env.close()
+
+
+def test_x2_evaluator_runs_x2_validation_starts_with_the_x2_rules(runs, tmp_path,
+                                                                   monkeypatch) -> None:
+    """The evaluator on 2 X2 validation starts (tiny model, development only)."""
+    import roboforge.sim.eval_states as es
+    from roboforge.x2 import states as x2s
+    from roboforge.x2.evaluate import evaluate_x2
+
+    path, sha = _ckpt(runs["x2"])
+    run_dir = runs["x2"]["checkpoints"][-1]["path"].rsplit("/checkpoints/", 1)[0]
+    with pytest.raises(RuntimeError, match="inside x2_bindings"):
+        evaluate_x2(run_dir, 30, family="bc_mlp", expected_sha256=sha, runs_dir=tmp_path)
+    real = es.load_suite
+    monkeypatch.setattr(es, "load_suite", lambda task, suite: real(task, suite)[:2])
+    with x2_bindings():
+        with pytest.raises(ValueError, match="admits only"):
+            evaluate_x2(run_dir, 30, family="bc_mlp", expected_sha256=sha, runs_dir=tmp_path,
+                        suite=x2s.HELDOUT_SUITE)
+        s = evaluate_x2(run_dir, 30, family="bc_mlp", expected_sha256=sha, runs_dir=tmp_path)
+        ph_path, ph_sha = _ckpt(runs["plain"])
+        ph_dir = runs["plain"]["checkpoints"][-1]["path"].rsplit("/checkpoints/", 1)[0]
+        with pytest.raises(CheckpointError):
+            evaluate_x2(ph_dir, 30, family="bc_mlp", expected_sha256=ph_sha, runs_dir=tmp_path)
+    assert s["suite"] == x2s.VALIDATION_SUITE and s["n_episodes"] == 2
+    assert s["episode_rules"]["horizon"] == 500
+    assert s["dataset_id"] == "robomimic_v1.5/can/mh" and s["verify_passed"]

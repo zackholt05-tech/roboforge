@@ -27,7 +27,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	pc-feasibility pc-feasibility-native pc-dataset pc-dataset-install pc-validate pc-placement \
 	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze x1-run x1-analyze \
 	x3-states check-x3-states x3-plan x3-train x3-validate x3-check x3-run x3-analyze \
-	x2-download x2-inspect x2-data check-x2-data x2-contract x2-states check-x2-states \
+	x2-download x2-inspect x2-data check-x2-data x2-contract x2-states check-x2-states x2-pilot x2-pilot-report \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
 	web-build web-test web-e2e web-verify web-dev visual-provenance \
 	paper-assets paper-check paper-bibcheck paper \
@@ -376,6 +376,12 @@ x2-states:  ## X2: the X2 validation and held-out Can starts ON THE CANONICAL CO
 
 check-x2-states:  ## X2: regenerate the X2 starts in memory and compare (bitwise on their platform)
 	$(RUN_S) python scripts/generate_x2_states.py --check
+
+x2-pilot:  ## X2: the X2-a headroom pilot (4 trainings, 20 evaluations on x2_validation; D-124)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/x2_pilot.py
+
+x2-pilot-report:  ## X2: rewrite the pilot report from its files (read-only)
+	$(RUN_S) python scripts/x2_pilot.py --report
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

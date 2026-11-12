@@ -1,0 +1,32 @@
+# X2-a headroom pilot (DECISIONS D-124; docs/extensions/X2_harder_task.md §3). Development
+# numbers only, never a result: one training seed of each family's frozen chosen Can
+# configuration (docs/FINAL_TEST_FREEZE.md §3), trained on the X2 (Can MH) data, evaluated on
+# X2 validation starts only. Read by roboforge.x2.pilot. Fixed before the first pilot launch.
+schema: roboforge.x2_pilot/1
+decision: D-124
+label: "X2-a headroom pilot: development numbers on X2 validation starts; not a result"
+task: can
+prefix: s15x2
+seed: 0                 # KI-062: a seed-0 run is what an X2-b plan's tuning trial 1 would train
+# Each family's frozen chosen Can configuration, as written out for X3 (D-111; equal to the
+# frozen base config with the chosen override applied, nothing else). With task=can, seed=0 and
+# the budget below each resolves to the frozen seed-0 Can configuration hash
+# (tests/unit/test_x2_pilot.py).
+families:
+  diffusion_unet: configs/extensions/x3/diffusion_unet_cos_can.yaml
+  bc_rnn: configs/extensions/x3/bc_rnn_cos_can.yaml
+  bc_mlp_chunk: configs/extensions/x3/bc_mlp_chunk_wd1e1_can.yaml
+  bc_mlp: configs/extensions/x3/bc_mlp_cos_can.yaml
+budget: ["train.max_steps=100000", "train.ckpt_every=5000"]
+# Evaluated checkpoints: every 4th of the 20 (stride 20,000). The other 15 stay unevaluated
+# unless X2-b counts these runs as tuning trial 1 (then all 20 are evaluated, as for any trial).
+eval_steps: [20000, 40000, 60000, 80000, 100000]
+suite: x2_validation
+# Host limits (KI-035, D-113): at most 4 trainings; at most 2 evaluation containers while the
+# diffusion run trains, 4 after it ends; no launch below 4 GiB free disk.
+limits: {max_train: 4, max_containers_during_diffusion: 2, max_containers: 4, min_free_gib: 4.0}
+# Reading rule over b_f = the highest success count among family f's evaluated checkpoints
+# (of 50): "saturated" if b_f >= 48 for at least 3 of the 4 families (the Can PH pattern, where
+# three families sit at 95-100 % on validation); "at zero" if b_f <= 2 for all 4; otherwise
+# "headroom".
+reading: {n_states: 50, saturated_threshold: 48, saturated_min_families: 3, zero_threshold: 2}

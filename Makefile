@@ -28,6 +28,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	pc-heldout pc-heldout-rehearse pc-heldout-gate level2-analyze x1-run x1-analyze \
 	x3-states check-x3-states x3-plan x3-train x3-validate x3-check x3-run x3-analyze \
 	x2-download x2-inspect x2-data check-x2-data x2-contract x2-states check-x2-states x2-pilot x2-pilot-report \
+	x2b-plan x2b-suite x2b-report x2b-benchmark \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
 	web-build web-test web-e2e web-verify web-dev visual-provenance \
 	paper-assets paper-check paper-bibcheck paper \
@@ -146,13 +147,13 @@ in-sim:  ## Run CMD on the canonical evaluation container, e.g. make in-sim CMD=
 MODEL ?= bc_mlp
 TASK ?= lift
 SEED ?= 0
-# Defaults bumped to Session 15 (DECISIONS D-117; Session 14: D-110; Session 13: D-106; Session 12:
-# D-097; Session 11: D-092; Session 10: D-087; Session 9: D-082; Session 8: D-073; Session 7: D-060;
-# Session 6: D-053; Session 5: D-048) so that no Session 15 command can write into Session 6-14
-# evidence or reuse the s14 run prefix by omission.
-PREFIX ?= s15
+# Defaults bumped to Session 16 (DECISIONS D-126; Session 15: D-117; Session 14: D-110;
+# Session 13: D-106; Session 12: D-097; Session 11: D-092; Session 10: D-087; Session 9: D-082;
+# Session 8: D-073; Session 7: D-060; Session 6: D-053; Session 5: D-048) so that no Session 16
+# command can write into Session 6-15 evidence or reuse the s15 run prefix by omission.
+PREFIX ?= s16
 EVAL_SET ?= validation
-EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),15)
+EVIDENCE_SESSION ?= $(if $(ROBOFORGE_EVIDENCE_SESSION),$(ROBOFORGE_EVIDENCE_SESSION),16)
 IN_SIM_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(IN_SIM)
 RUN_S := ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(RUN)
 SMOKE_DIR ?= logs/tmp/train_smoke
@@ -382,6 +383,18 @@ x2-pilot:  ## X2: the X2-a headroom pilot (4 trainings, 20 evaluations on x2_val
 
 x2-pilot-report:  ## X2: rewrite the pilot report from its files (read-only)
 	$(RUN_S) python scripts/x2_pilot.py --report
+
+x2b-plan:  ## X2-b: dry run (plan, pilot mapping, disk estimate; launches nothing; D-127)
+	$(RUN_S) python scripts/x2b_suite.py --dry-run
+
+x2b-suite:  ## X2-b: tuning, choice, replicates, selection on x2_validation (resumable; D-127)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/x2b_suite.py
+
+x2b-report:  ## X2-b: rewrite the report from its files (read-only)
+	$(RUN_S) python scripts/x2b_report.py
+
+x2b-benchmark:  ## X2-b: latency of the selected X2 checkpoints (container; no rollout)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) infra/containers/run_sim_cpu.sh python scripts/x2b_benchmark.py
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.

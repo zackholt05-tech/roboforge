@@ -1,0 +1,27 @@
+# X2-b: tuning, training and selection on X2 validation starts (DECISIONS D-125 to D-127;
+# docs/extensions/X2_PREREGISTRATION.md). Read by roboforge.x2.suite and scripts/x2b_suite.py.
+# Fixed before the first X2-b training.
+schema: roboforge.x2b/1
+decisions: [D-125, D-126, D-127]
+label: "X2-b development evaluations on X2 validation starts; selection only, never a result"
+plan: configs/experiments/x2_can_mh.yaml
+# The X2-a pilot (D-124): its runs count as the seed-0 runs of the trials whose configuration
+# they have (D-125). Its 20 evaluation summaries feed the same §7 selections as X2-b's.
+pilot_prefix: s15x2
+summary_dirs: [reports/session15/x2/pilot/evals, reports/session16/x2/suite/evals]
+out_dir: reports/session16/x2/suite
+suite: x2_validation
+n_states: 50
+# Host limits (KI-035, D-113, D-125): at most 4 trainings; trainings + evaluation containers at
+# most 5, so 1 container beside 4 trainings, 2 beside 3, up to 4; trainings launch first; at
+# most one launch per host sample (60 s), each after a fresh sample; no launch while the last
+# sample's swap rate exceeds swap_pages_per_s, below min_free_gib, or on a dirty tree; below
+# hard_stop_free_gib the trainings are stopped with a resume checkpoint and nothing launches.
+limits: {max_train: 4, max_jobs: 5, max_containers: 4, swap_pages_per_s: 3000.0,
+         min_free_gib: 4.0, hard_stop_free_gib: 2.0, sample_every_s: 60}
+# Replicate trainings launch only if free disk >= min_free_gib + the remaining need, from the
+# X2-a measurements (GiB): per training run by family, per evaluation (records of an
+# evaluation whose 50 episodes all run 500 steps: 36-39 MiB).
+disk_estimate_gib:
+  run: {diffusion_unet: 0.34, bc_rnn: 0.26, bc_mlp_chunk: 0.28, bc_mlp: 0.25}
+  evaluation: 0.038

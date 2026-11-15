@@ -3041,3 +3041,69 @@ chosen configurations are trial 2 (cosine; diffusion, BC-RNN, BC-MLP) and trial 
 decay 0.1; BC-MLP-chunk), not trial 1 (the base configuration). Whether X2-b counts each
 pilot run as the seed-0 run of the trial whose configuration it has, or retrains, is an
 owner decision for the X2-b preregistration (HANDOFF # Session 15 Handoff §5).
+
+## Session 16 (2026-11-14): post-release extension X2, phase X2-b (tuning, training, selection)
+Session 16 runs X2-b on Can MH (D-116): the preregistered search, training on local CPU and
+selection on X2 validation starts only. No X2 held-out start is stepped. Dates are the owner's
+(EST); 2026-11-15 UTC.
+
+### D-125 X2-b owner decisions: proceed on Can MH; pilot runs count; concurrency; disk (OWNER, 2026-11-14, Session 16)
+**Owner's words** (answering # Session 15 Handoff §5): "Follow what you would recommend for
+each of these decisions and continue". The recommendations taken:
+1. **Proceed** with X2-b on Can MH (the D-124 reading is headroom, by one family).
+2. **The pilot runs count** as the seed-0 runs of the trials whose configuration they have
+   (diffusion, BC-RNN, BC-MLP trial 2; BC-MLP-chunk trial 4), mapped by config SHA-256; their
+   other 15 checkpoints are evaluated like any trial's. Not retrained. This resolves the
+   "trial 1" discrepancy in D-124's outcome note.
+3. **Concurrency** (`configs/extensions/x2b.yaml`): at most 4 trainings; trainings plus
+   evaluation containers at most 5 (1 container beside 4 trainings); a baseline host sample
+   before the first launch; at most one launch per 60-s sample, each after a fresh sample;
+   launches held while the last swap rate exceeds 3,000 pages/s; below 2 GiB free disk the
+   trainings stop with a resume checkpoint. **Correction of # Session 15 Handoff §5 item 3:**
+   the X2-a pilot already sampled swap every 60 s and gated launches on it. What it lacked was
+   a sample before its first launches (its rate was undefined at startup), spacing between
+   launches, and a container cap beside trainings. Other projects' containers are not touched;
+   none was running at the start.
+4. **Disk** (KI-008). `uv cache prune` was run at about 01:20 UTC and failed after its 300-s
+   lock timeout: long-running `uvx` MCP-server processes hold the uv cache lock. It was **not
+   forced**, because `--force` may delete the cached environments those running tools execute
+   from. **Substituted:** `docker builder prune -f` (2.38 GB of unused build cache, listed as
+   reclaimable in # Session 15 Handoff §5; the canonical image is untouched), +2.1 GiB on the
+   host. Free disk at the dry run: 24.5 GiB, against a conservative need of 23.1 GiB plus the
+   4 GiB floor. So the tuning phase launches, and replicate trainings launch only when free
+   disk covers the remaining estimate plus the floor. The owner was notified with the options:
+   quit the apps running those servers so the prune can run; approve `--force`; or approve
+   removing the non-frozen development scratch runs (about 2.2 GB, citations checked first).
+   Swap files share the volume: swap grew from 10.2 to 13.3 GB in 15 minutes with no X2 job
+   running, which cost about 2 GiB of free disk.
+
+### D-126 Makefile defaults bumped to Session 16; X2-b targets (FIXED, before any code change)
+`PREFIX ?= s16` and `EVIDENCE_SESSION` default 16, so that no Session 16 command writes into
+Session 6–15 evidence or reuses the `s15` prefix by omission. New targets: `x2b-plan` (dry run),
+`x2b-suite`, `x2b-report`, `x2b-benchmark`. X2-b runs use the prefix `s16x2`.
+
+### D-127 X2-b design: the preregistration, plan, drivers and limits (FIXED, Session 16, before the first X2-b training)
+`docs/extensions/X2_PREREGISTRATION.md` governs X2-b and fixes the X2-c analysis.
+- **Plan** `configs/experiments/x2_can_mh.yaml`: Level 1's four trials per family (D-055,
+  D-061), the frozen budget, tuning seed 0, replicate seeds 1 and 2; resolved by the frozen
+  `load_plan`. The config hashes equal Level 1's Can trials (test).
+- **Selection:** every checkpoint once on the 50 `x2_validation` starts, the frozen §7
+  `select_checkpoint` per run and the frozen §6.3 `choose_configuration` per family. The X2-a
+  pilot summaries (`reports/session15/x2/pilot/evals/`) and X2-b's
+  (`reports/session16/x2/suite/evals/`) feed the same selections; a duplicate step raises.
+- **Code** (new files only; `make freeze-check` before and after):
+  - `src/roboforge/x2/suite.py` (plan, pilot mapping, selection and choice from files);
+  - `src/roboforge/x2/host.py` (host guards, D-125);
+  - `scripts/x2b_train.py` (refuses a pilot run);
+  - `scripts/x2b_eval.py` (the X2-a evaluator, X2 validation only);
+  - `scripts/x2b_suite.py` (resumable orchestrator);
+  - `scripts/x2b_report.py`;
+  - `scripts/x2b_benchmark.py` (latency, X2_harder_task §4);
+  - `configs/extensions/x2b.yaml`;
+  - tests `tests/unit/test_x2_suite.py` (a synthetic pass through the frozen §7 and §6.3 rules
+    to the test configuration, KI-062) and `tests/research_integrity/test_x2b_scope.py`.
+- **Not reused:** `scripts/x2_eval.py` (its summaries go to the pilot's directory) and
+  `scripts/x2_pilot.py` (unchanged X2-a evidence code).
+- **Estimates** (labelled; from the X2-a measured times): 30.5 training-hours summed;
+  evaluations about 64 container-hours (biased low); about 23 h of wall time; disk 18–23 GiB;
+  $0.

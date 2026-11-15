@@ -1,0 +1,57 @@
+# X2-b suite on Can MH (Session 16; DECISIONS D-125 to D-127; docs/extensions/X2_PREREGISTRATION.md).
+# Validated and resolved by the frozen roboforge.train.suite.load_plan; executed by
+# scripts/x2b_suite.py inside the X2 data binding (D-121), never by scripts/run_suite.py (KI-064).
+#
+# The Level 1 Can protocol unchanged (Sessions 6-7, D-055, D-061), on the X2 data:
+# Budget: identical for every run of every family (100,000 steps, batch 100 from the base
+# configs, checkpoints every 5,000, K = 20, every checkpoint evaluated on all 50 x2_validation
+# starts, 500-step episodes, D-120).
+#
+# Tuning: 4 configurations per family, seed 0, the Level 1 trials:
+#   1: the base configuration unchanged at the main budget
+#   2: cosine learning-rate schedule (1e-4 annealed to 0 over the 100k steps)
+#   3: constant learning rate 3e-4
+#   4: AdamW weight decay 0.1
+# Architecture, horizons, parameter counts, batch and budget never change (TRIAL_KEYS).
+# The chosen configuration (§6.3 ordering of the seed-0 runs' §7-selected checkpoints) is then
+# trained with seeds 1 and 2.
+#
+# Pilot runs (D-125): a planned run whose resolved config SHA-256 equals an X2-a pilot run's
+# (diffusion, BC-RNN and BC-MLP trial 2; BC-MLP-chunk trial 4; all seed 0) is that pilot run
+# (runs/x2/s15x2_*), not retrained; its 15 unevaluated checkpoints are evaluated like any
+# trial's (roboforge.x2.suite).
+schema: roboforge.suite_plan/1
+task: can
+prefix: s16x2
+budget: [train.max_steps=100000, train.ckpt_every=5000]
+tuning_seed: 0
+replicate_seeds: [1, 2]
+families:
+  - family: diffusion_unet
+    config: configs/models/diffusion_unet.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=diffusion_unet_cos, optim.schedule=cosine]}
+      - {trial: 3, overrides: [name=diffusion_unet_lr3e4, optim.lr=3.0e-4]}
+      - {trial: 4, overrides: [name=diffusion_unet_wd1e1, optim.weight_decay=0.1]}
+  - family: bc_rnn
+    config: configs/models/bc_rnn.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=bc_rnn_cos, optim.schedule=cosine]}
+      - {trial: 3, overrides: [name=bc_rnn_lr3e4, optim.lr=3.0e-4]}
+      - {trial: 4, overrides: [name=bc_rnn_wd1e1, optim.weight_decay=0.1]}
+  - family: bc_mlp_chunk
+    config: configs/models/bc_mlp_chunk.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=bc_mlp_chunk_cos, optim.schedule=cosine]}
+      - {trial: 3, overrides: [name=bc_mlp_chunk_lr3e4, optim.lr=3.0e-4]}
+      - {trial: 4, overrides: [name=bc_mlp_chunk_wd1e1, optim.weight_decay=0.1]}
+  - family: bc_mlp
+    config: configs/models/bc_mlp.yaml
+    trials:
+      - {trial: 1, overrides: []}
+      - {trial: 2, overrides: [name=bc_mlp_cos, optim.schedule=cosine]}
+      - {trial: 3, overrides: [name=bc_mlp_lr3e4, optim.lr=3.0e-4]}
+      - {trial: 4, overrides: [name=bc_mlp_wd1e1, optim.weight_decay=0.1]}

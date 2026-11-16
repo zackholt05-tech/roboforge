@@ -471,8 +471,10 @@ observatory-export:  ## Container: clips, reference frames, media, denoising, ca
 observatory-findings:  ## Host: findings.json from the frozen results.json files (hashes cited)
 	$(RUN_S) python scripts/export_observatory.py findings --out-dir $(OBS_OUT)
 
-web-data:  ## Host: copy the committed observatory outputs into website/public/data (hash-checked)
+web-data:  ## Host: copy the committed observatory outputs (Session 10, and the v1.1 extensions) into website/public/data (hash-checked)
 	$(RUN_S) python scripts/export_observatory.py web-data --out-dir $(OBS_OUT) \
+		--web-dir website/public
+	$(RUN_S) python scripts/export_observatory_ext.py web-data-ext --out-dir $(OBS_EXT_OUT) \
 		--web-dir website/public
 
 web-assets:  ## Host: extract compiled visual meshes into website/public/assets (gitignored; D-090)
@@ -499,6 +501,24 @@ web-dev:  ## Vite dev server (local only)
 
 visual-provenance:  ## Host: docs/VISUAL_PROVENANCE.md from the committed export (generated)
 	$(RUN_S) python scripts/visual_provenance.py --out-dir $(OBS_OUT)
+
+# --- Session 18: the Observatory's v1.1 extension section (DECISIONS D-134) ---
+# A new evidence tree; OBS_OUT (Session 10) is never written. Clips are re-derived from recorded
+# states only, on the canonical container from a clean tree, as one process.
+OBS_EXT_OUT ?= reports/session18/observatory
+obs-ext-select:  ## Host: the D-134 rules -> $(OBS_EXT_OUT)/selection.json (committed summaries only)
+	$(RUN_S) python scripts/export_observatory_ext.py select --out-dir $(OBS_EXT_OUT)
+
+obs-ext-export:  ## Host snapshot, container export of the selected clips (clean tree), snapshot compare
+	$(RUN_S) python scripts/export_observatory_ext.py snapshot --out-dir $(OBS_EXT_OUT) --tag before
+	$(IN_SIM_S) python scripts/export_observatory_ext.py export --out-dir $(OBS_EXT_OUT)
+	$(RUN_S) python scripts/export_observatory_ext.py snapshot --out-dir $(OBS_EXT_OUT) --tag after --compare before
+
+obs-ext-findings:  ## Host: findings_ext.json copied from the three pinned extension results
+	$(RUN_S) python scripts/export_observatory_ext.py findings --out-dir $(OBS_EXT_OUT)
+
+web-verify-ext:  ## Viewer vs MuJoCo reference frames for the extension clips -> $(OBS_EXT_OUT)/viewer_verification.json
+	cd website && $(NPM) run verify-ext
 
 # --- Session 11: research paper (DECISIONS D-092 to D-096) ---
 # Fixed SOURCE_DATE_EPOCH (2026-11-09 00:00 UTC) so paper/main.pdf is byte-identical across

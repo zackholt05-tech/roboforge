@@ -9,7 +9,7 @@ read code, documents or data, and it was given no opinion or plan. Its answer fo
 ---
 
 REVIEW RECORD: first-time-visitor visual audit, "before" screenshots
-Base: /Users/zackaryholt/Projects/roboforge/logs/session20/visual_audit/before/
+Base: ~/Projects/roboforge/logs/session20/visual_audit/before/
 Read: all 32 desktop tiles, all 9 viewer captures, 20 phone tiles (first two per section, followups_05, followups_10). Unprefixed names are 1440x900; "390/" is phone; "viewers/" is viewer captures.
 Capture gaps: inside_03.jpg shows Findings charts, so the end of "Inside" is not captured on desktop. The "−41.3" callout falls between pixels_01 and pixels_02 and was judged from 390/pixels_02.
 

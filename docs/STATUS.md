@@ -1,10 +1,10 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 19
-SESSION_STATUS: PASS            # Session 19: v1.1.0 published and verified (main 907c901, CI 3/3, tag v1.1.0 d805cb5, release with addendum.pdf bedfb277..., gh-pages d3f47dd on top of c14e041, live site 263/263 hashes and E2E 8/8); $0
-NEXT_SESSION: none planned      # v1.1 is published; any further study (e.g. the open diffusion side of KI-052) needs a new owner decision (docs/HANDOFF.md # Session 19 Handoff §6)
+CURRENT_SESSION: 20
+SESSION_STATUS: PASS            # Session 20: Observatory visual quality pass (D-136) built and verified locally at e5cff56; NOT published (main 92c8cc4, gh-pages d3f47dd unchanged on the remote); $0
+NEXT_SESSION: none planned      # pending owner answer: publish the Session 20 site build or not (docs/HANDOFF.md # Session 20 Handoff §5); any further study needs a new owner decision
 BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-053 (Can H2/H3 replicated by X3; X2 Can MH shown beside), KI-056, KI-057; mitigated: KI-062, KI-064 (Session 15), KI-065 (Session 18); KI-052 tested by X1 (Session 13); accepted: KI-009 (D-100, D-114), KI-060, KI-063 (D-122); partial: KI-061
-LAST_VERIFIED_COMMIT: 907c901   # v1.1.0 (tagged, CI 3/3, the Pages build source); Session 19 STOP checks ran on 907c901 plus the Session 19 records (documents and logs only); last code change f675490 (Makefile defaults ab6c49b)
+LAST_VERIFIED_COMMIT: e5cff56   # Session 20 site changes (local, unpushed); STOP checks ran on e5cff56 plus the Session 20 records. Published state is still v1.1.0 (907c901, CI 3/3, the live Pages build source)
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c, x1_preregistration: ab02469, x3_preregistration: fb9f05e, x2_preregistration: 9df6628}
 EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b], x1_code: 09d1a90, x1_preregistration: ab02469, x1_results: c2a9ae6, x3_code: [e0b8a4e, e9289c6], x3_heldout_suite: 81afa3b, x3_preregistration: fb9f05e, x3_suite_end: d602d1b, x3_validation: 86e6c9b, x3_isolation_before: 13c5db2, x3_evaluations: 949a6d7, x3_results: 335c27c, x2_data: [5e4b015, 305f074], x2_suites: 4459c00, x2_pilot_code: [3d42786, fe9df74], x2b_preregistration_and_code: 9df6628, x2b_evidence: fdb1f37, x2c_decisions: ca1897a, x2c_code: a1c3db7, x2c_engineering_check: 45edda2, x2_freeze: 3a64dbb, x2_heldout: 29ce47a, x2_results: 3df25ff, v1_1_decisions: b96b44f, addendum_and_readme: 5e2cf46, obs_ext_code: 2fdf21d, obs_ext_selection: 7eb5817, obs_ext_export: [f26e4e6, a8b5a74], obs_ext_site: fb1f6be, visual_provenance_ext: f675490, ki_065: d00b195, s19_decision: ab6c49b, v1_1_release_commit: 907c901, v1_1_tag_object: d805cb5, gh_pages_v1_1: d3f47dd}
 PAPER: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400 (D-093)", fresh_clone_rebuild: "byte-identical (Session 12)", label: "local build, not peer reviewed"}
@@ -22,11 +22,48 @@ UPDATED: 2026-11-16
 
 # RoboForge Status
 
-## Next: none planned
-v1.1.0 is published and verified (Session 19). No session is planned. Any further study, for
-example the open diffusion side of KI-052, needs a new owner decision first
-(`docs/HANDOFF.md` # Session 19 Handoff §5–§6). v1.0.0 (tag, release, `paper/main.pdf`
-`c648e753…`) stays as published.
+## Next: owner answer on publishing the Session 20 site build
+v1.1.0 is published and verified (Session 19). Session 20 improved the Observatory's
+presentation locally and published nothing: the live site is still the Session 19 build. The
+owner decides whether to publish it (`docs/HANDOFF.md` # Session 20 Handoff §5, with the exact
+steps). No other session is planned. Any further study, for example the open diffusion side of
+KI-052, needs a new owner decision first. v1.0.0 and v1.1.0 (tags, releases, `paper/main.pdf`
+`c648e753…`, `paper/addendum/addendum.pdf` `bedfb277…`) stay as published.
+
+## Session 20: Observatory visual quality pass (PASS; nothing published)
+| Step (Session 20 prompt) | Status | Evidence |
+|---|---|---|
+| Prerequisites, by executable checks | DONE: all PASS | E20-01 |
+| 1. Decisions first | DONE: D-136 (owner request, `website/` presentation only, no publication), D-137 (Makefile `s20`, site targets), `88707cd` | D-136, D-137 |
+| 2. Baseline audit, committed before any site change | DONE: 162 screenshots, word counts, fresh-context review, audit Parts 1 and 2, `586ef34` | E20-02 |
+| 3. Plan; owner question only if needed | DONE: not needed (no section removed, no reorder, no identity change, no new asset) | audit §2 |
+| 4. Implementation | DONE: `e5cff56` | E20-03, audit §3 |
+| 5. Verification | DONE: build within every budget, vitest 79, E2E 10/10, viewer re-verified 18/18 and 12/12, after audit and two fresh-context reviews | E20-03, E20-04, audit §4 |
+| 6. Publication | NOT DONE: not authorized by D-136; the owner is asked once | HANDOFF §5 |
+| STOP | see below | E20-05 |
+
+**What changed for a visitor** (before/after pictures: `logs/session20/visual_audit/montage/`).
+- The hero says what is shown and what the research found: three results read from
+  `findings.json`, with intervals, verdicts and caveats, on the first screen.
+- The 3D scene is lit so the table, bins and object read clearly; the default camera frames the
+  gripper, object and goal.
+- Charts have titles and one reading key per section; on phones, row charts put each label above
+  its row.
+- Clip captions are one line; the full source is in a "Provenance" disclosure on every clip.
+- Less text: 4,291 → 3,471 reading words and 21,477 → 18,637 px at 1440×900.
+- No number, verdict, clip or export changed. Every required caveat is still visible by default;
+  KI-052 is now also in Findings and the hero, and the X2 (Can MH) label is visible by default.
+
+**STOP checks.** On `e5cff56` plus the Session 20 records, host, no container or browser job
+during the suite: `make lint` clean; full suite alone **721 passed** (9:43;
+`logs/session20/stop_full_suite.log`); `make freeze-check` unchanged; `tests/research_integrity`
+81 passed; `make addendum-check`, `make paper-check` pass; `make release-check` PASS (records
+staged). Host: 24 GiB free, swap 10.6 of 12.3 GiB used, no container running. Cost: $0.
+
+**Publication state (verified by `git ls-remote`, unchanged from the start of the session).**
+`main` `92c8cc4`, `gh-pages` `d3f47dd`, `v1.0.0` `82f3219` → `7b394fa`, `v1.1.0` `d805cb5` →
+`907c901`. Local `main` is ahead by the Session 20 commits (`88707cd`, `586ef34`, `e5cff56` and
+the records commit), unpushed.
 
 ## Session 19: v1.1.0 published (PASS)
 | Step (Session 19 prompt, D-131 order) | Status | Evidence |

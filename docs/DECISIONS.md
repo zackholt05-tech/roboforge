@@ -3693,3 +3693,33 @@ across the observatory, that everything makes sense".
 - Nothing else changes in the Makefile. No test pins the Makefile defaults (checked by grep
   before the change, as in D-135).
 
+
+**Outcome note (D-136, Session 20 STOP, 2026-11-16; LEDGER E20-02 to E20-05).** Applied within
+the rules above; no rule changed after it was fixed.
+- **Not asked before implementing:** no section was removed, the narrative order and the §8.1
+  identity are unchanged, and no dependency, font, texture, environment map or other
+  third-party asset was added (`website/package-lock.json` unchanged).
+- **Done:** `docs/OBSERVATORY_VISUAL_AUDIT.md` Parts 1 to 4 (baseline committed at `586ef34`
+  before any site change; plan; changes; after measurements). Reading words visible by default
+  4,291 → 3,471 and page height 21,477 → 18,637 px at 1440×900; the hero now states three
+  results read from `findings.json`. Every caveat of the Session 20 prompt is visible by default
+  where its numbers are shown (audit §3.6, pinned by a new E2E test); KI-052 is now also shown in
+  Findings and the hero, and the X2 (Can MH) label is visible by default.
+- **Tests:** no existing assertion changed or removed; 2 E2E tests, 4 vitest tests and 1 pytest
+  test added (audit §3.5). D-088 budgets unchanged and met.
+- **3D:** `Viewer.tsx`, `robotScene.ts` (colours and material parameters) and `cameras.ts`
+  (viewer presets) changed; kinematics, transforms, meshes, `mujocoCameraPose` and `src/verify/`
+  did not. Both verifications were run again into `reports/session20/observatory/`: 18/18 and
+  12/12 frames pass, each frame record equal to the Session 10 or Session 18 record.
+- **One label was clarified:** X2 captions read "X2 held-out start" in place of "ad hoc
+  evaluation start"; Provenance keeps the recorded partition `eval_adhoc` beside it (D-123).
+- **Publication:** not done. The owner is asked once at STOP (Session 20 prompt, step 6).
+
+**Outcome note (D-137, Session 20 STOP).** The three targets were added as recorded
+(`web-audit`, `web-verify-s20`, `web-verify-ext-s20`) and `make web-verify`,
+`make web-verify-ext` were not run. One Makefile change beyond the list above:
+`visual-provenance` passes `--reverify-dir $(OBS_REVERIFY)` (`reports/session20/observatory`) so
+that the generated `docs/VISUAL_PROVENANCE.md` gains a section for the Session 20
+re-verification; `scripts/visual_provenance.py` appends it after the existing sections, which
+stay byte-identical (`tests/unit/test_visual_provenance.py`). `scripts/visual_audit_montage.py`
+(before/after montages from the audit screenshots) is new.

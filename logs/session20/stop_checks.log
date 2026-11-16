@@ -1,0 +1,32 @@
+## make lint
+uv run --frozen ruff check src scripts tests infra
+All checks passed!
+## make freeze-check
+	  bad = f.code_problems(d); print('\n'.join(bad) or 'freeze committed; frozen code unchanged'); \
+	  raise SystemExit(1 if bad else 0)"
+freeze committed; frozen code unchanged
+## tests/research_integrity
+.........                                                                [100%]
+81 passed in 12.05s
+## make addendum-check
+uv run --frozen python scripts/addendum_assets.py check
+15 addendum files equal a fresh build
+uv run --frozen python scripts/addendum_assets.py lint
+addendum lint: every number comes from a generated macro
+## make paper-check
+uv run --frozen python scripts/paper_assets.py check
+paper/generated/ matches a fresh build (35 files)
+uv run --frozen python scripts/paper_assets.py lint
+paper lint: every number comes from a generated macro
+## make release-check (records staged)
+uv run --frozen python scripts/release_check.py
+history          PASS
+secrets          PASS
+private_paths    PASS
+tracked_content  PASS
+docs             PASS
+readme_findings  PASS
+readme_preview   PASS
+readme_extensions PASS
+disclosed local-path files (D-100): 139
+release-check: PASS

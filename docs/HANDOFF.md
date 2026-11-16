@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 19 STOP, v1.1.0 published and verified, updated 2026-11-16) -->
+<!-- parsable handoff header (real values; Session 20 STOP, Observatory visual pass built locally and not published, updated 2026-11-16) -->
 ```yaml
 project: roboforge-3d
-current_session: 19
-session_status: PASS          # Session 19: v1.1.0 published and verified (main, CI 3/3, tag, release with the addendum PDF, Pages redeploy on top of c14e041, live checks); $0
-next_session: none planned    # any further study needs a new owner decision (# Session 19 Handoff §5-§6)
-last_verified_commit: 907c901   # v1.1.0 (tag object d805cb5), CI 3/3, the Pages build source; Session 19 STOP checks ran on 907c901 plus the Session 19 records (documents and logs only)
+current_session: 20
+session_status: PASS          # Session 20: Observatory visual quality pass (D-136), built and verified locally at e5cff56; nothing published; $0
+next_session: none planned    # pending owner answer: publish the Session 20 site build or not (# Session 20 Handoff §5)
+last_verified_commit: e5cff56   # Session 20 site changes, local and unpushed; published state is still v1.1.0 (907c901, tag object d805cb5, CI 3/3, the live Pages build source)
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -107,10 +107,12 @@ x3_study: {decisions: "D-109-D-115", label: "separate replication", preregistrat
 x2_study: {decisions: "D-116-D-130", preregistration: "docs/extensions/X2_PREREGISTRATION.md @ 9df6628 (sha256 d9bc5955...)", option: "A, Can MH", phase: "done: X2-a (Session 15), X2-b (Session 16), X2-c (Session 17)", x2b: "reports/session16/x2/suite/ from clean 9df6628: chosen diffusion t2 (48), BC-RNN t4 (36), BC-MLP-chunk t2 (49), BC-MLP t1 (16); test configuration fdb1f37", data: "data/manifests/robomimic_v1.5_mh.json (hash-verified); split data/splits/can_mh.json (operator-stratified, within-operator claims only)", suites: "can/x2_validation 50 starts 47b889cd, can/x2_heldout 100 starts 40b8228c (4459c00)", freeze: "docs/extensions/X2_FREEZE.md @ 3a64dbb (sha256 952d232c..., blob 9929dc7c...); code a1c3db7; engineering check PASS 45edda2", evaluations: "12/12 once from 3a64dbb (reports/session17/x2/heldout/evals/, runs/x2c/), 0 errors, isolation PASS, no rerun; never again", analysis: "reports/session17/x2/ @ 3df25ff (results.json sha256 30c01f55...)", primary: "H2 diffusion - BC-MLP +63.3 pp [+53.0, +73.0] robust (+), same direction; H2 diffusion - BC-RNN +27.3 pp [+16.7, +37.7] robust (+), new separation; H2-c +2.0 pp [-6.3, +11.0] not separated, neither separated; H3 BC-RNN - BC-MLP +36.0 pp [+23.7, +48.0] robust (+), same direction", label: "X2 (Can MH): beside the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator only"}
 ```
 
-# Next: none planned (v1.1.0 published)
+# Next: owner answer on publishing the Session 20 site build
 
-v1.1.0 is published and verified (Session 19, D-131). No session is planned. Every earlier
-boundary still applies, and the published v1.1 content is now fixed as well:
+v1.1.0 is published and verified (Session 19, D-131). Session 20 (D-136) improved the
+Observatory's presentation locally and published nothing; whether to publish that build is the
+owner's decision (# Session 20 Handoff §5). No other session is planned. Every earlier boundary
+still applies, and the published v1.1 content is fixed as well:
 - never rerun `make obs-ext-select`, `make obs-ext-export`, `make obs-ext-findings` or
   `make web-verify-ext`;
 - never edit `reports/session18` or `reports/session19` evidence, or `paper/addendum/`;
@@ -123,6 +125,99 @@ boundary still applies, and the published v1.1 content is now fixed as well:
 | X2 a harder or multimodal task: option A, Can MH (D-116) | `docs/extensions/X2_harder_task.md` | 15 X2-a, 16 X2-b, 17 X2-c: DONE |
 | X3 more training seeds, on a fresh held-out suite | `docs/extensions/X3_more_seeds.md` | 14, DONE |
 | v1.1: addendum, README section, Observatory section | `docs/extensions/README.md`, D-131 to D-135 | 18 built; 19 published (v1.1.0) |
+
+# Session 20 Handoff (Observatory visual pass, built and verified; nothing published)
+
+Do not trust this file blindly. Every claim names its command and evidence
+(`logs/session20/`, `reports/session20/`, LEDGER E20-01 to E20-05,
+`docs/OBSERVATORY_VISUAL_AUDIT.md`).
+
+## 1. Session completed
+Session 20: a visual quality pass on the Observatory, at the owner's request (D-136).
+Presentation only, in `website/`. Status **PASS**. No rollout, policy call, `env.step`, training
+or evaluation; no paid compute ($0). Nothing was pushed or deployed.
+
+## 2. Completed work
+- **Prerequisites** (E20-01) and **decisions** D-136, D-137 (`88707cd`), before any code change.
+- **Baseline audit** (`586ef34`), before any site change: 162 screenshots, DOM word counts, a
+  fresh-context review of the screenshots, 11 ranked findings and the plan.
+- **Implementation** (`e5cff56`; `docs/OBSERVATORY_VISUAL_AUDIT.md` §3):
+  - scene lighting, materials and shadows; a "Workspace" default camera;
+  - hero caption in words and a "What the research found" strip read from `findings.json`;
+  - chart titles, one reading key per section, grouped paired rows, a phone layout for row
+    charts;
+  - one-line clip captions with a "Provenance" disclosure on every clip;
+  - long tables, method notes and source lists behind disclosures;
+  - KI-052 shown in Findings and the hero; the X2 (Can MH) label visible by default; the
+    addendum named "a local build, not peer reviewed".
+- **Tests** (audit §3.5): no existing assertion changed or removed. Added: 2 E2E tests (caveats
+  visible by default and provenance one click away; phone chart layout), 4 vitest tests, 1 pytest
+  test.
+- **Viewer re-verification** into `reports/session20/observatory/` (E20-04), because files under
+  `website/src/three/` changed. `docs/VISUAL_PROVENANCE.md` has a new section; its earlier
+  sections are unchanged.
+
+## 3. Results
+No new result. Site measurements (audit §4):
+
+| Measure, 1440×900 | Before | After |
+|---|---|---|
+| Reading words visible by default | 4,291 | 3,471 |
+| All visible words | 6,133 | 4,791 |
+| Page height | 21,477 px | 18,637 px |
+| 30-second test, 36 cells (yes / partly / no) | 15 / 13 / 8 | 22 / 7 / 7 |
+| Hero states a finding | no | yes, on the first screen |
+
+- Budgets (D-088, none loosened): JavaScript 391.8 of 520 KB gzip; CSS 6.1 of 40 KB; all data
+  29.31 of 80 MB; first view 3.95 of 6.50 MB.
+- Tests: vitest 79 passed; E2E 10/10.
+- Viewer: 18/18 and 12/12 reference frames pass the D-091 thresholds, each frame record equal to
+  the Session 10 or Session 18 record.
+- Before/after pictures: `logs/session20/visual_audit/montage/<section>.jpg` and
+  `montage/viewers_<name>.jpg`.
+
+What the last review still finds, and why each was left, is in audit §4.4 (the cropped upper arm
+in the Workspace view, internal codes in callouts, phone structure, empty right columns).
+
+## 4. Publication state (verified) and STOP checks
+| Item | Verified state (`git ls-remote`, unchanged from the start of the session) |
+|---|---|
+| `main` on the remote | `92c8cc4` (Session 19 records) |
+| Local `main` | ahead by `88707cd`, `586ef34`, `e5cff56` and the Session 20 records commit; unpushed |
+| `gh-pages` | `d3f47dd`; the live site is the Session 19 build of `907c901` |
+| Tags | `v1.0.0` `82f3219` → `7b394fa`; `v1.1.0` `d805cb5` → `907c901` |
+| README Observatory paragraph, `docs/FINAL_RELEASE_AUDIT.md` | unchanged; they describe the live build |
+
+**STOP checks.** On `e5cff56` plus the Session 20 records, host, no container or browser job
+during the suite: `make lint` clean; full suite alone **721 passed** (9:43); `make freeze-check`
+unchanged; `tests/research_integrity` 81 passed; `make addendum-check`, `make paper-check` pass;
+`make release-check` PASS (records staged). Logs: `logs/session20/stop_checks.log`,
+`logs/session20/stop_full_suite.log`.
+
+## 5. Owner decisions pending
+**Publish the Session 20 site build, or not.** D-136 does not authorize it. If yes, in this
+order, each step verified before the next (as Session 19, E19-04):
+1. Push `main` as a fast-forward; wait for CI 3/3 on the pushed head.
+2. Build the Pages bundle from the clean pushed commit (`scripts/pages_bundle.py`); in a scratch
+   worktree, add one new `gh-pages` commit on top of `d3f47dd`; push it as a fast-forward. Never
+   an orphan commit, never a force-push.
+3. Verify the live site: `scripts/pages_bundle.py verify` and the E2E suite against the live URL.
+4. Then update the build commit in the README Observatory paragraph and append an "Observatory
+   redeploy" section to `docs/FINAL_RELEASE_AUDIT.md`.
+
+No new tag or release unless the owner asks for one. Estimate, from the measured Session 19
+times: about 0.1 h from the push to the end of the live checks (CI about 3 minutes, the Pages
+build 30 s). If the answer is no, everything stays committed locally and unpushed.
+
+## 6. Next session
+None planned. Every boundary of Session 19 still applies. In addition:
+- never run `make web-verify` or `make web-verify-ext`; a re-verification after a further site
+  change uses new spec files and a new output tree, as `make web-verify-s20` does;
+- never edit `reports/session20/observatory/` or `logs/session20/visual_audit/before/`.
+
+Candidates for a later visual pass, none started (audit §4.4): a phone layout for the sampler
+grid, plain-word glosses for the hypothesis codes, a rule-selected opening frame for the
+comparison viewers.
 
 # Session 19 Handoff (v1.1.0 published and verified)
 

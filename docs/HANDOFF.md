@@ -181,8 +181,8 @@ only (D-119). X2: 3 seeds × 100 held-out starts at 500 steps. Level 1 Can PH: 3
 - **Secondary, declared, no readings.**
   - Censored episode length: H2 −192.5 and −79.6 steps, H3 −112.9, all separated; H2-c +16.9,
     not separated.
-  - Taxonomy: BC-MLP failures are mostly "gripper never closed" (88 of 210) and "no grasp"
-    (88); diffusion has no "gripper never closed" episode.
+  - Taxonomy counts (episodes of 300): BC-MLP gripper never closed 88, no grasp (drift) 52,
+    no grasp (near) 36; diffusion gripper never closed 0.
 - **Within-operator.** The split is operator-stratified (D-119), so these numbers do not
   measure transfer to a new operator.
 - **Cost, measured** (D-130 estimates in brackets): 2.66 container-hours [3.6]; 47.0 min wall

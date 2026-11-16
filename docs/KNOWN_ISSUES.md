@@ -1243,9 +1243,8 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   - H2 diffusion − BC-RNN +27.3 pp, [+16.7, +37.7], [+14.9, +39.8]: *robust (+)*, a new
     separation (not separated on Can PH).
   - H2-c diffusion − BC-MLP-chunk +2.0 pp: not separated under either (*neither separated*).
-  - On Can MH the gaps are larger than on Can PH, so 3 seeds separate them under both
-    intervals. This is a different dataset, horizon and suite: it does not change the
-    fragility of the frozen Can PH separations.
+  - X2 is a different dataset, horizon and suite: it does not change the fragility of the
+    frozen Can PH separations.
 - **Status:** stays DOCUMENTED. The fragility is a property of the frozen 3-seed result, which
   stands as reported; X3 and X2 are shown beside it and never pooled with it.
 

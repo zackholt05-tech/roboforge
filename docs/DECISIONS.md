@@ -3325,8 +3325,8 @@ episode records stay in `runs/x2c/`, outside git);
 (`reports/session17/x2/results.json`, SHA-256 `30c01f55…`). All 12 evaluations completed
 attempt 1 with exit 0: 100 of 100 starts each, 0 engineering errors, `verify_record` audit PASS,
 canonical platform, clean tree, the freeze blob attested. No rerun and no rerun decision.
-Isolation PASS: `runs/x2`, `runs/x3` and the frozen Level 1 held-out records are hash-equal
-before and after; `runs/x2c` is the only new top-level entry. Result, X2 (Can MH), beside the
+Isolation PASS: the listing digests (path and size of every file) of `runs/x2`, `runs/x3` and
+the frozen Level 1 held-out records are equal before and after; `runs/x2c` is the only new top-level entry. Result, X2 (Can MH), beside the
 frozen Level 1 Can PH result, never pooled, within-operator only:
 
 | Contrast | X2 difference, bootstrap 95 %, seed-level 95 % | X2 verdict | Relation to Level 1 Can PH |

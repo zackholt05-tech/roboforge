@@ -54,6 +54,24 @@ seed-0 trials. 20 new runs were trained and 460 new evaluations run, with none f
   `can/x2_heldout` and the preregistered analysis once. The exact prompt is in
   `docs/HANDOFF.md` (# Session 16 Handoff §6).
 
+**Status (2026-11-16).** X2 phase X2-c ran in Session 17 (PASS; X2 is done), under D-130.
+`docs/extensions/X2_FREEZE.md` was committed alone (`3a64dbb`) before any held-out rollout. The
+12 checkpoints ran once on the 100 `can/x2_heldout` starts (12/12 complete, 0 errors, isolation
+PASS), and the preregistered §7 analysis ran once (`reports/session17/x2/`, `3df25ff`).
+Label X2 (Can MH): beside the frozen Level 1 Can PH result, never instead of it, never pooled;
+within-operator only.
+
+| Contrast | X2 (Can MH), 3 seeds × 100 starts, 500 steps | Verdict | Relation to Level 1 Can PH |
+|---|---|---|---|
+| H2 diffusion − BC-MLP | +63.3 pp [+53.0, +73.0] | robust (+) | same direction |
+| H2 diffusion − BC-RNN | +27.3 pp [+16.7, +37.7] | robust (+) | new separation |
+| H2-c diffusion − BC-MLP-chunk | +2.0 pp [−6.3, +11.0] | not separated | neither separated |
+| H3 BC-RNN − BC-MLP | +36.0 pp [+23.7, +48.0] | robust (+) | same direction |
+
+Family success on the held-out starts: diffusion 93.3 %, BC-MLP-chunk 91.3 %, BC-RNN 66.0 %,
+BC-MLP 30.0 %. All three extensions are done. Whether X1, X2 and X3 are published (v1.1) is
+the owner's decision (D-105).
+
 ## Rules shared by every extension
 
 1. **Frozen means frozen.** Level 1, the RGB study and Level 2 stay as tested. Never rerun

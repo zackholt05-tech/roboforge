@@ -228,6 +228,10 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
   30.6 GiB around 22:15 UTC without any suite action (cause not identified). Swap files share
   the volume: swap grew from 12.3 to 13.3 GB late in the suite. Not approved and untouched:
   untagged Docker images, `uv cache prune --force`.
+- **Session 17 (X2-c, measured).** 13 GiB free at the start (E17-01), 19 GiB before the
+  engineering check, 13.2 GiB at the lowest host sample of the held-out run
+  (`logs/session17/x2/heldout/host.jsonl`) and 26 GiB after it; no disk stop. `runs/x2c` is
+  529 MB, `runs/x2c_checks` 31 MB. Nothing reclaimed or deleted.
 
 ### KI-009 — Evidence files contain absolute local paths
 Some files contain `/Users/zackaryholt/...` paths: `reports/feasibility/*.json`
@@ -784,6 +788,13 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
     separated" (E8-15).
 
 ### KI-035 — Host contention during the Session 6 suite inflated wall times (results unaffected)
+- **Session 17 (X2-c held-out run; D-125 limits, D-130).** 12 evaluation containers, at most 4
+  at once, one launch per fresh 60-s sample, no training. 44 host samples
+  (`logs/session17/x2/heldout/host.jsonl`): the swap rate peaked at 991 pages/s, below the
+  3,000 limit, so no launch was held. Per-family means per 100 starts (diffusion 826 s,
+  BC-RNN 939 s, BC-MLP-chunk 398 s, BC-MLP 972 s) are all below twice the X2-b means per 50
+  (1,284, 1,334, 456 and 1,262 s), so the 3.6 container-hour estimate was high (measured
+  2.66). Results are unaffected: every evaluation verified.
 - **Session 16 (X2-b suite; D-125 limits).** At most 4 trainings and 5 jobs, one launch per
   fresh 60-s sample, launches held above 3,000 pages/s; no other project's container ran.
   Sampled every 60 s (`logs/session16/x2/suite/host.jsonl`, 298 samples): the guard held
@@ -1222,8 +1233,21 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
     the seed-level interval only ([−5.4, −0.6]).
   - Measured seed-level half-widths about ±14.7 pp (H2, H3) and ±2.9 pp (H2-c), against the
     preregistered estimates ±10.8 and ±4.6.
+- **X2 (Session 17, a separate study on Can MH; D-116, D-130, `reports/session17/x2/tables.md`).**
+  Configurations tuned and checkpoints selected on 50 Can MH validation starts, 3 seeds per
+  family, evaluated once on 100 held-out starts (`can/x2_heldout`, content `40b8228c…`), 500-step
+  episodes, within-operator only:
+  - H2 diffusion − BC-MLP +63.3 pp, bootstrap [+53.0, +73.0], seed-level [+51.9, +74.8]; H3
+    BC-RNN − BC-MLP +36.0 pp, [+23.7, +48.0], [+22.9, +49.1]: *robust (+)*, the same direction
+    as the frozen Can PH verdicts.
+  - H2 diffusion − BC-RNN +27.3 pp, [+16.7, +37.7], [+14.9, +39.8]: *robust (+)*, a new
+    separation (not separated on Can PH).
+  - H2-c diffusion − BC-MLP-chunk +2.0 pp: not separated under either (*neither separated*).
+  - On Can MH the gaps are larger than on Can PH, so 3 seeds separate them under both
+    intervals. This is a different dataset, horizon and suite: it does not change the
+    fragility of the frozen Can PH separations.
 - **Status:** stays DOCUMENTED. The fragility is a property of the frozen 3-seed result, which
-  stands as reported; X3 is shown beside it and never pooled with it.
+  stands as reported; X3 and X2 are shown beside it and never pooled with it.
 
 ### KI-054 Declared secondary metrics were never aggregated (MEDIUM, FIXED by reporting; Session 11)
 - RESEARCH_PROTOCOL §8 declares gripper sign changes and action smoothness; every held-out

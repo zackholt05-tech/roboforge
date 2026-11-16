@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 16 STOP, X2-b done, updated 2026-11-16) -->
+<!-- parsable handoff header (real values; Session 17 STOP, X2 done, updated 2026-11-16) -->
 ```yaml
 project: roboforge-3d
-current_session: 16
-session_status: PASS          # Session 16: X2 phase X2-b, Can MH: preregistered search, 20 new runs, 460 validation evaluations, choices, X2 test configuration; $0
-next_session: 17              # X2 phase X2-c (freeze, held-out once, analysis once); exact prompt in # Session 16 Handoff §6
-last_verified_commit: 9df6628   # code and preregistration; suite and benchmark ran from it clean; STOP checks ran on it plus the Session 16 records and evidence (# Session 16 Handoff §4)
+current_session: 17
+session_status: PASS          # Session 17: X2 phase X2-c, Can MH: X2 freeze, 12 evaluations once on can/x2_heldout, analysis once; X2 done; $0
+next_session: 18              # owner decision pending: publish X1, X2 and X3 as v1.1 (D-105)?; exact prompt for that session in # Session 17 Handoff §6
+last_verified_commit: 3df25ff   # X2-c code a1c3db7 (unchanged since); freeze 3a64dbb; evaluations from clean 3a64dbb; analysis from clean 29ce47a; STOP checks ran on 3df25ff plus the Session 17 records (# Session 17 Handoff §4)
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -102,24 +102,204 @@ release: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 378ea43", selections: reports/session8/rgb_selection/, heldout: "reports/session8/rgb_heldout/ @ bc054bc", results: "reports/session8/rgb_results/ @ 3b23255", success: {rgb_diffusion: 100.0, rgb_bc_chunk: 99.3}, diffusion_minus_bc: "+0.7 pp [+0.0, +4.0], not separated", videos: reports/session8/rgb_videos/}
 x1_study: {decision: D-107, label: "exploratory, after the freeze", code: 09d1a90, preregistration: "docs/extensions/X1_PREREGISTRATION.md @ ab02469", evaluations: "45 once from ab02469 (reports/session13/x1_clamp/evals/, runs/x1_clamp/)", analysis: "reports/session13/x1_clamp/ @ c2a9ae6", primary: "Lift ood_arm_offset drop(diffusion) - drop(clamped BC-MLP-chunk) -40.0 pp [-54.0, -25.3], separated (-) (frozen -40.0 [-54.0, -26.0]); reading R1", clamped_minus_unclamped: "0 of 15 separated; largest |diff| 0.7 pp", engineering_checks: "logs/session13/x1_checks/ (all PASS)"}
 x3_study: {decisions: "D-109-D-115", label: "separate replication", preregistration: "docs/extensions/X3_PREREGISTRATION.md @ fb9f05e", heldout_suite: "can/x3_heldout, 100 starts, content 9c199e19 (81afa3b)", training: "12 runs s14_* (4 families x seeds 3-5), 0 failed", validation: "240 evaluations, 12 selections (reports/session14/suite/x3_validation.json @ 86e6c9b; KI-062, D-112)", evaluations: "24 once from 13c5db2 (reports/session14/x3/evals/, runs/x3/), isolation PASS", analysis: "reports/session14/x3/ @ 335c27c", primary: "H2 diffusion - BC-MLP +22.7 pp, H3 BC-RNN - BC-MLP +23.8 pp: separated under bootstrap and seed-level (holds, robust); H2 diffusion - BC-RNN -1.2, H2-c -1.7: not separated (unchanged)"}
-x2_study: {decisions: "D-116-D-128", preregistration: "docs/extensions/X2_PREREGISTRATION.md @ 9df6628 (sha256 d9bc5955...)", option: "A, Can MH", phase: "X2-a done (Session 15); X2-b done (Session 16); X2-c next", x2b: "reports/session16/x2/suite/ from clean 9df6628: chosen diffusion t2 (48), BC-RNN t4 (36), BC-MLP-chunk t2 (49), BC-MLP t1 (16)", data: "data/manifests/robomimic_v1.5_mh.json (hash-verified); split data/splits/can_mh.json (operator-stratified, within-operator claims only)", suites: "can/x2_validation 50 starts 47b889cd, can/x2_heldout 100 starts 40b8228c (4459c00); no held-out start stepped", pilot: "reports/session15/x2/pilot/ from fe9df74; best of 5 of 50: diffusion 48, BC-MLP-chunk 48, BC-RNN 34, BC-MLP 6; reading headroom (D-124)", label: "development numbers on X2 validation starts; not a result"}
+x2_study: {decisions: "D-116-D-130", preregistration: "docs/extensions/X2_PREREGISTRATION.md @ 9df6628 (sha256 d9bc5955...)", option: "A, Can MH", phase: "done: X2-a (Session 15), X2-b (Session 16), X2-c (Session 17)", x2b: "reports/session16/x2/suite/ from clean 9df6628: chosen diffusion t2 (48), BC-RNN t4 (36), BC-MLP-chunk t2 (49), BC-MLP t1 (16); test configuration fdb1f37", data: "data/manifests/robomimic_v1.5_mh.json (hash-verified); split data/splits/can_mh.json (operator-stratified, within-operator claims only)", suites: "can/x2_validation 50 starts 47b889cd, can/x2_heldout 100 starts 40b8228c (4459c00)", freeze: "docs/extensions/X2_FREEZE.md @ 3a64dbb (sha256 952d232c..., blob 9929dc7c...); code a1c3db7; engineering check PASS 45edda2", evaluations: "12/12 once from 3a64dbb (reports/session17/x2/heldout/evals/, runs/x2c/), 0 errors, isolation PASS, no rerun; never again", analysis: "reports/session17/x2/ @ 3df25ff (results.json sha256 30c01f55...)", primary: "H2 diffusion - BC-MLP +63.3 pp [+53.0, +73.0] robust (+), same direction; H2 diffusion - BC-RNN +27.3 pp [+16.7, +37.7] robust (+), new separation; H2-c +2.0 pp [-6.3, +11.0] not separated, neither separated; H3 BC-RNN - BC-MLP +36.0 pp [+23.7, +48.0] robust (+), same direction", label: "X2 (Can MH): beside the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator only"}
 ```
 
-# Next: Session 17, X2 phase X2-c (freeze, held-out once, analysis once)
+# Next: owner decision, publish X1, X2 and X3 as v1.1 (D-105)?
 
-Session 16 ran X2 phase X2-b (# Session 16 Handoff below). Read `docs/extensions/README.md`,
-`docs/extensions/X2_harder_task.md` and `docs/extensions/X2_PREREGISTRATION.md`. The exact
-Session 17 prompt is in # Session 16 Handoff §6. Every earlier boundary still applies, and the
-X2-b evidence is now fixed too:
-- never rerun `make x2b-suite` or `make x2b-benchmark`;
-- never edit `reports/session16` results;
-- never prune or move `runs/x2`.
+All three extensions are done (# Session 17 Handoff below). v1.0.0 stays as published, and
+nothing from Sessions 13 to 17 was pushed. The owner decides whether the extension results are
+published, for example as v1.1 with an addendum (D-105). If the answer is yes, the exact prompt
+for the publication session is in # Session 17 Handoff §6. If the answer is no, no session is
+planned. Every earlier boundary still applies, and the X2-c evidence is now fixed too:
+- never rerun `make x2c-run`, `make x2c-analyze`, `make x2c-check` or `make x2c-freeze`;
+- never step `can/x2_heldout` again;
+- never edit `reports/session17` results or `docs/extensions/X2_FREEZE.md`;
+- never prune or move `runs/x2c` or `runs/x2c_checks`.
 
 | Study | File | Session |
 |---|---|---|
 | X1 evaluation-only action-clamp test (KI-052) | `docs/extensions/X1_action_clamp.md` | 13, DONE |
-| X2 a harder or multimodal task: option A, Can MH (D-116) | `docs/extensions/X2_harder_task.md` | 15 X2-a DONE; 16 X2-b DONE; X2-c next |
+| X2 a harder or multimodal task: option A, Can MH (D-116) | `docs/extensions/X2_harder_task.md` | 15 X2-a, 16 X2-b, 17 X2-c: DONE |
 | X3 more training seeds, on a fresh held-out suite | `docs/extensions/X3_more_seeds.md` | 14, DONE |
+
+# Session 17 Handoff (X2-c)
+
+Do not trust this file blindly. Every claim names its command and evidence
+(`logs/session17/`, `reports/session17/`, LEDGER E17-01 to E17-07).
+
+## 1. Session completed
+Session 17: post-release extension X2, phase X2-c (freeze, the X2 held-out suite once, the
+preregistered analysis once), option A, Can MH (`docs/extensions/X2_harder_task.md` §4,
+`docs/extensions/X2_PREREGISTRATION.md` §7; D-105, D-115 to D-130). Status **PASS**. X2 is done.
+
+## 2. Completed work
+- **Prerequisites** (E17-01), all confirmed by executable checks on clean `fdb1f37`: the test
+  configuration hash, the 12 checkpoints re-hashed, `make check-x2-data`, `make
+  check-x2-states`, no held-out output anywhere, `runs/x2` intact, `make freeze-check`
+  unchanged. Baseline full suite 644 passed. No owner decision was needed.
+- **Decisions before acting** (`ca1897a`): D-129 (Makefile `PREFIX ?= s17`, evidence session 17,
+  the `x2c-*` targets) and D-130 (the X2-c design: freeze contents, attestation, refusals,
+  outputs, isolation, the engineering check, limits, the rerun rule, analysis clarifications
+  1–4, estimates). D-130 has an outcome note.
+- **Code** (new files only, `a1c3db7`; `make freeze-check` unchanged):
+  - `src/roboforge/x2/{heldout,heldout_gate,analysis,freeze_doc}.py`;
+  - `scripts/{x2c_eval,x2c_run,x2c_check,write_x2_freeze,analyze_x2c}.py`;
+  - tests: `tests/unit/test_x2c_freeze.py` (13), `tests/unit/test_x2c_analysis.py` (36,
+    synthetic outcomes), `tests/research_integrity/test_x2c_scope.py` (12). Full suite 705
+    passed.
+- **Engineering check** (E17-03, `45edda2`). The evaluator in check mode reproduced two
+  committed X2-b validation summaries exactly: diffusion seed 0 (48/50) and BC-MLP-chunk seed 1
+  (50/50), 0 mismatching episodes.
+- **Freeze** (E17-04). `docs/extensions/X2_FREEZE.md` was written once from `a1c3db7` and
+  committed alone in `3a64dbb` (SHA-256 `952d232c…`, git blob `9929dc7c…`). Before the commit,
+  the real gate ran on the file: no code problem, the design equal, 12 jobs, no held-out output.
+- **Evaluations** (E17-05, `29ce47a`). `make x2c-run` ran once from clean `3a64dbb`:
+  - 12/12 complete on attempt 1: 100/100 starts each, 0 errors, audit PASS, the canonical
+    platform, the freeze blob attested;
+  - isolation PASS;
+  - no rerun.
+- **Analysis** (E17-06, `3df25ff`). `make x2c-analyze` ran once from clean `29ce47a`, writing
+  `reports/session17/x2/{results.json,tables.md,taxonomy.json,analysis_record.json}`.
+- **Records.** STATUS, HANDOFF, DECISIONS (D-130 outcome note), KNOWN_ISSUES (KI-008, KI-035,
+  KI-053), EXPERIMENT_LEDGER (E17-02 to E17-07), `docs/extensions/README.md`.
+
+## 3. Result: X2 (Can MH)
+Reported beside the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator
+only (D-119). X2: 3 seeds × 100 held-out starts at 500 steps. Level 1 Can PH: 3 × 50 at 400 steps.
+`reports/session17/x2/tables.md` has every number.
+
+| Contrast | Level 1 Can PH (frozen) | X2 difference [bootstrap 95 %] | X2 seed-level 95 % | X2 verdict | Relation |
+|---|---|---|---|---|---|
+| H2 diffusion − BC-MLP | +18.7 pp, separated (+) | +63.3 pp [+53.0, +73.0] | [+51.9, +74.8] | robust (+) | same direction |
+| H2 diffusion − BC-RNN | −0.7 pp, not separated | +27.3 pp [+16.7, +37.7] | [+14.9, +39.8] | robust (+) | new separation |
+| H2-c diffusion − BC-MLP-chunk | −0.7 pp, not separated | +2.0 pp [−6.3, +11.0] | [−11.6, +15.6] | not separated | neither separated |
+| H3 BC-RNN − BC-MLP | +19.3 pp, separated (+) | +36.0 pp [+23.7, +48.0] | [+22.9, +49.1] | robust (+) | same direction |
+
+- **Family success** (per seed): diffusion 93.3 % (90, 96, 94); BC-MLP-chunk 91.3 % (91, 98,
+  85); BC-RNN 66.0 % (72, 60, 66); BC-MLP 30.0 % (24, 31, 35).
+- **Secondary, declared, no readings.**
+  - Censored episode length: H2 −192.5 and −79.6 steps, H3 −112.9, all separated; H2-c +16.9,
+    not separated.
+  - Taxonomy: BC-MLP failures are mostly "gripper never closed" (88 of 210) and "no grasp"
+    (88); diffusion has no "gripper never closed" episode.
+- **Within-operator.** The split is operator-stratified (D-119), so these numbers do not
+  measure transfer to a new operator.
+- **Cost, measured** (D-130 estimates in brackets): 2.66 container-hours [3.6]; 47.0 min wall
+  [0.9–1.0 h]; engineering check 7.0 min [0.2 h]; `runs/x2c` 529 MB [0.6–0.9 GiB]; $0.
+
+## 4. STOP checks
+On `3df25ff` plus the Session 17 records (documents and a log only; no code changed after `a1c3db7`), host, no container running: `make lint` clean; full suite alone **705 passed** (9:00; equal to the post-code run, `logs/session17/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged"); `tests/research_integrity` 81 passed; `make release-check` PASS with the new records staged so that its scan covers them (139 disclosed local-path files, D-100 and D-114; no new local path). Isolation PASS (E17-05). No frozen file, freeze, result or executed outcome changed; `X2_FREEZE.md` unchanged since `3a64dbb`; no held-out start of a frozen suite was stepped; nothing was pushed, tagged, released or deployed.
+
+## 5. Owner decisions pending
+1. **Publish X1, X2 and X3 as v1.1?** (D-105). Facts:
+   - local `main` is ahead of `origin/main` by the Sessions 13–17 commits;
+   - nothing was pushed, tagged, released or deployed;
+   - v1.0.0 (tag, release, `paper/main.pdf` `c648e753…`, Observatory) stays as released either
+     way.
+
+   If yes, the owner also chooses the scope at the start of Session 18 (prompt below):
+   - push only;
+   - push, a `v1.1.0` tag and a GitHub release with an addendum;
+   - either of these with a README section.
+2. The optional diffusion side of KI-052 (open since Session 14; not needed for v1.1).
+
+## 6. Exact prompt for Session 18 (v1.1 publication; only if the owner answers yes)
+
+```text
+Implement RoboForge 3D SESSION 18 ONLY: publication of the post-release extensions X1, X2 and
+X3 as v1.1, an addendum to the published v1.0.0, under DECISIONS D-097 to D-105 (D-099
+"what release means", D-100, D-101, D-103, D-104), D-107, D-111, D-130 and the rules of
+MASTER_SPEC.md. Run this session only if the owner answered "publish" to the Session 17 STOP
+question; record that answer as the session's first decision.
+
+Begin by reading all of MASTER_SPEC.md, docs/FINAL_RELEASE_AUDIT.md (the v1.0.0 publication
+record and its checks), docs/extensions/README.md, the three extension result tables
+(reports/session13/x1_clamp/tables.md, reports/session14/x3/tables.md,
+reports/session17/x2/tables.md), docs/STATUS.md, docs/HANDOFF.md (# Session 17 Handoff),
+docs/DECISIONS.md (D-097 to D-105, D-107, D-111, D-116, D-119, D-130 and their outcome notes),
+docs/KNOWN_ISSUES.md (KI-009, KI-052, KI-053, KI-061), README.md and CITATION.cff, and inspect
+the actual repository, remote and test state. Do not blindly trust handoff claims; confirm
+every prerequisite with executable checks:
+- the extension results hash to their recorded values:
+  - reports/session13/x1_clamp/results.json ad50368645b96fb87489310243535f97694b1e47a2ff993915b039b2199a5ee7;
+  - reports/session14/x3/results.json 4299a14930790bfdb2f91d7a3216c9bd7f6db1fa2171469a29bfed3c5c5b71d1;
+  - reports/session17/x2/results.json 30c01f551333feafba70bfa4c9c6a414eda691f179800022d3871776be2df238;
+- docs/extensions/X2_FREEZE.md hashes to 952d232c40a8871084e08ac9c57e9d4ab3b9717db31413d1750fc1ebb5acf08e;
+- paper/main.pdf still hashes to c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f;
+- make freeze-check is unchanged; make lint, the full suite alone, tests/research_integrity
+  and make release-check pass;
+- the tree is clean; git log origin/main..main lists only commits from Session 13 onward, and
+  origin/main is the published v1.0.0 state (no history rewrite, D-100);
+- gh is logged in as zackholt05-tech with repo scope; the remote, tag v1.0.0, its release and
+  the Pages site match the publication record (FINAL_RELEASE_AUDIT §7).
+Report free disk, swap use and running containers.
+
+1. Ask the owner once, with these facts, and record the answers as decisions before acting:
+   - scope:
+     (a) push main only;
+     (b) push main, an annotated tag v1.1.0 and a GitHub release with an addendum PDF;
+     (c) (a) or (b) plus a README section on the extensions;
+   - the Observatory (GitHub Pages) stays unchanged unless the owner asks otherwise.
+2. Record the Makefile defaults PREFIX ?= s18 and evidence session 18, and any new targets
+   with their code.
+3. If the scope includes an addendum:
+   - build it from new files only (for example paper/addendum/);
+   - paper/main.pdf, paper/main.tex, paper/sections and paper/generated stay byte-identical to
+     v1.0.0;
+   - every number is generated from the three hash-pinned results.json files, never typed
+     (the D-094 and D-103 rule), with a check that the generated numbers equal a fresh build;
+   - same toolchain as v1.0.0 (Tectonic 0.17.0, --only-cached, a fixed SOURCE_DATE_EPOCH);
+   - each study keeps its own label: X1 "exploratory, after the freeze"; X3 "separate
+     replication"; X2 "X2 (Can MH)", beside the frozen Level 1 Can PH result, never instead of
+     it, never pooled, within-operator only;
+   - each study carries its caveats: KI-052 for X1; KI-053 for X3 and X2; the 500-step and
+     400-step scales differ for X2; the paper is a local build, not peer reviewed.
+4. If the scope includes a README section, generate it the same way, in its own generated
+   block; the v1.0.0 findings block stays as generated from paper/generated/numbers.tex.
+5. If the scope includes a tag:
+   - CITATION.cff version 1.1.0 and its date;
+   - pyproject.toml and website/package.json versions stay as they are (D-099).
+6. Publish only after every check passes, and verify each step before reporting it:
+   - git ls-remote for main and the tag;
+   - the CI runs on the pushed commit (D-101);
+   - gh release view;
+   - a download of the attached PDF compared by SHA-256.
+   No AI co-author trailer or AI byline in commits, the tag, the release text or the
+   repository description. If GitHub rejects the push, stop and ask; never rewrite author
+   emails.
+7. Append the v1.1 publication record to docs/FINAL_RELEASE_AUDIT.md as a new section; the
+   v1.0.0 sections stay unchanged.
+
+Binding boundaries:
+- Frozen: Level 1, the RGB study, Level 2, X1, X2 and X3, and all their evidence.
+- No rollout of any kind: no training and no evaluation, held-out or validation.
+- Never rerun any eval, analysis, check or freeze target of Level 1, the RGB study, Level 2,
+  X1, X2 or X3.
+- Never step can/x2_heldout or can/x3_heldout again.
+- Never edit:
+  - reports/session6-10, reports/session13 to reports/session17 results;
+  - the freezes (including docs/extensions/X2_FREEZE.md), the X1, X2 or X3 preregistration,
+    LEVEL1_COMPLETE or LEVEL2_GO_NO_GO's executed outcome;
+  - paper/main.pdf and its sources;
+  - any file that make freeze-check pins.
+- Never prune or move runs/.
+- No paid or remote compute.
+- No push, tag, release or deployment outside the scope the owner chose in step 1.
+- No changes to existing data, eval suites, uv.lock or Python dependencies without a decision.
+- Use EVIDENCE_SESSION=18.
+- Never run the full test suite alongside a container job (KI-043).
+- Label every estimate as an estimate, in hours from measured times.
+
+At the SESSION 18 STOP boundary:
+- update STATUS, HANDOFF, DECISIONS, KNOWN_ISSUES and EXPERIMENT_LEDGER;
+- run make lint, the full suite alone, make freeze-check, tests/research_integrity and
+  make release-check;
+- commit verified work as Zackary Holt <zackholt05@gmail.com> with no AI co-author trailers;
+- inspect git log --format=fuller -n 5;
+- report the verified publication state;
+- STOP. Do not proceed automatically.
+```
 
 # Session 16 Handoff (X2-b)
 

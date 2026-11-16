@@ -3313,3 +3313,31 @@ data exist; they go beyond the preregistration's text and are disclosed as such 
 - The engineering check takes about 0.2 h (642 s and 228 s at once).
 - Disk about 0.6–0.9 GiB (X2-b records were 10–37 MiB per 50 episodes by family).
 - $0.
+
+**Outcome note (D-130, Session 17 STOP; LEDGER E17-02 to E17-07).** The design ran as fixed,
+in the fixed commit order: code `a1c3db7`; engineering check PASS from it (both reproductions
+exact, 7.0 min); `docs/extensions/X2_FREEZE.md` written once from `a1c3db7`; the check
+evidence and ledger rows committed in `45edda2` (the freeze file left out); the freeze
+committed alone in `3a64dbb` (SHA-256 `952d232c…`, git blob `9929dc7c…`); `make x2c-run` once from clean
+`3a64dbb`, 05:34 to 06:20 UTC 2026-11-16; the summaries and logs committed in `29ce47a` (the
+episode records stay in `runs/x2c/`, outside git);
+`make x2c-analyze` once from clean `29ce47a`, committed in `3df25ff`
+(`reports/session17/x2/results.json`, SHA-256 `30c01f55…`). All 12 evaluations completed
+attempt 1 with exit 0: 100 of 100 starts each, 0 engineering errors, `verify_record` audit PASS,
+canonical platform, clean tree, the freeze blob attested. No rerun and no rerun decision.
+Isolation PASS: `runs/x2`, `runs/x3` and the frozen Level 1 held-out records are hash-equal
+before and after; `runs/x2c` is the only new top-level entry. Result, X2 (Can MH), beside the
+frozen Level 1 Can PH result, never pooled, within-operator only:
+
+| Contrast | X2 difference, bootstrap 95 %, seed-level 95 % | X2 verdict | Relation to Level 1 Can PH |
+|---|---|---|---|
+| H2 diffusion − BC-MLP | +63.3 pp [+53.0, +73.0], [+51.9, +74.8] | robust (+) | same direction |
+| H2 diffusion − BC-RNN | +27.3 pp [+16.7, +37.7], [+14.9, +39.8] | robust (+) | new separation |
+| H2-c diffusion − BC-MLP-chunk | +2.0 pp [−6.3, +11.0], [−11.6, +15.6] | not separated | neither separated |
+| H3 BC-RNN − BC-MLP | +36.0 pp [+23.7, +48.0], [+22.9, +49.1] | robust (+) | same direction |
+
+Measured against the labelled estimates: the 12 evaluations 2.66 container-hours, launch to
+exit (2.61 inside the evaluator; per-family means per 100 starts: diffusion 826 s, BC-RNN
+939 s, BC-MLP-chunk 398 s, BC-MLP 972 s), against 3.6; wall time 47.0 min against 0.9–1.0 h;
+the engineering check 7.0 min against 0.2 h; `runs/x2c` 529 MB against 0.6–0.9 GiB; the
+analysis 1.5 min; $0.

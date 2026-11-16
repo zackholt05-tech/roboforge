@@ -1,33 +1,63 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 16
-SESSION_STATUS: PASS            # Session 16: post-release extension X2, phase X2-b (Can MH): preregistered search, 20 new runs, 460 validation evaluations, choices and the X2 test configuration; no held-out rollout; $0
-NEXT_SESSION: 17                # X2 phase X2-c (freeze, held-out once, analysis once); exact prompt in docs/HANDOFF.md # Session 16 Handoff §6
-BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-053 (Can H2/H3 replicated by X3), KI-056, KI-057; mitigated: KI-062, KI-064 (Session 15); KI-052 tested by X1 (Session 13); accepted: KI-009 (D-100, D-114), KI-060, KI-063 (D-122); partial: KI-061
-LAST_VERIFIED_COMMIT: 9df6628   # code (X2-b code and preregistration); the suite and benchmark ran from it clean; STOP checks below ran on it plus the Session 16 records and evidence
-PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c, x1_preregistration: ab02469, x3_preregistration: fb9f05e}
-EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b], x1_code: 09d1a90, x1_preregistration: ab02469, x1_results: c2a9ae6, x3_code: [e0b8a4e, e9289c6], x3_heldout_suite: 81afa3b, x3_preregistration: fb9f05e, x3_suite_end: d602d1b, x3_validation: 86e6c9b, x3_isolation_before: 13c5db2, x3_evaluations: 949a6d7, x3_results: 335c27c, x2_data: [5e4b015, 305f074], x2_suites: 4459c00, x2_pilot_code: [3d42786, fe9df74], x2b_preregistration_and_code: 9df6628}
+CURRENT_SESSION: 17
+SESSION_STATUS: PASS            # Session 17: post-release extension X2, phase X2-c (Can MH): X2 freeze, 12 evaluations once on can/x2_heldout, the preregistered analysis once; X2 done; $0
+NEXT_SESSION: 18                # owner decision pending: publish X1, X2 and X3 as v1.1 (D-105)? exact prompt for the publication session in docs/HANDOFF.md # Session 17 Handoff §6
+BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-053 (Can H2/H3 replicated by X3; X2 Can MH shown beside), KI-056, KI-057; mitigated: KI-062, KI-064 (Session 15); KI-052 tested by X1 (Session 13); accepted: KI-009 (D-100, D-114), KI-060, KI-063 (D-122); partial: KI-061
+LAST_VERIFIED_COMMIT: 3df25ff   # X2-c code a1c3db7 (unchanged since); freeze 3a64dbb; evaluations from clean 3a64dbb; analysis from clean 29ce47a; STOP checks below ran on 3df25ff plus the Session 17 records
+PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c, x1_preregistration: ab02469, x3_preregistration: fb9f05e, x2_preregistration: 9df6628}
+EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b], x1_code: 09d1a90, x1_preregistration: ab02469, x1_results: c2a9ae6, x3_code: [e0b8a4e, e9289c6], x3_heldout_suite: 81afa3b, x3_preregistration: fb9f05e, x3_suite_end: d602d1b, x3_validation: 86e6c9b, x3_isolation_before: 13c5db2, x3_evaluations: 949a6d7, x3_results: 335c27c, x2_data: [5e4b015, 305f074], x2_suites: 4459c00, x2_pilot_code: [3d42786, fe9df74], x2b_preregistration_and_code: 9df6628, x2b_evidence: fdb1f37, x2c_decisions: ca1897a, x2c_code: a1c3db7, x2c_engineering_check: 45edda2, x2_freeze: 3a64dbb, x2_heldout: 29ce47a, x2_results: 3df25ff}
 PAPER: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400 (D-093)", fresh_clone_rebuild: "byte-identical (Session 12)", label: "local build, not peer reviewed"}
 RELEASE: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097-D-104", repository: "https://github.com/zackholt05-tech/roboforge (public, per D-099; verified state in the publication record)", observatory: "GitHub Pages per D-102 (verified state in the publication record)"}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only. Session 13 (X1) ran on the Session 7 robustness sets only; no held-out or validation start was stepped. Session 14 (X3) stepped only the Can validation starts and the new can/x3_heldout suite (24 evaluations, once); no frozen held-out suite; isolation PASS. Session 15 (X2-a) stepped only the can/x2_validation starts (20 pilot evaluations); no held-out start of any suite; isolation PASS. Session 16 (X2-b) stepped only the can/x2_validation starts (460 evaluations); no held-out start of any suite; isolation PASS"
-RESOURCE_SPEND: {usd_billed_total: 10.61, session13_usd_billed: 0, session14_usd_billed: 0, session15_usd_billed: 0, session16_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-16 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
+FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only. Session 13 (X1) ran on the Session 7 robustness sets only; no held-out or validation start was stepped. Session 14 (X3) stepped only the Can validation starts and the new can/x3_heldout suite (24 evaluations, once); no frozen held-out suite; isolation PASS. Session 15 (X2-a) stepped only the can/x2_validation starts (20 pilot evaluations); no held-out start of any suite; isolation PASS. Session 16 (X2-b) stepped only the can/x2_validation starts (460 evaluations); no held-out start of any suite; isolation PASS. Session 17 (X2-c) stepped can/x2_heldout once (12 evaluations from the X2 freeze 3a64dbb; never again) and 100 can/x2_validation starts for the engineering check; no frozen held-out suite; isolation PASS"
+RESOURCE_SPEND: {usd_billed_total: 10.61, session13_usd_billed: 0, session14_usd_billed: 0, session15_usd_billed: 0, session16_usd_billed: 0, session17_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-17 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
 APPROVED_LIMIT: {A-03: "closed, $8.06 of $15", A-04: "closed, $2.37 of $9", open: none, local: "$0"}
 X1: {decision: D-107, preregistration: "docs/extensions/X1_PREREGISTRATION.md @ ab02469 (sha256 7405dc3d...)", evaluations: "45/45 once, reports/session13/x1_clamp/evals/, runs/x1_clamp/", analysis: "reports/session13/x1_clamp/results.json (sha256 ad503686...) @ c2a9ae6", primary: "Lift ood_arm_offset drop(diffusion) - drop(clamped BC-MLP-chunk) -40.0 pp [-54.0, -25.3], separated (-); reading R1", label: "exploratory, after the freeze"}
 X3: {decisions: "D-109-D-115", preregistration: "docs/extensions/X3_PREREGISTRATION.md @ fb9f05e (sha256 b5e54125...)", suite: "can/x3_heldout, 100 starts, content 9c199e19... (81afa3b)", runs: "12 new (4 families x seeds 3-5), validation-selected (reports/session14/suite/x3_validation.json)", evaluations: "24/24 once, reports/session14/x3/evals/, runs/x3/", analysis: "reports/session14/x3/results.json (sha256 4299a149...) @ 335c27c", primary: "H2 diffusion - BC-MLP +22.7 pp and H3 BC-RNN - BC-MLP +23.8 pp separated under bootstrap and seed-level (holds, robust); H2 diffusion - BC-RNN -1.2 and H2-c -1.7 not separated (unchanged)", label: "separate replication"}
-X2: {decisions: "D-116-D-128", preregistration: "docs/extensions/X2_PREREGISTRATION.md @ 9df6628", option: "A, Can MH (operator-stratified split; within-operator claims only)", suites: "can/x2_validation 50 starts 47b889cd..., can/x2_heldout 100 starts 40b8228c... (4459c00)", pilot: "reports/session15/x2/pilot/ from fe9df74: best of 5 of 50, diffusion 48, BC-MLP-chunk 48, BC-RNN 34, BC-MLP 6; reading headroom (D-124)", x2b: "reports/session16/x2/suite/ from clean 9df6628: 24 runs, 480 summaries, chosen diffusion t2 (48), BC-RNN t4 (36), BC-MLP-chunk t2 (49), BC-MLP t1 (16); test configuration x2_test_configuration.json (12 checkpoints, hashes re-checked)", phase: "X2-b done; X2-c next", label: "development numbers on X2 validation starts; not a result"}
+X2: {decisions: "D-116-D-130", preregistration: "docs/extensions/X2_PREREGISTRATION.md @ 9df6628", option: "A, Can MH (operator-stratified split; within-operator claims only)", suites: "can/x2_validation 50 starts 47b889cd..., can/x2_heldout 100 starts 40b8228c... (4459c00)", x2b: "reports/session16/x2/suite/ from clean 9df6628: chosen diffusion t2, BC-RNN t4, BC-MLP-chunk t2, BC-MLP t1; x2_test_configuration.json (12 checkpoints)", freeze: "docs/extensions/X2_FREEZE.md @ 3a64dbb (sha256 952d232c..., blob 9929dc7c...)", evaluations: "12/12 once from 3a64dbb (reports/session17/x2/heldout/evals/, runs/x2c/), isolation PASS", analysis: "reports/session17/x2/results.json (sha256 30c01f55...) @ 3df25ff", primary: "H2 diffusion - BC-MLP +63.3 pp robust (+), same direction; H2 diffusion - BC-RNN +27.3 pp robust (+), new separation; H2-c +2.0 pp not separated; H3 BC-RNN - BC-MLP +36.0 pp robust (+), same direction", phase: "X2 done (X2-a Session 15, X2-b Session 16, X2-c Session 17)", label: "X2 (Can MH): beside the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator only"}
 UPDATED: 2026-11-16
 ```
 
 # RoboForge Status
 
-## Next: Session 17, X2 phase X2-c (freeze, held-out once, analysis once)
-v1.0.0 stays as published. Session 16 ran X2 phase X2-b on Can MH (below). Session 17 commits
-`docs/extensions/X2_FREEZE.md` (a copy of the X2 test configuration with hashes), then runs the
-12 selected checkpoints once on the 100 `can/x2_heldout` starts and the preregistered analysis
-once (`docs/extensions/X2_PREREGISTRATION.md` §7). The exact prompt is in `docs/HANDOFF.md`
-(# Session 16 Handoff §6). Whether X1 and X3 are published (v1.1) is still the owner's decision
-(D-105); nothing was pushed.
+## Next: owner decision, publish X1, X2 and X3 as v1.1 (D-105)?
+v1.0.0 stays as published. All three extensions are done: X1 (Session 13), X3 (Session 14) and
+X2 (Sessions 15–17). Nothing from Sessions 13–17 was pushed: local `main` is 35 commits ahead of
+`origin/main` before the Session 17 STOP commit. Whether the extension results are published,
+for example as v1.1 with an addendum, is the owner's decision. The exact prompt for a
+publication session (Session 18) is in `docs/HANDOFF.md` (# Session 17 Handoff §6). If the
+owner declines, no session is planned.
+
+## Session 17: post-release extension X2, phase X2-c, Can MH (PASS; X2 done)
+| Step (Session 17 prompt) | Status | Evidence |
+|---|---|---|
+| Prerequisites, by executable checks; host facts | DONE: all PASS, no owner decision needed | E17-01 |
+| 1. Decisions before acting | DONE: D-129 (Makefile s17, evidence session 17, X2-c targets), D-130 (the X2-c design), both in `ca1897a` before any code | DECISIONS, E17-01 |
+| 2. New code in new files only; synthetic-outcome tests first; research-integrity test | DONE: `a1c3db7`; `make freeze-check` unchanged; full suite 705 passed; engineering check PASS (two X2-b validation summaries reproduced exactly) | E17-02, E17-03 |
+| 3. `docs/extensions/X2_FREEZE.md` committed from a clean tree before any held-out rollout | DONE: alone in `3a64dbb` (SHA-256 `952d232c…`, git blob `9929dc7c…`) | E17-04 |
+| 4. The 12 evaluations once on the canonical container from the freeze commit | DONE: 12/12 complete, attempt 1, 0 errors, audit PASS; isolation PASS; no rerun | E17-05, `reports/session17/x2/heldout/evals/` |
+| 5. The analysis once; label "X2 (Can MH)" | DONE: `3df25ff` | E17-06, `reports/session17/x2/` |
+| STOP | see # Session 17 Handoff §4 | E17-07 |
+
+**Result: X2 (Can MH), beside the frozen Level 1 Can PH result, never instead of it, never
+pooled; within-operator only** (`reports/session17/x2/tables.md`; 3 seeds × 100 held-out starts,
+500-step episodes; Level 1 Can PH was 3 × 50 starts at 400 steps).
+| Contrast | Level 1 Can PH (frozen) | X2: difference, bootstrap 95 % | X2 seed-level 95 % | X2 verdict | Relation |
+|---|---|---|---|---|---|
+| H2 diffusion − BC-MLP | +18.7 pp, separated (+) | +63.3 pp [+53.0, +73.0] | [+51.9, +74.8] | robust (+) | same direction |
+| H2 diffusion − BC-RNN | −0.7 pp, not separated | +27.3 pp [+16.7, +37.7] | [+14.9, +39.8] | robust (+) | new separation |
+| H2-c diffusion − BC-MLP-chunk | −0.7 pp, not separated | +2.0 pp [−6.3, +11.0] | [−11.6, +15.6] | not separated | neither separated |
+| H3 BC-RNN − BC-MLP | +19.3 pp, separated (+) | +36.0 pp [+23.7, +48.0] | [+22.9, +49.1] | robust (+) | same direction |
+
+Family success on the X2 held-out starts: diffusion 93.3 % (90, 96, 94 per seed), BC-MLP-chunk
+91.3 % (91, 98, 85), BC-RNN 66.0 % (72, 60, 66), BC-MLP 30.0 % (24, 31, 35). Engineering
+errors 0. The frozen Level 1 result stands as reported.
+
+**Cost (measured; labelled estimates from D-130 in brackets).** Evaluations 2.66
+container-hours, launch to exit [3.6]; wall 47.0 min [0.9–1.0 h]; engineering check 7.0 min
+[0.2 h]; `runs/x2c` 529 MB [0.6–0.9 GiB]; analysis 1.5 min; $0. Host: swap rate peak 991
+pages/s (no launch held), free disk ≥ 13.2 GiB.
 
 ## Session 16: post-release extension X2, phase X2-b, Can MH (PASS; development numbers only)
 | Step (Session 16 prompt) | Status | Evidence |

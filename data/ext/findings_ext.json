@@ -1,0 +1,2739 @@
+{
+ "decision": "D-134",
+ "git": {
+  "dirty": false,
+  "sha": "7eb58173be08855fc62c1e34ce270ba1eb333a59"
+ },
+ "schema": "roboforge.observatory_ext_findings/1",
+ "sources": [
+  {
+   "key": "x1",
+   "label": "exploratory, after the freeze",
+   "path": "reports/session13/x1_clamp/results.json",
+   "sha256": "ad50368645b96fb87489310243535f97694b1e47a2ff993915b039b2199a5ee7"
+  },
+  {
+   "key": "x3",
+   "label": "separate replication",
+   "path": "reports/session14/x3/results.json",
+   "sha256": "4299a14930790bfdb2f91d7a3216c9bd7f6db1fa2171469a29bfed3c5c5b71d1"
+  },
+  {
+   "key": "x2",
+   "label": "X2 (Can MH)",
+   "path": "reports/session17/x2/results.json",
+   "sha256": "30c01f551333feafba70bfa4c9c6a414eda691f179800022d3871776be2df238"
+  }
+ ],
+ "x1": {
+  "decision": "D-107",
+  "label": "exploratory, after the freeze",
+  "method": "RESEARCH_PROTOCOL \u00a79 hierarchical paired bootstrap, B = 10,000, seed 20261106; frozen keys first in the frozen order, clamped keys grouped with their family; frozen part asserted equal to the Session 7 analysis",
+  "readings": {
+   "base": {
+    "can": {
+     "a": "bc_mlp_chunk+clamp:robustness_base",
+     "b": "bc_mlp_chunk:robustness_base",
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "difference": 0.0,
+     "kind": "clamped - unclamped, same checkpoints",
+     "reading": "No separated effect of the bound on BC-MLP-chunk's in-distribution success. Exploratory, after the freeze; the frozen numbers stand.",
+     "separation": "not separated"
+    },
+    "lift": {
+     "a": "bc_mlp_chunk+clamp:robustness_base",
+     "b": "bc_mlp_chunk:robustness_base",
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "difference": 0.0,
+     "kind": "clamped - unclamped, same checkpoints",
+     "reading": "No separated effect of the bound on BC-MLP-chunk's in-distribution success. Exploratory, after the freeze; the frozen numbers stand.",
+     "separation": "not separated"
+    }
+   },
+   "primary": {
+    "ci95": [
+     -0.54,
+     -0.2533333333333334
+    ],
+    "estimate": -0.4,
+    "frozen": {
+     "ci95": [
+      -0.54,
+      -0.2599999999999999
+     ],
+     "estimate": -0.4,
+     "name": "drop diffusion_unet - drop bc_mlp_chunk on ood_arm_offset",
+     "separation": "separated (-)",
+     "weights": {
+      "bc_mlp_chunk:ood_arm_offset": 1,
+      "bc_mlp_chunk:robustness_base": -1,
+      "diffusion_unet:ood_arm_offset": -1,
+      "diffusion_unet:robustness_base": 1
+     }
+    },
+    "name": "drop diffusion_unet - drop bc_mlp_chunk+clamp on ood_arm_offset",
+    "reading": "R1. The bound does not account for all of the frozen H4 gap: with the same action bound, BC-MLP-chunk still degrades more than diffusion under the arm offset on Lift. Exploratory, after the freeze; the frozen numbers stand.",
+    "separation": "separated (-)",
+    "weights": {
+     "bc_mlp_chunk+clamp:ood_arm_offset": 1,
+     "bc_mlp_chunk+clamp:robustness_base": -1,
+     "diffusion_unet:ood_arm_offset": -1,
+     "diffusion_unet:robustness_base": 1
+    }
+   },
+   "support": {
+    "ci95": [
+     -0.03999999999999998,
+     0.040000000000000036
+    ],
+    "estimate": 0.0,
+    "name": "drop bc_mlp_chunk - drop bc_mlp_chunk+clamp on ood_arm_offset",
+    "reading": "No separated change in BC-MLP-chunk's drop under the arm offset on Lift. Exploratory, after the freeze; the frozen numbers stand.",
+    "separation": "not separated",
+    "weights": {
+     "bc_mlp_chunk+clamp:ood_arm_offset": 1,
+     "bc_mlp_chunk+clamp:robustness_base": -1,
+     "bc_mlp_chunk:ood_arm_offset": -1,
+     "bc_mlp_chunk:robustness_base": 1
+    }
+   }
+  },
+  "tasks": {
+   "can": {
+    "clamp_activity": {
+     "bc_mlp+clamp:ood_arm_offset": {
+      "fraction_actions_changed": 0.171999749848867,
+      "fraction_actions_clamped": 0.6757415938796356,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.0,
+       0.0,
+       0.09288945404515228,
+       0.11511121302453566,
+       0.03033082487336099,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.3176502470242438,
+       0.29574117696108065,
+       0.30974964040774633,
+       0.09288945404515228,
+       0.11511121302453566,
+       0.11427737591461508,
+       0.44589439453002855
+      ],
+      "n_actions_changed": 8251,
+      "n_actions_clamped": 32416,
+      "n_actions_decoded": 47971,
+      "n_actions_executed": 47971
+     },
+     "bc_mlp+clamp:robustness_base": {
+      "fraction_actions_changed": 0.082943057394787,
+      "fraction_actions_clamped": 0.462032880074933,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.0,
+       0.0,
+       0.0272278027195504,
+       0.04873873582894609,
+       0.025225283421078132,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.13923968864054778,
+       0.20496753980814572,
+       0.1589741933400084,
+       0.0272278027195504,
+       0.04877103452730855,
+       0.05484318981945028,
+       0.30373695940053613
+      ],
+      "n_actions_changed": 2568,
+      "n_actions_clamped": 14305,
+      "n_actions_decoded": 30961,
+      "n_actions_executed": 30961
+     },
+     "bc_mlp_chunk+clamp:ood_arm_offset": {
+      "fraction_actions_changed": 0.0415484860099655,
+      "fraction_actions_clamped": 0.592755845151399,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.0,
+       0.0,
+       0.011383671904944423,
+       0.025986968187044844,
+       0.014411651973936374,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.07673438098888463,
+       0.15170563434266002,
+       0.08129551552318896,
+       0.011383671904944423,
+       0.025986968187044844,
+       0.019011115369873516,
+       0.5003449597546953
+      ],
+      "n_actions_changed": 1084,
+      "n_actions_clamped": 15465,
+      "n_actions_decoded": 26090,
+      "n_actions_executed": 26090
+     },
+     "bc_mlp_chunk+clamp:robustness_base": {
+      "fraction_actions_changed": 0.01265473032714412,
+      "fraction_actions_clamped": 0.5773651635720601,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.0,
+       0.0,
+       0.0023209549071618036,
+       0.003647214854111406,
+       0.010665340406719718,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.03696949602122016,
+       0.1942418213969938,
+       0.047800618921308574,
+       0.0023209549071618036,
+       0.003647214854111406,
+       0.010665340406719718,
+       0.4897214854111406
+      ],
+      "n_actions_changed": 229,
+      "n_actions_clamped": 10448,
+      "n_actions_decoded": 18096,
+      "n_actions_executed": 18096
+     },
+     "bc_rnn+clamp:ood_arm_offset": {
+      "fraction_actions_changed": 0.0,
+      "fraction_actions_clamped": 0.7158351409978309,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.138273107243003,
+       0.1681127982646421,
+       0.06462621025342574,
+       0.0,
+       0.0,
+       0.00010581450716893285,
+       0.6538013861700439
+      ],
+      "n_actions_changed": 0,
+      "n_actions_clamped": 27060,
+      "n_actions_decoded": 37802,
+      "n_actions_executed": 37802
+     },
+     "bc_rnn+clamp:robustness_base": {
+      "fraction_actions_changed": 0.00026659557451346307,
+      "fraction_actions_clamped": 0.513623033857638,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.00026659557451346307,
+       0.0,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.010237270061316982,
+       0.14348173820314583,
+       0.005598507064782724,
+       0.0,
+       0.00026659557451346307,
+       0.0,
+       0.4504932018128499
+      ],
+      "n_actions_changed": 5,
+      "n_actions_clamped": 9633,
+      "n_actions_decoded": 18755,
+      "n_actions_executed": 18755
+     }
+    },
+    "families": {
+     "bc_mlp+clamp:ood_arm_offset": {
+      "ci95": [
+       0.19316666666666815,
+       0.41333333333333333
+      ],
+      "estimate": 0.3,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.26,
+       0.36,
+       0.28
+      ]
+     },
+     "bc_mlp+clamp:robustness_base": {
+      "ci95": [
+       0.56,
+       0.82
+      ],
+      "estimate": 0.6933333333333334,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.68,
+       0.78,
+       0.62
+      ]
+     },
+     "bc_mlp:ood_arm_offset": {
+      "ci95": [
+       0.19316666666666815,
+       0.41333333333333333
+      ],
+      "estimate": 0.3,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.26,
+       0.36,
+       0.28
+      ]
+     },
+     "bc_mlp:robustness_base": {
+      "ci95": [
+       0.56,
+       0.82
+      ],
+      "estimate": 0.6933333333333334,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.68,
+       0.78,
+       0.62
+      ]
+     },
+     "bc_mlp_chunk+clamp:ood_arm_offset": {
+      "ci95": [
+       0.66,
+       0.9066666666666667
+      ],
+      "estimate": 0.7933333333333333,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.82,
+       0.68,
+       0.88
+      ]
+     },
+     "bc_mlp_chunk+clamp:robustness_base": {
+      "ci95": [
+       0.8933333333333334,
+       1.0
+      ],
+      "estimate": 0.9533333333333334,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.94,
+       0.94,
+       0.98
+      ]
+     },
+     "bc_mlp_chunk:ood_arm_offset": {
+      "ci95": [
+       0.66,
+       0.9066666666666667
+      ],
+      "estimate": 0.7933333333333333,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.82,
+       0.68,
+       0.88
+      ]
+     },
+     "bc_mlp_chunk:robustness_base": {
+      "ci95": [
+       0.8933333333333334,
+       1.0
+      ],
+      "estimate": 0.9533333333333334,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.94,
+       0.94,
+       0.98
+      ]
+     },
+     "bc_rnn+clamp:ood_arm_offset": {
+      "ci95": [
+       0.41333333333333333,
+       0.66
+      ],
+      "estimate": 0.5333333333333333,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.54,
+       0.56,
+       0.5
+      ]
+     },
+     "bc_rnn+clamp:robustness_base": {
+      "ci95": [
+       0.9133333333333334,
+       1.0
+      ],
+      "estimate": 0.9666666666666667,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.94,
+       0.98,
+       0.98
+      ]
+     },
+     "bc_rnn:ood_arm_offset": {
+      "ci95": [
+       0.41333333333333333,
+       0.66
+      ],
+      "estimate": 0.5333333333333333,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.54,
+       0.56,
+       0.5
+      ]
+     },
+     "bc_rnn:robustness_base": {
+      "ci95": [
+       0.9133333333333334,
+       1.0
+      ],
+      "estimate": 0.9666666666666667,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.94,
+       0.98,
+       0.98
+      ]
+     },
+     "diffusion_unet:ood_arm_offset": {
+      "ci95": [
+       0.5800000000000001,
+       0.84
+      ],
+      "estimate": 0.7133333333333334,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.66,
+       0.68,
+       0.8
+      ]
+     },
+     "diffusion_unet:robustness_base": {
+      "ci95": [
+       0.8533333333333334,
+       0.98
+      ],
+      "estimate": 0.92,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.9,
+       0.94,
+       0.92
+      ]
+     }
+    },
+    "frozen_contrasts": [
+     {
+      "ci95": [
+       -0.36,
+       -0.006666666666666599
+      ],
+      "estimate": -0.1866666666666667,
+      "name": "drop diffusion_unet - drop bc_mlp on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp:ood_arm_offset": 1,
+       "bc_mlp:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.39333333333333337,
+       -0.053333333333333455
+      ],
+      "estimate": -0.22666666666666668,
+      "name": "drop diffusion_unet - drop bc_rnn on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_rnn:ood_arm_offset": 1,
+       "bc_rnn:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.1066666666666668,
+       0.20666666666666667
+      ],
+      "estimate": 0.046666666666666634,
+      "name": "drop diffusion_unet - drop bc_mlp_chunk on ood_arm_offset",
+      "separation": "not separated",
+      "weights": {
+       "bc_mlp_chunk:ood_arm_offset": 1,
+       "bc_mlp_chunk:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.12666666666666676,
+       0.21333333333333337
+      ],
+      "estimate": 0.03999999999999998,
+      "name": "drop bc_rnn - drop bc_mlp on ood_arm_offset",
+      "separation": "not separated",
+      "weights": {
+       "bc_mlp:ood_arm_offset": 1,
+       "bc_mlp:robustness_base": -1,
+       "bc_rnn:ood_arm_offset": -1,
+       "bc_rnn:robustness_base": 1
+      }
+     }
+    ],
+    "n_states": 50,
+    "sets": [
+     "robustness_base",
+     "ood_arm_offset"
+    ],
+    "x1_contrasts": [
+     {
+      "ci95": [
+       -0.36,
+       -0.006666666666666599
+      ],
+      "estimate": -0.1866666666666667,
+      "name": "drop diffusion_unet - drop bc_mlp+clamp on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp+clamp:ood_arm_offset": 1,
+       "bc_mlp+clamp:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.39333333333333337,
+       -0.053333333333333455
+      ],
+      "estimate": -0.22666666666666668,
+      "name": "drop diffusion_unet - drop bc_rnn+clamp on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_rnn+clamp:ood_arm_offset": 1,
+       "bc_rnn+clamp:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.1066666666666668,
+       0.20666666666666667
+      ],
+      "estimate": 0.046666666666666634,
+      "name": "drop diffusion_unet - drop bc_mlp_chunk+clamp on ood_arm_offset",
+      "separation": "not separated",
+      "weights": {
+       "bc_mlp_chunk+clamp:ood_arm_offset": 1,
+       "bc_mlp_chunk+clamp:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -2.7755575615628914e-17,
+       2.7755575615628914e-17
+      ],
+      "estimate": 0.0,
+      "name": "drop bc_mlp - drop bc_mlp+clamp on ood_arm_offset",
+      "separation": "not separated",
+      "weights": {
+       "bc_mlp+clamp:ood_arm_offset": 1,
+       "bc_mlp+clamp:robustness_base": -1,
+       "bc_mlp:ood_arm_offset": -1,
+       "bc_mlp:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -5.551115123125783e-17,
+       5.551115123125783e-17
+      ],
+      "estimate": 0.0,
+      "name": "drop bc_rnn - drop bc_rnn+clamp on ood_arm_offset",
+      "separation": "not separated",
+      "weights": {
+       "bc_rnn+clamp:ood_arm_offset": 1,
+       "bc_rnn+clamp:robustness_base": -1,
+       "bc_rnn:ood_arm_offset": -1,
+       "bc_rnn:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "estimate": 0.0,
+      "name": "drop bc_mlp_chunk - drop bc_mlp_chunk+clamp on ood_arm_offset",
+      "separation": "not separated",
+      "weights": {
+       "bc_mlp_chunk+clamp:ood_arm_offset": 1,
+       "bc_mlp_chunk+clamp:robustness_base": -1,
+       "bc_mlp_chunk:ood_arm_offset": -1,
+       "bc_mlp_chunk:robustness_base": 1
+      }
+     }
+    ],
+    "x1_differences": [
+     {
+      "a": "bc_mlp+clamp:robustness_base",
+      "b": "bc_mlp:robustness_base",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp+clamp:ood_arm_offset",
+      "b": "bc_mlp:ood_arm_offset",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_rnn+clamp:robustness_base",
+      "b": "bc_rnn:robustness_base",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_rnn+clamp:ood_arm_offset",
+      "b": "bc_rnn:ood_arm_offset",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp_chunk+clamp:robustness_base",
+      "b": "bc_mlp_chunk:robustness_base",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp_chunk+clamp:ood_arm_offset",
+      "b": "bc_mlp_chunk:ood_arm_offset",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp+clamp:robustness_base",
+      "b": "bc_mlp+clamp:ood_arm_offset",
+      "ci95": [
+       0.26000000000000006,
+       0.5200000000000001
+      ],
+      "difference": 0.39333333333333337,
+      "kind": "drop (base - OOD), clamped",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "bc_rnn+clamp:robustness_base",
+      "b": "bc_rnn+clamp:ood_arm_offset",
+      "ci95": [
+       0.29999999999999993,
+       0.5666666666666667
+      ],
+      "difference": 0.43333333333333335,
+      "kind": "drop (base - OOD), clamped",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "bc_mlp_chunk+clamp:robustness_base",
+      "b": "bc_mlp_chunk+clamp:ood_arm_offset",
+      "ci95": [
+       0.05999999999999983,
+       0.28
+      ],
+      "difference": 0.16000000000000003,
+      "kind": "drop (base - OOD), clamped",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "diffusion_unet:robustness_base",
+      "b": "bc_mlp+clamp:robustness_base",
+      "ci95": [
+       0.08000000000000007,
+       0.36683333333333096
+      ],
+      "difference": 0.22666666666666668,
+      "kind": "diffusion - clamped BC",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "diffusion_unet:ood_arm_offset",
+      "b": "bc_mlp+clamp:ood_arm_offset",
+      "ci95": [
+       0.25999999999999995,
+       0.5733333333333333
+      ],
+      "difference": 0.4133333333333334,
+      "kind": "diffusion - clamped BC",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "diffusion_unet:robustness_base",
+      "b": "bc_rnn+clamp:robustness_base",
+      "ci95": [
+       -0.1266666666666667,
+       0.033333333333333326
+      ],
+      "difference": -0.046666666666666634,
+      "kind": "diffusion - clamped BC",
+      "separation": "not separated"
+     },
+     {
+      "a": "diffusion_unet:ood_arm_offset",
+      "b": "bc_rnn+clamp:ood_arm_offset",
+      "ci95": [
+       0.033333333333333215,
+       0.3266666666666667
+      ],
+      "difference": 0.18000000000000005,
+      "kind": "diffusion - clamped BC",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "diffusion_unet:robustness_base",
+      "b": "bc_mlp_chunk+clamp:robustness_base",
+      "ci95": [
+       -0.11999999999999988,
+       0.046666666666666634
+      ],
+      "difference": -0.033333333333333326,
+      "kind": "diffusion - clamped BC",
+      "separation": "not separated"
+     },
+     {
+      "a": "diffusion_unet:ood_arm_offset",
+      "b": "bc_mlp_chunk+clamp:ood_arm_offset",
+      "ci95": [
+       -0.2333333333333334,
+       0.08666666666666656
+      ],
+      "difference": -0.07999999999999996,
+      "kind": "diffusion - clamped BC",
+      "separation": "not separated"
+     }
+    ]
+   },
+   "lift": {
+    "clamp_activity": {
+     "bc_mlp+clamp:ood_arm_offset": {
+      "fraction_actions_changed": 0.7248377459565262,
+      "fraction_actions_clamped": 0.8230143195632018,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.509879468424848,
+       0.0,
+       0.5059647676934171,
+       0.41757494591531885,
+       0.4026990831358813,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.4492222107757289,
+       0.509879468424848,
+       0.6039765117956114,
+       0.5059647676934171,
+       0.41757494591531885,
+       0.4026990831358813,
+       0.5617389512722777
+      ],
+      "n_actions_changed": 35180,
+      "n_actions_clamped": 39945,
+      "n_actions_decoded": 48535,
+      "n_actions_executed": 48535
+     },
+     "bc_mlp+clamp:ood_cube_shift": {
+      "fraction_actions_changed": 0.6383994681011816,
+      "fraction_actions_clamped": 0.785155187524555,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.4901024509655777,
+       0.0,
+       0.45873250929311854,
+       0.35821572123666473,
+       0.37435401492943277,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.42781589047719787,
+       0.4901024509655777,
+       0.552056574692496,
+       0.45873250929311854,
+       0.35821572123666473,
+       0.37435401492943277,
+       0.5679530961951101
+      ],
+      "n_actions_changed": 21124,
+      "n_actions_clamped": 25980,
+      "n_actions_decoded": 33089,
+      "n_actions_executed": 33089
+     },
+     "bc_mlp+clamp:robustness_base": {
+      "fraction_actions_changed": 0.12374497991967871,
+      "fraction_actions_clamped": 0.4479166666666667,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.07969377510040161,
+       0.0,
+       0.10529618473895583,
+       0.08308232931726908,
+       0.058609437751004016,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.10830823293172691,
+       0.07969377510040161,
+       0.11182228915662651,
+       0.10529618473895583,
+       0.08308232931726908,
+       0.058609437751004016,
+       0.4127761044176707
+      ],
+      "n_actions_changed": 986,
+      "n_actions_clamped": 3569,
+      "n_actions_decoded": 7968,
+      "n_actions_executed": 7968
+     },
+     "bc_mlp_chunk+clamp:ood_arm_offset": {
+      "fraction_actions_changed": 0.5173431734317343,
+      "fraction_actions_clamped": 0.7771785410161794,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.3426625035481124,
+       0.0,
+       0.33045699687766106,
+       0.2985807550383196,
+       0.13247232472324724,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.16267385750780586,
+       0.3426625035481124,
+       0.31004825432869715,
+       0.33045699687766106,
+       0.2985807550383196,
+       0.13247232472324724,
+       0.6440817485097928
+      ],
+      "n_actions_changed": 18226,
+      "n_actions_clamped": 27380,
+      "n_actions_decoded": 35230,
+      "n_actions_executed": 35230
+     },
+     "bc_mlp_chunk+clamp:ood_cube_shift": {
+      "fraction_actions_changed": 0.5422632645838026,
+      "fraction_actions_clamped": 0.7708420476849319,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.3577013417420123,
+       0.0,
+       0.3997232858200071,
+       0.32732713407767305,
+       0.20560507094822872,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.20110042150648347,
+       0.3577013417420123,
+       0.34524920364233086,
+       0.3997232858200071,
+       0.32732713407767305,
+       0.20560507094822872,
+       0.6473503008462306
+      ],
+      "n_actions_changed": 16853,
+      "n_actions_clamped": 23957,
+      "n_actions_decoded": 31079,
+      "n_actions_executed": 31079
+     },
+     "bc_mlp_chunk+clamp:robustness_base": {
+      "fraction_actions_changed": 0.0,
+      "fraction_actions_clamped": 0.45633587786259544,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.0,
+       0.0,
+       0.001068702290076336,
+       0.0,
+       0.0,
+       0.0,
+       0.45618320610687024
+      ],
+      "n_actions_changed": 0,
+      "n_actions_clamped": 2989,
+      "n_actions_decoded": 6550,
+      "n_actions_executed": 6550
+     },
+     "bc_rnn+clamp:ood_arm_offset": {
+      "fraction_actions_changed": 0.03161431701972243,
+      "fraction_actions_clamped": 0.21411249086924763,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       2.9218407596785974e-05,
+       0.0,
+       0.020014609203798394,
+       0.001110299488677867,
+       0.011804236669101534,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.0,
+       2.9218407596785974e-05,
+       0.0003798392987582177,
+       0.020014609203798394,
+       0.001110299488677867,
+       0.011804236669101534,
+       0.20835646457268078
+      ],
+      "n_actions_changed": 1082,
+      "n_actions_clamped": 7328,
+      "n_actions_decoded": 34225,
+      "n_actions_executed": 34225
+     },
+     "bc_rnn+clamp:ood_cube_shift": {
+      "fraction_actions_changed": 0.0021343518310492026,
+      "fraction_actions_clamped": 0.47000674005841386,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.0,
+       0.0,
+       0.0021343518310492026,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.0,
+       0.0,
+       0.001797348910357223,
+       0.0021343518310492026,
+       0.0,
+       0.0,
+       0.4685463940687486
+      ],
+      "n_actions_changed": 19,
+      "n_actions_clamped": 4184,
+      "n_actions_decoded": 8902,
+      "n_actions_executed": 8902
+     },
+     "bc_rnn+clamp:robustness_base": {
+      "fraction_actions_changed": 0.0,
+      "fraction_actions_clamped": 0.46580262336039974,
+      "fraction_entries_changed_per_dim": [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "fraction_entries_clamped_per_dim": [
+       0.0,
+       0.0,
+       0.0007807620237351655,
+       0.0,
+       0.0,
+       0.0,
+       0.4656464709556527
+      ],
+      "n_actions_changed": 0,
+      "n_actions_clamped": 2983,
+      "n_actions_decoded": 6404,
+      "n_actions_executed": 6404
+     }
+    },
+    "families": {
+     "bc_mlp+clamp:ood_arm_offset": {
+      "ci95": [
+       0.13333333333333333,
+       0.3333333333333333
+      ],
+      "estimate": 0.22666666666666666,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.2,
+       0.24,
+       0.24
+      ]
+     },
+     "bc_mlp+clamp:ood_cube_shift": {
+      "ci95": [
+       0.34,
+       0.6933333333333334
+      ],
+      "estimate": 0.52,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.34,
+       0.6,
+       0.62
+      ]
+     },
+     "bc_mlp+clamp:robustness_base": {
+      "ci95": [
+       0.92,
+       1.0
+      ],
+      "estimate": 0.98,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.94,
+       1.0,
+       1.0
+      ]
+     },
+     "bc_mlp:ood_arm_offset": {
+      "ci95": [
+       0.12000000000000001,
+       0.34
+      ],
+      "estimate": 0.22666666666666666,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.18,
+       0.24,
+       0.26
+      ]
+     },
+     "bc_mlp:ood_cube_shift": {
+      "ci95": [
+       0.35333333333333333,
+       0.6933333333333334
+      ],
+      "estimate": 0.5266666666666666,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.36,
+       0.6,
+       0.62
+      ]
+     },
+     "bc_mlp:robustness_base": {
+      "ci95": [
+       0.92,
+       1.0
+      ],
+      "estimate": 0.98,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.94,
+       1.0,
+       1.0
+      ]
+     },
+     "bc_mlp_chunk+clamp:ood_arm_offset": {
+      "ci95": [
+       0.36000000000000004,
+       0.62
+      ],
+      "estimate": 0.4866666666666667,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.52,
+       0.52,
+       0.42
+      ]
+     },
+     "bc_mlp_chunk+clamp:ood_cube_shift": {
+      "ci95": [
+       0.3333333333333333,
+       0.7533333333333333
+      ],
+      "estimate": 0.5466666666666666,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.34,
+       0.74,
+       0.56
+      ]
+     },
+     "bc_mlp_chunk+clamp:robustness_base": {
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "estimate": 1.0,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "bc_mlp_chunk:ood_arm_offset": {
+      "ci95": [
+       0.36000000000000004,
+       0.6133333333333334
+      ],
+      "estimate": 0.4866666666666667,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.52,
+       0.52,
+       0.42
+      ]
+     },
+     "bc_mlp_chunk:ood_cube_shift": {
+      "ci95": [
+       0.3333333333333333,
+       0.7533333333333333
+      ],
+      "estimate": 0.5466666666666666,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.34,
+       0.74,
+       0.56
+      ]
+     },
+     "bc_mlp_chunk:robustness_base": {
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "estimate": 1.0,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "bc_rnn+clamp:ood_arm_offset": {
+      "ci95": [
+       0.35333333333333333,
+       0.64
+      ],
+      "estimate": 0.49333333333333335,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.46,
+       0.44,
+       0.58
+      ]
+     },
+     "bc_rnn+clamp:ood_cube_shift": {
+      "ci95": [
+       0.8799999999999999,
+       1.0
+      ],
+      "estimate": 0.96,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.9,
+       0.98,
+       1.0
+      ]
+     },
+     "bc_rnn+clamp:robustness_base": {
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "estimate": 1.0,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "bc_rnn:ood_arm_offset": {
+      "ci95": [
+       0.36000000000000004,
+       0.64
+      ],
+      "estimate": 0.5,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.46,
+       0.46,
+       0.58
+      ]
+     },
+     "bc_rnn:ood_cube_shift": {
+      "ci95": [
+       0.8799999999999999,
+       1.0
+      ],
+      "estimate": 0.96,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.9,
+       0.98,
+       1.0
+      ]
+     },
+     "bc_rnn:robustness_base": {
+      "ci95": [
+       1.0,
+       1.0
+      ],
+      "estimate": 1.0,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       1.0,
+       1.0,
+       1.0
+      ]
+     },
+     "diffusion_unet:ood_arm_offset": {
+      "ci95": [
+       0.7933333333333333,
+       0.9533333333333333
+      ],
+      "estimate": 0.88,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.86,
+       0.92,
+       0.86
+      ]
+     },
+     "diffusion_unet:ood_cube_shift": {
+      "ci95": [
+       0.7600000000000001,
+       0.9333333333333332
+      ],
+      "estimate": 0.8533333333333334,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       0.86,
+       0.84,
+       0.86
+      ]
+     },
+     "diffusion_unet:robustness_base": {
+      "ci95": [
+       0.96,
+       1.0
+      ],
+      "estimate": 0.9933333333333333,
+      "n_seeds": 3,
+      "n_states": 50,
+      "per_seed": [
+       1.0,
+       0.98,
+       1.0
+      ]
+     }
+    },
+    "frozen_contrasts": [
+     {
+      "ci95": [
+       -0.4799999999999999,
+       -0.1533333333333332
+      ],
+      "estimate": -0.31333333333333346,
+      "name": "drop diffusion_unet - drop bc_mlp on ood_cube_shift",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp:ood_cube_shift": 1,
+       "bc_mlp:robustness_base": -1,
+       "diffusion_unet:ood_cube_shift": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.00666666666666671,
+       0.20666666666666667
+      ],
+      "estimate": 0.09999999999999987,
+      "name": "drop diffusion_unet - drop bc_rnn on ood_cube_shift",
+      "separation": "not separated",
+      "weights": {
+       "bc_rnn:ood_cube_shift": 1,
+       "bc_rnn:robustness_base": -1,
+       "diffusion_unet:ood_cube_shift": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.54,
+       -0.10000000000000009
+      ],
+      "estimate": -0.31333333333333346,
+      "name": "drop diffusion_unet - drop bc_mlp_chunk on ood_cube_shift",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp_chunk:ood_cube_shift": 1,
+       "bc_mlp_chunk:robustness_base": -1,
+       "diffusion_unet:ood_cube_shift": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.58,
+       -0.2533333333333334
+      ],
+      "estimate": -0.41333333333333333,
+      "name": "drop bc_rnn - drop bc_mlp on ood_cube_shift",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp:ood_cube_shift": 1,
+       "bc_mlp:robustness_base": -1,
+       "bc_rnn:ood_cube_shift": -1,
+       "bc_rnn:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.7666666666666666,
+       -0.5066666666666667
+      ],
+      "estimate": -0.64,
+      "name": "drop diffusion_unet - drop bc_mlp on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp:ood_arm_offset": 1,
+       "bc_mlp:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.5333333333333332,
+       -0.2400000000000001
+      ],
+      "estimate": -0.3866666666666667,
+      "name": "drop diffusion_unet - drop bc_rnn on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_rnn:ood_arm_offset": 1,
+       "bc_rnn:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.54,
+       -0.2599999999999999
+      ],
+      "estimate": -0.4,
+      "name": "drop diffusion_unet - drop bc_mlp_chunk on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp_chunk:ood_arm_offset": 1,
+       "bc_mlp_chunk:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.4,
+       -0.11333333333333334
+      ],
+      "estimate": -0.2533333333333333,
+      "name": "drop bc_rnn - drop bc_mlp on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp:ood_arm_offset": 1,
+       "bc_mlp:robustness_base": -1,
+       "bc_rnn:ood_arm_offset": -1,
+       "bc_rnn:robustness_base": 1
+      }
+     }
+    ],
+    "n_states": 50,
+    "sets": [
+     "robustness_base",
+     "ood_cube_shift",
+     "ood_arm_offset"
+    ],
+    "x1_contrasts": [
+     {
+      "ci95": [
+       -0.49333333333333323,
+       -0.15333333333333332
+      ],
+      "estimate": -0.32000000000000006,
+      "name": "drop diffusion_unet - drop bc_mlp+clamp on ood_cube_shift",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp+clamp:ood_cube_shift": 1,
+       "bc_mlp+clamp:robustness_base": -1,
+       "diffusion_unet:ood_cube_shift": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.7666666666666666,
+       -0.5133333333333332
+      ],
+      "estimate": -0.64,
+      "name": "drop diffusion_unet - drop bc_mlp+clamp on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp+clamp:ood_arm_offset": 1,
+       "bc_mlp+clamp:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.00666666666666671,
+       0.20666666666666667
+      ],
+      "estimate": 0.09999999999999987,
+      "name": "drop diffusion_unet - drop bc_rnn+clamp on ood_cube_shift",
+      "separation": "not separated",
+      "weights": {
+       "bc_rnn+clamp:ood_cube_shift": 1,
+       "bc_rnn+clamp:robustness_base": -1,
+       "diffusion_unet:ood_cube_shift": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.5466666666666664,
+       -0.2466666666666667
+      ],
+      "estimate": -0.39333333333333337,
+      "name": "drop diffusion_unet - drop bc_rnn+clamp on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_rnn+clamp:ood_arm_offset": 1,
+       "bc_rnn+clamp:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.54,
+       -0.10000000000000009
+      ],
+      "estimate": -0.31333333333333346,
+      "name": "drop diffusion_unet - drop bc_mlp_chunk+clamp on ood_cube_shift",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp_chunk+clamp:ood_cube_shift": 1,
+       "bc_mlp_chunk+clamp:robustness_base": -1,
+       "diffusion_unet:ood_cube_shift": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.54,
+       -0.2533333333333334
+      ],
+      "estimate": -0.4,
+      "name": "drop diffusion_unet - drop bc_mlp_chunk+clamp on ood_arm_offset",
+      "separation": "separated (-)",
+      "weights": {
+       "bc_mlp_chunk+clamp:ood_arm_offset": 1,
+       "bc_mlp_chunk+clamp:robustness_base": -1,
+       "diffusion_unet:ood_arm_offset": -1,
+       "diffusion_unet:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.039999999999999925,
+       5.551115123125783e-17
+      ],
+      "estimate": -0.006666666666666599,
+      "name": "drop bc_mlp - drop bc_mlp+clamp on ood_cube_shift",
+      "separation": "not separated",
+      "weights": {
+       "bc_mlp+clamp:ood_cube_shift": 1,
+       "bc_mlp+clamp:robustness_base": -1,
+       "bc_mlp:ood_cube_shift": -1,
+       "bc_mlp:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.03333333333333327,
+       0.039999999999999925
+      ],
+      "estimate": -2.7755575615628914e-17,
+      "name": "drop bc_mlp - drop bc_mlp+clamp on ood_arm_offset",
+      "separation": "not separated",
+      "weights": {
+       "bc_mlp+clamp:ood_arm_offset": 1,
+       "bc_mlp+clamp:robustness_base": -1,
+       "bc_mlp:ood_arm_offset": -1,
+       "bc_mlp:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "estimate": 0.0,
+      "name": "drop bc_rnn - drop bc_rnn+clamp on ood_cube_shift",
+      "separation": "not separated",
+      "weights": {
+       "bc_rnn+clamp:ood_cube_shift": 1,
+       "bc_rnn+clamp:robustness_base": -1,
+       "bc_rnn:ood_cube_shift": -1,
+       "bc_rnn:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.03999999999999987,
+       5.551115123125783e-17
+      ],
+      "estimate": -0.006666666666666654,
+      "name": "drop bc_rnn - drop bc_rnn+clamp on ood_arm_offset",
+      "separation": "not separated",
+      "weights": {
+       "bc_rnn+clamp:ood_arm_offset": 1,
+       "bc_rnn+clamp:robustness_base": -1,
+       "bc_rnn:ood_arm_offset": -1,
+       "bc_rnn:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -5.551115123125783e-17,
+       5.551115123125783e-17
+      ],
+      "estimate": 0.0,
+      "name": "drop bc_mlp_chunk - drop bc_mlp_chunk+clamp on ood_cube_shift",
+      "separation": "not separated",
+      "weights": {
+       "bc_mlp_chunk+clamp:ood_cube_shift": 1,
+       "bc_mlp_chunk+clamp:robustness_base": -1,
+       "bc_mlp_chunk:ood_cube_shift": -1,
+       "bc_mlp_chunk:robustness_base": 1
+      }
+     },
+     {
+      "ci95": [
+       -0.03999999999999998,
+       0.040000000000000036
+      ],
+      "estimate": 0.0,
+      "name": "drop bc_mlp_chunk - drop bc_mlp_chunk+clamp on ood_arm_offset",
+      "separation": "not separated",
+      "weights": {
+       "bc_mlp_chunk+clamp:ood_arm_offset": 1,
+       "bc_mlp_chunk+clamp:robustness_base": -1,
+       "bc_mlp_chunk:ood_arm_offset": -1,
+       "bc_mlp_chunk:robustness_base": 1
+      }
+     }
+    ],
+    "x1_differences": [
+     {
+      "a": "bc_mlp+clamp:robustness_base",
+      "b": "bc_mlp:robustness_base",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp+clamp:ood_cube_shift",
+      "b": "bc_mlp:ood_cube_shift",
+      "ci95": [
+       -0.039999999999999925,
+       0.0
+      ],
+      "difference": -0.006666666666666599,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp+clamp:ood_arm_offset",
+      "b": "bc_mlp:ood_arm_offset",
+      "ci95": [
+       -0.033333333333333326,
+       0.03999999999999995
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_rnn+clamp:robustness_base",
+      "b": "bc_rnn:robustness_base",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_rnn+clamp:ood_cube_shift",
+      "b": "bc_rnn:ood_cube_shift",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_rnn+clamp:ood_arm_offset",
+      "b": "bc_rnn:ood_arm_offset",
+      "ci95": [
+       -0.039999999999999925,
+       0.0
+      ],
+      "difference": -0.006666666666666654,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp_chunk+clamp:robustness_base",
+      "b": "bc_mlp_chunk:robustness_base",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp_chunk+clamp:ood_cube_shift",
+      "b": "bc_mlp_chunk:ood_cube_shift",
+      "ci95": [
+       0.0,
+       0.0
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp_chunk+clamp:ood_arm_offset",
+      "b": "bc_mlp_chunk:ood_arm_offset",
+      "ci95": [
+       -0.03999999999999998,
+       0.040000000000000036
+      ],
+      "difference": 0.0,
+      "kind": "clamped - unclamped, same checkpoints",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_mlp+clamp:robustness_base",
+      "b": "bc_mlp+clamp:ood_cube_shift",
+      "ci95": [
+       0.30666666666666664,
+       0.6199999999999999
+      ],
+      "difference": 0.45999999999999996,
+      "kind": "drop (base - OOD), clamped",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "bc_mlp+clamp:robustness_base",
+      "b": "bc_mlp+clamp:ood_arm_offset",
+      "ci95": [
+       0.6466666666666667,
+       0.8533333333333333
+      ],
+      "difference": 0.7533333333333333,
+      "kind": "drop (base - OOD), clamped",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "bc_rnn+clamp:robustness_base",
+      "b": "bc_rnn+clamp:ood_cube_shift",
+      "ci95": [
+       0.0,
+       0.1200000000000001
+      ],
+      "difference": 0.040000000000000036,
+      "kind": "drop (base - OOD), clamped",
+      "separation": "not separated"
+     },
+     {
+      "a": "bc_rnn+clamp:robustness_base",
+      "b": "bc_rnn+clamp:ood_arm_offset",
+      "ci95": [
+       0.36,
+       0.6466666666666667
+      ],
+      "difference": 0.5066666666666666,
+      "kind": "drop (base - OOD), clamped",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "bc_mlp_chunk+clamp:robustness_base",
+      "b": "bc_mlp_chunk+clamp:ood_cube_shift",
+      "ci95": [
+       0.2466666666666667,
+       0.6666666666666667
+      ],
+      "difference": 0.45333333333333337,
+      "kind": "drop (base - OOD), clamped",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "bc_mlp_chunk+clamp:robustness_base",
+      "b": "bc_mlp_chunk+clamp:ood_arm_offset",
+      "ci95": [
+       0.38,
+       0.6399999999999999
+      ],
+      "difference": 0.5133333333333333,
+      "kind": "drop (base - OOD), clamped",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "diffusion_unet:robustness_base",
+      "b": "bc_mlp+clamp:robustness_base",
+      "ci95": [
+       -0.026666666666666727,
+       0.07333333333333325
+      ],
+      "difference": 0.013333333333333308,
+      "kind": "diffusion - clamped BC",
+      "separation": "not separated"
+     },
+     {
+      "a": "diffusion_unet:ood_cube_shift",
+      "b": "bc_mlp+clamp:ood_cube_shift",
+      "ci95": [
+       0.1466666666666666,
+       0.5200000000000001
+      ],
+      "difference": 0.33333333333333337,
+      "kind": "diffusion - clamped BC",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "diffusion_unet:ood_arm_offset",
+      "b": "bc_mlp+clamp:ood_arm_offset",
+      "ci95": [
+       0.5266666666666666,
+       0.7733333333333333
+      ],
+      "difference": 0.6533333333333333,
+      "kind": "diffusion - clamped BC",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "diffusion_unet:robustness_base",
+      "b": "bc_rnn+clamp:robustness_base",
+      "ci95": [
+       -0.040000000000000036,
+       0.0
+      ],
+      "difference": -0.00666666666666671,
+      "kind": "diffusion - clamped BC",
+      "separation": "not separated"
+     },
+     {
+      "a": "diffusion_unet:ood_cube_shift",
+      "b": "bc_rnn+clamp:ood_cube_shift",
+      "ci95": [
+       -0.21333333333333326,
+       0.0
+      ],
+      "difference": -0.10666666666666658,
+      "kind": "diffusion - clamped BC",
+      "separation": "not separated"
+     },
+     {
+      "a": "diffusion_unet:ood_arm_offset",
+      "b": "bc_rnn+clamp:ood_arm_offset",
+      "ci95": [
+       0.2465000000000014,
+       0.5266666666666667
+      ],
+      "difference": 0.38666666666666666,
+      "kind": "diffusion - clamped BC",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "diffusion_unet:robustness_base",
+      "b": "bc_mlp_chunk+clamp:robustness_base",
+      "ci95": [
+       -0.040000000000000036,
+       0.0
+      ],
+      "difference": -0.00666666666666671,
+      "kind": "diffusion - clamped BC",
+      "separation": "not separated"
+     },
+     {
+      "a": "diffusion_unet:ood_cube_shift",
+      "b": "bc_mlp_chunk+clamp:ood_cube_shift",
+      "ci95": [
+       0.09333333333333349,
+       0.5266666666666667
+      ],
+      "difference": 0.30666666666666675,
+      "kind": "diffusion - clamped BC",
+      "separation": "separated (+)"
+     },
+     {
+      "a": "diffusion_unet:ood_arm_offset",
+      "b": "bc_mlp_chunk+clamp:ood_arm_offset",
+      "ci95": [
+       0.2533333333333333,
+       0.5333333333333332
+      ],
+      "difference": 0.3933333333333333,
+      "kind": "diffusion - clamped BC",
+      "separation": "separated (+)"
+     }
+    ]
+   }
+  }
+ },
+ "x2": {
+  "censored_episode_length": {
+   "B": 10000,
+   "differences": [
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp",
+     "ci95": [
+      -225.47024999999996,
+      -157.33583333333334
+     ],
+     "difference": -192.52333333333334,
+     "separation": "separated (-)"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_rnn",
+     "ci95": [
+      -113.58691666666664,
+      -43.425250000000005
+     ],
+     "difference": -79.58000000000001,
+     "separation": "separated (-)"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp_chunk",
+     "ci95": [
+      -15.68041666666667,
+      46.503833333333326
+     ],
+     "difference": 16.913333333333327,
+     "separation": "not separated"
+    },
+    {
+     "a": "bc_rnn",
+     "b": "bc_mlp",
+     "ci95": [
+      -153.19483333333332,
+      -73.41224999999999
+     ],
+     "difference": -112.94333333333333,
+     "separation": "separated (-)"
+    }
+   ],
+   "draw_order": [
+    "states",
+    "bc_mlp",
+    "bc_rnn",
+    "bc_mlp_chunk",
+    "diffusion_unet"
+   ],
+   "families": {
+    "bc_mlp": {
+     "ci95": [
+      378.0925000000001,
+      436.987
+     ],
+     "estimate": 408.37333333333333,
+     "n_seeds": 3,
+     "n_states": 100,
+     "per_seed": [
+      429.96,
+      399.08,
+      396.08
+     ]
+    },
+    "bc_mlp_chunk": {
+     "ci95": [
+      176.5025,
+      227.57483333333332
+     ],
+     "estimate": 198.93666666666667,
+     "n_seeds": 3,
+     "n_states": 100,
+     "per_seed": [
+      191.67,
+      181.7,
+      223.44
+     ]
+    },
+    "bc_rnn": {
+     "ci95": [
+      262.70283333333333,
+      327.33383333333336
+     ],
+     "estimate": 295.43,
+     "n_seeds": 3,
+     "n_states": 100,
+     "per_seed": [
+      288.13,
+      319.11,
+      279.05
+     ]
+    },
+    "diffusion_unet": {
+     "ci95": [
+      199.36333333333334,
+      235.5540833333333
+     ],
+     "estimate": 215.85,
+     "n_seeds": 3,
+     "n_states": 100,
+     "per_seed": [
+      225.87,
+      204.49,
+      217.19
+     ]
+    }
+   },
+   "interval": "percentile, numpy linear interpolation",
+   "level": 0.95,
+   "method": "hierarchical paired bootstrap (RESEARCH_PROTOCOL \u00a79)",
+   "seed": 20261106
+  },
+  "contrasts": [
+   {
+    "a": "diffusion_unet",
+    "b": "bc_mlp",
+    "bootstrap_ci95": [
+     0.53,
+     0.73
+    ],
+    "bootstrap_separation": "separated (+)",
+    "difference": 0.6333333333333333,
+    "frozen": {
+     "bootstrap_ci95": [
+      0.046666666666666634,
+      0.32666666666666666
+     ],
+     "bootstrap_separation": "separated (+)",
+     "difference": 0.18666666666666665,
+     "horizon": 400,
+     "n_seeds": 3,
+     "n_states": 50,
+     "seed_level_ci95": [
+      -0.04463266848890082,
+      0.4179660018222341
+     ],
+     "seed_level_df": 2.3516693163751983,
+     "seed_level_separation": "not separated"
+    },
+    "hypothesis": "H2",
+    "name": "H2 diffusion \u2212 BC-MLP",
+    "relation": "same direction",
+    "seed_level_ci95": [
+     0.5188287274685354,
+     0.7478379391981312
+    ],
+    "seed_level_df": 3.104208629280185,
+    "seed_level_separation": "separated (+)",
+    "sign": "+",
+    "status": "computed",
+    "verdict": "robust"
+   },
+   {
+    "a": "diffusion_unet",
+    "b": "bc_rnn",
+    "bootstrap_ci95": [
+     0.16666666666666663,
+     0.3766666666666666
+    ],
+    "bootstrap_separation": "separated (+)",
+    "difference": 0.2733333333333333,
+    "frozen": {
+     "bootstrap_ci95": [
+      -0.08000000000000007,
+      0.06666666666666665
+     ],
+     "bootstrap_separation": "not separated",
+     "difference": -0.006666666666666599,
+     "horizon": 400,
+     "n_seeds": 3,
+     "n_states": 50,
+     "seed_level_ci95": [
+      -0.08960033961492067,
+      0.07626700628158725
+     ],
+     "seed_level_df": 3.7409326424870453,
+     "seed_level_separation": "not separated"
+    },
+    "hypothesis": "H2",
+    "name": "H2 diffusion \u2212 BC-RNN",
+    "relation": "new separation",
+    "seed_level_ci95": [
+     0.14895342672630402,
+     0.3977132399403624
+    ],
+    "seed_level_df": 2.9717223650385587,
+    "seed_level_separation": "separated (+)",
+    "sign": "+",
+    "status": "computed",
+    "verdict": "robust"
+   },
+   {
+    "a": "diffusion_unet",
+    "b": "bc_mlp_chunk",
+    "bootstrap_ci95": [
+     -0.06333333333333346,
+     0.1100000000000001
+    ],
+    "bootstrap_separation": "not separated",
+    "difference": 0.020000000000000018,
+    "frozen": {
+     "bootstrap_ci95": [
+      -0.08666666666666656,
+      0.07333333333333325
+     ],
+     "bootstrap_separation": "not separated",
+     "difference": -0.006666666666666599,
+     "horizon": 400,
+     "n_seeds": 3,
+     "n_states": 50,
+     "seed_level_ci95": [
+      -0.08960033961492067,
+      0.07626700628158725
+     ],
+     "seed_level_df": 3.7409326424870453,
+     "seed_level_separation": "not separated"
+    },
+    "hypothesis": "H2c",
+    "name": "H2-c diffusion \u2212 BC-MLP-chunk",
+    "relation": "neither separated",
+    "seed_level_ci95": [
+     -0.11635176798060703,
+     0.15635176798060663
+    ],
+    "seed_level_df": 2.841009874061372,
+    "seed_level_separation": "not separated",
+    "sign": null,
+    "status": "computed",
+    "verdict": "not separated"
+   },
+   {
+    "a": "bc_rnn",
+    "b": "bc_mlp",
+    "bootstrap_ci95": [
+     0.2366666666666667,
+     0.48
+    ],
+    "bootstrap_separation": "separated (+)",
+    "difference": 0.36000000000000004,
+    "frozen": {
+     "bootstrap_ci95": [
+      0.05333333333333323,
+      0.33999999999999997
+     ],
+     "bootstrap_separation": "separated (+)",
+     "difference": 0.19333333333333325,
+     "horizon": 400,
+     "n_seeds": 3,
+     "n_states": 50,
+     "seed_level_ci95": [
+      -0.028219560119902676,
+      0.4148862267865694
+     ],
+     "seed_level_df": 2.59389193422083,
+     "seed_level_separation": "not separated"
+    },
+    "hypothesis": "H3",
+    "name": "H3 BC-RNN \u2212 BC-MLP",
+    "relation": "same direction",
+    "seed_level_ci95": [
+     0.2285016353943742,
+     0.4914983646056259
+    ],
+    "seed_level_df": 3.9778466991581736,
+    "seed_level_separation": "separated (+)",
+    "sign": "+",
+    "status": "computed",
+    "verdict": "robust"
+   }
+  ],
+  "decisions": [
+   "D-116",
+   "D-117",
+   "D-118",
+   "D-119",
+   "D-120",
+   "D-121",
+   "D-122",
+   "D-123",
+   "D-124",
+   "D-125",
+   "D-126",
+   "D-127",
+   "D-128",
+   "D-129",
+   "D-130"
+  ],
+  "engineering": {
+   "families": {
+    "bc_mlp": "complete",
+    "bc_mlp_chunk": "complete",
+    "bc_rnn": "complete",
+    "diffusion_unet": "complete"
+   },
+   "incomplete": {},
+   "n_attempt2": 0,
+   "n_errors_total": 0,
+   "rule": "docs/FINAL_TEST_FREEZE.md \u00a74: the family is left out of the bootstrap; its contrasts are not computed"
+  },
+  "families": {
+   "bc_mlp": {
+    "ci95": [
+     0.21,
+     0.3933333333333333
+    ],
+    "estimate": 0.3,
+    "n_seeds": 3,
+    "n_states": 100,
+    "per_seed": [
+     0.24,
+     0.31,
+     0.35
+    ]
+   },
+   "bc_mlp_chunk": {
+    "ci95": [
+     0.83,
+     0.98
+    ],
+    "estimate": 0.9133333333333333,
+    "n_seeds": 3,
+    "n_states": 100,
+    "per_seed": [
+     0.91,
+     0.98,
+     0.85
+    ]
+   },
+   "bc_rnn": {
+    "ci95": [
+     0.5633333333333334,
+     0.7533333333333333
+    ],
+    "estimate": 0.66,
+    "n_seeds": 3,
+    "n_states": 100,
+    "per_seed": [
+     0.72,
+     0.6,
+     0.66
+    ]
+   },
+   "diffusion_unet": {
+    "ci95": [
+     0.88,
+     0.9766666666666666
+    ],
+    "estimate": 0.9333333333333333,
+    "n_seeds": 3,
+    "n_states": 100,
+    "per_seed": [
+     0.9,
+     0.96,
+     0.94
+    ]
+   }
+  },
+  "frozen_families": {
+   "bc_mlp": {
+    "ci95": [
+     0.6266666666666666,
+     0.9
+    ],
+    "estimate": 0.7666666666666667,
+    "n_seeds": 3,
+    "n_states": 50,
+    "per_seed": [
+     0.68,
+     0.88,
+     0.74
+    ]
+   },
+   "bc_mlp_chunk": {
+    "ci95": [
+     0.8866666666666667,
+     1.0
+    ],
+    "estimate": 0.96,
+    "n_seeds": 3,
+    "n_states": 50,
+    "per_seed": [
+     0.96,
+     0.92,
+     1.0
+    ]
+   },
+   "bc_rnn": {
+    "ci95": [
+     0.8933333333333332,
+     1.0
+    ],
+    "estimate": 0.96,
+    "n_seeds": 3,
+    "n_states": 50,
+    "per_seed": [
+     0.92,
+     1.0,
+     0.96
+    ]
+   },
+   "diffusion_unet": {
+    "ci95": [
+     0.8933333333333332,
+     1.0
+    ],
+    "estimate": 0.9533333333333334,
+    "n_seeds": 3,
+    "n_states": 50,
+    "per_seed": [
+     0.92,
+     0.98,
+     0.96
+    ]
+   },
+   "random_uniform": {
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "estimate": 0.0,
+    "n_seeds": 1,
+    "n_states": 50,
+    "per_seed": [
+     0.0
+    ]
+   }
+  },
+  "label": "X2 (Can MH) held-out evaluation, once: reported beside the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator only",
+  "outcome": "success before the 500-step horizon; engineering errors are failures",
+  "study": "X2 (Can MH)",
+  "suite": {
+   "decision": "D-123",
+   "manifest_content_sha256": "40b8228c3e08cf6e3bdcf23c77a28cb273e5bd7f2eb7a797b0e7d7caebdd833c",
+   "n_states": 100,
+   "name": "x2_heldout",
+   "partition": "eval_adhoc",
+   "seeds": "16,000,000 + i, i = 0..99",
+   "state_order": "manifest order",
+   "task": "can"
+  },
+  "taxonomy": {
+   "bc_mlp": {
+    "dropped": 17,
+    "engineering_error": 0,
+    "gripper_never_closed": 88,
+    "in_goal_bin_not_success": 8,
+    "no_grasp_drift": 52,
+    "no_grasp_near": 36,
+    "success": 90,
+    "timeout_holding": 9
+   },
+   "bc_mlp_chunk": {
+    "dropped": 2,
+    "engineering_error": 0,
+    "gripper_never_closed": 11,
+    "in_goal_bin_not_success": 3,
+    "no_grasp_drift": 4,
+    "no_grasp_near": 3,
+    "success": 274,
+    "timeout_holding": 3
+   },
+   "bc_rnn": {
+    "dropped": 9,
+    "engineering_error": 0,
+    "gripper_never_closed": 47,
+    "in_goal_bin_not_success": 14,
+    "no_grasp_drift": 9,
+    "no_grasp_near": 17,
+    "success": 198,
+    "timeout_holding": 6
+   },
+   "diffusion_unet": {
+    "dropped": 5,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "in_goal_bin_not_success": 10,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 1,
+    "success": 280,
+    "timeout_holding": 3
+   }
+  }
+ },
+ "x3": {
+  "contrasts": [
+   {
+    "a": "diffusion_unet",
+    "b": "bc_mlp",
+    "bootstrap_ci95": [
+     0.10499999999999998,
+     0.35
+    ],
+    "bootstrap_separation": "separated (+)",
+    "difference": 0.22666666666666657,
+    "frozen": {
+     "bootstrap_ci95": [
+      0.046666666666666634,
+      0.32666666666666666
+     ],
+     "bootstrap_separation": "separated (+)",
+     "difference": 0.18666666666666665,
+     "n_seeds": 3,
+     "n_states": 50,
+     "seed_level_ci95": [
+      -0.04463266848890082,
+      0.4179660018222341
+     ],
+     "seed_level_df": 2.3516693163751983,
+     "seed_level_separation": "not separated"
+    },
+    "hypothesis": "H2",
+    "n_seeds": {
+     "bc_mlp": 6,
+     "diffusion_unet": 6
+    },
+    "name": "H2 diffusion \u2212 BC-MLP",
+    "reading": "H2 diffusion \u2212 BC-MLP: separated (+) under both the bootstrap and the seed-level interval, with 6 seeds on 100 fresh starts. In this replication the difference does not rest on 3 seeds or on the 50 frozen starts. The frozen separation holds in this replication, now under both interval methods. Separate replication; the frozen result stands as reported.",
+    "relation": "holds, robust",
+    "seed_level_ci95": [
+     0.0804693134326642,
+     0.372864019900669
+    ],
+    "seed_level_df": 5.18486828252113,
+    "seed_level_separation": "separated (+)",
+    "sign": "+",
+    "status": "computed",
+    "verdict": "robust"
+   },
+   {
+    "a": "diffusion_unet",
+    "b": "bc_rnn",
+    "bootstrap_ci95": [
+     -0.05666666666666664,
+     0.030000000000000027
+    ],
+    "bootstrap_separation": "not separated",
+    "difference": -0.011666666666666714,
+    "frozen": {
+     "bootstrap_ci95": [
+      -0.08000000000000007,
+      0.06666666666666665
+     ],
+     "bootstrap_separation": "not separated",
+     "difference": -0.006666666666666599,
+     "n_seeds": 3,
+     "n_states": 50,
+     "seed_level_ci95": [
+      -0.08960033961492067,
+      0.07626700628158725
+     ],
+     "seed_level_df": 3.7409326424870453,
+     "seed_level_separation": "not separated"
+    },
+    "hypothesis": "H2",
+    "n_seeds": {
+     "bc_rnn": 6,
+     "diffusion_unet": 6
+    },
+    "name": "H2 diffusion \u2212 BC-RNN",
+    "reading": "H2 diffusion \u2212 BC-RNN: not separated under either interval, with 6 seeds on 100 fresh starts. This replication gives no evidence of a difference; that is not evidence of equality. As in the frozen result, not separated. Separate replication; the frozen result stands as reported.",
+    "relation": "unchanged, not separated",
+    "seed_level_ci95": [
+     -0.035005921039908634,
+     0.01167258770657565
+    ],
+    "seed_level_df": 9.907837630839934,
+    "seed_level_separation": "not separated",
+    "sign": null,
+    "status": "computed",
+    "verdict": "not separated"
+   },
+   {
+    "a": "diffusion_unet",
+    "b": "bc_mlp_chunk",
+    "bootstrap_ci95": [
+     -0.06166666666666687,
+     0.02833333333333332
+    ],
+    "bootstrap_separation": "not separated",
+    "difference": -0.01666666666666672,
+    "frozen": {
+     "bootstrap_ci95": [
+      -0.08666666666666656,
+      0.07333333333333325
+     ],
+     "bootstrap_separation": "not separated",
+     "difference": -0.006666666666666599,
+     "n_seeds": 3,
+     "n_states": 50,
+     "seed_level_ci95": [
+      -0.08960033961492067,
+      0.07626700628158725
+     ],
+     "seed_level_df": 3.7409326424870453,
+     "seed_level_separation": "not separated"
+    },
+    "hypothesis": "H2c",
+    "n_seeds": {
+     "bc_mlp_chunk": 6,
+     "diffusion_unet": 6
+    },
+    "name": "H2-c diffusion \u2212 BC-MLP-chunk",
+    "reading": "H2-c diffusion \u2212 BC-MLP-chunk: not separated under either interval, with 6 seeds on 100 fresh starts. This replication gives no evidence of a difference; that is not evidence of equality. As in the frozen result, not separated. Separate replication; the frozen result stands as reported.",
+    "relation": "unchanged, not separated",
+    "seed_level_ci95": [
+     -0.04487325834462536,
+     0.011539925011292147
+    ],
+    "seed_level_df": 9.457786116322698,
+    "seed_level_separation": "not separated",
+    "sign": null,
+    "status": "computed",
+    "verdict": "not separated"
+   },
+   {
+    "a": "bc_rnn",
+    "b": "bc_mlp",
+    "bootstrap_ci95": [
+     0.12000000000000022,
+     0.3600000000000001
+    ],
+    "bootstrap_separation": "separated (+)",
+    "difference": 0.23833333333333329,
+    "frozen": {
+     "bootstrap_ci95": [
+      0.05333333333333323,
+      0.33999999999999997
+     ],
+     "bootstrap_separation": "separated (+)",
+     "difference": 0.19333333333333325,
+     "n_seeds": 3,
+     "n_states": 50,
+     "seed_level_ci95": [
+      -0.028219560119902676,
+      0.4148862267865694
+     ],
+     "seed_level_df": 2.59389193422083,
+     "seed_level_separation": "not separated"
+    },
+    "hypothesis": "H3",
+    "n_seeds": {
+     "bc_mlp": 6,
+     "bc_rnn": 6
+    },
+    "name": "H3 BC-RNN \u2212 BC-MLP",
+    "reading": "H3 BC-RNN \u2212 BC-MLP: separated (+) under both the bootstrap and the seed-level interval, with 6 seeds on 100 fresh starts. In this replication the difference does not rest on 3 seeds or on the 50 frozen starts. The frozen separation holds in this replication, now under both interval methods. Separate replication; the frozen result stands as reported.",
+    "relation": "holds, robust",
+    "seed_level_ci95": [
+     0.09210403833671446,
+     0.3845626283299517
+    ],
+    "seed_level_df": 5.152361874343021,
+    "seed_level_separation": "separated (+)",
+    "sign": "+",
+    "status": "computed",
+    "verdict": "robust"
+   }
+  ],
+  "decision": "D-111",
+  "engineering": {
+   "failed_training_runs": [],
+   "families": {
+    "bc_mlp": "complete",
+    "bc_mlp_chunk": "complete",
+    "bc_rnn": "complete",
+    "diffusion_unet": "complete"
+   },
+   "incomplete": {},
+   "n_errors_total": 0,
+   "validation_and_selection": {
+    "decision": "D-112",
+    "known_issue": "KI-062",
+    "summary": "reports/session14/suite/x3_validation.json",
+    "summary_sha256": "8ff6c4531ef0923efd19394a3078ae61674c7b04ae46fcc6fe3e6b7061e898eb"
+   }
+  },
+  "families": {
+   "bc_mlp": {
+    "ci95": [
+     0.605,
+     0.84
+    ],
+    "estimate": 0.7233333333333334,
+    "n_seeds": 6,
+    "n_states": 100,
+    "per_seed": [
+     0.75,
+     0.93,
+     0.66,
+     0.54,
+     0.64,
+     0.82
+    ]
+   },
+   "bc_mlp_chunk": {
+    "ci95": [
+     0.9316666666666666,
+     0.9900000000000001
+    ],
+    "estimate": 0.9666666666666667,
+    "n_seeds": 6,
+    "n_states": 100,
+    "per_seed": [
+     0.95,
+     0.93,
+     1.0,
+     0.98,
+     0.97,
+     0.97
+    ]
+   },
+   "bc_rnn": {
+    "ci95": [
+     0.9316666666666666,
+     0.985
+    ],
+    "estimate": 0.9616666666666667,
+    "n_seeds": 6,
+    "n_states": 100,
+    "per_seed": [
+     0.94,
+     0.98,
+     0.94,
+     0.97,
+     0.97,
+     0.97
+    ]
+   },
+   "diffusion_unet": {
+    "ci95": [
+     0.91,
+     0.9816666666666668
+    ],
+    "estimate": 0.95,
+    "n_seeds": 6,
+    "n_states": 100,
+    "per_seed": [
+     0.98,
+     0.93,
+     0.96,
+     0.93,
+     0.95,
+     0.95
+    ]
+   }
+  },
+  "frozen_families": {
+   "bc_mlp": {
+    "ci95": [
+     0.6266666666666666,
+     0.9
+    ],
+    "estimate": 0.7666666666666667,
+    "n_seeds": 3,
+    "n_states": 50,
+    "per_seed": [
+     0.68,
+     0.88,
+     0.74
+    ]
+   },
+   "bc_mlp_chunk": {
+    "ci95": [
+     0.8866666666666667,
+     1.0
+    ],
+    "estimate": 0.96,
+    "n_seeds": 3,
+    "n_states": 50,
+    "per_seed": [
+     0.96,
+     0.92,
+     1.0
+    ]
+   },
+   "bc_rnn": {
+    "ci95": [
+     0.8933333333333332,
+     1.0
+    ],
+    "estimate": 0.96,
+    "n_seeds": 3,
+    "n_states": 50,
+    "per_seed": [
+     0.92,
+     1.0,
+     0.96
+    ]
+   },
+   "diffusion_unet": {
+    "ci95": [
+     0.8933333333333332,
+     1.0
+    ],
+    "estimate": 0.9533333333333334,
+    "n_seeds": 3,
+    "n_states": 50,
+    "per_seed": [
+     0.92,
+     0.98,
+     0.96
+    ]
+   },
+   "random_uniform": {
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "estimate": 0.0,
+    "n_seeds": 1,
+    "n_states": 50,
+    "per_seed": [
+     0.0
+    ]
+   }
+  },
+  "label": "separate replication",
+  "seeds": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "suite": {
+   "content_sha256": "9c199e19f69708872a01665cf1367d2e34741388c2f546ef96d3ffc900a2b34d",
+   "n_states": 100,
+   "name": "x3_heldout",
+   "task": "can"
+  }
+ }
+}

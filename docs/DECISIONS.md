@@ -3625,3 +3625,71 @@ compute. Session 19 publishes only what D-131 authorizes, in its order.
   `obs-ext-select`, `obs-ext-export`, `obs-ext-findings`, `web-verify-ext`; `addendum`,
   `addendum-assets`, `readme-extensions`, `paper`, `paper-assets` (the committed outputs stand).
 - No test pins the Makefile defaults (checked by grep before the change).
+
+## Session 20 (2026-11-16): Observatory visual quality pass
+Level 1, the RGB study, Level 2, X1, X2 and X3 stay frozen with all their evidence, and so do
+the Observatory exports (`reports/session10/observatory/`, `reports/session18/observatory/`),
+the generated `website/public/data`, `paper/`, the README's generated blocks, preview and chart,
+and `CITATION.cff`. No rollout, no policy call, no `env.step`, no training, no evaluation, no
+paid or remote compute. Session 20 changes how the site presents the recorded evidence, and
+nothing else.
+
+### D-136 A full visual quality pass on the Observatory (OWNER, 2026-11-16)
+**The owner's request, verbatim:** "a full visual quality improvement pass on the observatory,
+making sure things are best visually represented, rendered, that there isnt too much text strewn
+across the observatory, that everything makes sense".
+
+- **Authorizes:** changes to `website/` source, styles and site tests, for presentation only, in
+  this session.
+- **Supersedes**, for `website/` code only, Session 19's "the site code is frozen".
+- **Authorizes nothing else.** No new result, no new clip, no re-export, no change to any number
+  or verdict. In particular it does **not** authorize publication: the push of `main`, the Pages
+  redeploy and any README or audit record of a new build need a separate owner answer at the end
+  of the session (Session 20 prompt, step 6).
+- **Rules the pass keeps** (Session 20 prompt, step 4):
+  - recorded physical state, the policy's proposals and illustrative material stay visually
+    distinct and labelled (MASTER_SPEC §0.4, §8.1, §8.3 to §8.5);
+  - every clip keeps a reachable source (run id, checkpoint hash, start, outcome), which may move
+    into a collapsible "Provenance" element but is never deleted; selection labels stay with
+    their clips;
+  - every number still comes from the generated data; no number is typed into new TSX or CSS
+    text; no arithmetic beyond what exists (D-134: counting verdicts only); the verdict gating
+    stays;
+  - the caveats listed in the Session 20 prompt stay visible by default wherever their numbers
+    are shown; `docs/OBSERVATORY_VISUAL_AUDIT.md` lists each caveat's location before and after;
+  - kinematics, transforms, meshes, frame conversion and the MuJoCo camera intrinsics used for
+    verification do not change what pose is shown; if anything under `website/src/three/` or
+    `website/src/verify/` changes, the viewer is re-verified with new spec files that write to
+    `reports/session20/observatory/`, with the D-091 thresholds unchanged;
+  - no new npm dependency, font, texture, environment map or other third-party asset without the
+    owner's approval; `website/package-lock.json` does not change without it; the D-088 budgets
+    hold and are never loosened;
+  - tests are never weakened (D-101); a test that pins moved text or a moved selector is changed
+    to check the same fact on the new element, and each such change is recorded with its reason.
+- **Asked once, before implementing, only for:** removing a section, reordering the narrative,
+  changing the visual identity of MASTER_SPEC §8.1, or adding any third-party asset.
+
+### D-137 Makefile defaults bumped to Session 20; site audit and verification targets (FIXED, before any code change)
+- `PREFIX ?= s20` and `EVIDENCE_SESSION` default 20 (the D-092/D-097/D-106/D-110/D-117/D-126/
+  D-129/D-132/D-135 pattern). Evidence goes to `reports/session20/` and `logs/session20/` with
+  `ROBOFORGE_EVIDENCE_SESSION=20`.
+- `OBS_OUT` stays `reports/session10/observatory` and `OBS_EXT_OUT` stays
+  `reports/session18/observatory`: `make web-data` only reads them. Nothing writes into Session
+  10 or Session 18 evidence.
+- New site targets, each added with its spec file before first use and recorded here:
+  - `web-audit` (`website/e2e/audit-s20.spec.ts`): screenshots of every section of the built
+    site and DOM word counts, into `logs/session20/visual_audit/$(AUDIT_TAG)/`
+    (`AUDIT_TAG` = `before` or `after`). It reads the built site only;
+  - `web-verify-s20` and `web-verify-ext-s20` (`website/e2e/verify-s20.spec.ts`,
+    `website/e2e/verify-ext-s20.spec.ts`): the checks of `web-verify` and `web-verify-ext`
+    with the D-091 thresholds, writing to `reports/session20/observatory/` and
+    `reports/session20/observatory/ext/`. Added only if step 4 changes `website/src/three/` or
+    `website/src/verify/`.
+- Never run in Session 20: `make web-verify`, `make web-verify-ext` (they would overwrite the
+  Session 10 and Session 18 `viewer_verification.json` and montages); any eval, analysis, check
+  or freeze target of Level 1, the RGB study, Level 2, X1, X2 or X3; `obs-ext-select`,
+  `obs-ext-export`, `obs-ext-findings`, `observatory-export`, `observatory-findings`;
+  `addendum`, `addendum-assets`, `readme-extensions`, `paper`, `paper-assets`.
+- Nothing else changes in the Makefile. No test pins the Makefile defaults (checked by grep
+  before the change, as in D-135).
+

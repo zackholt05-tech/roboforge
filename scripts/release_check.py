@@ -1,5 +1,6 @@
 """Release checks (DECISIONS D-104): history identity, secrets, private paths, tracked content,
-public documents, the generated README block and the README preview.
+public documents, the generated README blocks (v1.0 findings and setup; the v1.1 extensions
+block and chart, D-133) and the README preview.
 
     uv run --frozen python scripts/release_check.py                 # offline (make release-check)
     uv run --frozen python scripts/release_check.py --network --out reports/session12/x.json
@@ -16,6 +17,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from roboforge.addendum import readme as extensions_readme
 from roboforge.paths import REPO_ROOT
 from roboforge.provenance import environment_snapshot
 from roboforge.release import preview, scan
@@ -36,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
         "docs": scan.check_docs,
         "readme_findings": check_readme,
         "readme_preview": preview.check,
+        "readme_extensions": extensions_readme.check,  # D-133
     }
     report: dict[str, object] = {"schema": "roboforge.release_check/1", "decision": "D-104"}
     results: dict[str, list[str]] = {}

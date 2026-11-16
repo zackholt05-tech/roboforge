@@ -1,0 +1,256 @@
+% RoboForge v1.1 addendum (DECISIONS D-131, D-133). Build: make addendum (Tectonic, the
+% v1.0.0 toolchain). Every number in the prose is a generated macro \ax{key}
+% (generated/numbers.tex) and every table and figure is generated (generated/), from the three
+% hash-pinned extension results only. The v1.0.0 report (paper/main.pdf) is unchanged.
+\documentclass[10pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,array,graphicx,xcolor}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{placeins}
+
+% Generated results: \ax{key} expands a pinned value; an undefined key is an error.
+\input{generated/numbers.tex}
+\newcommand{\ax}[1]{\ifcsname ax@#1\endcsname\csname ax@#1\endcsname\else
+  \PackageError{roboforge}{Undefined addendum key #1}{Run make addendum-assets}\textbf{??}\fi}
+\newcommand{\file}[1]{\nolinkurl{#1}}
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\pp}{\,pp}
+\newcommand{\pct}{\,\%}
+\setlength{\emergencystretch}{2em}
+
+\title{RoboForge v1.1 addendum:\\ three follow-up studies (X1, X2, X3)}
+\author{Zackary Holt}
+\date{Addendum to the RoboForge v1.0.0 technical report (local build, not peer reviewed)}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+After the v1.0.0 release, three follow-up studies addressed questions that the frozen results
+left open. Each was decided, preregistered and run under its own rules, and none of them
+changes a frozen number. \textbf{X1} (exploratory, after the freeze) gave the BC policies the
+diffusion sampler's action bound. Under the Lift arm offset, the gap stayed:
+drop(diffusion) $-$ drop(clamped BC-MLP-chunk) was \ax{x1.prim.d}\pp{}
+[\ax{x1.prim.lo}, \ax{x1.prim.hi}], against \ax{x1.prim.f.d}\pp{} frozen.
+\textbf{X3} (separate replication) trained \ax{x3.nnew} more seeds per family on Can and
+evaluated all \ax{x3.nseeds} per family on \ax{x3.nstates} fresh held-out starts. The two Can
+separations that were fragile at the seed level (H2 diffusion $-$ BC-MLP and H3 BC-RNN $-$
+BC-MLP) held under both interval methods. \textbf{X2 (Can MH)} repeated the comparison on
+robomimic's mixed-quality, multi-operator Can demonstrations. Diffusion separated from BC-MLP
+by \ax{x2.h2bcmlp.b.d}\pp{} and from BC-RNN by \ax{x2.h2bcrnn.b.d}\pp, a separation not seen on
+Can PH. Diffusion was still not separated from the chunked MLP that shares its inputs and
+horizons (\ax{x2.h2c.b.d}\pp). On Can, in the frozen result, X3 and X2 alike, the generative head shows no
+measurable gain over observation history plus action chunking (H2-c). Simulation only.
+\end{abstract}
+
+\section{What this addendum is}
+The v1.0.0 report compared behavior cloning with a conditional diffusion policy
+\citep{chi2023diffusion} on robomimic tasks \citep{mandlekar2021robomimic}; it and its numbers
+stand as released. Everything here comes from three result files, each run once under its own
+preregistration and pinned by SHA-256 (Table~\ref{tab:sources}). No number below was typed by
+hand. Each study keeps its label:
+\begin{itemize}
+\item \textbf{X1, exploratory, after the freeze.} It ran in the validation regime, on the
+  Session~7 robustness starts, not on the held-out test.
+\item \textbf{X3, separate replication.} It is shown beside the frozen Level~1 result and never
+  pooled with it.
+\item \textbf{X2 (Can MH).} It is reported beside the frozen Level~1 Can PH result, never instead
+  of it and never pooled with it. Its claims are within-operator only, because the split is
+  stratified by operator. X2 episodes end at \ax{x2.horizon} steps and Level~1 Can PH episodes
+  at \ax{l1.horizon}, so the two success scales differ.
+\end{itemize}
+Intervals are the preregistered hierarchical paired bootstrap over seeds and starts, \ax{level}\pct.
+``Separated'' means the interval excludes zero. ``Not separated'' is never read as equality.
+
+\begin{table}[h]
+\centering
+\caption{The three pinned result files; every value of this addendum comes from them.}
+\label{tab:sources}
+\input{generated/tables/sources.tex}
+\end{table}
+
+\section{X1: the action bound (KI-052), exploratory, after the freeze}
+\textbf{Question.} The diffusion sampler clamps its actions to each dimension's training range;
+the BC heads are clipped only to the controller limits. Does that bound explain diffusion's
+advantage in the frozen robustness (H4) comparisons?
+\textbf{Design.} The frozen BC checkpoints were re-evaluated once with every normalized action
+clipped to the same range before decoding, in \ax{x1.nevals} evaluations on the Session~7
+robustness sets (Lift: base, cube shift, arm offset; Can: base, arm offset). Nothing was
+retrained.
+
+\textbf{Result.} The preregistered primary was drop(diffusion) $-$ drop(clamped BC-MLP-chunk)
+under the Lift arm offset: \ax{x1.prim.d}\pp{} [\ax{x1.prim.lo}, \ax{x1.prim.hi}],
+\ax{x1.prim.sep}. The frozen, unclamped value is \ax{x1.prim.f.d}\pp{} [\ax{x1.prim.f.lo},
+\ax{x1.prim.f.hi}] (Table~\ref{tab:x1}, Figure~\ref{fig:x1}). The clamp acted: it changed
+\ax{x1.lift.chg.chunkc.arm}\pct{} of BC-MLP-chunk's executed actions under the arm offset
+(Table~\ref{tab:x1s}). Yet none of the \ax{x1.cu.n} clamped $-$ unclamped success differences
+separated (\ax{x1.cu.nsep} of \ax{x1.cu.n}; the largest is \ax{x1.cu.maxabs}\pp). Every one of
+the \ax{x1.kept.of} drop contrasts between diffusion and a clamped BC family kept its frozen
+verdict (\ax{x1.kept.n} of \ax{x1.kept.of}).
+
+\textbf{Reading (preregistered).} The bound does not account for all of the frozen H4 gap:
+with the same action bound, BC-MLP-chunk still degrades more than diffusion under the arm
+offset on Lift.
+\textbf{Not tested.} The sampler clips its estimate of the clean action chunk at every
+denoising step, so the bound shapes diffusion's whole sampling path. X1 tested only the BC
+side. Whether in-sampler clipping contributes to diffusion's own robustness needs a diffusion
+arm without it, which was not run. KI-052 stays half-open.
+
+\begin{table}[h]
+\centering\small
+\caption{X1 (exploratory, after the freeze): the preregistered primary and its legs.}
+\label{tab:x1}
+\input{generated/tables/x1_contrasts.tex}
+\end{table}
+
+\begin{table}[h]
+\centering\footnotesize
+\caption{X1, Lift success (\%) on the Session~7 robustness sets, with \ax{level}\pct{} intervals, and
+the share of executed actions the clamp changed under the arm offset.}
+\label{tab:x1s}
+\input{generated/tables/x1_success.tex}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\linewidth]{generated/figures/x1_success.pdf}
+\caption{X1, Lift: success on the base and arm-offset robustness sets for diffusion,
+BC-MLP-chunk and BC-MLP-chunk with the diffusion sampler's action bound (hatched). The bound
+leaves BC-MLP-chunk's success unchanged.}
+\label{fig:x1}
+\end{figure}
+
+\FloatBarrier
+\section{X3: more training seeds on Can, separate replication}
+\textbf{Question.} With three seeds, the frozen Can separations H2 (diffusion $-$ BC-MLP) and
+H3 (BC-RNN $-$ BC-MLP) held under the preregistered bootstrap but not under a seed-level
+interval (KI-053). Do they hold with more seeds, on fresh starts?
+\textbf{Design.} The frozen Can configurations were trained with seeds \ax{x3.newseeds}, with
+no retuning and with validation-only checkpoint selection. All \ax{x3.nseeds} seeds per family
+were then evaluated once on \ax{x3.nstates} new held-out starts, \ax{x3.nevals} evaluations
+with \ax{x3.errors} engineering errors.
+
+\textbf{Result} (Table~\ref{tab:x3}, Figure~\ref{fig:contrasts}).
+\begin{itemize}
+\item H2 diffusion $-$ BC-MLP was \ax{x3.h2bcmlp.b.d}\pp{} [\ax{x3.h2bcmlp.b.lo},
+  \ax{x3.h2bcmlp.b.hi}], seed-level [\ax{x3.h2bcmlp.s.lo}, \ax{x3.h2bcmlp.s.hi}]:
+  \ax{x3.h2bcmlp.verdict} (\ax{x3.h2bcmlp.relation}).
+\item H3 BC-RNN $-$ BC-MLP was \ax{x3.h3.b.d}\pp{}, seed-level [\ax{x3.h3.s.lo},
+  \ax{x3.h3.s.hi}]: \ax{x3.h3.verdict}.
+\item H2 diffusion $-$ BC-RNN (\ax{x3.h2bcrnn.b.d}\pp) and H2-c diffusion $-$ BC-MLP-chunk
+  (\ax{x3.h2c.b.d}\pp) stayed \ax{x3.h2c.verdict}, as in the frozen result.
+\end{itemize}
+The frozen Level~1 result stands as reported.
+
+\begin{table}[h]
+\centering\scriptsize
+\caption{X3 (separate replication) beside the frozen Level~1 Can PH values: differences in pp
+with bootstrap \ax{level}\pct{} intervals, seed-level \ax{level}\pct{} intervals and verdicts.}
+\label{tab:x3}
+\input{generated/tables/x3_contrasts.tex}
+\end{table}
+
+\FloatBarrier
+\section{X2 (Can MH): mixed-quality demonstrations}
+\textbf{Question.} The frozen tasks sit near the ceiling, and the proficient-human data are
+nearly unimodal. Does the generative head help when the demonstrations come from several
+operators of different quality, on the task, simulator and controller already validated for
+Can?
+\textbf{Design.} The robomimic Can MH demonstrations were split by robomimic's
+operator-stratified masks, so every operator appears in training and validation. Each family
+was tuned with the frozen Level~1 budget and selected on validation starts only. The
+\ax{x2.nevals} chosen checkpoints (\ax{x2.nseeds} seeds per family) were then evaluated once on
+\ax{x2.nstates} new held-out starts, after a freeze committed alone. There were
+\ax{x2.errors} engineering errors and no rerun.
+
+\textbf{Result} (Tables~\ref{tab:x2}, \ref{tab:fam} and \ref{tab:cens},
+Figure~\ref{fig:contrasts}).
+\begin{itemize}
+\item Diffusion reached \ax{x2.fam.diff.succ}\pct, BC-MLP-chunk \ax{x2.fam.chunk.succ}\pct,
+  BC-RNN \ax{x2.fam.bcrnn.succ}\pct{} and BC-MLP \ax{x2.fam.bcmlp.succ}\pct.
+\item H2 diffusion $-$ BC-MLP (\ax{x2.h2bcmlp.b.d}\pp) and H3 BC-RNN $-$ BC-MLP
+  (\ax{x2.h3.b.d}\pp) were \ax{x2.h3.verdict}, the same direction as on Can PH.
+\item H2 diffusion $-$ BC-RNN was \ax{x2.h2bcrnn.b.d}\pp{} [\ax{x2.h2bcrnn.b.lo},
+  \ax{x2.h2bcrnn.b.hi}], seed-level [\ax{x2.h2bcrnn.s.lo}, \ax{x2.h2bcrnn.s.hi}]:
+  \ax{x2.h2bcrnn.verdict}. This is a \ax{x2.h2bcrnn.relation} relative to Can PH.
+\item H2-c diffusion $-$ BC-MLP-chunk was \ax{x2.h2c.b.d}\pp{} [\ax{x2.h2c.b.lo},
+  \ax{x2.h2c.b.hi}]: \ax{x2.h2c.verdict} (\ax{x2.h2c.relation}).
+\item Episodes in which the gripper never closed: BC-MLP \ax{x2.tax.bcmlp.gripper-never-closed},
+  diffusion \ax{x2.tax.diff.gripper-never-closed}.
+\end{itemize}
+
+\textbf{Reading.} On these mixed-quality data, the recurrent policy falls well behind both
+chunked policies, and the one-step MLP further still. The two policies that predict
+\emph{chunks} of future actions, one by denoising and one deterministically, are not
+separated. These are within-operator results on the X2 held-out starts. They do not measure
+transfer to a new operator, and they do not change the frozen Can PH numbers or their
+fragility (KI-053).
+
+\begin{table}[h]
+\centering\scriptsize
+\caption{X2 (Can MH) beside the frozen Level~1 Can PH values (never pooled; different data,
+starts and horizon): differences in pp with bootstrap and seed-level \ax{level}\pct{} intervals.}
+\label{tab:x2}
+\input{generated/tables/x2_contrasts.tex}
+\end{table}
+
+\begin{table}[h]
+\centering\scriptsize
+\caption{Family success (\%) with bootstrap \ax{level}\pct{} intervals, in separate columns: the frozen
+Level~1 Can PH result, X3 and X2 (Can MH). The X2 column is on a different dataset, start
+suite and horizon.}
+\label{tab:fam}
+\input{generated/tables/families.tex}
+\end{table}
+
+\begin{table}[h]
+\centering\small
+\caption{X2 (Can MH), declared secondary without readings: censored episode length (first
+success step, else the horizon).}
+\label{tab:cens}
+\input{generated/tables/x2_censored.tex}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{generated/figures/contrasts.pdf}
+\caption{The four declared Can contrasts: frozen Level~1 Can PH (circles), X3 (squares) and
+X2 (Can MH, diamonds), each with its bootstrap \ax{level}\pct{} interval. The three are shown beside
+each other and never pooled.}
+\label{fig:contrasts}
+\end{figure}
+
+\FloatBarrier
+\section{What changes, and what does not}
+\begin{itemize}
+\item The v1.0.0 results, freezes and report are unchanged.
+\item H2-c was not separated in the frozen Can PH result, in X3 and in X2 (and on Lift in the
+  v1.0.0 report). Across these data, the diffusion head shows no measurable gain over a
+  deterministic head with the same observation history and action chunks.
+\item The BC side of the action-bound confound (KI-052) is resolved: BC's missing bound does
+  not explain the robustness gaps. The diffusion side is open.
+\item The fragile Can PH separations hold in a larger replication (X3).
+\item With mixed-quality demonstrations (X2), chunked policies separate from the recurrent and
+  one-step baselines by wide margins.
+\end{itemize}
+
+\section{Limitations}
+Simulation only, with exact object state as input. The studies use small diffusion models,
+the frozen tuning budgets, a few seeds and a single canonical platform. X1 used validation-regime
+starts and one action bound. X3 replicated Can only. X2 is within-operator, uses a
+\ax{x2.horizon}-step horizon and one task. This addendum, like the v1.0.0 report, is a local
+build and has not been peer reviewed.
+
+\section*{Reproduction}
+\file{make addendum-check} regenerates every table, figure and macro from the pinned files and
+compares them byte for byte; \file{make addendum} builds this PDF with the v1.0.0 toolchain.
+The study records are \file{docs/extensions/}, \file{docs/DECISIONS.md} (D-105 to D-134) and
+\file{docs/EXPERIMENT_LEDGER.md}.
+
+\bibliographystyle{plainnat}
+\bibliography{../references}
+\end{document}

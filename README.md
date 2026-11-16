@@ -19,6 +19,10 @@ frozen and committed before the held-out starts were first used, and run once.
 Controlled Comparison of Behavior Cloning and Diffusion Policies* (a local build, not peer
 reviewed). Every number in it is generated from the frozen result files.
 
+**[Read the v1.1 addendum](paper/addendum/addendum.pdf)**: three follow-up studies after
+v1.0.0 (X1, X2, X3), every number generated from their hash-pinned result files (a local
+build, not peer reviewed). The v1.0.0 report and its numbers are unchanged.
+
 **[Open the RoboForge Observatory](https://zackholt05-tech.github.io/roboforge/)**: an
 interactive 3D site that replays recorded evaluation episodes, shows the diffusion sampler's
 real denoising steps (replayed from recorded validation episodes) and presents the frozen
@@ -57,6 +61,36 @@ The short answer: on these two tasks, the diffusion policy was not separated fro
 deterministic MLP that sees the same history and predicts the same action chunks, and it cost
 far more to train and to run. All of this is simulation with exact object state for Level 1; nothing here was run on a
 physical robot.
+
+## After v1.0.0: three follow-up studies (v1.1)
+
+<!-- BEGIN GENERATED: extensions (scripts/readme_extensions.py from paper/addendum/generated/numbers.tex; do not edit by hand) -->
+
+![Left: X1 on Lift, success on the base and arm-offset robustness sets for diffusion, BC-MLP-chunk and BC-MLP-chunk with the diffusion sampler's action bound. Right: the four declared Can contrasts for the frozen Level 1 Can PH result, the X3 replication and X2 (Can MH), each with its bootstrap interval, side by side.](docs/media/readme_extensions.svg)
+
+Three follow-up studies ran after v1.0.0, each preregistered and run once. None of them changes a frozen number above. Each keeps its own label. Intervals are 95 %; "not separated" is never read as equality.
+
+- **X1, the action bound (exploratory, after the freeze; validation regime, the Session 7 robustness starts).** The frozen BC checkpoints were re-run with the diffusion sampler's action bound (45 evaluations).
+  - Under the Lift arm offset, drop(diffusion) − drop(clamped BC-MLP-chunk) was −40.0 pp [−54.0, −25.3], separated (−); the frozen, unclamped value is −40.0 pp.
+  - The clamp changed 51.7 % of BC-MLP-chunk's actions there. Yet 0 of 15 clamped − unclamped success differences separated.
+  - So BC's missing bound does not explain the robustness gaps. The diffusion side of KI-052, clipping inside the sampler, was not tested.
+- **X3, more seeds on Can (separate replication).** 6 seeds per family on 100 fresh held-out starts.
+  - H2 diffusion − BC-MLP +22.7 pp (bootstrap [+10.5, +35.0], seed-level [+8.0, +37.3]) and H3 BC-RNN − BC-MLP +23.8 pp (bootstrap [+12.0, +36.0], seed-level [+9.2, +38.5]): robust (+).
+  - The frozen Can separations that were fragile with 3 seeds (KI-053) hold.
+  - H2 diffusion − BC-RNN (−1.2 pp) and H2-c (−1.7 pp) stay not separated, as frozen.
+- **X2 (Can MH), mixed-quality demonstrations from several operators.**
+  - Reported beside the frozen Level 1 Can PH result, never pooled with it, and within-operator only.
+  - X2 episodes end at 500 steps and Level 1's at 400, so the success scales differ.
+  - Success: diffusion 93.3 %, BC-MLP-chunk 91.3 %, BC-RNN 66.0 %, BC-MLP 30.0 %.
+  - H2 diffusion − BC-RNN +27.3 pp (bootstrap [+16.7, +37.7], seed-level [+14.9, +39.8]): robust (+), a new separation (not separated on Can PH).
+  - H2 diffusion − BC-MLP +63.3 pp and H3 +36.0 pp: robust (+).
+  - H2-c diffusion − BC-MLP-chunk +2.0 pp (bootstrap [−6.3, +11.0], seed-level [−11.6, +15.6]): not separated.
+
+On Can, in the frozen result, X3 and X2 alike, no primary analysis separates the diffusion policy from the deterministic MLP that sees the same history and predicts the same action chunks (H2-c). Details, tables and caveats are in the [v1.1 addendum](paper/addendum/addendum.pdf) (a local build, not peer reviewed).
+
+<!-- END GENERATED: extensions -->
+
+Study records: [docs/extensions/README.md](docs/extensions/README.md).
 
 ## Research questions
 
@@ -154,9 +188,10 @@ first failure per task and family by sorted start, the first head-to-head starts
 denoising traces. Case studies are labelled as such. The full ledger is
 [docs/VISUAL_PROVENANCE.md](docs/VISUAL_PROVENANCE.md).
 
-## Extensions: RGB and point clouds
+## Extensions: RGB and point clouds (v1.0.0)
 
-Both optional studies ran, each separately preregistered, frozen and tested once:
+Both optional studies ran, each separately preregistered, frozen and tested once (the
+follow-up studies X1–X3 are summarized above):
 
 - **RGB (Session 8):** visual BC-chunk vs visual diffusion on Lift from two cameras plus
   proprioception (ResNet-18 encoder, trained on one L4). Both reach the task's ceiling.
@@ -171,7 +206,9 @@ Both optional studies ran, each separately preregistered, frozen and tested once
   differences of a few points near the ceiling; Lift saturates (KI-034), and several
   separations depend on how the seed-level uncertainty is modelled (KI-053).
 - **A confound:** the diffusion sampler bounds actions to the training range, the BC heads do
-  not (KI-052). An evaluation-only test that would separate the two effects was not run.
+  not (KI-052). The evaluation-only test X1 (v1.1) gave the BC heads the same bound and found
+  it does not explain the robustness gaps; whether clipping inside the sampler helps diffusion
+  itself was not tested.
 - **Scale:** a compact diffusion U-Net, matched in size to the BC models, and a small tuning
   budget; the results say nothing about large diffusion policies.
 - **Platform:** physics is not bit-identical across platforms (KI-013); every reported rollout

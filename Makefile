@@ -33,7 +33,9 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
 	web-build web-test web-e2e web-verify web-dev visual-provenance \
 	paper-assets paper-check paper-bibcheck paper \
-	readme-findings readme-preview release-check pages-bundle
+	readme-findings readme-preview release-check pages-bundle \
+	addendum-assets addendum-check addendum readme-extensions \
+	obs-ext-select obs-ext-export obs-ext-findings web-verify-ext
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -519,6 +521,27 @@ paper: paper-check  ## Build paper/main.pdf with Tectonic (cached bundle only, f
 		rm -f paper/main.log; echo "paper: undefined or duplicate references or citations"; exit 1; fi
 	@rm -f paper/main.log paper/main.blg
 	shasum -a 256 paper/main.pdf
+
+# --- Session 18: v1.1 addendum (DECISIONS D-131 to D-133) ---
+# Every value comes from the three hash-pinned extension results (roboforge.addendum.sources);
+# paper/main.pdf and its sources are never touched. Fixed SOURCE_DATE_EPOCH 2026-11-16 00:00 UTC.
+ADDENDUM_EPOCH ?= 1794787200
+addendum-assets:  ## Regenerate paper/addendum/generated/ and the README chart from the pinned results (D-133)
+	$(RUN) python scripts/addendum_assets.py build
+
+addendum-check:  ## The addendum's generated files and README chart equal a fresh build; addendum lint (D-133)
+	$(RUN) python scripts/addendum_assets.py check
+	$(RUN) python scripts/addendum_assets.py lint
+
+addendum: addendum-check  ## Build paper/addendum/addendum.pdf (Tectonic, cached bundle only, fixed SOURCE_DATE_EPOCH)
+	cd paper/addendum && SOURCE_DATE_EPOCH=$(ADDENDUM_EPOCH) tectonic -X compile --only-cached --keep-logs addendum.tex
+	@if grep -nE "(Reference|Citation).*undefined|There were undefined|multiply defined" paper/addendum/addendum.log; then \
+		rm -f paper/addendum/addendum.log; echo "addendum: undefined or duplicate references or citations"; exit 1; fi
+	@rm -f paper/addendum/addendum.log paper/addendum/addendum.blg
+	shasum -a 256 paper/addendum/addendum.pdf
+
+readme-extensions:  ## Rewrite README.md's generated extensions block from the addendum macros (D-133)
+	$(RUN) python scripts/readme_extensions.py
 
 # --- Session 12: release (DECISIONS D-097 to D-104) ---
 readme-findings:  ## Rewrite README.md's generated key-findings block from paper/generated/numbers.tex (D-103)

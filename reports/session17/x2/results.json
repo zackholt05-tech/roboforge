@@ -1,0 +1,1059 @@
+{
+ "schema": "roboforge.x2c_results/1",
+ "study": "X2 (Can MH)",
+ "label": "X2 (Can MH) held-out evaluation, once: reported beside the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator only",
+ "decisions": [
+  "D-116",
+  "D-117",
+  "D-118",
+  "D-119",
+  "D-120",
+  "D-121",
+  "D-122",
+  "D-123",
+  "D-124",
+  "D-125",
+  "D-126",
+  "D-127",
+  "D-128",
+  "D-129",
+  "D-130"
+ ],
+ "design": {
+  "bootstrap": {
+   "function": "roboforge.eval.statistics.hierarchical_paired_bootstrap",
+   "B": 10000,
+   "seed": 20261106,
+   "level": 0.95,
+   "interval": "percentile, numpy linear interpolation",
+   "draw_order": [
+    "states",
+    "bc_mlp",
+    "bc_rnn",
+    "bc_mlp_chunk",
+    "diffusion_unet"
+   ]
+  },
+  "seed_level": {
+   "function": "roboforge.paper.sensitivity.welch",
+   "decision": "D-095",
+   "level": 0.95,
+   "undefined": "undefined (no seed variance)"
+  },
+  "contrasts": [
+   {
+    "hypothesis": "H2",
+    "a": "diffusion_unet",
+    "b": "bc_mlp"
+   },
+   {
+    "hypothesis": "H2",
+    "a": "diffusion_unet",
+    "b": "bc_rnn"
+   },
+   {
+    "hypothesis": "H2c",
+    "a": "diffusion_unet",
+    "b": "bc_mlp_chunk"
+   },
+   {
+    "hypothesis": "H3",
+    "a": "bc_rnn",
+    "b": "bc_mlp"
+   }
+  ],
+  "outcome": "success before the 500-step horizon; engineering errors are failures",
+  "verdicts": [
+   "robust",
+   "bootstrap only",
+   "seed-level only",
+   "not separated",
+   "conflicting"
+  ],
+  "relation": {
+   "against": "reports/session7/results/results.json (Level 1 Can PH, frozen bootstrap)",
+   "sha256": "b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c",
+   "labels": [
+    "same direction",
+    "reversed",
+    "not reproduced",
+    "new separation",
+    "neither separated",
+    "no relation"
+   ],
+   "rule": "frozen bootstrap separation vs X2 bootstrap separation; no relation when the X2 verdict is conflicting (D-130)"
+  },
+  "secondary": {
+   "censored_episode_length": "first-success step if successful, else 500; same bootstrap, 4 contrasts",
+   "descriptive": [
+    "per-seed success rates",
+    "family means with bootstrap intervals",
+    "frozen failure taxonomy on every episode",
+    "X2-b validation selections",
+    "latency benchmark"
+   ]
+  },
+  "engineering_incomplete": "docs/FINAL_TEST_FREEZE.md \u00a74: the family is left out of the bootstrap; its contrasts are not computed",
+  "no_p_values": true,
+  "multiplicity_correction": null
+ },
+ "primary": {
+  "families": [
+   "bc_mlp",
+   "bc_rnn",
+   "bc_mlp_chunk",
+   "diffusion_unet"
+  ],
+  "bootstrap": {
+   "method": "hierarchical paired bootstrap (RESEARCH_PROTOCOL \u00a79)",
+   "B": 10000,
+   "seed": 20261106,
+   "level": 0.95,
+   "draw_order": [
+    "states",
+    "bc_mlp",
+    "bc_rnn",
+    "bc_mlp_chunk",
+    "diffusion_unet"
+   ],
+   "interval": "percentile, numpy linear interpolation",
+   "families": {
+    "bc_mlp": {
+     "estimate": 0.3,
+     "per_seed": [
+      0.24,
+      0.31,
+      0.35
+     ],
+     "n_seeds": 3,
+     "n_states": 100,
+     "ci95": [
+      0.21,
+      0.3933333333333333
+     ]
+    },
+    "bc_rnn": {
+     "estimate": 0.66,
+     "per_seed": [
+      0.72,
+      0.6,
+      0.66
+     ],
+     "n_seeds": 3,
+     "n_states": 100,
+     "ci95": [
+      0.5633333333333334,
+      0.7533333333333333
+     ]
+    },
+    "bc_mlp_chunk": {
+     "estimate": 0.9133333333333333,
+     "per_seed": [
+      0.91,
+      0.98,
+      0.85
+     ],
+     "n_seeds": 3,
+     "n_states": 100,
+     "ci95": [
+      0.83,
+      0.98
+     ]
+    },
+    "diffusion_unet": {
+     "estimate": 0.9333333333333333,
+     "per_seed": [
+      0.9,
+      0.96,
+      0.94
+     ],
+     "n_seeds": 3,
+     "n_states": 100,
+     "ci95": [
+      0.88,
+      0.9766666666666666
+     ]
+    }
+   },
+   "differences": [
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp",
+     "difference": 0.6333333333333333,
+     "ci95": [
+      0.53,
+      0.73
+     ],
+     "separation": "separated (+)"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_rnn",
+     "difference": 0.2733333333333333,
+     "ci95": [
+      0.16666666666666663,
+      0.3766666666666666
+     ],
+     "separation": "separated (+)"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp_chunk",
+     "difference": 0.020000000000000018,
+     "ci95": [
+      -0.06333333333333346,
+      0.1100000000000001
+     ],
+     "separation": "not separated"
+    },
+    {
+     "a": "bc_rnn",
+     "b": "bc_mlp",
+     "difference": 0.36000000000000004,
+     "ci95": [
+      0.2366666666666667,
+      0.48
+     ],
+     "separation": "separated (+)"
+    }
+   ]
+  },
+  "contrasts": [
+   {
+    "hypothesis": "H2",
+    "a": "diffusion_unet",
+    "b": "bc_mlp",
+    "name": "H2 diffusion \u2212 BC-MLP",
+    "status": "computed",
+    "difference": 0.6333333333333333,
+    "bootstrap_ci95": [
+     0.53,
+     0.73
+    ],
+    "bootstrap_separation": "separated (+)",
+    "seed_level_ci95": [
+     0.5188287274685354,
+     0.7478379391981312
+    ],
+    "seed_level_df": 3.104208629280185,
+    "seed_level_separation": "separated (+)",
+    "verdict": "robust",
+    "sign": "+",
+    "relation": "same direction",
+    "frozen": {
+     "difference": 0.18666666666666665,
+     "bootstrap_ci95": [
+      0.046666666666666634,
+      0.32666666666666666
+     ],
+     "bootstrap_separation": "separated (+)",
+     "seed_level_ci95": [
+      -0.04463266848890082,
+      0.4179660018222341
+     ],
+     "seed_level_df": 2.3516693163751983,
+     "seed_level_separation": "not separated",
+     "n_seeds": 3,
+     "n_states": 50,
+     "horizon": 400
+    }
+   },
+   {
+    "hypothesis": "H2",
+    "a": "diffusion_unet",
+    "b": "bc_rnn",
+    "name": "H2 diffusion \u2212 BC-RNN",
+    "status": "computed",
+    "difference": 0.2733333333333333,
+    "bootstrap_ci95": [
+     0.16666666666666663,
+     0.3766666666666666
+    ],
+    "bootstrap_separation": "separated (+)",
+    "seed_level_ci95": [
+     0.14895342672630402,
+     0.3977132399403624
+    ],
+    "seed_level_df": 2.9717223650385587,
+    "seed_level_separation": "separated (+)",
+    "verdict": "robust",
+    "sign": "+",
+    "relation": "new separation",
+    "frozen": {
+     "difference": -0.006666666666666599,
+     "bootstrap_ci95": [
+      -0.08000000000000007,
+      0.06666666666666665
+     ],
+     "bootstrap_separation": "not separated",
+     "seed_level_ci95": [
+      -0.08960033961492067,
+      0.07626700628158725
+     ],
+     "seed_level_df": 3.7409326424870453,
+     "seed_level_separation": "not separated",
+     "n_seeds": 3,
+     "n_states": 50,
+     "horizon": 400
+    }
+   },
+   {
+    "hypothesis": "H2c",
+    "a": "diffusion_unet",
+    "b": "bc_mlp_chunk",
+    "name": "H2-c diffusion \u2212 BC-MLP-chunk",
+    "status": "computed",
+    "difference": 0.020000000000000018,
+    "bootstrap_ci95": [
+     -0.06333333333333346,
+     0.1100000000000001
+    ],
+    "bootstrap_separation": "not separated",
+    "seed_level_ci95": [
+     -0.11635176798060703,
+     0.15635176798060663
+    ],
+    "seed_level_df": 2.841009874061372,
+    "seed_level_separation": "not separated",
+    "verdict": "not separated",
+    "sign": null,
+    "relation": "neither separated",
+    "frozen": {
+     "difference": -0.006666666666666599,
+     "bootstrap_ci95": [
+      -0.08666666666666656,
+      0.07333333333333325
+     ],
+     "bootstrap_separation": "not separated",
+     "seed_level_ci95": [
+      -0.08960033961492067,
+      0.07626700628158725
+     ],
+     "seed_level_df": 3.7409326424870453,
+     "seed_level_separation": "not separated",
+     "n_seeds": 3,
+     "n_states": 50,
+     "horizon": 400
+    }
+   },
+   {
+    "hypothesis": "H3",
+    "a": "bc_rnn",
+    "b": "bc_mlp",
+    "name": "H3 BC-RNN \u2212 BC-MLP",
+    "status": "computed",
+    "difference": 0.36000000000000004,
+    "bootstrap_ci95": [
+     0.2366666666666667,
+     0.48
+    ],
+    "bootstrap_separation": "separated (+)",
+    "seed_level_ci95": [
+     0.2285016353943742,
+     0.4914983646056259
+    ],
+    "seed_level_df": 3.9778466991581736,
+    "seed_level_separation": "separated (+)",
+    "verdict": "robust",
+    "sign": "+",
+    "relation": "same direction",
+    "frozen": {
+     "difference": 0.19333333333333325,
+     "bootstrap_ci95": [
+      0.05333333333333323,
+      0.33999999999999997
+     ],
+     "bootstrap_separation": "separated (+)",
+     "seed_level_ci95": [
+      -0.028219560119902676,
+      0.4148862267865694
+     ],
+     "seed_level_df": 2.59389193422083,
+     "seed_level_separation": "not separated",
+     "n_seeds": 3,
+     "n_states": 50,
+     "horizon": 400
+    }
+   }
+  ],
+  "censored_episode_length": {
+   "method": "hierarchical paired bootstrap (RESEARCH_PROTOCOL \u00a79)",
+   "B": 10000,
+   "seed": 20261106,
+   "level": 0.95,
+   "draw_order": [
+    "states",
+    "bc_mlp",
+    "bc_rnn",
+    "bc_mlp_chunk",
+    "diffusion_unet"
+   ],
+   "interval": "percentile, numpy linear interpolation",
+   "families": {
+    "bc_mlp": {
+     "estimate": 408.37333333333333,
+     "per_seed": [
+      429.96,
+      399.08,
+      396.08
+     ],
+     "n_seeds": 3,
+     "n_states": 100,
+     "ci95": [
+      378.0925000000001,
+      436.987
+     ]
+    },
+    "bc_rnn": {
+     "estimate": 295.43,
+     "per_seed": [
+      288.13,
+      319.11,
+      279.05
+     ],
+     "n_seeds": 3,
+     "n_states": 100,
+     "ci95": [
+      262.70283333333333,
+      327.33383333333336
+     ]
+    },
+    "bc_mlp_chunk": {
+     "estimate": 198.93666666666667,
+     "per_seed": [
+      191.67,
+      181.7,
+      223.44
+     ],
+     "n_seeds": 3,
+     "n_states": 100,
+     "ci95": [
+      176.5025,
+      227.57483333333332
+     ]
+    },
+    "diffusion_unet": {
+     "estimate": 215.85,
+     "per_seed": [
+      225.87,
+      204.49,
+      217.19
+     ],
+     "n_seeds": 3,
+     "n_states": 100,
+     "ci95": [
+      199.36333333333334,
+      235.5540833333333
+     ]
+    }
+   },
+   "differences": [
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp",
+     "difference": -192.52333333333334,
+     "ci95": [
+      -225.47024999999996,
+      -157.33583333333334
+     ],
+     "separation": "separated (-)"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_rnn",
+     "difference": -79.58000000000001,
+     "ci95": [
+      -113.58691666666664,
+      -43.425250000000005
+     ],
+     "separation": "separated (-)"
+    },
+    {
+     "a": "diffusion_unet",
+     "b": "bc_mlp_chunk",
+     "difference": 16.913333333333327,
+     "ci95": [
+      -15.68041666666667,
+      46.503833333333326
+     ],
+     "separation": "not separated"
+    },
+    {
+     "a": "bc_rnn",
+     "b": "bc_mlp",
+     "difference": -112.94333333333333,
+     "ci95": [
+      -153.19483333333332,
+      -73.41224999999999
+     ],
+     "separation": "separated (-)"
+    }
+   ]
+  }
+ },
+ "frozen_families": {
+  "bc_mlp": {
+   "estimate": 0.7666666666666667,
+   "per_seed": [
+    0.68,
+    0.88,
+    0.74
+   ],
+   "n_seeds": 3,
+   "n_states": 50,
+   "ci95": [
+    0.6266666666666666,
+    0.9
+   ]
+  },
+  "bc_rnn": {
+   "estimate": 0.96,
+   "per_seed": [
+    0.92,
+    1.0,
+    0.96
+   ],
+   "n_seeds": 3,
+   "n_states": 50,
+   "ci95": [
+    0.8933333333333332,
+    1.0
+   ]
+  },
+  "bc_mlp_chunk": {
+   "estimate": 0.96,
+   "per_seed": [
+    0.96,
+    0.92,
+    1.0
+   ],
+   "n_seeds": 3,
+   "n_states": 50,
+   "ci95": [
+    0.8866666666666667,
+    1.0
+   ]
+  },
+  "diffusion_unet": {
+   "estimate": 0.9533333333333334,
+   "per_seed": [
+    0.92,
+    0.98,
+    0.96
+   ],
+   "n_seeds": 3,
+   "n_states": 50,
+   "ci95": [
+    0.8933333333333332,
+    1.0
+   ]
+  },
+  "random_uniform": {
+   "estimate": 0.0,
+   "per_seed": [
+    0.0
+   ],
+   "n_seeds": 1,
+   "n_states": 50,
+   "ci95": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "engineering": {
+  "families": {
+   "bc_mlp": "complete",
+   "bc_rnn": "complete",
+   "bc_mlp_chunk": "complete",
+   "diffusion_unet": "complete"
+  },
+  "incomplete": {},
+  "n_errors_total": 0,
+  "n_attempt2": 0,
+  "rule": "docs/FINAL_TEST_FREEZE.md \u00a74: the family is left out of the bootstrap; its contrasts are not computed"
+ },
+ "evaluations": [
+  {
+   "family": "bc_mlp",
+   "seed": 0,
+   "train_run_id": "s16x2_bc_mlp_can_seed0_ad021ce7",
+   "step": 85000,
+   "checkpoint_sha256": "83cbe5682fc8c230bb12425f419a8cfa1575cb20b3f26da0848942d4a0feec25",
+   "eval_run_id": "s16x2_bc_mlp_can_seed0_ad021ce7__x2_heldout_step0085000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_bc_mlp_can_seed0_ad021ce7__x2_heldout_step0085000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "3d98a9e5fd2ca77649dd3f6bb52dbfa9ceb10490210693af567087e58b376c66",
+   "successes": 24,
+   "n_episodes": 100,
+   "wilson95": [
+    0.16691325556948772,
+    0.33232336349814473
+   ],
+   "n_errors": 0,
+   "wall_s": 1052.45779744,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 16,
+   "latency_ms_median": 1.5985829999998202,
+   "taxonomy": {
+    "success": 24,
+    "engineering_error": 0,
+    "gripper_never_closed": 29,
+    "no_grasp_drift": 23,
+    "no_grasp_near": 10,
+    "timeout_holding": 5,
+    "in_goal_bin_not_success": 5,
+    "dropped": 4
+   }
+  },
+  {
+   "family": "bc_mlp",
+   "seed": 1,
+   "train_run_id": "s16x2_bc_mlp_can_seed1_8bf126a6",
+   "step": 45000,
+   "checkpoint_sha256": "e16cfb3f63916355b26914e66f13fe2662d4721652ff87f8f44679dcd84ea0fe",
+   "eval_run_id": "s16x2_bc_mlp_can_seed1_8bf126a6__x2_heldout_step0045000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_bc_mlp_can_seed1_8bf126a6__x2_heldout_step0045000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "08769afb11f2c5fd639a580c99f874d8558a1920ec26c53c20f5a0831aefd24f",
+   "successes": 31,
+   "n_episodes": 100,
+   "wilson95": [
+    0.22779697212376038,
+    0.40626055719489407
+   ],
+   "n_errors": 0,
+   "wall_s": 985.451228574,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 12,
+   "latency_ms_median": 1.3529579999982388,
+   "taxonomy": {
+    "success": 31,
+    "engineering_error": 0,
+    "gripper_never_closed": 32,
+    "no_grasp_drift": 9,
+    "no_grasp_near": 20,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 2,
+    "dropped": 5
+   }
+  },
+  {
+   "family": "bc_mlp",
+   "seed": 2,
+   "train_run_id": "s16x2_bc_mlp_can_seed2_8324158e",
+   "step": 75000,
+   "checkpoint_sha256": "61571865ff9e1e875ebd6b16108f6a41c76701d819c3bb6b13323cb2102365bc",
+   "eval_run_id": "s16x2_bc_mlp_can_seed2_8324158e__x2_heldout_step0075000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_bc_mlp_can_seed2_8324158e__x2_heldout_step0075000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "a55d76ccad607e9d0a2bdc240d17be535dd61509df872422289e4a2ca54dd68d",
+   "successes": 35,
+   "n_episodes": 100,
+   "wilson95": [
+    0.26364248243097527,
+    0.44745556703112027
+   ],
+   "n_errors": 0,
+   "wall_s": 878.9542498169999,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 15,
+   "latency_ms_median": 1.4620829999998364,
+   "taxonomy": {
+    "success": 35,
+    "engineering_error": 0,
+    "gripper_never_closed": 27,
+    "no_grasp_drift": 20,
+    "no_grasp_near": 6,
+    "timeout_holding": 3,
+    "in_goal_bin_not_success": 1,
+    "dropped": 8
+   }
+  },
+  {
+   "family": "bc_rnn",
+   "seed": 0,
+   "train_run_id": "s16x2_bc_rnn_wd1e1_can_seed0_14e39a6c",
+   "step": 65000,
+   "checkpoint_sha256": "fb6d3ccdab444dfd0d87bb11db60ea8b963efd50ad9960e0fc3045d2b1474c7a",
+   "eval_run_id": "s16x2_bc_rnn_wd1e1_can_seed0_14e39a6c__x2_heldout_step0065000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_bc_rnn_wd1e1_can_seed0_14e39a6c__x2_heldout_step0065000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "fd3433ce661bb11a591884ed88427d02276bf0074edb65fbeafe7021900076e0",
+   "successes": 72,
+   "n_episodes": 100,
+   "wilson95": [
+    0.6251197129007884,
+    0.7986031478881379
+   ],
+   "n_errors": 0,
+   "wall_s": 906.1085911630001,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 36,
+   "latency_ms_median": 9.70708299999501,
+   "taxonomy": {
+    "success": 72,
+    "engineering_error": 0,
+    "gripper_never_closed": 6,
+    "no_grasp_drift": 2,
+    "no_grasp_near": 10,
+    "timeout_holding": 3,
+    "in_goal_bin_not_success": 3,
+    "dropped": 4
+   }
+  },
+  {
+   "family": "bc_rnn",
+   "seed": 1,
+   "train_run_id": "s16x2_bc_rnn_wd1e1_can_seed1_7eddb00a",
+   "step": 65000,
+   "checkpoint_sha256": "9a856115af4f9370b444993332c942585cf86923e751c36954d791382b9d2d41",
+   "eval_run_id": "s16x2_bc_rnn_wd1e1_can_seed1_7eddb00a__x2_heldout_step0065000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_bc_rnn_wd1e1_can_seed1_7eddb00a__x2_heldout_step0065000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "d4a00db297c1482211a9f35e8c81443b448e3d32d2422cbd734aa2ed06ed672f",
+   "successes": 60,
+   "n_episodes": 100,
+   "wilson95": [
+    0.5020025867910618,
+    0.6905987135675411
+   ],
+   "n_errors": 0,
+   "wall_s": 1035.4358004730002,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 36,
+   "latency_ms_median": 9.40395799999294,
+   "taxonomy": {
+    "success": 60,
+    "engineering_error": 0,
+    "gripper_never_closed": 18,
+    "no_grasp_drift": 4,
+    "no_grasp_near": 3,
+    "timeout_holding": 2,
+    "in_goal_bin_not_success": 10,
+    "dropped": 3
+   }
+  },
+  {
+   "family": "bc_rnn",
+   "seed": 2,
+   "train_run_id": "s16x2_bc_rnn_wd1e1_can_seed2_14ae1f29",
+   "step": 90000,
+   "checkpoint_sha256": "77ac0d5d9b32fcadca7321b6781d61f503a333e444231716b00465087fd9db5f",
+   "eval_run_id": "s16x2_bc_rnn_wd1e1_can_seed2_14ae1f29__x2_heldout_step0090000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_bc_rnn_wd1e1_can_seed2_14ae1f29__x2_heldout_step0090000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "1c1c7f4f70067dc88f966d77a291a258a80f61939a7b570973b5be1a66391303",
+   "successes": 66,
+   "n_episodes": 100,
+   "wilson95": [
+    0.5627772885472462,
+    0.7453847920265184
+   ],
+   "n_errors": 0,
+   "wall_s": 875.405630694,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 39,
+   "latency_ms_median": 9.794667000022628,
+   "taxonomy": {
+    "success": 66,
+    "engineering_error": 0,
+    "gripper_never_closed": 23,
+    "no_grasp_drift": 3,
+    "no_grasp_near": 4,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 1,
+    "dropped": 2
+   }
+  },
+  {
+   "family": "bc_mlp_chunk",
+   "seed": 0,
+   "train_run_id": "s16x2_bc_mlp_chunk_cos_can_seed0_7d7745e8",
+   "step": 15000,
+   "checkpoint_sha256": "a47c676a00a9051e1b4825b6ff07e10a9f0508a6dce3ebbe38a00fd52e3b0078",
+   "eval_run_id": "s16x2_bc_mlp_chunk_cos_can_seed0_7d7745e8__x2_heldout_step0015000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_bc_mlp_chunk_cos_can_seed0_7d7745e8__x2_heldout_step0015000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "c270ec4ae6bc0b6e2f87afd11d69a4a69c41fec95839eabdf42df621c5ba5086",
+   "successes": 91,
+   "n_episodes": 100,
+   "wilson95": [
+    0.837737871472837,
+    0.9519274599974348
+   ],
+   "n_errors": 0,
+   "wall_s": 393.94264518099976,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 49,
+   "latency_ms_median": 1.6784170000008203,
+   "taxonomy": {
+    "success": 91,
+    "engineering_error": 0,
+    "gripper_never_closed": 4,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 1,
+    "timeout_holding": 2,
+    "in_goal_bin_not_success": 1,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "bc_mlp_chunk",
+   "seed": 1,
+   "train_run_id": "s16x2_bc_mlp_chunk_cos_can_seed1_96b63a9d",
+   "step": 5000,
+   "checkpoint_sha256": "b9e0b945be90607f8314795de753f54ddcd4bfc4b5fb0af16ab9ad7c6214bb8b",
+   "eval_run_id": "s16x2_bc_mlp_chunk_cos_can_seed1_96b63a9d__x2_heldout_step0005000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_bc_mlp_chunk_cos_can_seed1_96b63a9d__x2_heldout_step0005000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "cc39febe453d57862c5fa95536ccb47c02f56952a06886f0fb4d231e2b645ca0",
+   "successes": 98,
+   "n_episodes": 100,
+   "wilson95": [
+    0.929988209271456,
+    0.9944980324498376
+   ],
+   "n_errors": 0,
+   "wall_s": 367.5137530449997,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 50,
+   "latency_ms_median": 1.8122919999967735,
+   "taxonomy": {
+    "success": 98,
+    "engineering_error": 0,
+    "gripper_never_closed": 2,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 0,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "bc_mlp_chunk",
+   "seed": 2,
+   "train_run_id": "s16x2_bc_mlp_chunk_cos_can_seed2_a6007970",
+   "step": 30000,
+   "checkpoint_sha256": "218afa96f846ef55a03b6e763f48f6aae83b735c7d62e918f2b7d4c06b29ca0d",
+   "eval_run_id": "s16x2_bc_mlp_chunk_cos_can_seed2_a6007970__x2_heldout_step0030000__linux-aarch64-container-1f685638f28c",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_bc_mlp_chunk_cos_can_seed2_a6007970__x2_heldout_step0030000__linux-aarch64-container-1f685638f28c.json",
+   "summary_sha256": "12a5f0f4fb598cf831a1f0345c95b901760afa0ab31044510d9fc2a6f7aed9d6",
+   "successes": 85,
+   "n_episodes": 100,
+   "wilson95": [
+    0.7671644040916763,
+    0.9069401471634337
+   ],
+   "n_errors": 0,
+   "wall_s": 432.9126192419999,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 48,
+   "latency_ms_median": 1.7392909999998096,
+   "taxonomy": {
+    "success": 85,
+    "engineering_error": 0,
+    "gripper_never_closed": 5,
+    "no_grasp_drift": 3,
+    "no_grasp_near": 2,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 2,
+    "dropped": 2
+   }
+  },
+  {
+   "family": "diffusion_unet",
+   "seed": 0,
+   "train_run_id": "s15x2_diffusion_unet_cos_can_seed0_99251da3",
+   "step": 100000,
+   "checkpoint_sha256": "1301c3b26eedf0ae72c550b13549caf09aa739d74ba580e2314f7fd28838f357",
+   "eval_run_id": "s15x2_diffusion_unet_cos_can_seed0_99251da3__x2_heldout_step0100000__linux-aarch64-container-1f685638f28c__ps0r0",
+   "summary": "reports/session17/x2/heldout/evals/s15x2_diffusion_unet_cos_can_seed0_99251da3__x2_heldout_step0100000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "summary_sha256": "3754b4adb0ce6fe9bb14da45027947a129bba9cca1c68520a9f07eedb88b3ce9",
+   "successes": 90,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8256343384950865,
+    0.9447708629393249
+   ],
+   "n_errors": 0,
+   "wall_s": 837.845786215,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 48,
+   "latency_ms_median": 48.083500000018375,
+   "taxonomy": {
+    "success": 90,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 1,
+    "timeout_holding": 2,
+    "in_goal_bin_not_success": 6,
+    "dropped": 1
+   }
+  },
+  {
+   "family": "diffusion_unet",
+   "seed": 1,
+   "train_run_id": "s16x2_diffusion_unet_cos_can_seed1_51f8481d",
+   "step": 90000,
+   "checkpoint_sha256": "c39fe169012fd060c47080ef30ca08fcb25ba1010ee189765d498fb33053f7e2",
+   "eval_run_id": "s16x2_diffusion_unet_cos_can_seed1_51f8481d__x2_heldout_step0090000__linux-aarch64-container-1f685638f28c__ps0r0",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_diffusion_unet_cos_can_seed1_51f8481d__x2_heldout_step0090000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "summary_sha256": "1af6dd30cd76c25dbe6b12af6bc4bb28ffad233e260e4f95c20436aa4bf53e62",
+   "successes": 96,
+   "n_episodes": 100,
+   "wilson95": [
+    0.9016292856411208,
+    0.9843366960084523
+   ],
+   "n_errors": 0,
+   "wall_s": 792.3998536949999,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 46,
+   "latency_ms_median": 47.995416999981444,
+   "taxonomy": {
+    "success": 96,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 1,
+    "no_grasp_near": 0,
+    "timeout_holding": 1,
+    "in_goal_bin_not_success": 2,
+    "dropped": 0
+   }
+  },
+  {
+   "family": "diffusion_unet",
+   "seed": 2,
+   "train_run_id": "s16x2_diffusion_unet_cos_can_seed2_9b0fde56",
+   "step": 65000,
+   "checkpoint_sha256": "d04e02f7de5538a08ca51bc83b42dd4e1df51c320955b6d03d613e8bfbc2830a",
+   "eval_run_id": "s16x2_diffusion_unet_cos_can_seed2_9b0fde56__x2_heldout_step0065000__linux-aarch64-container-1f685638f28c__ps0r0",
+   "summary": "reports/session17/x2/heldout/evals/s16x2_diffusion_unet_cos_can_seed2_9b0fde56__x2_heldout_step0065000__linux-aarch64-container-1f685638f28c__ps0r0.json",
+   "summary_sha256": "75acd8b1336890c3069d5a978753cb9a3698b334b6759bc6895ad96dbf3b90ff",
+   "successes": 94,
+   "n_episodes": 100,
+   "wilson95": [
+    0.8752318455410406,
+    0.9722138760368118
+   ],
+   "n_errors": 0,
+   "wall_s": 848.476497553,
+   "attempt": 1,
+   "rerun_decision": null,
+   "validation_successes": 47,
+   "latency_ms_median": 52.68333399999392,
+   "taxonomy": {
+    "success": 94,
+    "engineering_error": 0,
+    "gripper_never_closed": 0,
+    "no_grasp_drift": 0,
+    "no_grasp_near": 0,
+    "timeout_holding": 0,
+    "in_goal_bin_not_success": 2,
+    "dropped": 4
+   }
+  }
+ ],
+ "taxonomy_categories": [
+  "success",
+  "engineering_error",
+  "gripper_never_closed",
+  "no_grasp_drift",
+  "no_grasp_near",
+  "timeout_holding",
+  "in_goal_bin_not_success",
+  "dropped"
+ ],
+ "taxonomy": {
+  "bc_mlp": {
+   "success": 90,
+   "engineering_error": 0,
+   "gripper_never_closed": 88,
+   "no_grasp_drift": 52,
+   "no_grasp_near": 36,
+   "timeout_holding": 9,
+   "in_goal_bin_not_success": 8,
+   "dropped": 17
+  },
+  "bc_rnn": {
+   "success": 198,
+   "engineering_error": 0,
+   "gripper_never_closed": 47,
+   "no_grasp_drift": 9,
+   "no_grasp_near": 17,
+   "timeout_holding": 6,
+   "in_goal_bin_not_success": 14,
+   "dropped": 9
+  },
+  "bc_mlp_chunk": {
+   "success": 274,
+   "engineering_error": 0,
+   "gripper_never_closed": 11,
+   "no_grasp_drift": 4,
+   "no_grasp_near": 3,
+   "timeout_holding": 3,
+   "in_goal_bin_not_success": 3,
+   "dropped": 2
+  },
+  "diffusion_unet": {
+   "success": 280,
+   "engineering_error": 0,
+   "gripper_never_closed": 0,
+   "no_grasp_drift": 1,
+   "no_grasp_near": 1,
+   "timeout_holding": 3,
+   "in_goal_bin_not_success": 10,
+   "dropped": 5
+  }
+ },
+ "wall_s_total": 9406.904453091998,
+ "evaluations_git": [
+  "3a64dbb08ce25970c9847272352544dd1e8ae13b"
+ ],
+ "preregistration": {
+  "path": "docs/extensions/X2_PREREGISTRATION.md",
+  "sha256": "d9bc595549290fa433c19959bc63c8ddf3839e0e59f0289554629623849768ff"
+ },
+ "freeze": {
+  "path": "docs/extensions/X2_FREEZE.md",
+  "git_blob": "9929dc7c95cf233a9bf7207350d346c56008a0d1"
+ },
+ "test_configuration": {
+  "path": "reports/session16/x2/suite/x2_test_configuration.json",
+  "sha256": "387ecbe5ab77ade9dd39ae47917194780822928d0f48ee660ed2122a9fb1b863"
+ },
+ "suite": {
+  "task": "can",
+  "name": "x2_heldout",
+  "n_states": 100,
+  "manifest_content_sha256": "40b8228c3e08cf6e3bdcf23c77a28cb273e5bd7f2eb7a797b0e7d7caebdd833c",
+  "partition": "eval_adhoc",
+  "decision": "D-123",
+  "seeds": "16,000,000 + i, i = 0..99",
+  "state_order": "manifest order"
+ },
+ "frozen_source": {
+  "path": "reports/session7/results/results.json",
+  "sha256": "b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c"
+ },
+ "latency_source": {
+  "path": "reports/session16/x2/suite/latency/linux-aarch64-container-1f685638f28c.json",
+  "sha256": "daea5ba211301fc7cc7c21439732c8b1858d923e668ecc0e09961a4e1ebe2e3e"
+ },
+ "clarifications": [
+  "Relation to Level 1 Can PH compares the frozen bootstrap separation with the X2 bootstrap separation: same direction, reversed, not reproduced, new separation; 'neither separated' when neither is separated (no preregistered label); 'no relation' when the X2 verdict is conflicting (D-130).",
+  "The Level 1 side shows the frozen bootstrap difference, interval and verdict, and the D-095 seed-level interval recomputed from its per-seed values (descriptive, 400-step scale, never pooled).",
+  "No preregistered readings exist for X2: one generated sentence per contrast states its difference, verdict and relation in the preregistered terms only."
+ ],
+ "taxonomy_sha256": "5a5d998f12b16f58457be87edc417eba0f65bc386c8ec1a29f84e829d64bd7f6",
+ "git": {
+  "sha": "29ce47aa74f7efb448a35eff043e834d38610781",
+  "dirty": false
+ },
+ "generated_utc": "2026-11-16T06:29:32.217986+00:00"
+}

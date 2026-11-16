@@ -1449,7 +1449,7 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   shows the Can MH label, with the recorded label and this issue's number in Provenance; checked
   by the site's E2E run against the live URL (`logs/session19/pages_live_e2e.log`). The v1.1.0
   release notes name this issue.
-- **Session 20 (visual pass, built locally, not published):** the display label "X2 (Can MH):
+- **Session 20 (visual pass; site build published 2026-11-16, D-138):** the display label "X2 (Can MH):
   trained on the robomimic Can MH demonstrations" is now visible by default under each X2 clip
   group, with this issue's number; the recorded label stays in each clip's Provenance
   disclosure. Pinned by the site's E2E suite (`docs/OBSERVATORY_VISUAL_AUDIT.md` §3.5, §3.6).

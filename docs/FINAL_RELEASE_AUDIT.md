@@ -225,3 +225,35 @@ reports: `reports/session19/`.
 README extensions block and chart, Observatory extension export and site code),
 `pyproject.toml` (0.0.1) and `website/package.json` (0.10.0) (D-099), and the repository
 description.
+
+## 11. Observatory redeploy after the visual quality pass (Session 20)
+
+**What was published:** the Session 20 site build (owner decisions D-136, D-138): presentation
+changes in `website/` only. No release, no tag, no result, no number, no clip and no export
+changed; v1.0.0 and v1.1.0 (tags, releases, `paper/main.pdf`, `paper/addendum/addendum.pdf`) stay
+as published. Sections 1 to 10 above stay unchanged. No training, no evaluation, no rollout and
+no paid compute.
+
+Each row was verified before it was written, in the order of `docs/HANDOFF.md` # Session 20
+Handoff §5. Logs: `logs/session20/`; reports: `reports/session20/`.
+
+| Step | Verified state | Evidence |
+|---|---|---|
+| Local checks before the push | On `e5cff56` plus the Session 20 records: lint, full suite alone (721 passed), freeze-check (unchanged), `tests/research_integrity` (81), addendum-check, paper-check and release-check pass; site build within every budget, vitest 79, E2E 10/10; viewer re-verified 18/18 and 12/12 | E20-03 to E20-05 |
+| `main` | pushed as a fast-forward, `92c8cc4..57d8b7b` (4 commits: `88707cd`, `586ef34`, `e5cff56`, `57d8b7b`); author and committer of each Zackary Holt <zackholt05@gmail.com>; no commit message carries a co-author trailer or AI byline; `git ls-remote` `refs/heads/main` `57d8b7b` | `git ls-remote` |
+| CI, Linux aarch64, `57d8b7b` | python-tests pass (43882198857: 455 passed, 13 skipped, 1 deselected); research-integrity pass (43882198783: 77 passed, 4 skipped; the release scans all PASS, `private_paths` included); web-build pass (43882198727: every budget, vitest 79); each run's `headSha` is `57d8b7b` | `logs/session20/ci_57d8b7b.json` |
+| Observatory build | from the pushed commit `57d8b7b`, tracked files clean: `make web-data` (161 + 74 files, hash-checked), `make web-assets` (61 meshes, host vs container 0.0 m), `make web-build` (every budget; JavaScript 391.8 of 520 KB gzip, all data 29.31 of 80 MB, first view 3.95 of 6.50 MB), `make pages-bundle`: 263 files, 35.7 MB, `deploy.json` source `57d8b7b`, dirty false, SHA-256 `38a02eac…` | `logs/session20/pages_build.log`, `reports/session20/pages/deploy.json` |
+| `gh-pages` | new commit `b4467f7` on top of `d3f47dd` (parent checked before the push; author and committer Zackary Holt, no trailer), pushed as a fast-forward `d3f47dd..b4467f7`; never an orphan commit or a force push, so the v1.0.0 and v1.1.0 sites stay in history. 264 tracked files (the 263 of the bundle and `deploy.json`), every hash equal to the manifest. Changed against `d3f47dd`: 12 hashed script and stylesheet files replaced, `index.html` and `deploy.json` modified; no file under `data/`, no mesh, font or video changed | `git ls-remote` |
+| Pages | build `built` for `b4467f7` (2026-11-16 14:09:19 to 14:09:50 UTC), `https://zackholt05-tech.github.io/roboforge/` | `logs/session20/pages_build_latest.json` |
+| Live site check | `scripts/pages_bundle.py verify`: the first attempt (14:09:59 UTC) stopped on one HTTP 503 from the Pages CDN for one file; the second (14:10:27 UTC) matched all 263 files listed in `deploy.json` (`.nojekyll` is not served); the live `deploy.json` equals the staged one (`38a02eac…`). The site's E2E against the live URL (a scratch copy of `e2e/site.spec.ts` whose only change is 10 relative `page.goto` paths under `/roboforge/`): 10/10, including the two Session 20 tests (caveats visible by default and provenance one click away; phone chart layout) | `logs/session20/pages_verify.log`, `logs/session20/pages_live_e2e.log` |
+| README | the Observatory paragraph names the build commit `57d8b7b` (on `main`, after tag `v1.1.0`); nothing else in the README changed; committed after the live checks passed | `README.md` |
+
+**Disclosed:** three Session 20 logs were committed at `88707cd` and `586ef34` with the absolute
+home directory in them and rewritten with `~` at `57d8b7b` (E20-05). History is never rewritten
+(D-100), so those earlier blobs are public in the history of `main`. The path holds the
+author's name, which the repository already states, and nothing else.
+
+**Not changed by this redeploy:** every frozen file and result, the Session 10 and Session 18
+Observatory exports and their viewer verifications, `website/public/data`, `paper/`, the README
+findings, setup and extensions blocks, the README preview and chart, `CITATION.cff` (1.1.0),
+`website/package-lock.json`, both tags and both releases.

@@ -1,18 +1,18 @@
 <!-- parsable status header -->
 ```yaml
 CURRENT_SESSION: 20
-SESSION_STATUS: PASS            # Session 20: Observatory visual quality pass (D-136) built and verified locally at e5cff56; NOT published (main 92c8cc4, gh-pages d3f47dd unchanged on the remote); $0
-NEXT_SESSION: none planned      # pending owner answer: publish the Session 20 site build or not (docs/HANDOFF.md # Session 20 Handoff §5); any further study needs a new owner decision
+SESSION_STATUS: PASS            # Session 20: Observatory visual quality pass (D-136) built and verified at e5cff56; published by owner decision D-138 (main 57d8b7b then the records commit, gh-pages b4467f7, live site verified); no new tag or release; $0
+NEXT_SESSION: none planned      # nothing pending; any further study or site change needs a new owner decision
 BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-053 (Can H2/H3 replicated by X3; X2 Can MH shown beside), KI-056, KI-057; mitigated: KI-062, KI-064 (Session 15), KI-065 (Session 18); KI-052 tested by X1 (Session 13); accepted: KI-009 (D-100, D-114), KI-060, KI-063 (D-122); partial: KI-061
-LAST_VERIFIED_COMMIT: e5cff56   # Session 20 site changes (local, unpushed); STOP checks ran on e5cff56 plus the Session 20 records. Published state is still v1.1.0 (907c901, CI 3/3, the live Pages build source)
+LAST_VERIFIED_COMMIT: 57d8b7b   # Session 20 site changes and records, pushed; CI 3/3 on 57d8b7b; the live Pages build source. The release is still v1.1.0 (907c901)
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c, x1_preregistration: ab02469, x3_preregistration: fb9f05e, x2_preregistration: 9df6628}
-EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b], x1_code: 09d1a90, x1_preregistration: ab02469, x1_results: c2a9ae6, x3_code: [e0b8a4e, e9289c6], x3_heldout_suite: 81afa3b, x3_preregistration: fb9f05e, x3_suite_end: d602d1b, x3_validation: 86e6c9b, x3_isolation_before: 13c5db2, x3_evaluations: 949a6d7, x3_results: 335c27c, x2_data: [5e4b015, 305f074], x2_suites: 4459c00, x2_pilot_code: [3d42786, fe9df74], x2b_preregistration_and_code: 9df6628, x2b_evidence: fdb1f37, x2c_decisions: ca1897a, x2c_code: a1c3db7, x2c_engineering_check: 45edda2, x2_freeze: 3a64dbb, x2_heldout: 29ce47a, x2_results: 3df25ff, v1_1_decisions: b96b44f, addendum_and_readme: 5e2cf46, obs_ext_code: 2fdf21d, obs_ext_selection: 7eb5817, obs_ext_export: [f26e4e6, a8b5a74], obs_ext_site: fb1f6be, visual_provenance_ext: f675490, ki_065: d00b195, s19_decision: ab6c49b, v1_1_release_commit: 907c901, v1_1_tag_object: d805cb5, gh_pages_v1_1: d3f47dd}
+EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b], x1_code: 09d1a90, x1_preregistration: ab02469, x1_results: c2a9ae6, x3_code: [e0b8a4e, e9289c6], x3_heldout_suite: 81afa3b, x3_preregistration: fb9f05e, x3_suite_end: d602d1b, x3_validation: 86e6c9b, x3_isolation_before: 13c5db2, x3_evaluations: 949a6d7, x3_results: 335c27c, x2_data: [5e4b015, 305f074], x2_suites: 4459c00, x2_pilot_code: [3d42786, fe9df74], x2b_preregistration_and_code: 9df6628, x2b_evidence: fdb1f37, x2c_decisions: ca1897a, x2c_code: a1c3db7, x2c_engineering_check: 45edda2, x2_freeze: 3a64dbb, x2_heldout: 29ce47a, x2_results: 3df25ff, v1_1_decisions: b96b44f, addendum_and_readme: 5e2cf46, obs_ext_code: 2fdf21d, obs_ext_selection: 7eb5817, obs_ext_export: [f26e4e6, a8b5a74], obs_ext_site: fb1f6be, visual_provenance_ext: f675490, ki_065: d00b195, s19_decision: ab6c49b, v1_1_release_commit: 907c901, v1_1_tag_object: d805cb5, gh_pages_v1_1: d3f47dd, s20_decisions: 88707cd, s20_baseline_audit: 586ef34, s20_site: e5cff56, s20_stop_records: 57d8b7b, gh_pages_s20: b4467f7}
 PAPER: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400 (D-093)", fresh_clone_rebuild: "byte-identical (Session 12)", label: "local build, not peer reviewed"}
 ADDENDUM: {pdf: paper/addendum/addendum.pdf, sha256: bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2, pages: 6, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794787200 (D-133)", sources: "the three pinned extension results.json", check: "make addendum-check (CI research-integrity)", label: "local build, not peer reviewed"}
-RELEASE: {version: v1.1.0, previous: v1.0.0, audit: "docs/FINAL_RELEASE_AUDIT.md (v1.0.0 §1-§9, v1.1.0 §10)", decisions: "D-097-D-104, D-131-D-135", repository: "https://github.com/zackholt05-tech/roboforge (public)", tag: "v1.1.0, object d805cb5 on 907c901", release: "https://github.com/zackholt05-tech/roboforge/releases/tag/v1.1.0 (addendum.pdf, sha256 bedfb277...)", observatory: "https://zackholt05-tech.github.io/roboforge/ (gh-pages d3f47dd, built from 907c901; v1.0.0 site c14e041 kept in history)"}
+RELEASE: {version: v1.1.0, previous: v1.0.0, audit: "docs/FINAL_RELEASE_AUDIT.md (v1.0.0 §1-§9, v1.1.0 §10, Session 20 Observatory redeploy §11)", decisions: "D-097-D-104, D-131-D-135, D-136, D-138", repository: "https://github.com/zackholt05-tech/roboforge (public)", tag: "v1.1.0, object d805cb5 on 907c901", release: "https://github.com/zackholt05-tech/roboforge/releases/tag/v1.1.0 (addendum.pdf, sha256 bedfb277...)", observatory: "https://zackholt05-tech.github.io/roboforge/ (gh-pages b4467f7, built from 57d8b7b, Session 20 visual pass; v1.0.0 site c14e041 and v1.1.0 site d3f47dd kept in history)"}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only. Session 13 (X1) ran on the Session 7 robustness sets only; no held-out or validation start was stepped. Session 14 (X3) stepped only the Can validation starts and the new can/x3_heldout suite (24 evaluations, once); no frozen held-out suite; isolation PASS. Session 15 (X2-a) stepped only the can/x2_validation starts (20 pilot evaluations); no held-out start of any suite; isolation PASS. Session 16 (X2-b) stepped only the can/x2_validation starts (460 evaluations); no held-out start of any suite; isolation PASS. Session 17 (X2-c) stepped can/x2_heldout once (12 evaluations from the X2 freeze 3a64dbb; never again) and, for the engineering check, 2 evaluations on the 50 can/x2_validation starts (100 episodes); no frozen held-out suite; isolation PASS. Session 18 read recorded evidence only: 23 X1/X2 records re-rendered from their recorded states on the canonical container (no policy call, no env.step); isolation PASS. Session 19 published only; no rollout, no container job"
-RESOURCE_SPEND: {usd_billed_total: 10.61, session13_usd_billed: 0, session14_usd_billed: 0, session15_usd_billed: 0, session16_usd_billed: 0, session17_usd_billed: 0, session18_usd_billed: 0, session19_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-19 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
+FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only. Session 13 (X1) ran on the Session 7 robustness sets only; no held-out or validation start was stepped. Session 14 (X3) stepped only the Can validation starts and the new can/x3_heldout suite (24 evaluations, once); no frozen held-out suite; isolation PASS. Session 15 (X2-a) stepped only the can/x2_validation starts (20 pilot evaluations); no held-out start of any suite; isolation PASS. Session 16 (X2-b) stepped only the can/x2_validation starts (460 evaluations); no held-out start of any suite; isolation PASS. Session 17 (X2-c) stepped can/x2_heldout once (12 evaluations from the X2 freeze 3a64dbb; never again) and, for the engineering check, 2 evaluations on the 50 can/x2_validation starts (100 episodes); no frozen held-out suite; isolation PASS. Session 18 read recorded evidence only: 23 X1/X2 records re-rendered from their recorded states on the canonical container (no policy call, no env.step); isolation PASS. Session 19 published only; no rollout, no container job. Session 20 changed site presentation and published the site build only; no rollout, no policy call, no env.step"
+RESOURCE_SPEND: {usd_billed_total: 10.61, session13_usd_billed: 0, session14_usd_billed: 0, session15_usd_billed: 0, session16_usd_billed: 0, session17_usd_billed: 0, session18_usd_billed: 0, session19_usd_billed: 0, session20_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-20 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
 APPROVED_LIMIT: {A-03: "closed, $8.06 of $15", A-04: "closed, $2.37 of $9", open: none, local: "$0"}
 X1: {decision: D-107, preregistration: "docs/extensions/X1_PREREGISTRATION.md @ ab02469 (sha256 7405dc3d...)", evaluations: "45/45 once, reports/session13/x1_clamp/evals/, runs/x1_clamp/", analysis: "reports/session13/x1_clamp/results.json (sha256 ad503686...) @ c2a9ae6", primary: "Lift ood_arm_offset drop(diffusion) - drop(clamped BC-MLP-chunk) -40.0 pp [-54.0, -25.3], separated (-); reading R1", label: "exploratory, after the freeze"}
 X3: {decisions: "D-109-D-115", preregistration: "docs/extensions/X3_PREREGISTRATION.md @ fb9f05e (sha256 b5e54125...)", suite: "can/x3_heldout, 100 starts, content 9c199e19... (81afa3b)", runs: "12 new (4 families x seeds 3-5), validation-selected (reports/session14/suite/x3_validation.json)", evaluations: "24/24 once, reports/session14/x3/evals/, runs/x3/", analysis: "reports/session14/x3/results.json (sha256 4299a149...) @ 335c27c", primary: "H2 diffusion - BC-MLP +22.7 pp and H3 BC-RNN - BC-MLP +23.8 pp separated under bootstrap and seed-level (holds, robust); H2 diffusion - BC-RNN -1.2 and H2-c -1.7 not separated (unchanged)", label: "separate replication"}
@@ -22,15 +22,15 @@ UPDATED: 2026-11-16
 
 # RoboForge Status
 
-## Next: owner answer on publishing the Session 20 site build
+## Next: nothing pending
 v1.1.0 is published and verified (Session 19). Session 20 improved the Observatory's
-presentation locally and published nothing: the live site is still the Session 19 build. The
-owner decides whether to publish it (`docs/HANDOFF.md` # Session 20 Handoff §5, with the exact
-steps). No other session is planned. Any further study, for example the open diffusion side of
-KI-052, needs a new owner decision first. v1.0.0 and v1.1.0 (tags, releases, `paper/main.pdf`
+presentation, and the owner then had that site build published (D-138): the live site is the
+build of `57d8b7b`, verified file by file and by the live E2E run (E20-07,
+`docs/FINAL_RELEASE_AUDIT.md` §11). No new tag or release. No other session is planned. Any
+further study, for example the open diffusion side of KI-052, needs a new owner decision first. v1.0.0 and v1.1.0 (tags, releases, `paper/main.pdf`
 `c648e753…`, `paper/addendum/addendum.pdf` `bedfb277…`) stay as published.
 
-## Session 20: Observatory visual quality pass (PASS; nothing published)
+## Session 20: Observatory visual quality pass (PASS; site build published, D-138)
 | Step (Session 20 prompt) | Status | Evidence |
 |---|---|---|
 | Prerequisites, by executable checks | DONE: all PASS | E20-01 |
@@ -39,7 +39,7 @@ KI-052, needs a new owner decision first. v1.0.0 and v1.1.0 (tags, releases, `pa
 | 3. Plan; owner question only if needed | DONE: not needed (no section removed, no reorder, no identity change, no new asset) | audit §2 |
 | 4. Implementation | DONE: `e5cff56` | E20-03, audit §3 |
 | 5. Verification | DONE: build within every budget, vitest 79, E2E 10/10, viewer re-verified 18/18 and 12/12, after audit and two fresh-context reviews | E20-03, E20-04, audit §4 |
-| 6. Publication | NOT DONE: not authorized by D-136; the owner is asked once | HANDOFF §5 |
+| 6. Publication | DONE after STOP, by owner decision D-138: `main` `92c8cc4..57d8b7b`, CI 3/3; `gh-pages` `d3f47dd..b4467f7`; all 263 live files match `deploy.json`; live E2E 10/10; README paragraph and audit §11. No new tag or release | E20-06, E20-07, E20-08, audit §11 |
 | STOP | see below | E20-05 |
 
 **What changed for a visitor** (before/after pictures: `logs/session20/visual_audit/montage/`).
@@ -60,10 +60,16 @@ during the suite: `make lint` clean; full suite alone **721 passed** (9:43;
 81 passed; `make addendum-check`, `make paper-check` pass; `make release-check` PASS (records
 staged). Host: 24 GiB free, swap 10.6 of 12.3 GiB used, no container running. Cost: $0.
 
-**Publication state (verified by `git ls-remote`, unchanged from the start of the session).**
+**Publication state at STOP (`git ls-remote`, unchanged from the start of the session).**
 `main` `92c8cc4`, `gh-pages` `d3f47dd`, `v1.0.0` `82f3219` → `7b394fa`, `v1.1.0` `d805cb5` →
-`907c901`. Local `main` is ahead by the Session 20 commits (`88707cd`, `586ef34`, `e5cff56` and
-the records commit), unpushed.
+`907c901`; local `main` ahead by the four Session 20 commits, unpushed.
+
+**Publication state after D-138 (verified by `git ls-remote`).** `main` `57d8b7b` (CI 3/3:
+43882198857, 43882198783, 43882198727), then the publication records commit; `gh-pages`
+`b4467f7` on top of `d3f47dd`, built from `57d8b7b` (`deploy.json` `38a02eac…`, 263 files);
+Pages `built`; the live site matches the manifest and passes the E2E suite 10/10. Tags
+unchanged: `v1.0.0` `82f3219` → `7b394fa`, `v1.1.0` `d805cb5` → `907c901`. Both releases
+untouched.
 
 ## Session 19: v1.1.0 published (PASS)
 | Step (Session 19 prompt, D-131 order) | Status | Evidence |

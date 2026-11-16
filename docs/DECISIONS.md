@@ -3713,7 +3713,8 @@ the rules above; no rule changed after it was fixed.
   12/12 frames pass, each frame record equal to the Session 10 or Session 18 record.
 - **One label was clarified:** X2 captions read "X2 held-out start" in place of "ad hoc
   evaluation start"; Provenance keeps the recorded partition `eval_adhoc` beside it (D-123).
-- **Publication:** not done. The owner is asked once at STOP (Session 20 prompt, step 6).
+- **Publication:** not done at STOP. The owner was asked once (Session 20 prompt, step 6) and
+  answered yes: D-138.
 
 **Outcome note (D-137, Session 20 STOP).** The three targets were added as recorded
 (`web-audit`, `web-verify-s20`, `web-verify-ext-s20`) and `make web-verify`,
@@ -3723,3 +3724,30 @@ that the generated `docs/VISUAL_PROVENANCE.md` gains a section for the Session 2
 re-verification; `scripts/visual_provenance.py` appends it after the existing sections, which
 stay byte-identical (`tests/unit/test_visual_provenance.py`). `scripts/visual_audit_montage.py`
 (before/after montages from the audit screenshots) is new.
+
+### D-138 Publish the Session 20 Observatory build (OWNER, 2026-11-16)
+**The owner's answer, verbatim**, to the one question asked at the Session 20 STOP ("Publish
+this site build?", with the four steps and the facts of that report): "yes please publish
+everything and and make all of the updates you mentioned to main".
+
+- **Authorizes**, in this order, each step verified before the next (HANDOFF # Session 20
+  Handoff §5, as Session 19 E19-04):
+  1. push `main` as a fast-forward and wait for CI 3/3 on the pushed head;
+  2. build the Pages bundle from the pushed commit and add one new `gh-pages` commit on top of
+     `d3f47dd`, pushed as a fast-forward, never an orphan commit or a force-push;
+  3. verify the live site by `scripts/pages_bundle.py verify` and by the E2E suite against the
+     live URL;
+  4. then update the build commit in the README Observatory paragraph, append an "Observatory
+     redeploy" section to `docs/FINAL_RELEASE_AUDIT.md`, and push those records to `main`.
+- **Authorizes nothing else.** No new tag, no new release, no edit of either existing release,
+  no change to any frozen file, result, export, number or verdict. `CITATION.cff` stays at 1.1.0.
+- **Known when the owner answered** (stated in the STOP report): three Session 20 logs in the
+  local commits `88707cd` and `586ef34` contain the absolute home directory; pushing `main`
+  publishes those blobs, since history is never rewritten (D-100).
+
+**Outcome note (D-138, 2026-11-16; LEDGER E20-06 to E20-08).** Applied in the order above.
+`main` `92c8cc4..57d8b7b`; CI 3/3 on `57d8b7b`; bundle of 263 files from `57d8b7b`
+(`deploy.json` `38a02eac…`); `gh-pages` `d3f47dd..b4467f7`; Pages `built` in 31 s; all 263 live
+files match on the second attempt (the first met one HTTP 503 from the CDN); live E2E 10/10;
+then the records. Measured: 5.7 minutes from the push of `main` to the end of the live E2E
+(estimate given: about 0.1 h). Tags and releases unchanged. Cost: $0.

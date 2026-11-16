@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 20 STOP, Observatory visual pass built locally and not published, updated 2026-11-16) -->
+<!-- parsable handoff header (real values; Session 20, Observatory visual pass built, verified and published by D-138, updated 2026-11-16) -->
 ```yaml
 project: roboforge-3d
 current_session: 20
-session_status: PASS          # Session 20: Observatory visual quality pass (D-136), built and verified locally at e5cff56; nothing published; $0
-next_session: none planned    # pending owner answer: publish the Session 20 site build or not (# Session 20 Handoff §5)
-last_verified_commit: e5cff56   # Session 20 site changes, local and unpushed; published state is still v1.1.0 (907c901, tag object d805cb5, CI 3/3, the live Pages build source)
+session_status: PASS          # Session 20: Observatory visual quality pass (D-136), built and verified at e5cff56; site build published by D-138 (gh-pages b4467f7 from 57d8b7b, live site verified); no new tag or release; $0
+next_session: none planned    # nothing pending
+last_verified_commit: 57d8b7b   # Session 20 site changes and records, pushed; CI 3/3; the live Pages build source. The release is still v1.1.0 (907c901, tag object d805cb5)
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -100,19 +100,19 @@ observatory_v1_1: {decisions: "D-131, D-134", export: "reports/session18/observa
 addendum: {pdf: paper/addendum/addendum.pdf, sha256: bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2, pages: 6, build: "make addendum (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794787200)", check: "make addendum-check", decision: D-133, label: "local build, not peer reviewed"}
 level2_study: {freeze: "docs/LEVEL2_EXPERIMENT_FREEZE.md @ b93c50c (sha256 ffe5a03e...)", gate: "D-086 @ b1f4da2, amended 08c3aa8", runs: [s9_pc_diffusion_dp3_lift_seed0_8fd35613, s9_pc_diffusion_dp3_lift_seed1_a66a2758, s9_pc_diffusion_dp3_lift_seed2_402a1f24], selections: "30000 / 40000 / 60000 (reports/session9/pc_selection/)", placement: "reports/session9/level2_placement/ @ 4ebebc1", heldout: "reports/session9/pc_heldout/ @ a031e88", results: "reports/session9/level2_results/ @ 620c541 (+ ERRATA.md)", h5: "pc - rgb on ood_cube_shift -41.3 pp [-54.0, -28.0], separated (-)", heldout_success: {pc_diffusion: 100.0, rgb_diffusion: 100.0}, label: DP3-inspired, privilege: sensor-like}
 paper: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, build: "make paper (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400)", generated: "paper/generated/ (35 files, index.json)", audit: docs/AUDIT.md, decisions: "D-092-D-096", label: "local build, not peer reviewed", fresh_clone: "byte-identical rebuild (Session 12)"}
-release: {version: v1.1.0, previous: v1.0.0, audit: "docs/FINAL_RELEASE_AUDIT.md (§7 v1.0.0, §10 v1.1.0)", decisions: "D-097-D-104, D-131-D-135", repository: "https://github.com/zackholt05-tech/roboforge", tag: "v1.1.0 d805cb5 -> 907c901", release_asset: "addendum.pdf sha256 bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2", observatory: "GitHub Pages, gh-pages d3f47dd (D-102)", ci: ".github/workflows (D-101)", state: "see # Session 19 Handoff §4 (publication record, verified)"}
+release: {version: v1.1.0, previous: v1.0.0, audit: "docs/FINAL_RELEASE_AUDIT.md (§7 v1.0.0, §10 v1.1.0, §11 Session 20 Observatory redeploy)", decisions: "D-097-D-104, D-131-D-135, D-136, D-138", repository: "https://github.com/zackholt05-tech/roboforge", tag: "v1.1.0 d805cb5 -> 907c901", release_asset: "addendum.pdf sha256 bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2", observatory: "GitHub Pages, gh-pages b4467f7 built from 57d8b7b (D-102, D-138)", ci: ".github/workflows (D-101)", state: "see # Session 19 Handoff §4 (v1.1.0) and # Session 20 Handoff §4 (site redeploy), both verified"}
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 378ea43", selections: reports/session8/rgb_selection/, heldout: "reports/session8/rgb_heldout/ @ bc054bc", results: "reports/session8/rgb_results/ @ 3b23255", success: {rgb_diffusion: 100.0, rgb_bc_chunk: 99.3}, diffusion_minus_bc: "+0.7 pp [+0.0, +4.0], not separated", videos: reports/session8/rgb_videos/}
 x1_study: {decision: D-107, label: "exploratory, after the freeze", code: 09d1a90, preregistration: "docs/extensions/X1_PREREGISTRATION.md @ ab02469", evaluations: "45 once from ab02469 (reports/session13/x1_clamp/evals/, runs/x1_clamp/)", analysis: "reports/session13/x1_clamp/ @ c2a9ae6", primary: "Lift ood_arm_offset drop(diffusion) - drop(clamped BC-MLP-chunk) -40.0 pp [-54.0, -25.3], separated (-) (frozen -40.0 [-54.0, -26.0]); reading R1", clamped_minus_unclamped: "0 of 15 separated; largest |diff| 0.7 pp", engineering_checks: "logs/session13/x1_checks/ (all PASS)"}
 x3_study: {decisions: "D-109-D-115", label: "separate replication", preregistration: "docs/extensions/X3_PREREGISTRATION.md @ fb9f05e", heldout_suite: "can/x3_heldout, 100 starts, content 9c199e19 (81afa3b)", training: "12 runs s14_* (4 families x seeds 3-5), 0 failed", validation: "240 evaluations, 12 selections (reports/session14/suite/x3_validation.json @ 86e6c9b; KI-062, D-112)", evaluations: "24 once from 13c5db2 (reports/session14/x3/evals/, runs/x3/), isolation PASS", analysis: "reports/session14/x3/ @ 335c27c", primary: "H2 diffusion - BC-MLP +22.7 pp, H3 BC-RNN - BC-MLP +23.8 pp: separated under bootstrap and seed-level (holds, robust); H2 diffusion - BC-RNN -1.2, H2-c -1.7: not separated (unchanged)"}
 x2_study: {decisions: "D-116-D-130", preregistration: "docs/extensions/X2_PREREGISTRATION.md @ 9df6628 (sha256 d9bc5955...)", option: "A, Can MH", phase: "done: X2-a (Session 15), X2-b (Session 16), X2-c (Session 17)", x2b: "reports/session16/x2/suite/ from clean 9df6628: chosen diffusion t2 (48), BC-RNN t4 (36), BC-MLP-chunk t2 (49), BC-MLP t1 (16); test configuration fdb1f37", data: "data/manifests/robomimic_v1.5_mh.json (hash-verified); split data/splits/can_mh.json (operator-stratified, within-operator claims only)", suites: "can/x2_validation 50 starts 47b889cd, can/x2_heldout 100 starts 40b8228c (4459c00)", freeze: "docs/extensions/X2_FREEZE.md @ 3a64dbb (sha256 952d232c..., blob 9929dc7c...); code a1c3db7; engineering check PASS 45edda2", evaluations: "12/12 once from 3a64dbb (reports/session17/x2/heldout/evals/, runs/x2c/), 0 errors, isolation PASS, no rerun; never again", analysis: "reports/session17/x2/ @ 3df25ff (results.json sha256 30c01f55...)", primary: "H2 diffusion - BC-MLP +63.3 pp [+53.0, +73.0] robust (+), same direction; H2 diffusion - BC-RNN +27.3 pp [+16.7, +37.7] robust (+), new separation; H2-c +2.0 pp [-6.3, +11.0] not separated, neither separated; H3 BC-RNN - BC-MLP +36.0 pp [+23.7, +48.0] robust (+), same direction", label: "X2 (Can MH): beside the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator only"}
 ```
 
-# Next: owner answer on publishing the Session 20 site build
+# Next: nothing pending
 
 v1.1.0 is published and verified (Session 19, D-131). Session 20 (D-136) improved the
-Observatory's presentation locally and published nothing; whether to publish that build is the
-owner's decision (# Session 20 Handoff §5). No other session is planned. Every earlier boundary
-still applies, and the published v1.1 content is fixed as well:
+Observatory's presentation, and the owner had that site build published (D-138; # Session 20
+Handoff §4 and §5). No other session is planned. Every earlier boundary still applies, and the
+published v1.1 content is fixed as well:
 - never rerun `make obs-ext-select`, `make obs-ext-export`, `make obs-ext-findings` or
   `make web-verify-ext`;
 - never edit `reports/session18` or `reports/session19` evidence, or `paper/addendum/`;
@@ -126,7 +126,7 @@ still applies, and the published v1.1 content is fixed as well:
 | X3 more training seeds, on a fresh held-out suite | `docs/extensions/X3_more_seeds.md` | 14, DONE |
 | v1.1: addendum, README section, Observatory section | `docs/extensions/README.md`, D-131 to D-135 | 18 built; 19 published (v1.1.0) |
 
-# Session 20 Handoff (Observatory visual pass, built and verified; nothing published)
+# Session 20 Handoff (Observatory visual pass, built, verified and published)
 
 Do not trust this file blindly. Every claim names its command and evidence
 (`logs/session20/`, `reports/session20/`, LEDGER E20-01 to E20-05,
@@ -135,7 +135,8 @@ Do not trust this file blindly. Every claim names its command and evidence
 ## 1. Session completed
 Session 20: a visual quality pass on the Observatory, at the owner's request (D-136).
 Presentation only, in `website/`. Status **PASS**. No rollout, policy call, `env.step`, training
-or evaluation; no paid compute ($0). Nothing was pushed or deployed.
+or evaluation; no paid compute ($0). Nothing was pushed or deployed before the STOP; the owner
+then authorized publication of the site build (D-138), recorded in §4 and §5.
 
 ## 2. Completed work
 - **Prerequisites** (E20-01) and **decisions** D-136, D-137 (`88707cd`), before any code change.
@@ -180,13 +181,19 @@ What the last review still finds, and why each was left, is in audit §4.4 (the 
 in the Workspace view, internal codes in callouts, phone structure, empty right columns).
 
 ## 4. Publication state (verified) and STOP checks
-| Item | Verified state (`git ls-remote`, unchanged from the start of the session) |
+At the STOP, `git ls-remote` was unchanged from the start of the session (`main` `92c8cc4`,
+`gh-pages` `d3f47dd`). After the owner's answer (D-138; E20-06 to E20-08;
+`docs/FINAL_RELEASE_AUDIT.md` §11):
+
+| Item | Verified state (`git ls-remote`, after D-138) |
 |---|---|
-| `main` on the remote | `92c8cc4` (Session 19 records) |
-| Local `main` | ahead by `88707cd`, `586ef34`, `e5cff56` and the Session 20 records commit; unpushed |
-| `gh-pages` | `d3f47dd`; the live site is the Session 19 build of `907c901` |
-| Tags | `v1.0.0` `82f3219` → `7b394fa`; `v1.1.0` `d805cb5` → `907c901` |
-| README Observatory paragraph, `docs/FINAL_RELEASE_AUDIT.md` | unchanged; they describe the live build |
+| `main` | `57d8b7b` pushed as a fast-forward from `92c8cc4`, then the publication records commit |
+| CI on `57d8b7b` | python-tests 43882198857, research-integrity 43882198783, web-build 43882198727: all `success` |
+| `gh-pages` | `b4467f7` (parent `d3f47dd`), Zackary Holt, no trailer; built from `57d8b7b` (`deploy.json` `38a02eac…`, 263 files); only scripts, the stylesheet, `index.html` and `deploy.json` differ from `d3f47dd` |
+| Pages | `built` (2026-11-16 14:09:50 UTC); https://zackholt05-tech.github.io/roboforge/ |
+| Live site | all 263 files match `deploy.json` (second attempt; the first met one HTTP 503 from the CDN); live E2E 10/10 |
+| Tags and releases | unchanged: `v1.0.0` `82f3219` → `7b394fa`; `v1.1.0` `d805cb5` → `907c901`; no new tag or release |
+| README Observatory paragraph, `docs/FINAL_RELEASE_AUDIT.md` | name the live build `57d8b7b`; audit §11 |
 
 **STOP checks.** On `e5cff56` plus the Session 20 records, host, no container or browser job
 during the suite: `make lint` clean; full suite alone **721 passed** (9:43); `make freeze-check`
@@ -195,8 +202,10 @@ unchanged; `tests/research_integrity` 81 passed; `make addendum-check`, `make pa
 `logs/session20/stop_full_suite.log`.
 
 ## 5. Owner decisions pending
-**Publish the Session 20 site build, or not.** D-136 does not authorize it. If yes, in this
-order, each step verified before the next (as Session 19, E19-04):
+None. The one question of the STOP was answered yes (D-138) and carried out as below.
+
+**The question was: publish the Session 20 site build, or not.** D-136 did not authorize it. The
+steps, in this order, each verified before the next (as Session 19, E19-04):
 1. Push `main` as a fast-forward; wait for CI 3/3 on the pushed head.
 2. Build the Pages bundle from the clean pushed commit (`scripts/pages_bundle.py`); in a scratch
    worktree, add one new `gh-pages` commit on top of `d3f47dd`; push it as a fast-forward. Never
@@ -205,9 +214,9 @@ order, each step verified before the next (as Session 19, E19-04):
 4. Then update the build commit in the README Observatory paragraph and append an "Observatory
    redeploy" section to `docs/FINAL_RELEASE_AUDIT.md`.
 
-No new tag or release unless the owner asks for one. Estimate, from the measured Session 19
-times: about 0.1 h from the push to the end of the live checks (CI about 3 minutes, the Pages
-build 30 s). If the answer is no, everything stays committed locally and unpushed.
+No new tag or release was made; the owner did not ask for one. The estimate given was about
+0.1 h from the push to the end of the live checks; measured, 5.7 minutes (CI 2.7 minutes, the
+Pages build 31 s).
 
 ## 6. Next session
 None planned. Every boundary of Session 19 still applies. In addition:

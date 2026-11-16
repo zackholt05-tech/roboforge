@@ -3563,3 +3563,26 @@ summaries only, and suite names come from those summaries.
   the locked Level 1 suite.
 - The X2-c output gate (D-130) would now find these files, because they are named by held-out
   state ID. This is consistent: `make x2c-run` is never run again.
+
+**Outcome note (Session 18 STOP, 2026-11-16).** Applied as fixed; no rule changed after the
+selection.
+- **Selection** (`make obs-ext-select`, host, from clean `2fdf21d`; committed `7eb5817` before any
+  export): 23 clips, 12 cases, none missing. X2: 9 pairs (diffusion shared across pairs on
+  `0000` and `0008`); X1: 3 starts × 3 arms. Verification clips: the X2 (a) and X1 (a)
+  diffusion clips.
+- **Export** (`make obs-ext-export`, canonical container, clean `7eb5817`; committed `f26e4e6`,
+  videos `a8b5a74`): 23/23 clips, recomputed body poses equal the records (0.0 m), 350.5 s of
+  container time (the D-131 estimate was about 15 s per clip; measured 15.2 s on average,
+  29.7 s at most for 501-frame episodes). Isolation PASS: the 7 record directories read are
+  unchanged. Every mesh equals Session 10's. The `.mp4` files are force-added, as Session 10's
+  were, because `*.mp4` is ignored.
+- **Findings** (`findings_ext.json`): copied from the three pinned results at `7eb5817`.
+- **Site** (`fb1f6be`): the section is titled "After v1.0.0: three follow-up studies" (nav
+  "After v1.0"). Its prose is gated on the recorded verdicts: a sentence that a changed verdict
+  would falsify is not shown. Counting verdicts or adding taxonomy counts is the only arithmetic.
+  `make web-verify-ext`: 12 reference frames, robot IoU 0.9998–1.0000, object IoU 1.0000,
+  centroid ≤ 0.03 px, pass. Budgets: all data 29.3 MB of 80 MB, first view 3.95 MB of 6.5 MB.
+- **Labels:** KI-065 recorded; the X2 display label is checked by a site test.
+- `docs/VISUAL_PROVENANCE.md` gained the extension section (`f675490`); the Session 10 rows are
+  unchanged.
+- Nothing was pushed, tagged, released or deployed.

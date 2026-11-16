@@ -72,6 +72,18 @@ Family success on the held-out starts: diffusion 93.3 %, BC-MLP-chunk 91.3 %, BC
 BC-MLP 30.0 %. All three extensions are done. Whether X1, X2 and X3 are published (v1.1) is
 the owner's decision (D-105).
 
+**Status (2026-11-16).** Session 18, v1.1 built and verified locally; nothing published (D-131).
+The owner chose to publish X1, X2 and X3 as v1.1 and to update the Observatory first.
+- The addendum is `paper/addendum/addendum.pdf` (D-133). It is generated from the three pinned
+  results; `paper/main.pdf` is unchanged.
+- The README has a generated section on the three studies, with a chart.
+- The Observatory has a section "After v1.0.0: three follow-up studies" (D-134). It shows X1 and
+  X2 (Can MH) recorded episodes, re-rendered from their recorded states, and the three studies'
+  results under their own labels.
+- KI-065: X2 records carry the frozen "PH demonstrations" label. The site shows the Can MH
+  label instead.
+- Session 19 publishes: push, CI, tag `v1.1.0`, the release, and the Pages redeploy.
+
 ## Rules shared by every extension
 
 1. **Frozen means frozen.** Level 1, the RGB study and Level 2 stay as tested. Never rerun

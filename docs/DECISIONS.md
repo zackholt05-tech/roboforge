@@ -3341,3 +3341,225 @@ exit (2.61 inside the evaluator; per-family means per 100 starts: diffusion 826 
 939 s, BC-MLP-chunk 398 s, BC-MLP 972 s), against 3.6; wall time 47.0 min against 0.9–1.0 h;
 the engineering check 7.0 min against 0.2 h; `runs/x2c` 529 MB against 0.6–0.9 GiB; the
 analysis 1.5 min; $0.
+
+## Session 18 (2026-11-16): v1.1, the post-release extensions in the repository and the Observatory (build only; publication in Session 19)
+Level 1, the RGB study, Level 2, X1, X2 and X3 stay frozen with all their evidence. No rollout,
+no training, no evaluation, no paid or remote compute. Session 18 pushes, tags, releases and
+deploys nothing (D-131).
+
+### D-131 Publish X1, X2 and X3 as v1.1; the Observatory first; build now, publish in Session 19 (OWNER, 2026-11-16, Session 18)
+**First ask.** The owner was asked once, with facts measured at the start of Session 18:
+- every prerequisite passed:
+  - the three extension `results.json` files, `docs/extensions/X2_FREEZE.md` and
+    `paper/main.pdf` hash to their recorded values;
+  - lint, `make freeze-check`, the full suite alone (705 passed), `tests/research_integrity`
+    (81) and `make release-check` all pass;
+  - a fresh `git clone --no-local` ran the D-101 CI commands and passed (E18-01);
+- a push is 37 commits, a 19 MiB pack and about 1,880 files, mostly Session 13–17 logs and
+  reports;
+- README, CITATION, `paper/`, `website/` and `.github/` are unchanged since v1.0.0;
+- `origin/main` is `abbb9c3`, the owner's README edit after the v1.0.0 record;
+- the oldest unpushed commit, `536fa24`, is the D-105 handoff (documents only), made before
+  Session 13.
+
+Answers:
+- **"publish"**, the answer to the Session 17 STOP question. This is the session's first
+  decision.
+- Scope **"(b) + README"**: push `main`, an annotated tag `v1.1.0`, a GitHub release with an
+  addendum PDF, and a generated README section on the extensions.
+- The Observatory: **"Update it too"**.
+
+**Owner instruction during the session (2026-11-16 02:05 EST), which supersedes the "later
+session" wording of that option:** "before putting anything on github, we should fully update
+the observatory with the new results. I want all the changes we've done past version 1.0 to be
+visually and writtenly updated in both the repo and the observatory."
+
+**Second ask**, once, with the facts:
+- clips can only be re-rendered from recorded simulator states;
+- new denoising traces or candidate paths would call the policy and the simulator, so they are
+  excluded;
+- at most about 15 s of container time per plain clip (estimate). Session 10's 37-clip export
+  took 3,548 s, of which 3,036 s were two denoising clips (E10-05).
+
+Answers:
+- **"X2 + X1 clips"**: X2 (Can MH) held-out head-to-heads, and X1 under the Lift arm offset;
+- **"Build now, publish in S19"**.
+
+**Consequences.**
+- **Session 18 builds and verifies locally, then stops with nothing pushed:**
+  - the addendum PDF (D-133);
+  - the README section and its chart (D-133);
+  - the Observatory extension section and its clips (D-134);
+  - the records.
+- **Session 19 publishes, in this order:**
+  1. push `main`;
+  2. wait for green CI on that exact SHA (D-101);
+  3. create the annotated tag `v1.1.0` on it;
+  4. create the GitHub release with the addendum PDF, then download the PDF and compare its
+     SHA-256;
+  5. redeploy Pages as a **new commit on top of `c14e041`** on `gh-pages`, never an orphan or
+     a force push, so the v1.0.0 site stays in history;
+  6. append the v1.1 publication record to `docs/FINAL_RELEASE_AUDIT.md`.
+- **Pages redeployment is now inside the owner's chosen scope**, in Session 19 only.
+- `CITATION.cff` gets `version: 1.1.0` and its `date-released` in the Session 19 commit that is
+  tagged, because the date is the release date. `pyproject.toml` and `website/package.json`
+  keep their versions (D-099).
+- v1.0.0 stays as published: its tag, its release, `paper/main.pdf` (`c648e753…`) and the
+  frozen findings on the site.
+- No AI co-author trailer or AI byline anywhere (MASTER_SPEC §0.2, D-099).
+
+### D-132 Makefile defaults bumped to Session 18; v1.1 targets (FIXED, before any code change)
+- `PREFIX ?= s18` and `EVIDENCE_SESSION` default 18 (the D-092/D-097/D-106/D-110/D-117/D-126/
+  D-129 pattern). Evidence goes to `reports/session18/` and `logs/session18/` with
+  `ROBOFORGE_EVIDENCE_SESSION=18`.
+- `OBS_OUT` stays pinned to `reports/session10/observatory` (D-092). The extension export gets
+  its own `OBS_EXT_OUT ?= reports/session18/observatory`, so nothing writes into Session 10
+  evidence.
+- New targets, each added with its code before first use:
+  - `addendum-assets`, `addendum-check` and `addendum` (D-133);
+  - `readme-extensions` (D-133);
+  - `obs-ext-select`, `obs-ext-export` (canonical container, clean tree) and
+    `obs-ext-findings` (D-134);
+  - `web-verify-ext` (D-134).
+- `web-data` also copies the Session 18 tree, hash-checked (D-134).
+- The research-integrity workflow gains `make addendum-check`, beside `make paper-check` (a
+  D-101 amendment; no test or check is weakened).
+- No eval, analysis, check or freeze target of Level 1, the RGB study, Level 2, X1, X2 or X3 is
+  run.
+
+### D-133 v1.1 content: sources, labels and caveats; the addendum and the README section (FIXED, before any code)
+**Sources.** Exactly the three hash-pinned extension results. A mismatch stops every build, and
+nothing under `runs/` is read:
+
+| Study | File | SHA-256 |
+|---|---|---|
+| X1 | `reports/session13/x1_clamp/results.json` | `ad50368645b96fb87489310243535f97694b1e47a2ff993915b039b2199a5ee7` |
+| X3 | `reports/session14/x3/results.json` | `4299a14930790bfdb2f91d7a3216c9bd7f6db1fa2171469a29bfed3c5c5b71d1` |
+| X2 | `reports/session17/x2/results.json` | `30c01f551333feafba70bfa4c9c6a414eda691f179800022d3871776be2df238` |
+
+- Values are copied at their tables' rounding (one decimal, in pp or %).
+- Derived values are plain arithmetic and are listed in the generated index, as D-094 did.
+- The frozen Level 1 values shown beside X2 and X3 are the ones those `results.json` files
+  carry (`frozen_families`, `relation`). The X1 frozen reference values are the ones X1's
+  file carries.
+- No number in the addendum, the README section or the site's extension section is typed by
+  hand (the D-094/D-103 rule).
+
+**Labels and caveats, carried wherever the numbers appear.**
+- **X1:** "exploratory, after the freeze".
+  - Validation regime: the Session 7 robustness sets, not the held-out test.
+  - KI-052: X1 tested the BC side. The diffusion side, in-sampler clipping
+    (`clip_sample=False`), stays open (D-107 correction).
+- **X3:** "separate replication".
+  - The frozen Level 1 result stands as reported; X3 is shown beside it and never pooled.
+  - KI-053.
+- **X2:** "X2 (Can MH)".
+  - Beside the frozen Level 1 Can PH result, never instead of it, never pooled.
+  - Within-operator only (D-119).
+  - X2 episodes end at 500 steps, Level 1 Can PH at 400, so the success scales differ (D-120).
+  - KI-053: X2 does not change the fragility of the frozen Can PH separations.
+- **Every document:** simulation only; the addendum is a local build, not peer reviewed;
+  "not separated" is never read as equality.
+
+**Addendum PDF.**
+- New files only:
+  - `paper/addendum/addendum.tex`, whose prose carries every number through generated macros;
+  - `paper/addendum/generated/`: `numbers.tex`, tables, figure PDFs with their data sidecars,
+    and an `index.json` holding each output's SHA-256 and its sources;
+  - `paper/addendum/addendum.pdf`.
+- Generator `src/roboforge/addendum/`, script `scripts/addendum_assets.py` (build, check,
+  lint). `make addendum-check` proves the committed outputs equal a fresh build and that every
+  number in the `.tex` comes from a macro.
+- **Toolchain as v1.0.0:** Tectonic 0.17.0, `--only-cached`, and only the packages already in
+  `paper/main.tex`'s preamble. The fixed `SOURCE_DATE_EPOCH` is `1794787200` (2026-11-16
+  00:00 UTC). The PDF is built twice and the two copies must be byte-identical.
+- Title: "RoboForge v1.1 addendum: three follow-up studies (X1, X2, X3)". Author: Zackary Holt
+  only. Bibliography: entries reused from `paper/references.bib` only.
+- **Unchanged and byte-identical to v1.0.0:** `paper/main.pdf`, `paper/main.tex`,
+  `paper/sections/`, `paper/generated/` and `src/roboforge/paper/`. `make paper-check` and the
+  PDF hash are rechecked afterwards.
+
+**README.**
+- A new generated block, `extensions`, between its own markers. It is written by
+  `scripts/readme_extensions.py` from `paper/addendum/generated/numbers.tex` (which
+  `make addendum-check` proves equal to a fresh build) and states each study's label and
+  caveats.
+- A chart, `docs/media/readme_extensions.svg`, is generated deterministically (matplotlib SVG,
+  fixed hash salt, no date, text as paths) with a JSON sidecar of the plotted values.
+- `make release-check` gains a `readme_extensions` check: the block equals a fresh generation,
+  and the chart equals a fresh build.
+- The v1.0 `findings` and `setup` blocks stay as generated from `paper/generated/numbers.tex`.
+- **Hand-written edits, number-free:**
+  - the Limitations line on KI-052, which still says the evaluation-only test was not run,
+    now says X1 tested the BC side and the diffusion side stays open;
+  - a link to the addendum;
+  - the "Extensions" heading covers X1–X3.
+- The Observatory line ("built from commit `b4bd070`") is updated in Session 19, when the new
+  site is deployed and checked (D-102).
+
+### D-134 The Observatory's extension section and its clips (FIXED, before any code and before any export)
+**Section.** "After v1.0: three follow-up studies", placed after the frozen findings (F).
+- It holds generated charts and text for X1, X3 and X2, with the D-133 labels and caveats.
+  Every number comes from `findings_ext.json`, which copies blocks of the three pinned
+  `results.json` files, cites their SHA-256 and computes nothing.
+- The v1.0 sections, their data (`reports/session10/observatory/`) and their wording about the
+  frozen results are unchanged.
+- The site's tests and schemas grow with it: zod schemas, vitest and E2E assertions for the new
+  section, inside the D-088 budgets (first view ≤ 6.5 MB, all data ≤ 80 MB).
+
+**Clips: re-rendered from recorded states only.**
+- Each clip's body poses are recomputed from the recorded MuJoCo states, as Session 10's
+  held-out clips were.
+- No policy call, no clone simulation, no `env.step`. There are no denoising traces, branches or
+  candidate paths for the extensions.
+- The export runs on the canonical container from a clean tree, as one process, never alongside
+  the full suite (KI-043).
+- It only reads `runs/`; the listing digests (path and size) of every record directory it reads
+  are equal before and after.
+
+**Selection rules, fixed now and applied by `make obs-ext-select` (host).** It reads committed
+summaries only, and suite names come from those summaries.
+- **X2 (Can MH, the 12 X2-c held-out summaries listed in X2's `results.json`):**
+  - seed 0 diffusion against seed 0 of each BC family (BC-MLP, BC-RNN, BC-MLP-chunk), on the
+    same start, in the summary's state order;
+  - (a) the first start where only diffusion succeeds;
+  - (b) the first start where only the BC family succeeds;
+  - (c) the first start where both succeed.
+  Up to 9 pairs; a diffusion clip is shared when two pairs use the same start.
+- **X1 (Lift `ood_arm_offset`, seed 0):**
+  - three arms on the same start:
+    - diffusion (its Session 7 robustness record; the sampler already bounds its actions);
+    - BC-MLP-chunk unclamped (Session 7 robustness record);
+    - BC-MLP-chunk clamped (X1 record);
+  - (a) the first start where diffusion succeeds and both BC-MLP-chunk arms fail;
+  - (b) the first start where all three succeed;
+  - (c) the first start where the clamped and unclamped BC-MLP-chunk outcomes differ.
+- Session 7 summaries are read only after their SHA-256 equals the value pinned in X1's
+  `results.json` inputs or in the Session 7 analysis it pins.
+- **Missing cases** are recorded as `null` with a reason, never dropped. **Representativeness:**
+  the clips are rule-selected cases, labelled as such, not representative samples; the outcome
+  strips show all starts for the seed-0 checkpoints.
+
+**Labels on clips.**
+- The X2 records' recorded policy label reads "trained on robomimic PH demonstrations". That
+  string comes from the frozen evaluator's label template, which the X2 binding does not change
+  (KI-065).
+- The export keeps the recorded string in the clip's provenance. The site shows the study label:
+  "X2 (Can MH): trained on the robomimic Can MH demonstrations".
+
+**Outputs.** `reports/session18/observatory/`:
+- `selection.json`, `clips/`, `media/`, `verification/`, `meshes.json`, `index.json` (every
+  file with its SHA-256), `findings_ext.json` and `viewer_verification.json`.
+- `make web-data` copies it, hash-checked, into `website/public/data/ext/` and writes
+  `ext_registry.json`.
+
+**Verification (MASTER_SPEC §8.3).**
+- The first X2 (a) diffusion clip and the X1 (a) diffusion clip carry MuJoCo reference frames.
+- `make web-verify-ext` checks them against the D-091 thresholds: robot IoU ≥ 0.95, object IoU
+  ≥ 0.85, centroid ≤ 1.5 px. It writes to the Session 18 tree, never to Session 10's.
+
+**Integrity.**
+- No new file in `src/` or `scripts/` names the X2 held-out suite (D-130 test), the X3 suite or
+  the locked Level 1 suite.
+- The X2-c output gate (D-130) would now find these files, because they are named by held-out
+  state ID. This is consistent: `make x2c-run` is never run again.

@@ -520,6 +520,12 @@ obs-ext-findings:  ## Host: findings_ext.json copied from the three pinned exten
 web-verify-ext:  ## Viewer vs MuJoCo reference frames for the extension clips -> $(OBS_EXT_OUT)/viewer_verification.json
 	cd website && $(NPM) run verify-ext
 
+# --- Session 20: the Observatory visual quality pass (DECISIONS D-136, D-137) ---
+# Screenshots of the built site and DOM word counts; reads the built site only.
+AUDIT_TAG ?= before
+web-audit:  ## Screenshots of every section and DOM word counts -> logs/session20/visual_audit/$(AUDIT_TAG)/
+	cd website && AUDIT_TAG=$(AUDIT_TAG) $(NPM) run audit
+
 # --- Session 11: research paper (DECISIONS D-092 to D-096) ---
 # Fixed SOURCE_DATE_EPOCH (2026-11-09 00:00 UTC) so paper/main.pdf is byte-identical across
 # builds on this host and Tectonic bundle (D-093).

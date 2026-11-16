@@ -1,0 +1,31 @@
+## make lint
+uv run --frozen ruff check src scripts tests infra
+All checks passed!
+rc=0
+## make freeze-check
+ROBOFORGE_EVIDENCE_SESSION=19 uv run --frozen python -c "from roboforge.eval import freeze as f; d = f.load_freeze(); \
+	  bad = f.code_problems(d); print('\n'.join(bad) or 'freeze committed; frozen code unchanged'); \
+	  raise SystemExit(1 if bad else 0)"
+freeze committed; frozen code unchanged
+## make addendum-check
+uv run --frozen python scripts/addendum_assets.py check
+15 addendum files equal a fresh build
+uv run --frozen python scripts/addendum_assets.py lint
+addendum lint: every number comes from a generated macro
+## make paper-check
+uv run --frozen python scripts/paper_assets.py check
+paper/generated/ matches a fresh build (35 files)
+uv run --frozen python scripts/paper_assets.py lint
+paper lint: every number comes from a generated macro
+## make release-check
+uv run --frozen python scripts/release_check.py
+history          PASS
+secrets          PASS
+private_paths    PASS
+tracked_content  PASS
+docs             PASS
+readme_findings  PASS
+readme_preview   PASS
+readme_extensions PASS
+disclosed local-path files (D-100): 139
+release-check: PASS

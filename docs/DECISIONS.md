@@ -3586,3 +3586,26 @@ selection.
 - `docs/VISUAL_PROVENANCE.md` gained the extension section (`f675490`); the Session 10 rows are
   unchanged.
 - Nothing was pushed, tagged, released or deployed.
+
+## Session 19 (2026-11-16): v1.1 publication
+Level 1, the RGB study, Level 2, X1, X2 and X3 stay frozen with all their evidence, and so does
+the Session 18 build (the addendum, the README extensions block and chart, the Observatory
+extension export and the site code). No rollout, no training, no evaluation, no paid or remote
+compute. Session 19 publishes only what D-131 authorizes, in its order.
+
+### D-135 Makefile defaults bumped to Session 19 (FIXED, before any other change)
+- `PREFIX ?= s19` and `EVIDENCE_SESSION` default 19 (the D-092/D-097/D-106/D-110/D-117/D-126/
+  D-129/D-132 pattern). Evidence goes to `reports/session19/` and `logs/session19/` with
+  `ROBOFORGE_EVIDENCE_SESSION=19`.
+- `OBS_OUT` stays `reports/session10/observatory` and `OBS_EXT_OUT` stays
+  `reports/session18/observatory`: `make web-data` only reads them, and nothing writes into
+  Session 10 or Session 18 evidence. `PAGES_DIR` stays the gitignored `logs/tmp/pages`.
+- Nothing else changes in code: no new target, no change to `src/`, `scripts/`, `tests/`,
+  `website/`, `paper/`, `.github/`, `uv.lock` or any data.
+- Targets Session 19 runs: the checks (`lint`, `test`, `freeze-check`, `addendum-check`,
+  `paper-check`, `release-check`, `scripts/release_check.py --network`), the site build
+  (`web-data`, `web-assets`, `web-build`, `web-test`, `web-e2e`) and `pages-bundle`. Never run:
+  any eval, analysis, check or freeze target of Level 1, the RGB study, Level 2, X1, X2 or X3;
+  `obs-ext-select`, `obs-ext-export`, `obs-ext-findings`, `web-verify-ext`; `addendum`,
+  `addendum-assets`, `readme-extensions`, `paper`, `paper-assets` (the committed outputs stand).
+- No test pins the Makefile defaults (checked by grep before the change).

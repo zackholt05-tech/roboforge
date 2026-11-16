@@ -25,6 +25,12 @@ export const FAMILY_NOTE: Record<string, string> = {
 
 export const TASK: Record<string, string> = { lift: "Lift", can: "Can" };
 
+/** The task in plain words, for a first-time visitor. */
+export const TASK_NOTE: Record<string, string> = {
+  lift: "grasp a cube and lift it off the table",
+  can: "pick up a can and put it in its bin",
+};
+
 export const CATEGORY: Record<string, string> = {
   success: "Success",
   engineering_error: "Engineering error",
@@ -43,6 +49,12 @@ export const PARTITION: Record<string, string> = {
   eval_adhoc: "ad hoc evaluation start",
 };
 
+/** The start set of a clip, in words. The X2 held-out suite (`x2_heldout`, D-123) was recorded
+ * under the evaluator's `eval_adhoc` partition, the only frozen partition name open to a new
+ * suite; the caption names the suite, and Provenance keeps the recorded partition beside it. */
+export const startLabel = (partition: string, stateId: string): string =>
+  stateId.includes("_x2_heldout_") ? "X2 held-out start" : PARTITION[partition] ?? partition;
+
 // v1.1 extension arms (D-134): a family as evaluated in X1 or X2.
 export const ARM: Record<string, string> = {
   diffusion_unet: "Diffusion U-Net",
@@ -56,6 +68,9 @@ export const ARM: Record<string, string> = {
 
 export const SET: Record<string, string> = { robustness_base: "base", ood_cube_shift: "cube shift",
   ood_arm_offset: "arm offset" };
+
+/** Metres as centimetres with at most one decimal (display rounding only). */
+export const cm = (m: number): string => String(Math.round(m * 1000) / 10);
 
 export const steps1 = (x: number): string => `${x >= 0 ? "+" : "−"}${Math.abs(x).toFixed(1)}`;
 

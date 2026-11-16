@@ -35,7 +35,8 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	paper-assets paper-check paper-bibcheck paper \
 	readme-findings readme-preview release-check pages-bundle \
 	addendum-assets addendum-check addendum readme-extensions \
-	obs-ext-select obs-ext-export obs-ext-findings web-verify-ext
+	obs-ext-select obs-ext-export obs-ext-findings web-verify-ext \
+	web-audit web-verify-s20 web-verify-ext-s20
 
 help:  ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -500,7 +501,8 @@ web-dev:  ## Vite dev server (local only)
 	cd website && $(NPM) run dev
 
 visual-provenance:  ## Host: docs/VISUAL_PROVENANCE.md from the committed export (generated)
-	$(RUN_S) python scripts/visual_provenance.py --out-dir $(OBS_OUT) --ext-dir $(OBS_EXT_OUT)
+	$(RUN_S) python scripts/visual_provenance.py --out-dir $(OBS_OUT) --ext-dir $(OBS_EXT_OUT) \
+		--reverify-dir $(OBS_REVERIFY)
 
 # --- Session 18: the Observatory's v1.1 extension section (DECISIONS D-134) ---
 # A new evidence tree; OBS_OUT (Session 10) is never written. Clips are re-derived from recorded
@@ -523,8 +525,15 @@ web-verify-ext:  ## Viewer vs MuJoCo reference frames for the extension clips ->
 # --- Session 20: the Observatory visual quality pass (DECISIONS D-136, D-137) ---
 # Screenshots of the built site and DOM word counts; reads the built site only.
 AUDIT_TAG ?= before
+OBS_REVERIFY ?= reports/session20/observatory
 web-audit:  ## Screenshots of every section and DOM word counts -> logs/session20/visual_audit/$(AUDIT_TAG)/
 	cd website && AUDIT_TAG=$(AUDIT_TAG) $(NPM) run audit
+
+web-verify-s20:  ## Viewer vs MuJoCo reference frames after the visual pass -> reports/session20/observatory/ (Session 10 result untouched)
+	cd website && $(NPM) run verify-s20
+
+web-verify-ext-s20:  ## The same for the extension clips -> reports/session20/observatory/ext/ (Session 18 result untouched)
+	cd website && $(NPM) run verify-ext-s20
 
 # --- Session 11: research paper (DECISIONS D-092 to D-096) ---
 # Fixed SOURCE_DATE_EPOCH (2026-11-09 00:00 UTC) so paper/main.pdf is byte-identical across

@@ -3,7 +3,7 @@
 // new result. Every candidate path is a clone simulation of a chunk the robot never executed,
 // except the executed prefix, which reproduces the recorded frames bitwise.
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { Status } from "../components/ClipParts";
+import { ClipCaption, Provenance, Status } from "../components/ClipParts";
 import { decisionFrames, useClip, ViewerOrFallback } from "../components/ClipStage";
 import { Transport } from "../components/Transport";
 import { loadDenoise } from "../lib/data";
@@ -19,8 +19,8 @@ import { useRegistry } from "./registry";
 const DIMS = ["Δx", "Δy", "Δz", "Δroll", "Δpitch", "Δyaw", "gripper"];
 // Camera offsets from the decision's path centre, in three.js axes (y up), metres.
 const VIEWS: [string, string, number[] | null][] = [
-  ["above", "Close, from above", [0.2, 0.62, 0.26]],
-  ["side", "Close, from the side", [0.15, 0.12, 0.62]],
+  ["above", "Close, from above", [0.46, 0.58, 0.5]],
+  ["side", "Close, from the side", [0.3, 0.14, 0.86]],
   ["wide", "Whole scene", null],
 ];
 
@@ -44,14 +44,14 @@ function paths(d: Decision, stage: number, showDiversity: boolean): PathSpec[] {
     for (const p of d.paths.diversity) out.push({ points: p, color: PALETTE.sand, width: 1.2, opacity: 0.38 });
   }
   if (stage < d.timesteps.length) {
-    out.push({ points: d.paths.sample_in[stage], color: PALETTE.signal, width: 1.4, opacity: 0.55, dashed: true });
-    out.push({ points: d.paths.x0[stage], color: PALETTE.signal, width: 2.4, opacity: 0.9 });
+    out.push({ points: d.paths.sample_in[stage], color: PALETTE.signal, width: 2, opacity: 0.6, dashed: true });
+    out.push({ points: d.paths.x0[stage], color: PALETTE.signal, width: 3.4, opacity: 0.95 });
   } else {
     const ex = d.n_executed + 1;
-    out.push({ points: d.paths.final.slice(ex - 1), color: PALETTE.signal, width: 2, opacity: 0.5, dashed: true });
-    out.push({ points: d.paths.final.slice(0, ex), color: PALETTE.signal, width: 4, opacity: 1 });
+    out.push({ points: d.paths.final.slice(ex - 1), color: PALETTE.signal, width: 2.4, opacity: 0.6, dashed: true });
+    out.push({ points: d.paths.final.slice(0, ex), color: PALETTE.signal, width: 5, opacity: 1 });
   }
-  out.push({ points: d.paths.recorded_executed, color: 0xeee7d7, width: 3, opacity: 0.95 });
+  out.push({ points: d.paths.recorded_executed, color: 0xeee7d7, width: 3.6, opacity: 0.95 });
   return out;
 }
 
@@ -131,7 +131,7 @@ const OBS_LABEL = (n: string) => {
 const ObsWindow = memo(function ObsWindow({ d, names }: { d: Decision; names: string[] }) {
   const width = d.obs_window_normalized[0]?.length ?? 0;
   const groups = groupSizes(names, width);
-  const cell = 22, L = 74, W = L + width * cell, H = 34 + d.obs_window_normalized.length * (cell + 4);
+  const cell = 22, L = 74, W = L + width * cell + 30, H = 34 + d.obs_window_normalized.length * (cell + 4);
   const colour = (v: number) => {
     const a = Math.min(1, Math.abs(v));
     return v >= 0 ? `rgba(60,200,240,${0.12 + 0.88 * a})` : `rgba(201,168,107,${0.12 + 0.88 * a})`;
@@ -233,8 +233,9 @@ function Explorer({ clip, den }: { clip: Clip; den: Denoise }) {
           <ViewerOrFallback clip={clip} clock={clock} preset="orbit" options={{ ...DEFAULT_OPTIONS, trail: false, successHeight: clip.task === "lift" }}
             ariaLabel={`3D reconstruction of validation episode ${clip.state_id} at decision ${di}, with candidate end-effector paths`}
             focus={off ? focus : undefined} focusOffset={off ?? undefined}>
-            <PathLines paths={spec} markers={[{ at: start, color: 0xeee7d7, r: 0.007 }]} />
+            <PathLines paths={spec} markers={[{ at: start, color: 0xeee7d7, r: 0.008 }]} />
           </ViewerOrFallback>
+          <ClipCaption clip={clip} />
           <div className="chips" role="group" aria-label="Camera">
             {VIEWS.map(([k, l]) => <button key={k} type="button" className="chip" aria-pressed={view === k} onClick={() => setView(k)}>{l}</button>)}
           </div>
@@ -283,8 +284,10 @@ function Explorer({ clip, den }: { clip: Clip; den: Denoise }) {
         <summary>Show this decision's actions in controller units</summary>
         <EnvActions d={d} />
       </details>
-      <div className="grid-2 inside-foot">
-        <ObsWindow d={d} names={den.observation_names} />
+      <ObsWindow d={d} names={den.observation_names} />
+      <details className="prov">
+        <summary>Provenance and checks of this trace</summary>
+        <Provenance clip={clip} />
         <dl className="provenance">
           <div><dt>Episode</dt><dd>{den.state_id}, {clip.outcome.success ? `success at step ${clip.outcome.first_success_step}` : `failure (${clip.outcome.stop_reason})`}</dd></div>
           <div><dt>Checkpoint</dt><dd className="num">step {den.checkpoint.step}, sha256 {den.checkpoint.sha256.slice(0, 12)}…</dd></div>
@@ -296,7 +299,7 @@ function Explorer({ clip, den }: { clip: Clip; den: Denoise }) {
             return `gripper positions of the ${a.n} clone-simulated candidates: after ${d.n_executed} steps, RMS ${(100 * a.rms).toFixed(2)} cm from their centre (largest pair ${(100 * a.max).toFixed(2)} cm); after ${den.horizons.T_p} steps, ${(100 * b.rms).toFixed(2)} cm (${(100 * b.max).toFixed(2)} cm). Computed in the browser from the exported paths. Distinct modes would show as separated clusters of end points; this reports spread only.`;
           })()}</dd></div>
         </dl>
-      </div>
+      </details>
     </div>
   );
 }
@@ -316,10 +319,10 @@ export default function InsidePolicy() {
         <div className="section-head">
           <h2 id="inside-title">Inside the policy</h2>
           <p className="lede">
-            Every eight steps the diffusion policy starts from noise in a 16-step × 7-dimension action
-            space and removes it in ten DDIM steps, conditioned on the last two observations. Below are
-            the sampler's real intermediate states, recomputed bitwise from recorded validation episodes,
-            and where each candidate would have taken the gripper in a cloned simulation.
+            At each decision the diffusion policy starts from noise and denoises it, step by step, into
+            a short sequence of future actions. These are the sampler's real intermediate states from
+            recorded validation episodes, and where each candidate would have taken the gripper in a
+            cloned simulation.
           </p>
         </div>
         <fieldset className="chips" style={{ marginBottom: 18 }}>
@@ -334,10 +337,9 @@ export default function InsidePolicy() {
           : den.status !== "ready" ? <Status state={den} what="the denoising trace" />
           : <Explorer key={chosen.id} clip={clip.value} den={den.value} />}
         <p className="fine">
-          Export, not a result: these sampler calls were re-run in Session 10 only to show the mechanism.
-          The held-out results in Findings come from the frozen run and were not touched. Paths are the
-          end effector's trajectory in a clone of the simulator; intermediate sampler states are not
-          physical plans, and running them shows only where such an action sequence would lead.
+          Export, not a result: the sampler was re-run on recorded validation episodes only to show the
+          mechanism; the held-out results were not touched. Cyan paths are proposals run in a clone of the
+          simulator, not motion the robot made; only the ivory path was executed.
         </p>
       </div>
     </section>

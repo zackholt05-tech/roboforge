@@ -102,3 +102,19 @@ Method: three.js silhouette (MeshBasicMaterial, no antialiasing, linear output) 
 `reports/session18/observatory/viewer_verification.json`: 12 reference frames, overall **pass** (thresholds {'robot_iou_min': 0.95, 'object_iou_min': 0.85, 'centroid_px_max': 1.5}).
 Robot IoU 0.9998–1.0000; object IoU 1.0000–1.0000; robot centroid offset at most 0.03 px.
 Method: three.js silhouette (MeshBasicMaterial, no antialiasing, linear output) through the exported MuJoCo camera pose and fovy, vs the class mask of MuJoCo's segmentation render of the same recorded state (robosuite visual geom groups).
+
+## Viewer re-verification after the visual pass (Session 20, D-136)
+
+The visual quality pass changed styled materials, lights and viewer camera presets under `website/src/three/`. Both verifications above were run again with the same page, checks and thresholds, writing to a new tree; the results above were not rewritten.
+
+Release clips (`make web-verify-s20`):
+
+`reports/session20/observatory/viewer_verification.json`: 18 reference frames, overall **pass** (thresholds {'robot_iou_min': 0.95, 'object_iou_min': 0.85, 'centroid_px_max': 1.5}).
+Robot IoU 0.9998–1.0000; object IoU 0.9970–1.0000; robot centroid offset at most 0.04 px.
+Method: three.js silhouette (MeshBasicMaterial, no antialiasing, linear output) through the exported MuJoCo camera pose and fovy, vs the class mask of MuJoCo's segmentation render of the same recorded state (robosuite visual geom groups).
+
+Extension clips (`make web-verify-ext-s20`):
+
+`reports/session20/observatory/ext/viewer_verification.json`: 12 reference frames, overall **pass** (thresholds {'robot_iou_min': 0.95, 'object_iou_min': 0.85, 'centroid_px_max': 1.5}).
+Robot IoU 0.9998–1.0000; object IoU 1.0000–1.0000; robot centroid offset at most 0.03 px.
+Method: three.js silhouette (MeshBasicMaterial, no antialiasing, linear output) through the exported MuJoCo camera pose and fovy, vs the class mask of MuJoCo's segmentation render of the same recorded state (robosuite visual geom groups).

@@ -4,7 +4,8 @@ The ledger lists every visual output of the site with its source run, checkpoint
 simulator build and the transformations applied. It is generated, never edited by hand:
 
     make visual-provenance      # host: reads reports/session<N>/observatory/ and, for the
-                                # v1.1 extension clips (D-134), reports/session18/observatory/
+                                # v1.1 extension clips (D-134), reports/session18/observatory/;
+                                # the Session 20 re-verification (D-136) is its own section
 """
 
 from __future__ import annotations
@@ -40,7 +41,7 @@ def _clip(out: Path, cid: str) -> dict[str, Any]:
         return json.load(fh)
 
 
-def build(out: Path, ext: Path | None = None) -> str:
+def build(out: Path, ext: Path | None = None, reverify: Path | None = None) -> str:
     """The ledger's Markdown text; ``ext`` adds the v1.1 extension export (D-134)."""
     index = json.loads((out / "index.json").read_text())
     lines = [
@@ -88,6 +89,8 @@ def build(out: Path, ext: Path | None = None) -> str:
     lines += ["", "## Viewer verification", "", *_verification(out, "make web-verify")]
     if ext is not None:
         lines += _extension(ext)
+    if reverify is not None:
+        lines += _reverification(reverify)
     return "\n".join(lines) + "\n"
 
 
@@ -144,18 +147,36 @@ def _extension(ext: Path) -> list[str]:
             *_verification(ext, "make web-verify-ext")]
 
 
+def _reverification(rev: Path) -> list[str]:
+    """Session 20 (D-136): both verifications run again after the visual pass, in their own tree."""
+    return [
+        "", "## Viewer re-verification after the visual pass (Session 20, D-136)", "",
+        "The visual quality pass changed styled materials, lights and viewer camera presets "
+        "under `website/src/three/`. Both verifications above were run again with the same page, "
+        "checks and thresholds, writing to a new tree; the results above were not rewritten.",
+        "", "Release clips (`make web-verify-s20`):", "",
+        *_verification(rev, "make web-verify-s20"),
+        "", "Extension clips (`make web-verify-ext-s20`):", "",
+        *_verification(rev / "ext", "make web-verify-ext-s20"),
+    ]
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint."""
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--out-dir", type=Path, required=True)
     p.add_argument("--ext-dir", type=Path, default=None,
                    help="the v1.1 extension export (D-134), added as its own section")
+    p.add_argument("--reverify-dir", type=Path, default=None,
+                   help="the Session 20 re-verification tree (D-136), added as its own section")
     p.add_argument("--doc", type=Path, default=REPO_ROOT / "docs" / "VISUAL_PROVENANCE.md")
     a = p.parse_args(argv)
     out = a.out_dir if a.out_dir.is_absolute() else REPO_ROOT / a.out_dir
     ext = None if a.ext_dir is None else (a.ext_dir if a.ext_dir.is_absolute()
                                           else REPO_ROOT / a.ext_dir)
-    a.doc.write_text(build(out, ext))
+    rev = None if a.reverify_dir is None else (
+        a.reverify_dir if a.reverify_dir.is_absolute() else REPO_ROOT / a.reverify_dir)
+    a.doc.write_text(build(out, ext, rev))
     print(f"wrote {repo_relative(a.doc)}")
     return 0
 

@@ -9,8 +9,8 @@ import { useRegistry } from "./registry";
 export const APPROXIMATIONS = [
   "Poses between two recorded 20 Hz frames are interpolated (linear for positions, slerp for orientations) when playback runs slower or faster than real time; paused frames show the recorded pose exactly.",
   "Colours and materials are restyled (matte shells, linework); MuJoCo textures are not used.",
-  "The floor and walls are replaced by a metric grid (major lines every 10 cm on the Lift table, 1 cm minor).",
-  "Lighting and shadows are the viewer's own, not MuJoCo's.",
+  "The floor and walls are replaced by a metric grid (lines every 10 cm, on the floor and on the Lift table) and a soft pool of light.",
+  "Lighting and shadows are the viewer's own, not MuJoCo's; the manipulated object is drawn slightly self-lit so that it stays visible in shadow.",
   "Robot meshes are extracted from the installed robosuite package at build time (D-090) and quantized to 16 bits per axis within each mesh's bounding box (largest vertex error about 0.007 mm, measured when the mesh file is written). If they are missing, links are drawn as bounding boxes and the viewer says so.",
   "Candidate paths in Inside the policy are end-effector traces from a cloned simulator, not kinematic guesses; intermediate sampler states are not plans the policy would execute. They are drawn on top of the robot, never hidden by it, so their depth order is not physical.",
   "Point clouds are the policy's own input, recomputed from the recorded state at each decision frame and held until the next decision; each point is drawn as a dot of fixed screen size.",
@@ -33,11 +33,13 @@ function Verification() {
     <div className="verify">
       <h3>How the 3D view was checked</h3>
       <ul className="prose checks">
-        <li>Every body pose is recomputed from the saved simulator state on the canonical container and compared with the pose recorded during evaluation{rec.length ? `: largest difference ${Math.max(...rec).toExponential(1)} m over ${rec.length} clips` : ""}. Held-out episodes are re-rendered from their states, never re-run.</li>
-        <li>The browser poses each link from its recorded world transform. A unit test also rebuilds the poses from the joint angles through the exported kinematic tree (three.js forward kinematics) on about 12 frames of two clips per task, and checks that they agree within 0.1 mm and 0.06°.</li>
-        <li>The silhouette of the 3D reconstruction is rendered through each MuJoCo camera and compared with MuJoCo's own segmentation render of the same state:</li>
+        <li>Every body pose is recomputed from the saved simulator state on the canonical container and compared with the pose recorded during evaluation{rec.length ? (Math.max(...rec) === 0 ? `: identical in all ${rec.length} clips` : `: largest difference ${Math.max(...rec).toExponential(1)} m over ${rec.length} clips`) : ""}. Held-out episodes are re-rendered from their states, never re-run.</li>
+        <li>The browser poses each link from its recorded world transform. A unit test rebuilds the poses from the joint angles through the exported kinematic tree and checks that they agree within 0.1 mm and 0.06°.</li>
+        <li>The reconstruction's silhouette, rendered through each MuJoCo camera, is compared with MuJoCo's own segmentation render of the same state:</li>
       </ul>
       {v.status === "ready" && v.value ? (
+        <details className="more">
+          <summary>{v.value.pass ? "Pass" : "FAIL"} on all {v.value.frames.length} reference frames: robot IoU ≥ {Math.min(...v.value.frames.map((x) => x.robot_iou)).toFixed(4)}, centroid offset ≤ {Math.max(...v.value.frames.map((x) => x.robot_centroid_px)).toFixed(2)} px. Show every frame</summary>
         <div className="table-scroll">
           <table className="verify-table">
             <caption>Viewer vs MuJoCo reference frames (thresholds: robot IoU ≥ {v.value.threshold.robot_iou_min}, object IoU ≥ {v.value.threshold.object_iou_min}, robot centroid within {v.value.threshold.centroid_px_max} px). Overall: {v.value.pass ? "pass" : "FAIL"}.</caption>
@@ -49,11 +51,16 @@ function Verification() {
             ))}</tbody>
           </table>
         </div>
+        </details>
       ) : v.status === "loading" ? <Status state={v} what="the viewer verification" /> : (
         <p className="status">The viewer verification has not been run for this build (`make web-verify`).</p>
       )}
       <h3>Visual approximations</h3>
-      <ul className="prose checks">{APPROXIMATIONS.map((a) => <li key={a}>{a}</li>)}</ul>
+      <p className="prose">The 3D view is a restyled reconstruction of the recorded poses: interpolated between frames, with the viewer's own colours, lighting, shadows and grid.</p>
+      <details className="more">
+        <summary>All {APPROXIMATIONS.length} approximations</summary>
+        <ul className="prose checks">{APPROXIMATIONS.map((a) => <li key={a}>{a}</li>)}</ul>
+      </details>
     </div>
   );
 }
@@ -87,7 +94,10 @@ export default function Methods() {
               The only new policy calls are the denoising traces in Inside the policy, replayed on validation
               starts and labelled as an export.</p>
             {f.status === "ready" && (
-              <p className="fine">Frozen sources: {f.value.sources.map((s) => `${s.path} (${short(s.sha256, 8)})`).join("; ")}.</p>
+              <details className="more">
+                <summary>Frozen sources ({f.value.sources.length} files, SHA-256)</summary>
+                <p className="fine">{f.value.sources.map((s) => `${s.path} (${short(s.sha256, 8)})`).join("; ")}.</p>
+              </details>
             )}
           </div>
           <Verification />

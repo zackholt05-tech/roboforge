@@ -8,7 +8,7 @@ import { prefersReducedMotion, type Clock } from "../lib/playback";
 import type { Clip } from "../lib/schema";
 import { PRESETS, type PresetId } from "../three/cameras";
 import { DEFAULT_OPTIONS, Viewer, type ViewerOptions } from "../three/Viewer";
-import { ActionChannels, ClipCaption, InsetVideo, Provenance, Status } from "./ClipParts";
+import { ActionChannels, ClipCaption, InsetVideo, ProvenanceDetails, Status } from "./ClipParts";
 import { Transport } from "./Transport";
 
 export function decisionFrames(clip: Clip): number[] {
@@ -19,9 +19,11 @@ export function useClip(id: string | null) {
   return useAsync(() => (id ? loadClip(id) : Promise.reject(new Error("no clip selected"))), [id]);
 }
 
-export function ViewerOrFallback({ clip, clock, preset, options, ariaLabel, children, continuous, focus, focusOffset }: {
+export function ViewerOrFallback({ clip, clock, preset, options, ariaLabel, children, continuous, focus, focusOffset, tag = true }: {
   clip: Clip; clock: Clock; preset: PresetId; options: ViewerOptions; ariaLabel: string;
-  children?: ReactNode; continuous?: boolean; focus?: number[]; focusOffset?: number[] }) {
+  children?: ReactNode; continuous?: boolean; focus?: number[]; focusOffset?: number[];
+  /** Say on the canvas that this is a restyled reconstruction (off for the hero, whose caption says it). */
+  tag?: boolean }) {
   const meshes = useMeshes();
   const small = useMedia("(max-width: 720px)");
   const [want3d, setWant3d] = useState(false);
@@ -34,6 +36,7 @@ export function ViewerOrFallback({ clip, clock, preset, options, ariaLabel, chil
         <>
           {near && <Viewer clip={clip} lib={meshes.lib} clock={clock} preset={preset} options={options}
             ariaLabel={ariaLabel} continuous={continuous} focus={focus} focusOffset={focusOffset}>{children}</Viewer>}
+          {tag && <p className="stage-tag">3D reconstruction of the recorded states, restyled colours</p>}
           {meshes.error && (
             <p className="stage-note" role="note">Robot meshes are not available ({meshes.error}). Links are drawn as their bounding boxes, an approximation.</p>
           )}
@@ -52,8 +55,8 @@ export function ViewerOrFallback({ clip, clock, preset, options, ariaLabel, chil
 }
 
 export function ClipStage({ clipId, title, category, compact = false, autoplay = false,
-  initialPreset = "orbit", extra }: { clipId: string; title?: string; category?: string | null;
-  compact?: boolean; autoplay?: boolean; initialPreset?: PresetId; extra?: ReactNode }) {
+  initialPreset = "workspace", extra, note }: { clipId: string; title?: string; category?: string | null;
+  compact?: boolean; autoplay?: boolean; initialPreset?: PresetId; extra?: ReactNode; note?: string }) {
   const s = useClip(clipId);
   const clip = s.status === "ready" ? s.value : null;
   const clock = useClockFor(clip?.frames.n, clip?.control_dt_s);
@@ -96,13 +99,9 @@ export function ClipStage({ clipId, title, category, compact = false, autoplay =
           </fieldset>
         </div>
       )}
-      {!compact && (
-        <div className="stage-detail">
-          <ActionChannels clip={clip} clock={clock} />
-          <Provenance clip={clip} />
-        </div>
-      )}
-      <p className="fine">{clip.label}. {clip.success_rule.text && `Success rule: ${clip.success_rule.text}.`}</p>
+      {!compact && <ActionChannels clip={clip} clock={clock} />}
+      <ProvenanceDetails clip={clip} />
+      {clip.success_rule.text && <p className="fine">Success rule: {clip.success_rule.text}.{note ? ` ${note}` : ""}</p>}
     </div>
   );
 }

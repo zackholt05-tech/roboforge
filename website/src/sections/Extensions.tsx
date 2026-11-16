@@ -5,8 +5,8 @@
 // result or with another study. The recorded episodes are X1 and X2 records re-derived from
 // their recorded MuJoCo states; which start is shown is fixed by the D-134 rules (selection.json).
 import { useMemo, useState } from "react";
-import { DifferenceChart, EstimateChart, OutcomeStrip, TaxonomyBars } from "../charts/Charts";
-import { ActionChannels, ClipCaption, Provenance, Status } from "../components/ClipParts";
+import { ChartKey, DifferenceChart, EstimateChart, OutcomeStrip, TaxonomyBars } from "../charts/Charts";
+import { ActionChannels, ClipCaption, ProvenanceDetails, Status } from "../components/ClipParts";
 import { decisionFrames, ViewerOrFallback } from "../components/ClipStage";
 import { Transport } from "../components/Transport";
 import { loadExtClip, loadExtFindings, loadExtSelection, loadExtVerification } from "../lib/data";
@@ -28,13 +28,13 @@ function strip(s: { order: string[]; outcomes: boolean[] }) {
   return s.order.map((state_id, i) => ({ state_id, category: s.outcomes[i] ? "success" : "failure" }));
 }
 
-const STRIP_NOTE = "One square per start, in the summary's start order: filled, success; outlined, failure (these strips record success only, not the failure type; hover for the start).";
+const STRIP_NOTE = "One square per start, in the summary's start order. Filled: success. Outlined: failure (these strips record success only, not the failure type).";
 
 /** Recorded episodes of one rule-selected start, side by side on one clock. */
 function Group({ clips, names, study }: { clips: Clip[]; names: string[]; study: string }) {
   const n = Math.max(...clips.map((c) => c.frames.n));
   const clock = useClockFor(n, clips[0].control_dt_s);
-  const [preset, setPreset] = useState<PresetId>("frontview");
+  const [preset, setPreset] = useState<PresetId>("workspace");
   const opts = { ...DEFAULT_OPTIONS, successHeight: clips[0].task === "lift" };
   const diff = clips.find((c) => c.family === "diffusion_unet");
   const first = clips.map((c) => c.outcome.first_success_step).find((s) => s !== null) ?? null;
@@ -51,12 +51,9 @@ function Group({ clips, names, study }: { clips: Clip[]; names: string[]; study:
             </figcaption>
             <ViewerOrFallback clip={c} clock={clock} preset={preset} options={opts}
               ariaLabel={`3D reconstruction of ${names[i]} (${study}) on ${c.state_id}`} />
-            <ClipCaption clip={c} />
-            <ActionChannels clip={c} clock={clock} />
-            <details className="manifests">
-              <summary>Provenance and training data</summary>
-              <Provenance clip={c} />
-            </details>
+            <ClipCaption clip={c} brief />
+            <ActionChannels clip={c} clock={clock} caption={false} />
+            <ProvenanceDetails clip={c} />
           </figure>
         ))}
       </div>
@@ -69,7 +66,10 @@ function Group({ clips, names, study }: { clips: Clip[]; names: string[]; study:
             onClick={() => setPreset(p.id)}>{p.label}</button>
         ))}
       </fieldset>
-      <p className="fine">One clock drives every reconstruction; a shorter episode holds its last recorded frame.{diff ? " Scrubber ticks mark diffusion's decisions." : ""} Each episode was re-derived from its recorded MuJoCo states; nothing was simulated again.</p>
+      {clips[0].provenance.recorded_policy_label && (
+        <p className="fine training-label">{clips[0].policy.label}. The label the evaluator recorded is in each clip's Provenance (KI-065).</p>
+      )}
+      <p className="fine">MuJoCo simulation, one clock for every view, re-derived from the recorded states; nothing was simulated again.{diff ? " Scrubber ticks: diffusion's decisions." : ""} Line charts: the executed actions, recorded.</p>
     </div>
   );
 }
@@ -95,11 +95,13 @@ function Chips<T extends string>({ legend, items, value, set }: { legend: string
 
 function ContrastTable({ cs, study }: { cs: ExtContrast[]; study: string }) {
   return (
+    <details className="more">
+      <summary>Table: both intervals (bootstrap and seed-level) for each contrast</summary>
     <div className="table-scroll">
       <table className="sources ext-contrasts">
         <caption>The four declared Can contrasts, in percentage points: the frozen Level 1 Can PH value and the {study} value, each with its hierarchical paired bootstrap and seed-level (Welch) interval.</caption>
-        <thead><tr><th scope="col">Contrast</th><th scope="col">Level 1 Can PH (frozen)</th><th scope="col">seed-level</th>
-          <th scope="col">{study}</th><th scope="col">seed-level</th><th scope="col">verdict</th><th scope="col">relation to Level 1</th></tr></thead>
+        <thead><tr><th scope="col">Contrast</th><th scope="col">Level 1 Can PH (frozen), bootstrap</th><th scope="col">Level 1, seed-level</th>
+          <th scope="col">{study}, bootstrap</th><th scope="col">{study}, seed-level</th><th scope="col">verdict</th><th scope="col">relation to Level 1</th></tr></thead>
         <tbody>{cs.map((c) => (
           <tr key={c.name}>
             <th scope="row">{c.name}</th>
@@ -113,6 +115,7 @@ function ContrastTable({ cs, study }: { cs: ExtContrast[]; study: string }) {
         ))}</tbody>
       </table>
     </div>
+    </details>
   );
 }
 
@@ -168,36 +171,35 @@ function X1({ f, sel }: { f: FindingsExt; sel: ExtSelection }) {
     <div className="robustness ext-study" aria-labelledby="x1-title">
       <StudyHead id="x1-title" title="X1: does the missing action bound explain BC's robustness gap?"
         kinds={[f.x1.label, "validation regime, not held-out"]} />
-      <p className="fine">
-        The diffusion sampler bounds every action it decodes to the training range; the v1.0.0 BC heads had no such bound (KI-052).
-        X1 re-ran the frozen BC checkpoints on the Session 7 robustness starts with the same bound and nothing else changed ({f.x1.decision}).
-        {L.families[keys[0]] && ` Each set has ${L.n_states} starts; ${L.families[keys[0]].n_seeds} training seeds per arm.`}
+      <p className="study-q">
+        The diffusion sampler bounds every action to the training range; the BC heads did not (KI-052).
+        X1 re-ran the frozen BC checkpoints on the robustness starts with the same bound ({f.x1.decision}).
+      </p>
+      <p className="callout">
+        {holds && <><strong>The bound does not close the gap.</strong>{" "}</>}{R.primary.reading}
       </p>
       <div className="grid-2 findings-top">
         <EstimateChart title={`${TASK.lift}: success of diffusion and BC-MLP-chunk, with and without the bound`}
           rows={keys.map((k) => [k, L.families[k]])}
           label={(k) => { const [a, s] = k.split(":"); return `${ARM[a] ?? a}, ${SET[s] ?? s}`; }} />
-        <div className="findings-read">
-          <p className="callout">
-            {holds && <><strong>The bound does not close the gap.</strong>{" "}</>}{R.primary.reading}
-          </p>
+        <div>
+          <DifferenceChart title={`${TASK.lift}, arm offset: difference in drop (base − arm offset)`} rows={drops} labelWidth={318} lowerIsBetter
+            label={(d) => DROP[d.a] ?? d.a}
+            note="Negative: the first arm drops less. The frozen row is the v1.0.0 value, for comparison." />
           <p className="fine">
-            {changed !== undefined && <>Under the {TASK.lift} arm offset the bound changed {pct(changed)} of BC-MLP-chunk's actions; </>}
-            {cuSep} of {cu.length} clamped − unclamped success differences (same checkpoints, both tasks) separate. {R.support.reading}
+            {changed !== undefined && <>The bound changed {pct(changed)} of BC-MLP-chunk's actions under the arm offset, yet </>}
+            {cuSep} of {cu.length} clamped − unclamped success differences separate.
             {" "}The diffusion side of KI-052, clipping inside the sampler, was not tested.
           </p>
-          <p className="fine">Method: {f.x1.method}.</p>
         </div>
       </div>
-      <div className="grid-2">
-        <DifferenceChart title={`${TASK.lift}, arm offset: difference in drop (base − arm offset)`} rows={drops} labelWidth={318} lowerIsBetter
-          label={(d) => DROP[d.a] ?? d.a}
-          note="A negative difference means the first arm drops less. The frozen row is the v1.0.0 value, shown for comparison." />
-        <DifferenceChart title="Clamped − unclamped success, same checkpoints" rows={cu} labelWidth={318}
-          label={(d) => d.a} />
-      </div>
-      <h4 className="ext-sub">Three arms, one start ({TASK.lift}, arm offset, seed {sel.seed})</h4>
-      <p className="fine">Which start is shown is fixed by rule (D-134): the first one, in the summary's start order, where only diffusion succeeds, where all three succeed, and where the bound changed BC-MLP-chunk's outcome. Rule-selected cases, not representative samples.</p>
+      <details className="more">
+        <summary>All {cu.length} clamped − unclamped differences, and the method</summary>
+        <DifferenceChart title="Clamped − unclamped success, same checkpoints" rows={cu} labelWidth={318} label={(d) => d.a} />
+        <p className="fine">{R.support.reading} Method: {f.x1.method}.</p>
+      </details>
+      <h4 className="ext-sub">Three conditions, one start ({TASK.lift}, arm offset, seed {sel.seed})</h4>
+      <p className="fine">The start is fixed by rule (D-134): the first one, in the summary's start order, that fits the case. Rule-selected cases, not representative samples.</p>
       <div className="stage-controls"><Chips legend="Case" items={X1_CASES} value={kase} set={setKase} /></div>
       {!c?.clips ? (
         <p className="status">No start fits this case: {c?.reason ?? "not in the selection"}.</p>
@@ -218,13 +220,13 @@ function X3({ f }: { f: FindingsExt }) {
   return (
     <div className="robustness ext-study" aria-labelledby="x3-title">
       <StudyHead id="x3-title" title="X3: more seeds on Can" kinds={[x.label, "held-out, fresh starts"]} />
-      <p className="fine">
-        {x.seeds.length} training seeds per family (the frozen {frozenSeeds} plus seeds {added[0]}–{added[added.length - 1]}), evaluated once on {x.suite.n_states} fresh held-out {TASK[x.suite.task] ?? x.suite.task} starts ({x.decision}).
-        The frozen Level 1 Can PH values ({frozenSeeds} seeds × {x.contrasts[0].frozen.n_states} starts) stand as reported; X3 is a separate replication beside them.
+      <p className="study-q">
+        Do the Can separations survive more training seeds? {x.seeds.length} seeds per family (the frozen {frozenSeeds} plus seeds {added[0]}–{added[added.length - 1]}), evaluated once on {x.suite.n_states} fresh held-out starts ({x.decision}).
+        The frozen Level 1 values ({frozenSeeds} seeds × {x.contrasts[0].frozen.n_states} starts) stand as reported; X3 sits beside them, never pooled.
       </p>
       <div className="grid-2">
-        <DifferenceChart title="The four declared Can contrasts: Level 1 (frozen) and X3" rows={contrastRows(x.contrasts, "X3")} labelWidth={330}
-          label={(d) => `${d.a}, ${d.b}`} note="Bootstrap intervals; the seed-level intervals are in the table below." />
+        <DifferenceChart title="The declared Can contrasts: Level 1 (frozen), then X3" rows={contrastRows(x.contrasts, "X3")} labelWidth={330} paired
+          label={(d) => `${d.a}, ${d.b}`} note="Bootstrap intervals. Seed-level intervals are in the table." />
         <EstimateChart title={`X3: ${TASK.can} success by family`} rows={fams.map((k) => [k, x.families[k]])} />
       </div>
       <ContrastTable cs={x.contrasts} study="X3" />
@@ -252,21 +254,23 @@ function X2({ f, sel }: { f: FindingsExt; sel: ExtSelection }) {
   return (
     <div className="robustness ext-study" aria-labelledby="x2-title">
       <StudyHead id="x2-title" title={`${x.study}: demonstrations from several operators`} kinds={["held-out, once", "within-operator only"]} />
-      <p className="fine">
-        The four families were trained again on the robomimic Can MH demonstrations (mixed quality, several human operators) and evaluated once on {x.suite.n_states} held-out {TASK[x.suite.task] ?? x.suite.task} starts.
+      <p className="study-q">
+        Does the picture change with mixed-quality demonstrations from several operators? The four families were retrained on the robomimic Can MH demonstrations and evaluated once on {x.suite.n_states} held-out starts.
         {" "}{x.label}. Outcome: {x.outcome}{horizon !== undefined ? `; Level 1 episodes end at ${horizon} steps, so the two success scales differ` : ""}.
       </p>
       <div className="grid-2 findings-top">
         <EstimateChart title={`${x.study}: success by family`} rows={fams.map((k) => [k, x.families[k]])} counts={counts} />
-        <DifferenceChart title={`The four declared Can contrasts: Level 1 Can PH (frozen) and ${x.study}`} rows={contrastRows(x.contrasts, "X2")} labelWidth={300}
-          ticksPerSide={2} label={(d) => `${d.a}, ${d.b}`} note="Rows marked Level 1 are the frozen Can PH values; rows marked X2 are X2 (Can MH). Bootstrap intervals; seed-level intervals and each contrast's relation to Level 1 are in the table below." />
+        <DifferenceChart title={`The declared Can contrasts: Level 1 Can PH (frozen), then ${x.study}`} rows={contrastRows(x.contrasts, "X2")} labelWidth={300} paired
+          ticksPerSide={2} label={(d) => `${d.a}, ${d.b}`} note="Shown beside each other, never pooled. Bootstrap intervals. Seed-level intervals are in the table." />
       </div>
       <ContrastTable cs={x.contrasts} study={x.study} />
       <div className="grid-2">
         <TaxonomyBars title={`${x.study}: how the failures failed`} rows={tax} />
+        <details className="more">
+          <summary>Declared secondary: episode length</summary>
         <div className="table-scroll">
           <table className="sources">
-            <caption>Declared secondary: episode length in steps (steps to success; a failure counts as the full horizon), paired differences with {Math.round(100 * x.censored_episode_length.level)} % hierarchical bootstrap intervals.</caption>
+            <caption>Episode length in steps (steps to success; a failure counts as the full horizon), paired differences with {Math.round(100 * x.censored_episode_length.level)} % hierarchical bootstrap intervals.</caption>
             <thead><tr><th scope="col">Difference</th><th scope="col">steps</th><th scope="col">interval</th><th scope="col">verdict</th></tr></thead>
             <tbody>{x.censored_episode_length.differences.map((d) => (
               <tr key={`${d.a}-${d.b}`}><th scope="row">{FAMILY[d.a] ?? d.a} − {FAMILY[d.b] ?? d.b}</th>
@@ -275,9 +279,10 @@ function X2({ f, sel }: { f: FindingsExt; sel: ExtSelection }) {
             ))}</tbody>
           </table>
         </div>
+        </details>
       </div>
       <h4 className="ext-sub">Same start, diffusion against one BC family ({x.study}, seed {sel.seed})</h4>
-      <p className="fine">Which start is shown is fixed by rule (D-134): the first one, in the summary's start order, where only diffusion succeeds, where only the BC family succeeds, and where both do. Rule-selected cases, not representative samples.</p>
+      <p className="fine">The start is fixed by rule (D-134): the first one, in the summary's start order, that fits the case. Rule-selected cases, not representative samples.</p>
       <div className="stage-controls">
         <Chips legend="BC family" items={BC.map((k) => [k, FAMILY[k]] as const)} value={fam} set={setFam} />
         <Chips legend="Case" items={cases} value={kase} set={setKase} />
@@ -318,9 +323,8 @@ function ViewerCheck() {
   const maxPx = Math.max(...fr.map((x) => x.robot_centroid_px));
   return (
     <p className="fine">
-      Viewer check ({v.value.pass ? "pass" : "FAIL"}): on {fr.length} reference frames of these clips, the 3D reconstruction's
-      robot silhouette matches MuJoCo's own segmentation render through the same camera with IoU ≥ {minIou.toFixed(4)} and a
-      centroid offset ≤ {maxPx.toFixed(2)} px (thresholds: IoU ≥ {v.value.threshold.robot_iou_min}, ≤ {v.value.threshold.centroid_px_max} px).
+      Viewer check ({v.value.pass ? "pass" : "FAIL"}) on {fr.length} reference frames of these clips: robot silhouette IoU ≥ {minIou.toFixed(4)} against
+      MuJoCo's segmentation render, centroid offset ≤ {maxPx.toFixed(2)} px (thresholds {v.value.threshold.robot_iou_min} and {v.value.threshold.centroid_px_max} px).
     </p>
   );
 }
@@ -334,11 +338,12 @@ export default function Extensions() {
         <div className="section-head">
           <h2 id="followups-title">After v1.0.0: three follow-up studies</h2>
           <p className="lede">
-            Three studies ran after the v1.0.0 report, each preregistered and run once. None of them
-            changes a frozen number above. Each keeps its own label, and none is pooled with the frozen
-            result or with another study. &ldquo;Not separated&rdquo; is never read as equality.
+            Three studies ran after the v1.0.0 report, each preregistered and run once. None changes a
+            frozen number above; each keeps its own label and is never pooled with the frozen result or
+            with another study. &ldquo;Not separated&rdquo; is never read as equality.
           </p>
         </div>
+        <ChartKey estimate difference />
         {f.status !== "ready" ? <Status state={f} what="the v1.1 follow-up findings" /> :
           sel.status !== "ready" ? <Status state={sel} what="the v1.1 clip selection" /> : (
             <>
@@ -348,7 +353,7 @@ export default function Extensions() {
               <H2c f={f.value} />
               <div className="table-scroll">
                 <table className="sources">
-                  <caption>Every number in this section is read from these files (SHA-256 checked when the site data is built). The v1.1 addendum (paper/addendum/addendum.pdf in the repository) has the tables and caveats.</caption>
+                  <caption>Every number in this section is read from these files (SHA-256 checked when the site data is built). The v1.1 addendum (paper/addendum/addendum.pdf in the repository; a local build, not peer reviewed) has the tables and caveats.</caption>
                   <thead><tr><th scope="col">Study</th><th scope="col">Pinned results</th><th scope="col">SHA-256</th></tr></thead>
                   <tbody>{f.value.sources.map((s) => (
                     <tr key={s.key}><td>{s.key.toUpperCase()}: {s.label}</td><td>{s.path}</td><td className="num" title={s.sha256}>{short(s.sha256, 16)}…</td></tr>

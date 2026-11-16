@@ -44,7 +44,7 @@ function Schematic() {
         {mode === "bc"
           ? "A policy trained to predict the average action blends two valid demonstrations into one that neither demonstrator took."
           : "A diffusion policy learns the distribution of whole action sequences and draws one sample, so each plan follows a single demonstrated way."}{" "}
-        Dashed: demonstrations. This is the textbook motivation, not a measurement: the findings below compare success rates on Lift and Can, not modes.
+        Dashed: demonstrations. A textbook motivation, not a measurement: the findings compare success rates, not modes.
       </figcaption>
     </figure>
   );
@@ -53,8 +53,11 @@ function Schematic() {
 const ROWS: [number, string][] = [[0, "Δx"], [1, "Δy"], [2, "Δz"], [6, "gripper"]];
 
 function TensorStrip({ d, horizon }: { d: Decision; horizon: number }) {
-  const steps = d.timesteps.length;
-  const cw = 64, ch = 40, gx = 8, gy = 10, L = 56, T = 22;
+  // Every second sampler step, so that each cell is large enough to read; all of them are in
+  // "Inside the policy".
+  const shown = d.timesteps.map((_, i) => i).filter((i) => i % 2 === 0);
+  const steps = shown.length;
+  const cw = 104, ch = 56, gx = 10, gy = 12, L = 64, T = 24;
   const W = L + (steps + 1) * (cw + gx), H = T + ROWS.length * (ch + gy) + 8;
   const lim = 1.6;
   const x = (t: number) => 3 + (t / (horizon - 1)) * (cw - 6);
@@ -62,8 +65,8 @@ function TensorStrip({ d, horizon }: { d: Decision; horizon: number }) {
   const poly = (rows: number[][], k: number) => rows.map((r, t) => `${x(t)},${y(r[k])}`).join(" ");
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="img" className="tensor-strip"
-      aria-label={`Recorded sampler tensors: ${steps} DDIM steps from Gaussian noise to the final 16-step action chunk, for 4 of the 7 action dimensions; the last column overlays 16 extra seeds.`}>
-      {[...d.timesteps.map((t) => `t = ${t}`), "output"].map((l, i) => (
+      aria-label={`Recorded sampler tensors: ${steps} of the ${d.timesteps.length} DDIM steps from Gaussian noise to the final action chunk, for ${ROWS.length} of the action dimensions; the last column overlays the samples from other noise seeds.`}>
+      {[...shown.map((i) => (i === 0 ? `noise, t = ${d.timesteps[i]}` : `t = ${d.timesteps[i]}`)), "output"].map((l, i) => (
         <text key={l} x={L + i * (cw + gx) + cw / 2} y={12} textAnchor="middle" className="tick-label">{l}</text>
       ))}
       {ROWS.map(([k, name], r) => (
@@ -75,13 +78,13 @@ function TensorStrip({ d, horizon }: { d: Decision; horizon: number }) {
               <line x1={2} x2={cw - 2} y1={ch / 2} y2={ch / 2} className="grid-line" />
               {i < steps ? (
                 <>
-                  {d.sample_in_normalized[i].map((row, t) => <circle key={t} cx={x(t)} cy={y(row[k])} r={1.3} fill="var(--signal)" opacity={0.75} />)}
-                  <polyline points={poly(d.x0_normalized[i], k)} fill="none" stroke="var(--ivory)" strokeWidth={1} opacity={0.55} />
+                  {d.sample_in_normalized[shown[i]].map((row, t) => <circle key={t} cx={x(t)} cy={y(row[k])} r={2} fill="var(--signal)" opacity={0.8} />)}
+                  <polyline points={poly(d.x0_normalized[shown[i]], k)} fill="none" stroke="var(--ivory)" strokeWidth={1.3} opacity={0.7} />
                 </>
               ) : (
                 <>
-                  {d.diversity.chunks_normalized.map((c, j) => <polyline key={j} points={poly(c, k)} fill="none" stroke="var(--sand)" strokeWidth={0.8} opacity={0.45} />)}
-                  <polyline points={poly(d.final_normalized, k)} fill="none" stroke="var(--signal)" strokeWidth={1.8} />
+                  {d.diversity.chunks_normalized.map((c, j) => <polyline key={j} points={poly(c, k)} fill="none" stroke="var(--sand)" strokeWidth={1} opacity={0.6} />)}
+                  <polyline points={poly(d.final_normalized, k)} fill="none" stroke="var(--signal)" strokeWidth={2.2} />
                 </>
               )}
             </g>
@@ -107,8 +110,8 @@ export default function WhyDiffusion() {
           <h2 id="why-title">Why diffusion for actions?</h2>
           <p className="lede">
             Behaviour cloning usually regresses one action from the current state. A diffusion policy
-            instead learns to turn noise into a whole sequence of future actions, so it can represent
-            several good ways to move, and it commits to a short plan at a time.
+            learns to turn noise into a whole sequence of future actions, so it can represent several
+            good ways to move.
           </p>
         </div>
         <div className="why-grid">
@@ -119,10 +122,10 @@ export default function WhyDiffusion() {
               <>
                 <TensorStrip d={den.value.decisions[0]} horizon={den.value.horizons.T_p} />
                 <figcaption>
-                  The trained policy's first decision on {TASK[den.value.task]} validation start {den.value.state_id.split("_").pop()}: dots are the sampler's
-                  state x<sub>t</sub> at each of the 10 DDIM steps, starting as Gaussian noise; the ivory line is the clean chunk the network predicts from it;
-                  the last column is the output (cyan) and 16 more samples from other noise seeds (sand). Normalized units, 16 future steps per cell.
-                  Replayed bitwise from the recorded episode; not a held-out result.
+                  The trained policy's first decision on {TASK[den.value.task]} validation start {den.value.state_id.split("_").pop()}, left to right.
+                  Dots: the sampler's state, starting as noise. Ivory line: the clean action sequence the network predicts from it.
+                  Last column: the output (cyan) and samples from other noise seeds (sand). Every second sampler step is shown;
+                  each cell spans the {den.value.horizons.T_p} future steps. Replayed from a recorded validation episode; not a held-out result.
                 </figcaption>
                 <a className="btn" href="#inside">Explore every decision</a>
               </>

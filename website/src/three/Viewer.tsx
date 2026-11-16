@@ -31,21 +31,37 @@ export const DEFAULT_OPTIONS: ViewerOptions = { trail: true, labels: false, axes
 const LABEL_BODIES = ["robot0_link1", "robot0_link3", "robot0_link5", "robot0_link7",
   "gripper0_right_eef", "cube_main", "Can_main"];
 
+/** A soft pool of light on the floor under the workspace, drawn in code (no image asset). */
+function floorGlow(): THREE.CanvasTexture {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const g = c.getContext("2d")!;
+  const r = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  r.addColorStop(0, "#3a4049");
+  r.addColorStop(0.4, "#2a2e35");
+  r.addColorStop(1, "#1e2125");
+  g.fillStyle = r;
+  g.fillRect(0, 0, 256, 256);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 function Stage({ clip }: { clip: Clip }) {
   const top = clip.success_rule.table_top_z_m ?? 0.8;
+  const glow = useMemo(floorGlow, []);
+  useEffect(() => () => glow.dispose(), [glow]);
   const grids = useMemo(() => {
     const g = new THREE.Group();
-    const floor = new THREE.GridHelper(8, 80, 0x3a3f47, 0x2a2e34);
+    const floor = new THREE.GridHelper(8, 80, 0x4a5059, 0x343941);
     (floor.material as THREE.Material).transparent = true;
-    (floor.material as THREE.Material).opacity = 0.9;
+    (floor.material as THREE.Material).opacity = 0.5;
+    floor.position.y = 0.001;
     g.add(floor);
     if (clip.task === "lift") {
-      const fine = new THREE.GridHelper(0.8, 80, 0x4b5059, 0x41464e);
-      (fine.material as THREE.Material).transparent = true;
-      (fine.material as THREE.Material).opacity = 0.55;
-      fine.position.y = top + 0.0006;
-      g.add(fine);
-      const coarse = new THREE.GridHelper(0.8, 8, 0x5c626b, 0x5c626b);
+      const coarse = new THREE.GridHelper(0.8, 8, 0x8a909a, 0x767c86);
+      (coarse.material as THREE.Material).transparent = true;
+      (coarse.material as THREE.Material).opacity = 0.6;
       coarse.position.y = top + 0.0008;
       g.add(coarse);
     }
@@ -54,17 +70,23 @@ function Stage({ clip }: { clip: Clip }) {
   return (
     <>
       <color attach="background" args={[PALETTE.graphite]} />
-      <fog attach="fog" args={[PALETTE.graphite, 3.2, 8]} />
-      <hemisphereLight args={[0xf3ecdc, 0x15171a, 0.85]} />
-      <directionalLight position={[2.2, 3.4, 1.6]} intensity={2.1} castShadow
-        shadow-mapSize={[2048, 2048]} shadow-camera-left={-1.2} shadow-camera-right={1.2}
-        shadow-camera-top={1.2} shadow-camera-bottom={-1.2} shadow-bias={-0.0004} />
-      <directionalLight position={[-1.8, 1.6, -2.2]} intensity={0.55} color={0x9fd8f0} />
-      <primitive object={grids} />
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.001} receiveShadow>
-        <planeGeometry args={[12, 12]} />
-        <meshStandardMaterial color={0x1b1e22} roughness={1} />
+      <fog attach="fog" args={[PALETTE.graphite, 4, 10]} />
+      <hemisphereLight args={[0xfff4e2, 0x2a2e34, 1.15]} />
+      <directionalLight position={[1.4, 3.6, 2.2]} intensity={2.7} castShadow
+        shadow-mapSize={[2048, 2048]} shadow-camera-left={-1.5} shadow-camera-right={1.5}
+        shadow-camera-top={1.5} shadow-camera-bottom={-1.5} shadow-camera-near={0.5} shadow-camera-far={8}
+        shadow-bias={-0.0003} shadow-normalBias={0.015} shadow-radius={5} />
+      <directionalLight position={[-2.4, 1.9, -2.2]} intensity={1.25} color={0x9fdcf2} />
+      <directionalLight position={[2.6, 0.9, -1.6]} intensity={0.45} color={0xffe2bd} />
+      <mesh rotation-x={-Math.PI / 2} position-y={-0.002}>
+        <planeGeometry args={[14, 14]} />
+        <meshBasicMaterial map={glow} toneMapped={false} />
       </mesh>
+      <mesh rotation-x={-Math.PI / 2} position-y={0.0004} receiveShadow>
+        <planeGeometry args={[14, 14]} />
+        <shadowMaterial transparent opacity={0.42} />
+      </mesh>
+      <primitive object={grids} />
     </>
   );
 }
@@ -80,7 +102,7 @@ function Trail({ built, clip, clock, visible }: { built: BuiltScene; clip: Clip;
     }
     const geo = new LineGeometry();
     geo.setPositions(pts);
-    const mat = new LineMaterial({ color: PALETTE.signal, linewidth: 2.5, transparent: true,
+    const mat = new LineMaterial({ color: PALETTE.signal, linewidth: 3, transparent: true,
       opacity: 0.95, depthTest: true });
     const l = new Line2(geo, mat);
     l.computeLineDistances();
@@ -139,7 +161,7 @@ function CameraRig({ clip, preset, follow, built, clock, autoOrbit, focus, focus
     invalidate();
   }, [focus?.[0], focus?.[1], focus?.[2], invalidate]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const pose = presetPose(preset, clip);
+    const pose = presetPose(preset, clip, size.width / Math.max(1, size.height));
     const cam = pose.ortho ? ortho : persp;
     cam.position.copy(pose.position);
     cam.up.copy(pose.up);
@@ -266,7 +288,7 @@ export function Viewer({ clip, lib, clock, preset = "orbit", options = DEFAULT_O
     <div className="viewer-canvas" role="img" aria-label={ariaLabel}>
       <Canvas shadows="percentage" dpr={[1, 2]} frameloop={!active ? "never" : continuous ? "always" : "demand"}
         gl={{ antialias: true, powerPreference: "high-performance" }}
-        onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.05; }}>
+        onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.18; }}>
         <ClipContent clip={clip} lib={lib} clock={clock} preset={preset} options={options}
           labelLayer={labelLayer} focus={focus} focusOffset={focusOffset}>{children}</ClipContent>
       </Canvas>

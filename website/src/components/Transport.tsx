@@ -48,8 +48,8 @@ export function Transport({ clock, n, successFrame, decisions, label }: { clock:
         <div className="scrubber-track">
           {decisions?.map((d) => <span key={d} className="tick" style={{ left: `${(100 * d) / Math.max(1, n - 1)}%` }} />)}
           {successFrame !== null && (
-            <span className="tick tick-success" title={`success at frame ${successFrame}`}
-              style={{ left: `${(100 * successFrame) / Math.max(1, n - 1)}%` }} />
+            <span className={`tick tick-success${successFrame > 0.8 * (n - 1) ? " flip" : ""}`} title={`success at frame ${successFrame}`}
+              style={{ left: `${(100 * successFrame) / Math.max(1, n - 1)}%` }}><i>success</i></span>
           )}
           <input id={`${id}-seek`} type="range" min={0} max={n - 1} step={1} value={k}
             aria-valuetext={`frame ${k} of ${n - 1}, ${(k * clock.dt).toFixed(2)} seconds`}

@@ -10,7 +10,7 @@
 // Visual approximations (listed on the site): between two recorded frames poses are linearly
 // interpolated (slerp for orientations) when playback runs between frames; colours and
 // materials are restyled; textures are omitted; the floor and walls are replaced by a measured
-// grid; a mesh missing from assets/ is drawn as its bounding box and flagged.
+// grid and a soft pool of light; a mesh missing from assets/ is drawn as its bounding box and flagged.
 import * as THREE from "three";
 import type { Clip } from "../lib/schema";
 import { meshEdges, type MeshLibrary } from "./meshes";
@@ -19,12 +19,12 @@ export type RenderMode = "styled" | "silhouette";
 
 export const PALETTE = {
   graphite: 0x1e2125,
-  ivoryShell: 0xe6dfcf,
-  darkShell: 0x3a3e45,
-  pedestal: 0x2b2e33,
-  object: 0xd8ae5a,
-  table: 0x353940,
-  wood: 0x4a443c,
+  ivoryShell: 0xede6d6,
+  darkShell: 0x4d525a,
+  pedestal: 0x3b3f46,
+  object: 0xf2b441,
+  table: 0x565b64,
+  bin: 0x7a7f88,
   signal: 0x3cc8f0,
   error: 0xff5c6e,
   sand: 0xc9a86b,
@@ -71,13 +71,14 @@ function styledMaterial(role: Clip["geoms"][number]["role"]): THREE.Material {
   const std = (color: number, roughness: number, metalness = 0, extra = {}) =>
     new THREE.MeshStandardMaterial({ color, roughness, metalness, ...extra });
   switch (role) {
-    case "robot_light": return std(PALETTE.ivoryShell, 0.62, 0.02);
-    case "robot_dark": return std(PALETTE.darkShell, 0.48, 0.25);
+    case "robot_light": return std(PALETTE.ivoryShell, 0.55, 0.02);
+    case "robot_dark": return std(PALETTE.darkShell, 0.5, 0.2);
     case "robot_accent": return std(PALETTE.signal, 0.4, 0, { emissive: PALETTE.signal, emissiveIntensity: 0.35 });
-    case "pedestal": return std(PALETTE.pedestal, 0.7, 0.1);
-    case "object": return std(PALETTE.object, 0.42, 0.05);
+    case "pedestal": return std(PALETTE.pedestal, 0.75, 0.1);
+    // The manipulated object carries a little of its own light so it stays legible in shadow.
+    case "object": return std(PALETTE.object, 0.4, 0.05, { emissive: PALETTE.object, emissiveIntensity: 0.22 });
     case "table": return std(PALETTE.table, 0.9, 0);
-    case "fixture": return std(PALETTE.wood, 0.85, 0);
+    case "fixture": return std(PALETTE.bin, 0.85, 0);
     case "target": return std(0xeee7d7, 0.6, 0, { transparent: true, opacity: 0.07, depthWrite: false });
   }
 }
@@ -107,7 +108,7 @@ export function buildScene(clip: Clip, lib: MeshLibrary | null, mode: RenderMode
     [k, new THREE.MeshBasicMaterial({ color: c, toneMapped: false })])) as
     Record<keyof typeof CLASS_COLOUR, THREE.MeshBasicMaterial>;
   const darkLine = new THREE.LineBasicMaterial({ color: PALETTE.line, transparent: true, opacity: 0.55 });
-  const lightLine = new THREE.LineBasicMaterial({ color: 0xeee7d7, transparent: true, opacity: 0.16 });
+  const lightLine = new THREE.LineBasicMaterial({ color: 0xeee7d7, transparent: true, opacity: 0.24 });
   disposables.push(...Object.values(classMats), darkLine, lightLine);
   for (const g of clip.geoms) {
     if (g.rgba[3] <= 0) continue;

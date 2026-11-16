@@ -3,7 +3,7 @@
 // failure category), in the articulated viewer.
 import { useMemo, useState } from "react";
 import { ClipStage } from "../components/ClipStage";
-import { CATEGORY, FAMILY, FAMILY_NOTE, TASK } from "../lib/format";
+import { CATEGORY, FAMILY, FAMILY_NOTE, TASK, TASK_NOTE } from "../lib/format";
 import { roleText, useRegistry } from "./registry";
 
 const ORDER = ["diffusion_unet", "bc_mlp_chunk", "bc_rnn", "bc_mlp", "random_uniform"];
@@ -28,9 +28,9 @@ export function Lab() {
         <div className="section-head">
           <h2 id="lab-title">The robotic lab</h2>
           <p className="lede">
-            Recorded held-out episodes, reconstructed in 3D from the simulator's saved states. The
-            episodes are not picked by eye: the frozen protocol names, for each task and policy, the
-            first success and the first failure by start ID, and the first episode of each failure type.
+            Watch a trained policy drive the arm. These are recorded held-out episodes, rebuilt in 3D
+            from the simulator's saved states and chosen by rule, not by eye: the first success, the
+            first failure and the first episode of each failure type.
           </p>
         </div>
         {lab.length === 0 ? <p className="status">No lab episodes in the exported data.</p> : (
@@ -42,6 +42,7 @@ export function Lab() {
                   <button key={t} type="button" className="chip" aria-pressed={task === t}
                     onClick={() => { setTask(t); setPick(null); }}>{TASK[t]}</button>
                 ))}
+                <span className="chip-note">{TASK[task]}: {TASK_NOTE[task]}</span>
               </fieldset>
               <fieldset className="chips">
                 <legend>Policy (trained checkpoint)</legend>
@@ -62,10 +63,9 @@ export function Lab() {
               </fieldset>
             </div>
             {chosen && (
-              <ClipStage key={chosen.id} clipId={chosen.id} category={category(chosen)}
+              <ClipStage key={chosen.id} clipId={chosen.id} category={category(chosen)} note={`${FAMILY[fam]}: ${FAMILY_NOTE[fam]}.`}
                 title={`${FAMILY[chosen.family]} on ${TASK[chosen.task]}: ${chosen.outcome.success ? "success" : CATEGORY[category(chosen) ?? ""] ?? "failure"}`} />
             )}
-            <p className="fine">{FAMILY[fam]}: {FAMILY_NOTE[fam]}. Filled dot: success; open dot: failure.</p>
           </>
         )}
       </div>

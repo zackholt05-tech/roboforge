@@ -3,7 +3,7 @@
 // states; the 3D view is a reconstruction of the same states.
 import { useEffect, useRef } from "react";
 import { dataUrl } from "../lib/data";
-import { CATEGORY, FAMILY, PARTITION, short, TASK } from "../lib/format";
+import { CATEGORY, FAMILY, PARTITION, short, startLabel, TASK, TASK_NOTE } from "../lib/format";
 import { useClock, type Clock } from "../lib/playback";
 import type { Clip } from "../lib/schema";
 
@@ -13,25 +13,57 @@ export function outcomeText(clip: Clip): string {
   return `failure: ${o.stop_reason === "truncated_horizon" ? `no success within ${o.steps} steps` : o.stop_reason}`;
 }
 
-export function ClipCaption({ clip, category }: { clip: Clip; category?: string | null }) {
+/** One line under every recorded clip: what it is, who controls the arm, the task, the outcome
+ * and a short source. Everything else is in <ProvenanceDetails/>. */
+export function ClipCaption({ clip, category, name, brief = false, explain = false }: { clip: Clip; category?: string | null; name?: string;
+  /** Say the task in plain words after its name (where nothing else nearby does). */
+  explain?: boolean;
+  /** Inside a group whose header already names the policy and the outcome: only what the header lacks. */
+  brief?: boolean }) {
+  const run = clip.provenance.eval_run_id;
   return (
     <p className="clip-caption">
-      <span>MuJoCo simulation</span>
-      <span>trained checkpoint {clip.checkpoint.sha256 ? short(clip.checkpoint.sha256, 8) : "none (random)"}</span>
-      <span>task: {TASK[clip.task]}</span>
-      <span className={clip.outcome.success ? "ok" : "bad"}>outcome: {outcomeText(clip)}</span>
+      <span className="kind recorded">recorded rollout</span>
+      {!brief && (
+        <>
+          <span>MuJoCo simulation</span>
+          <span>{name ?? FAMILY[clip.family] ?? clip.family}, seed {clip.seed}</span>
+          <span>task: {TASK[clip.task]}{explain && TASK_NOTE[clip.task] ? ` (${TASK_NOTE[clip.task]})` : ""}</span>
+        </>
+      )}
+      <span>{startLabel(clip.partition, clip.state_id)} {clip.state_id.split("_").pop()}</span>
+      {!brief && (
+        <>
+          <span>trained checkpoint {clip.checkpoint.sha256 ? short(clip.checkpoint.sha256, 8) : "none (random)"}</span>
+          <span className={clip.outcome.success ? "ok" : "bad"}>outcome: {outcomeText(clip)}</span>
+        </>
+      )}
       {category && category !== "success" && <span className="bad">{CATEGORY[category] ?? category}</span>}
-      <span className="run-id" title="the evaluation run this episode was recorded in">source: {clip.provenance.eval_run_id}</span>
+      <span className="run-id" title={`the evaluation run this episode was recorded in: ${run}`}>source: {run.split("__")[0]}</span>
     </p>
+  );
+}
+
+/** The full source of a clip, one click away: run id, checkpoint hash, start, record, physics
+ * hash, simulator, platform and the recompute check (and, for X2, the recorded label, KI-065). */
+export function ProvenanceDetails({ clip }: { clip: Clip }) {
+  return (
+    <details className="prov">
+      <summary>Provenance</summary>
+      <Provenance clip={clip} />
+    </details>
   );
 }
 
 export function Provenance({ clip }: { clip: Clip }) {
   const p = clip.provenance;
   const rows: [string, string, string?][] = [
+    ["What this is", clip.label],
     ["Policy", `${FAMILY[clip.family] ?? clip.family}, training seed ${clip.seed}`],
     ["Checkpoint", clip.checkpoint.sha256 ? `${short(clip.checkpoint.sha256, 16)} at step ${clip.checkpoint.step}` : "none (non-learned baseline)", clip.checkpoint.sha256 ?? undefined],
-    ["Start state", `${clip.state_id} (${PARTITION[clip.partition] ?? clip.partition})`],
+    ["Start state", startLabel(clip.partition, clip.state_id) === (PARTITION[clip.partition] ?? clip.partition)
+      ? `${clip.state_id} (${PARTITION[clip.partition] ?? clip.partition})`
+      : `${clip.state_id} (${startLabel(clip.partition, clip.state_id)}; recorded partition ${clip.partition}, D-123)`],
     ["source: run_id", p.eval_run_id, p.eval_run_id],
     ["Record", p.record, p.record],
     ["physics_sha256", short(p.physics_sha256, 16), p.physics_sha256],
@@ -41,7 +73,7 @@ export function Provenance({ clip }: { clip: Clip }) {
   ];
   if (p.recorded_policy_label) {
     // KI-065: the frozen evaluator's label template names the PH demonstrations on X2 records.
-    rows.splice(1, 0, ["Training data", clip.policy.label],
+    rows.splice(2, 0, ["Training data", clip.policy.label],
       ["Recorded evaluator label", `${p.recorded_policy_label} (KI-065: the label template is wrong for X2; the checkpoints were trained on Can MH)`]);
   }
   return (
@@ -74,14 +106,16 @@ export function InsetVideo({ clip, clock, large = false }: { clip: Clip; clock: 
       <video ref={ref} src={dataUrl(clip.media.video.file)} muted playsInline preload="metadata"
         width={clip.media.video.size} height={clip.media.video.size}
         aria-label={`MuJoCo ${clip.media.video.camera} render of the recorded states`} />
-      <figcaption>MuJoCo {clip.media.video.camera} render of the recorded states</figcaption>
+      <figcaption>The same episode in the simulator's own render (MuJoCo {clip.media.video.camera}, original colours)</figcaption>
     </figure>
   );
 }
 
+export const ACTIONS_NOTE = "Executed actions sent to the simulator (pose deltas and gripper). Recorded, not predicted.";
+
 const DIM_COLOURS = ["#3cc8f0", "#3cc8f0", "#3cc8f0", "#b8b1a2", "#b8b1a2", "#b8b1a2", "#c9a86b"];
 
-export function ActionChannels({ clip, clock }: { clip: Clip; clock: Clock }) {
+export function ActionChannels({ clip, clock, caption = true }: { clip: Clip; clock: Clock; caption?: boolean }) {
   useClock(clock);
   const W = 560, H = 18, gap = 6;
   const a = clip.actions.executed;
@@ -106,7 +140,7 @@ export function ActionChannels({ clip, clock }: { clip: Clip; clock: Clock }) {
         <line x1={64 + (k / Math.max(1, T - 1)) * W} x2={64 + (k / Math.max(1, T - 1)) * W} y1={0}
           y2={7 * (H + gap)} className="playhead" />
       </svg>
-      <figcaption>Executed actions sent to the simulator (OSC pose deltas and gripper, clipped to [−1, 1]). Recorded, not predicted.</figcaption>
+      {caption && <figcaption>{ACTIONS_NOTE}</figcaption>}
     </figure>
   );
 }

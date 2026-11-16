@@ -1,5 +1,5 @@
 // The Observatory page: one narrative scroll through MASTER_SPEC §8.2 A–H.
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Status } from "./components/ClipParts";
 import { loadRegistry } from "./lib/data";
 import { useAsync } from "./lib/hooks";
@@ -22,16 +22,41 @@ export const NAV = [
   ["inside", "Inside the policy"],
   ["findings", "Findings"],
   ["followups", "After v1.0"],
-  ["pixels", "Beyond pixels"],
+  ["pixels", "Cameras & point clouds"],
   ["methods", "Methods"],
 ] as const;
 
+/** The section whose top has most recently passed under the bar (for the nav's current state). */
+function useCurrentSection(): string | null {
+  const [current, setCurrent] = useState<string | null>(null);
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      let now: string | null = null;
+      for (const [id] of NAV) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 120) now = id;
+      }
+      setCurrent(now);
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    update();
+    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
+  }, []);
+  return current;
+}
+
 function Topbar() {
+  const current = useCurrentSection();
   return (
     <header className="topbar">
       <a className="wordmark" href="#top">RoboForge<span>Observatory</span></a>
       <nav aria-label="Sections">
-        <ul>{NAV.map(([id, label]) => <li key={id}><a href={`#${id}`}>{label}</a></li>)}</ul>
+        <ul>{NAV.map(([id, label]) => (
+          <li key={id}><a href={`#${id}`} aria-current={current === id ? "true" : undefined}>{label}</a></li>
+        ))}</ul>
       </nav>
     </header>
   );

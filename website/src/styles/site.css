@@ -65,17 +65,19 @@ a:hover { color: var(--ivory); }
   color: var(--ivory); text-decoration: none; white-space: nowrap; }
 .wordmark span { color: var(--ivory-dim); font-weight: 400; font-stretch: 100%; margin-left: 8px; }
 .topbar nav { margin-left: auto; overflow-x: auto; scrollbar-width: none; }
+@media (max-width: 980px) { .topbar nav { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); padding-right: 28px; } }
 .topbar nav::-webkit-scrollbar { display: none; }
 .topbar ul { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
 .topbar nav a { display: block; padding: 6px 10px; color: var(--ivory-dim); text-decoration: none;
   font-size: var(--step--1); border-radius: var(--radius-s); white-space: nowrap; }
-.topbar nav a:hover, .topbar nav a[aria-current="true"] { color: var(--ivory); background: var(--slate); }
+.topbar nav a:hover { color: var(--ivory); background: var(--slate); }
+.topbar nav a[aria-current="true"] { color: var(--ivory); box-shadow: inset 0 -2px 0 var(--signal); border-radius: 0; }
 @media (max-width: 720px) { .wordmark span { display: none; } .topbar { gap: 12px; } }
 
 /* ------------------------------------------------------------------ layout */
-main > section { padding: clamp(56px, 9vw, 120px) var(--gutter); border-top: 1px solid var(--rule-soft); }
+main > section { padding: clamp(48px, 7vw, 96px) var(--gutter); border-top: 1px solid var(--rule-soft); }
 .wrap { max-width: 1240px; margin: 0 auto; }
-.section-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-bottom: 40px;
+.section-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-bottom: 32px;
   max-width: 880px; }
 h1, h2, h3 { font-family: var(--display); font-weight: 650; line-height: 1.08; margin: 0; letter-spacing: -0.005em; }
 h2 { font-size: var(--step-3); font-stretch: 112%; }
@@ -84,7 +86,7 @@ h3 { font-size: var(--step-1); font-stretch: 100%; font-weight: 600; }
 .prose { font: 400 1.0625rem/1.68 var(--text); max-width: var(--measure); color: var(--ivory); }
 .prose p { margin: 0 0 1em; }
 .dim { color: var(--ivory-dim); }
-.fine { font-size: var(--step--1); color: var(--ivory-dim); max-width: 92ch; margin: 10px 0 0; line-height: 1.5; }
+.fine { font-size: var(--step--1); color: var(--ivory-dim); max-width: 84ch; margin: 10px 0 0; line-height: 1.5; }
 .num { font-variant-numeric: tabular-nums; }
 .ok { color: var(--ok); }
 .bad { color: var(--error); }
@@ -117,42 +119,70 @@ select { font: 500 var(--step--1) var(--ui); color: var(--ivory); background: va
   border: 1px solid var(--rule); border-radius: var(--radius-s); padding: 8px 10px; }
 
 /* ------------------------------------------------------------------ hero */
-.hero { position: relative; min-height: min(92vh, 860px); padding: 0 !important; border-top: 0 !important;
-  display: grid; overflow: hidden; }
+.hero { padding: 0 !important; border-top: 0 !important; }
+.hero-stage { position: relative; min-height: min(70vh, 660px); display: grid; overflow: hidden; }
 .hero .stage, .hero .viewer-canvas { position: absolute; inset: 0; height: 100% !important; }
-.hero-copy { position: relative; z-index: 2; align-self: end; padding: 0 var(--gutter) clamp(32px, 6vw, 72px);
+.hero .stage { border: 0; border-radius: 0; }
+.hero-copy { position: relative; z-index: 2; align-self: end; padding: 0 var(--gutter) clamp(32px, 5vw, 64px);
   max-width: 1240px; width: 100%; margin: 0 auto; pointer-events: none; }
 .hero-copy > * { pointer-events: auto; }
 .hero h1 { font-size: var(--step-4); font-stretch: 125%; font-weight: 700; line-height: 0.98;
   letter-spacing: -0.01em; max-width: 12ch; text-shadow: 0 2px 30px rgba(30, 33, 37, 0.9); }
-.hero .lede { margin-top: 18px; max-width: 46ch; text-shadow: 0 1px 18px rgba(30, 33, 37, 0.95); }
+.hero .lede { margin-top: 18px; max-width: 44ch; text-shadow: 0 1px 18px rgba(30, 33, 37, 0.95); }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
 .hero-actions .btn { padding: 12px 18px; font-size: var(--step-0); }
-.hero .clip-caption { position: absolute; top: 18px; right: var(--gutter); z-index: 2; max-width: 560px;
-  justify-content: flex-end; background: rgba(30, 33, 37, 0.78); padding: 8px 12px; border-radius: var(--radius-s); }
+.hero-meta { position: absolute; top: 16px; right: var(--gutter); z-index: 3; max-width: 520px;
+  background: rgba(30, 33, 37, 0.78); padding: 8px 12px; border-radius: var(--radius-s); }
+.hero-meta .clip-caption { justify-content: flex-start; }
+.hero-meta .prov { margin-top: 4px; }
+.hero-meta .prov[open] { max-height: 52vh; overflow: auto; }
+/* The shade sits behind the copy on the left only, so the arm and the table stay fully lit. */
 .hero-shade { position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, rgba(30,33,37,0) 45%, rgba(30,33,37,0.88) 100%); }
-.hero-controls { position: absolute; right: var(--gutter); bottom: clamp(32px, 6vw, 72px); z-index: 3;
+  background: linear-gradient(90deg, rgba(30,33,37,0.86) 0%, rgba(30,33,37,0.6) 34%, rgba(30,33,37,0) 58%),
+    linear-gradient(180deg, rgba(30,33,37,0) 78%, rgba(30,33,37,0.55) 100%); }
+.hero-controls { position: absolute; right: var(--gutter); bottom: clamp(32px, 5vw, 64px); z-index: 3;
   display: flex; gap: 8px; }
 @media (max-width: 720px) {
-  .hero { min-height: auto; }
-  .hero .stage, .hero .viewer-canvas { position: relative; height: 56vh !important; }
+  .hero-stage { min-height: auto; }
+  .hero .stage, .hero .viewer-canvas { position: relative; height: auto !important; }
+  .hero .viewer-canvas { height: 56vh !important; }
   .hero-shade { display: none; }
-  .hero .clip-caption { position: static; margin: 0; max-width: none; justify-content: flex-start; }
+  .hero-meta { position: static; margin: 0; max-width: none; background: none; padding: 10px var(--gutter) 0; }
+  .hero-copy { padding-top: 20px; }
   .hero-controls { position: static; padding: 0 var(--gutter) 16px; }
+}
+/* What the research found: three recorded differences, right under the first screen. */
+.glance { padding: clamp(28px, 4vw, 44px) var(--gutter); border-top: 1px solid var(--rule-soft); background: var(--slate); }
+.glance-title { font-size: var(--step-1); font-stretch: 112%; margin-bottom: 18px; }
+.glance-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+.glance-cards li { display: grid; gap: 4px; align-content: start; padding: 0 24px; border-left: 1px solid var(--rule); }
+.glance-cards li:first-child { padding-left: 0; border-left: 0; }
+.glance-where { font-size: var(--step--1); color: var(--ivory-dim); }
+.glance-what { font: 600 var(--step-0)/1.25 var(--display); }
+.glance-number { font: 700 clamp(2rem, 3.6vw, 2.9rem)/1.05 var(--display); font-stretch: 112%; margin-top: 6px; }
+.glance-number .unit { font-size: 0.42em; font-weight: 500; color: var(--ivory-dim); font-stretch: 100%; }
+.glance-number.dim { color: var(--ivory); }
+.glance-ci { font-size: var(--step--1); color: var(--ivory-dim); }
+.glance-read { font: 400 1rem/1.45 var(--text); margin-top: 4px; }
+.glance .fine { margin-top: 20px; }
+@media (max-width: 860px) {
+  .glance-cards { grid-template-columns: 1fr; gap: 20px; }
+  .glance-cards li { padding: 16px 0 0; border-left: 0; border-top: 1px solid var(--rule); }
+  .glance-cards li:first-child { padding-top: 0; border-top: 0; }
 }
 
 /* ------------------------------------------------------------------ viewer */
 .clip-stage { display: grid; gap: 12px; }
 .clip-title { font-size: var(--step-1); }
-.clip-caption { display: flex; flex-wrap: wrap; gap: 0; margin: 0; font-size: var(--step--1); color: var(--ivory-dim); }
-.clip-caption span + span::before { content: "|"; margin: 0 9px; color: var(--rule); }
-.clip-caption .run-id { flex-basis: 100%; font-size: 11px; color: var(--ivory-faint); overflow-wrap: anywhere; }
-.clip-caption .run-id::before { content: none; }
+.clip-caption { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin: 0; font-size: var(--step--1); color: var(--ivory-dim); }
+.clip-caption .kind { color: var(--ivory); margin-right: -4px; }
+.clip-caption .run-id { color: var(--ivory-dim); overflow-wrap: anywhere; }
 .stage-wrap { position: relative; }
 .stage { position: relative; border-radius: var(--radius-m); overflow: hidden; background: var(--graphite);
   border: 1px solid var(--rule-soft); }
-.viewer-canvas { position: relative; width: 100%; height: clamp(320px, 58vh, 620px); touch-action: none; }
+.viewer-canvas { position: relative; width: 100%; height: clamp(320px, 56vh, 600px); touch-action: none; }
+/* The explorer's viewer, caption and legend fit one screen beside the sampler charts. */
+.inside .viewer-canvas { height: clamp(280px, 48vh, 480px); }
 .compact .viewer-canvas { height: clamp(260px, 40vh, 420px); }
 .viewer-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .viewer-label { position: absolute; left: 0; top: 0; font: 500 11px/1 var(--ui); color: var(--ivory);
@@ -160,11 +190,13 @@ select { font: 500 var(--step--1) var(--ui); color: var(--ivory); background: va
   margin: -9px 0 0 8px; white-space: nowrap; }
 .stage-note { position: absolute; left: 12px; bottom: 10px; margin: 0; font-size: var(--step--1);
   color: var(--ivory-dim); background: rgba(30, 33, 37, 0.85); padding: 4px 8px; border-radius: 2px; }
+.stage-tag { position: absolute; left: 10px; bottom: 10px; z-index: 2; margin: 0; font-size: 12px; line-height: 1.3; color: var(--ivory-dim);
+  background: rgba(30, 33, 37, 0.9); padding: 3px 8px; border-radius: 99px; pointer-events: none; max-width: calc(100% - 20px); }
 .stage-fallback { display: grid; gap: 12px; justify-items: start; padding: 12px; }
-.inset { position: absolute; right: 12px; top: 12px; z-index: 2; margin: 0; width: clamp(120px, 18%, 200px);
+.inset { position: absolute; right: 12px; top: 12px; z-index: 2; margin: 0; width: clamp(140px, 17%, 210px);
   border: 1px solid var(--rule); border-radius: var(--radius-s); overflow: hidden; background: #000; }
 .inset video { width: 100%; height: auto; }
-.inset figcaption { font-size: 10.5px; line-height: 1.3; color: var(--ivory-dim); padding: 4px 6px;
+.inset figcaption { font-size: 12px; line-height: 1.3; color: var(--ivory-dim); padding: 5px 7px;
   background: var(--graphite); }
 .inset-large { position: static; width: min(100%, 420px); }
 @media (max-width: 720px) { .inset:not(.inset-large) { width: 96px; } .inset figcaption { display: none; } }
@@ -175,6 +207,10 @@ select { font: 500 var(--step--1) var(--ui); color: var(--ivory); background: va
 .scrubber-track { position: relative; height: 28px; display: flex; align-items: center; }
 .scrubber-track .tick { position: absolute; top: 4px; width: 1px; height: 6px; background: var(--ivory-faint); }
 .scrubber-track .tick-success { top: 0; height: 28px; width: 2px; background: var(--signal); }
+.scrubber-track .tick-success i { position: absolute; left: 5px; top: -13px; font: 500 12px/1 var(--ui); font-style: normal; color: var(--signal); white-space: nowrap; }
+/* Near the end of the timeline the label goes to the left of its tick, clear of the readout. */
+.scrubber-track .tick-success.flip i { left: auto; right: 5px; }
+.scrubber-track { margin-top: 14px; }
 input[type="range"] { width: 100%; accent-color: var(--ivory); background: transparent; }
 .readout { font-size: var(--step--1); white-space: nowrap; }
 @media (max-width: 720px) { .transport { grid-template-columns: 1fr; } }
@@ -185,7 +221,7 @@ input[type="range"] { width: 100%; accent-color: var(--ivory); background: trans
 .channels { margin: 0; }
 .channels svg { width: 100%; height: auto; }
 .channels figcaption, figure figcaption { font-size: var(--step--1); color: var(--ivory-dim); margin-top: 6px; line-height: 1.45; }
-.axis-label { font: 500 10.5px var(--ui); fill: var(--ivory-dim); }
+.axis-label { font: 500 12px var(--ui); fill: var(--ivory-dim); }
 .zero { stroke: var(--rule); stroke-width: 1; }
 .playhead { stroke: var(--ivory); stroke-width: 1; opacity: 0.7; }
 .provenance { display: grid; gap: 0; margin: 0; font-size: var(--step--1); border-top: 1px solid var(--rule-soft); }
@@ -208,12 +244,13 @@ input[type="range"] { width: 100%; accent-color: var(--ivory); background: trans
 .chart text { font-family: var(--ui); }
 .chart .grid-line { stroke: var(--rule-soft); }
 .chart .axis { stroke: var(--rule); }
-.chart .tick-label { font-size: 11px; fill: var(--ivory-dim); }
-.chart .row-label { font-size: 12.5px; fill: var(--ivory); }
-.chart .value-label { font-size: 12px; fill: var(--ivory); font-variant-numeric: tabular-nums; }
-.chart .note-label { font-size: 11px; fill: var(--ivory-dim); }
+.chart .tick-label { font-size: 12px; fill: var(--ivory-dim); }
+.chart .row-label { font-size: 13px; fill: var(--ivory); }
+.chart .value-label { font-size: 13px; fill: var(--ivory); font-variant-numeric: tabular-nums; }
+.chart .note-label { font-size: 12px; fill: var(--ivory-dim); }
+.chart .pair-band { fill: var(--slate); opacity: 0.55; }
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
-.callout { border-left: 2px solid var(--signal); padding: 4px 0 4px 16px; margin: 18px 0; max-width: 70ch; }
+.callout { border-left: 2px solid var(--signal); padding: 4px 0 4px 16px; margin: 18px 0; max-width: 70ch; font: 400 1.0625rem/1.6 var(--text); }
 .callout.neg { border-left-color: var(--error); }
 .callout strong { font-family: var(--display); font-weight: 650; }
 .big-number { font: 700 clamp(2.4rem, 5vw, 3.6rem)/1 var(--display); font-stretch: 112%; }
@@ -224,6 +261,7 @@ table.data th { color: var(--ivory-dim); font-weight: 500; }
 table.data td.n { text-align: right; font-variant-numeric: tabular-nums; }
 .table-scroll { overflow-x: auto; }
 details > summary { cursor: pointer; color: var(--ivory-dim); font-size: var(--step--1); margin-top: 12px; }
+details > summary:hover { color: var(--ivory); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: var(--step--1); color: var(--ivory-dim); margin: 10px 0 0; padding: 0; list-style: none; }
 .legend li { display: flex; align-items: center; gap: 6px; }
 .swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
@@ -242,8 +280,8 @@ tr.erratum-row s { color: var(--ivory-faint); }
 /* ------------------------------------------------------------------ section rhythm */
 h3.sub { font-size: var(--step-2); font-stretch: 112%; margin: 56px 0 14px; }
 .chart { margin: 0; }
-.chart.strip { margin-top: 28px; }
-.chart.strip svg { max-width: 980px; }
+.chart.strip { margin-top: 28px; margin-bottom: 28px; }
+.chart.strip svg { max-width: 100%; }
 .findings-task { display: grid; gap: 32px; }
 .findings-read { align-self: center; }
 .findings-read .callout { margin-top: 0; font: 400 1.0625rem/1.6 var(--text); }
@@ -256,7 +294,7 @@ h3.sub { font-size: var(--step-2); font-stretch: 112%; margin: 56px 0 14px; }
 .recorded-fig .tensor-strip { width: 100%; height: auto; }
 .recorded-fig .btn { justify-self: start; }
 .tensor-strip text { font-family: var(--ui); }
-.tensor-strip .tick-label { font-size: 10px; fill: var(--ivory-dim); }
+.tensor-strip .tick-label { font-size: 13px; fill: var(--ivory-dim); }
 .tensor-strip .grid-line { stroke: var(--rule); }
 .fig-kind { display: flex; }
 
@@ -270,11 +308,11 @@ h3.sub { font-size: var(--step-2); font-stretch: 112%; margin: 56px 0 14px; }
 .h2h-side.focus > figcaption { border-left-color: var(--signal); }
 .h2h-name { font: 650 var(--step-0)/1.2 var(--display); color: var(--ivory); }
 .h2h .viewer-canvas { height: clamp(280px, 46vh, 520px); }
-.h2h .clip-caption { font-size: 11.5px; }
+.h2h .clip-caption { font-size: 12px; }
 /* v1.1 follow-up studies (D-134): three arms side by side for X1. */
 .h2h-pair.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 1180px) { .h2h-pair.n3 { grid-template-columns: 1fr; } }
-.h2h-pair.n3 .viewer-canvas { height: clamp(240px, 38vh, 420px); }
+.h2h-pair.n3 .viewer-canvas { height: clamp(260px, 42vh, 440px); }
 .ext-study + .ext-study { margin-top: 36px; }
 .ext-sub { margin: 8px 0 0; font-family: var(--display); font-weight: 600; font-size: var(--step-0); }
 table.ext-contrasts th[scope="row"] { white-space: nowrap; }
@@ -292,19 +330,21 @@ table.ext-contrasts th[scope="row"] { white-space: nowrap; }
 .toggle { display: inline-flex; gap: 8px; align-items: center; font-size: var(--step--1); color: var(--ivory-dim); cursor: pointer; }
 .toggle input { accent-color: var(--signal); width: 16px; height: 16px; }
 .stage-ticks { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); list-style: none; margin: -2px 0 0; padding: 0;
-  font-size: 10px; color: var(--ivory-faint); text-align: center; }
+  font-size: 12px; color: var(--ivory-dim); text-align: center; }
+@media (max-width: 720px) { .stage-ticks li:nth-child(even) { visibility: hidden; } }
 .stage-ticks li.on { color: var(--signal); font-weight: 600; }
 .chunk-chart svg { width: 100%; height: auto; }
-.chunk-chart .tick-label { font-size: 11px; fill: var(--ivory); }
-.obs-window svg { width: 100%; height: auto; }
-.obs-window .obs-group { font-size: 9.5px; }
+.chunk-chart .tick-label { font-size: 12px; fill: var(--ivory); }
+.obs-window svg { width: 100%; max-width: 790px; height: auto; }
+.obs-window figcaption { max-width: 76ch; }
+.obs-window .obs-group { font-size: 11px; }
 .path-legend { margin-top: 0; }
 .swatch.dashed { background: repeating-linear-gradient(90deg, var(--signal) 0 3px, transparent 3px 6px); height: 3px; width: 14px; }
 .inside-foot { align-items: start; }
 input[type="range"] { width: 100%; accent-color: var(--signal); }
 .btn:disabled, .chip:disabled { opacity: 0.45; cursor: not-allowed; }
 
-table.env-actions { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+table.env-actions { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
 table.env-actions th, table.env-actions td { padding: 4px 10px 4px 0; border-bottom: 1px solid var(--rule-soft); text-align: right; }
 table.env-actions th:first-child, table.env-actions td:first-child { text-align: left; }
 table.env-actions tr.discarded td { color: var(--ivory-faint); }
@@ -324,7 +364,11 @@ table.env-actions tr.discarded td { color: var(--ivory-faint); }
 .policy-view > div { display: flex; gap: 6px; }
 .policy-view img { width: 112px; height: 112px; image-rendering: pixelated; border-radius: var(--radius-s); border: 1px solid var(--rule-soft); }
 .overlays { margin: 0; }
-.overlay-strip { display: grid; gap: 8px; }
+.overlay-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; }
+.overlays figcaption { margin-top: 8px; }
+.pc-after { display: grid; gap: 32px; margin-top: 32px; }
+.pc-after > * { min-width: 0; }
+.pc-after > .chart { max-width: 720px; }
 .overlay-strip img { width: 100%; height: auto; border-radius: var(--radius-s); }
 
 /* ------------------------------------------------------------------ H: methods */
@@ -354,7 +398,7 @@ footer .wrap { display: grid; gap: 8px; }
 .vpanels { display: flex; flex-wrap: wrap; gap: 8px; }
 .vpanel { margin: 0; }
 .vpanel img, .vpanel canvas { width: 240px; height: 240px; border-radius: var(--radius-s); }
-.vpanel figcaption { font-size: 11px; color: var(--ivory-dim); }
+.vpanel figcaption { font-size: 12px; color: var(--ivory-dim); }
 
 /* F. robustness and ablations: validation regime, set apart from the held-out results */
 .robustness { display: grid; gap: 24px; border-top: 1px solid var(--rule); padding-top: 28px; }
@@ -363,4 +407,44 @@ footer .wrap { display: grid; gap: 8px; }
 .manifests { align-self: start; font-size: var(--step--1); color: var(--ivory-dim); min-width: 0; }
 .manifests summary { cursor: pointer; color: var(--ivory); }
 .manifests ul { list-style: none; padding: 0; margin: 8px 0 0; max-height: 320px; overflow: auto; display: grid; gap: 6px; }
-.manifests code { overflow-wrap: anywhere; font-size: 11px; }
+.manifests code { overflow-wrap: anywhere; font-size: 12px; }
+
+/* ------------------------------------------------------------------ Session 20: charts, keys, disclosures */
+/* A chart: its title above the marks, then the drawing, then (rarely) one short note. */
+.chart .chart-title, figure.chart > figcaption.chart-title { font: 600 0.9375rem/1.3 var(--display); color: var(--ivory); margin: 0 0 10px; }
+.chart .chart-sub { display: block; font: 400 var(--step--1)/1.35 var(--ui); color: var(--ivory-dim); margin-top: 2px; }
+.chart .chart-note { font-size: var(--step--1); color: var(--ivory-dim); margin: 6px 0 0; line-height: 1.45; max-width: 76ch; }
+.chart-scroll { overflow-x: auto; }
+.chart-scroll > svg { width: 100%; height: auto; }
+@media (max-width: 720px) {
+  /* Keep chart type readable on a phone: the drawing keeps its width and scrolls in its box. */
+  /* Charts with a phone layout (.fit: labels above their rows) need no sideways scroll. */
+  .chart:not(.strip):not(.fit) .chart-scroll > svg { min-width: 560px; }
+  .chart.strip .chart-scroll > svg { min-width: 680px; }
+  .channels svg, .chunk-chart svg, .tensor-strip { min-width: 520px; }
+  .channels, .chunk-chart, .recorded-fig { overflow-x: auto; }
+}
+/* What the marks mean, said once per group of charts. */
+.chart-key { list-style: none; margin: 0 0 22px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 6px 22px;
+  font-size: var(--step--1); color: var(--ivory-dim); border: 1px solid var(--rule-soft); border-radius: var(--radius-m); }
+.chart-key li { display: inline-flex; align-items: center; gap: 7px; }
+.chart-key svg { flex: none; }
+.swatch.outline { background: none; border: 2px solid var(--ivory-dim); }
+/* The question a study or panel answers, in reading type, before its charts. */
+.study-q { font: 400 1.0625rem/1.6 var(--text); color: var(--ivory); max-width: 78ch; margin: 0 0 18px; }
+.robustness .study-q { margin: 0; }
+.robustness .callout { margin: 0; }
+.robustness .chart-key { margin-bottom: 0; }
+/* Disclosures: detail one click away. */
+details.more, details.prov { font-family: var(--ui); font-size: var(--step--1); color: var(--ivory-dim); min-width: 0; }
+details.more > summary, details.prov > summary { color: var(--ivory); margin-top: 8px; }
+details.more[open] > summary, details.prov[open] > summary { margin-bottom: 10px; }
+details.prov .provenance + .provenance { border-top: 0; }
+.chip-note { align-self: center; font-size: var(--step--1); color: var(--ivory-dim); margin-left: 8px; }
+.training-label { color: var(--ivory); }
+.clip-stage .channels { max-width: 860px; }
+.findings-read { align-self: start; }
+
+/* Grid items may shrink below their content, so a wide drawing scrolls in its own box. */
+.robustness > *, .findings-task > *, .h2h > *, .inside > *, .clip-stage > *, .h2h-side > *, .inside-panel > *,
+.inside-viewer > *, .recorded-fig > *, .schematic > *, .glance-cards > * { min-width: 0; }

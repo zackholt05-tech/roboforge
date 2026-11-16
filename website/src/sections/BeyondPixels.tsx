@@ -2,12 +2,12 @@
 // DP3-inspired point clouds against the frozen RGB arm. Numbers are findings.json fields (copied
 // verbatim from the frozen results); episodes are the D-089 rule 5 placement pairs.
 import { useMemo, useState } from "react";
-import { DifferenceChart, EstimateChart, OutcomeStrip, TaxonomyBars } from "../charts/Charts";
-import { Status } from "../components/ClipParts";
+import { ChartKey, DifferenceChart, EstimateChart, OutcomeStrip, TaxonomyBars } from "../charts/Charts";
+import { ClipCaption, ProvenanceDetails, Status } from "../components/ClipParts";
 import { decisionFrames, useClip, ViewerOrFallback } from "../components/ClipStage";
 import { Transport } from "../components/Transport";
 import { dataUrl, loadClouds, loadFindings } from "../lib/data";
-import { FAMILY, FAMILY_NOTE, ciPp, pp, sepLabel } from "../lib/format";
+import { FAMILY, ciPp, cm, pp, sepLabel } from "../lib/format";
 import { useAsync, useClockFor } from "../lib/hooks";
 import { useClock, type Clock } from "../lib/playback";
 import type { Clip, Findings } from "../lib/schema";
@@ -68,7 +68,7 @@ function PlacementMap({ f, arm }: { f: Findings; arm: "pc_diffusion" | "rgb_diff
             <text x={sx(t)} y={S + 14} textAnchor="middle" className="tick-label">{(100 * t).toFixed(0)} cm</text>
           </g>
         ))}
-        <text x={6} y={14} className="tick-label">← robot base, at x = −56 cm</text>
+        <text x={6} y={S - 6} className="tick-label">← robot base, at x = −56 cm</text>
         <text x={S - 4} y={c - 6} textAnchor="end" className="tick-label">+x</text>
         <text x={c + 6} y={12} className="tick-label">+y</text>
         {m.states.map((s) => {
@@ -83,7 +83,7 @@ function PlacementMap({ f, arm }: { f: Findings; arm: "pc_diffusion" | "rgb_diff
           );
         })}
       </svg>
-      <figcaption><strong>{FAMILY[arm]}</strong>: {won} of {3 * ood.length} shifted-cube episodes succeed. Each disc is one start, filled by how many of 3 seeds succeeded (red ring: none). Dashed square: the training placement range (±{100 * h} cm); shaded ring: the shifted placements ({100 * m.ood_radius_m[0]}–{100 * m.ood_radius_m[1]} cm from centre). Top view.</figcaption>
+      <figcaption><strong>{FAMILY[arm]}</strong>: {won} of {3 * ood.length} shifted-cube episodes succeed.{arm === "pc_diffusion" && <> Top view. Each disc is one start, filled by how many of 3 seeds succeeded (red ring: none). Dashed square: the training placement range (±{cm(h)} cm); shaded ring: the shifted placements ({cm(m.ood_radius_m[0])}–{cm(m.ood_radius_m[1])} cm from centre).</>}</figcaption>
     </figure>
   );
 }
@@ -118,26 +118,30 @@ function PcStage({ pc, rgb }: { pc: Clip; rgb: Clip }) {
         <figure className="h2h-side focus">
           <figcaption><span className="h2h-name">{FAMILY[pc.family]}</span>
             <span className={pc.outcome.success ? "ok" : "bad"}>{pc.outcome.success ? `success at step ${pc.outcome.first_success_step}` : `failure, ${pc.outcome.steps} steps`}</span></figcaption>
-          <ViewerOrFallback clip={pc} clock={clock} preset="orbit" options={pcOpts}
+          <ViewerOrFallback clip={pc} clock={clock} preset="workspace" options={pcOpts}
             ariaLabel={`3D reconstruction of the point-cloud policy on ${pc.state_id}, with its input cloud`}>
             {clouds.status === "ready" && <CloudPoints clouds={clouds.value} clock={clock} />}
           </ViewerOrFallback>
           {clouds.status !== "ready" && <Status state={clouds} what="the input point clouds" />}
+          <ClipCaption clip={pc} brief />
+          <ProvenanceDetails clip={pc} />
           <ul className="legend"><li><span className="swatch" style={{ background: "#d9824a" }} />cloud points from agentview depth</li>
             <li><span className="swatch" style={{ background: "var(--signal)" }} />from the wrist camera's depth</li></ul>
         </figure>
         <figure className="h2h-side base">
           <figcaption><span className="h2h-name">{FAMILY[rgb.family]}</span>
             <span className={rgb.outcome.success ? "ok" : "bad"}>{rgb.outcome.success ? `success at step ${rgb.outcome.first_success_step}` : `failure, ${rgb.outcome.steps} steps`}</span></figcaption>
-          <ViewerOrFallback clip={rgb} clock={clock} preset="orbit" options={{ ...DEFAULT_OPTIONS, successHeight: true }}
+          <ViewerOrFallback clip={rgb} clock={clock} preset="workspace" options={{ ...DEFAULT_OPTIONS, successHeight: true }}
             ariaLabel={`3D reconstruction of the RGB policy on ${rgb.state_id}`} />
+          <ClipCaption clip={rgb} brief />
+          <ProvenanceDetails clip={rgb} />
           <PolicyView clip={rgb} clock={clock} />
         </figure>
       </div>
       <Transport clock={clock} n={n} label={`${pc.state_id}, both arms`} successFrame={pc.outcome.first_success_step ?? rgb.outcome.first_success_step}
         decisions={decisionFrames(pc)} />
       <label className="toggle"><input type="checkbox" checked={onlyCloud} onChange={(e) => setOnlyCloud(e.target.checked)} /> Show only the point cloud, what the point-cloud policy sees</label>
-      <p className="fine">Seed 0 of each arm (point cloud step {pc.checkpoint.step}, RGB step {rgb.checkpoint.step}) from the same start, one shared clock. {pc.clouds ? "The cloud is the policy's own input, recomputed from the recorded state; it updates at each decision (every 8 steps)." : ""}</p>
+      <p className="fine">MuJoCo simulation, seed 0 of each arm from the same start, one clock. {pc.clouds ? "The cloud is the policy's own input, recomputed from the recorded state at each decision." : ""}</p>
     </div>
   );
 }
@@ -176,6 +180,7 @@ function Level2({ f }: { f: Findings }) {
           <p className="fine">{cap(l2.privilege)}. {cap(l2.power)}.</p>
         </div>
       </div>
+      <ChartKey estimate difference />
       <div className="grid-2">
         <EstimateChart title="Lift success by arm and placement" rows={order.filter((k) => P.families[k]).map((k) => [k, P.families[k]])}
           label={ARM_SET} colour={ARM_COLOUR} />
@@ -198,7 +203,7 @@ function Level2({ f }: { f: Findings }) {
         : <PcStage key={kase} pc={A.value} rgb={B.value} />}
       <OutcomeStrip label={`Every ${SUITE[pair?.[0].suite ?? "ood_cube_shift"]} episode, by arm and seed (outlined: the start shown)`}
         rows={strips} highlight={pair?.[0].state_id ?? null} />
-      <div className="grid-2">
+      <div className="pc-after">
         <TaxonomyBars title="How the shifted-cube failures failed" rows={tax} label={ARM_SET} />
         <figure className="overlays">
           <div className="overlay-strip">
@@ -206,7 +211,7 @@ function Level2({ f }: { f: Findings }) {
               <img key={k} src={dataUrl(k)} alt={`Session 9 calibration overlay ${k.replace("overlays/", "")}: sampled cloud points projected onto MuJoCo renders`} loading="lazy" />
             ))}
           </div>
-          <figcaption>Calibration check from the Session 9 feasibility run, copied unmodified: 512 sampled points (orange from agentview, cyan from the wrist camera) projected back onto 256² renders of a training demonstration.</figcaption>
+          <figcaption>Calibration check (Session 9, copied unmodified): sampled cloud points projected back onto renders of a training demonstration, not of these episodes.</figcaption>
         </figure>
       </div>
       <div className="table-scroll">
@@ -224,7 +229,7 @@ function Level2({ f }: { f: Findings }) {
           ))}</tbody>
         </table>
       </div>
-      <p className="erratum"><strong>* Erratum (KI-049).</strong> {f.notes.ki_049} The generated row's wall time ({(l2.training_generated[er.run_id].train_wall_s / 3600).toFixed(2)} h) is the completed segment only ({er.completed_segment_wall_h} h); the run took {er.total_wall_h} h in total.</p>
+      <p className="erratum"><strong>*</strong> {f.notes.ki_049} The generated row's wall time ({(l2.training_generated[er.run_id].train_wall_s / 3600).toFixed(2)} h) is the completed segment only ({er.completed_segment_wall_h} h); the run took {er.total_wall_h} h in total.</p>
     </>
   );
 }
@@ -235,7 +240,7 @@ export default function BeyondPixels() {
     <section id="pixels" aria-labelledby="pixels-title">
       <div className="wrap">
         <div className="section-head">
-          <h2 id="pixels-title">Beyond privileged state</h2>
+          <h2 id="pixels-title">Beyond privileged state: cameras and point clouds</h2>
           <p className="lede">
             The Level 1 policies read the cube's pose straight from the simulator. Two later studies
             took that away: first two 84-pixel cameras, then a 3D point cloud built from depth, both
@@ -249,11 +254,11 @@ export default function BeyondPixels() {
               <EstimateChart title="Lift held-out success from two 84² cameras" rows={["rgb_diffusion", "rgb_bc_chunk"].filter((k) => s.value.rgb.success.families[k]).map((k) => [k, s.value.rgb.success.families[k]])} />
               <div>
                 <DifferenceChart title="Visual diffusion vs visual BC-chunk" rows={s.value.rgb.success.differences} />
-                <p className="fine">{s.value.notes.privilege_rgb} {FAMILY.rgb_diffusion}: {FAMILY_NOTE.rgb_diffusion}. Lift is saturated (KI-034), so success alone cannot rank these two. <RgbContext f={s.value} /></p>
+                <p className="fine">{s.value.notes.privilege_rgb} Lift is saturated (KI-034), so success alone cannot rank these two. Not separated is not evidence of equivalence. <RgbContext f={s.value} /></p>
               </div>
             </div>
             <h3 className="sub">From a point cloud (Level 2)</h3>
-            <p className="prose dim">{s.value.notes.privilege_level2}</p>
+            <p className="study-q">{s.value.notes.privilege_level2}</p>
             <Level2 f={s.value} />
           </>
         )}

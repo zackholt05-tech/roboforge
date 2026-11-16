@@ -4,10 +4,10 @@
 // are the frozen taxonomy's per-category counts added over seeds, and the callouts only pick
 // out values (the highest estimate, the drops whose interval includes 0).
 import { useState } from "react";
-import { DifferenceChart, EstimateChart, LatencyChart, OutcomeStrip, TaxonomyBars } from "../charts/Charts";
+import { ChartKey, DifferenceChart, EstimateChart, LatencyChart, OutcomeStrip, TaxonomyBars } from "../charts/Charts";
 import { Status } from "../components/ClipParts";
 import { loadFindings } from "../lib/data";
-import { FAMILY, TASK, pct, pp, short } from "../lib/format";
+import { FAMILY, TASK, TASK_NOTE, cm, pct, pp, short } from "../lib/format";
 import { useAsync } from "../lib/hooks";
 import type { Findings as F } from "../lib/schema";
 
@@ -17,21 +17,25 @@ const total = (t: Record<string, number>) => Object.values(t).reduce((a, b) => a
 
 export function SourceTable({ f }: { f: F }) {
   return (
+    <details className="more">
+      <summary>Sources: every number in this section is read from these {f.sources.length} frozen files</summary>
     <div className="table-scroll">
       <table className="sources">
-        <caption>Every number in this section is read from these files (SHA-256 checked when the site data is built).</caption>
+        <caption>SHA-256 of each file, checked when the site data is built.</caption>
         <thead><tr><th scope="col">Frozen file</th><th scope="col">SHA-256</th></tr></thead>
         <tbody>{f.sources.map((s) => (
           <tr key={s.path}><td>{s.path}</td><td className="num" title={s.sha256}>{short(s.sha256, 16)}…</td></tr>
         ))}</tbody>
       </table>
     </div>
+    </details>
   );
 }
 
+const KI_052 = "Confound (KI-052): the diffusion sampler bounds its actions to the training range and the BC heads do not, so every comparison with diffusion includes that bound.";
+
 const SET: Record<string, string> = { robustness_base: "base", ood_cube_shift: "cube shift",
   ood_arm_offset: "arm offset" };
-const cm = (m: number) => String(Math.round(m * 1000) / 10); // metres -> cm, at most 1 decimal
 const sepd = (s: string) => s.startsWith("separated");
 const famSet = (k: string) => { const [fam, set] = k.split(":"); return [fam, set] as const; };
 const CONTRAST = /^drop (\S+) - drop (\S+) on (\S+)$/;
@@ -83,7 +87,7 @@ function Robustness({ f, task }: { f: F; task: string }) {
               `Every drop is separated except ${unsep.map((d) => `${FAMILY[famSet(d.a)[0]]} on the ${SET[famSet(d.b)[1]]} (${pp(d.difference)} points)`).join(", ")}.`}{" "}
             Highest success: {best.join("; ")}. {ood.length > 1 ? "Which family holds up best depends on the perturbation, and an" : "An"} order of estimates is not a ranking: the separations are in the charts below.
           </p>
-          <p className="fine">{f.notes.not_separated}</p>
+          <p className="fine">{KI_052}</p>
         </div>
       </div>
       <div className="grid-2">
@@ -91,12 +95,17 @@ function Robustness({ f, task }: { f: F; task: string }) {
           label={(d) => `${FAMILY[famSet(d.a)[0]]} − ${FAMILY[famSet(d.b)[0]]}, ${SET[famSet(d.a)[1]]}`} />
         <DifferenceChart title="Declared contrasts: difference in drop (base − perturbed)" rows={contrasts} labelWidth={318} lowerIsBetter
           label={(d) => { const m = CONTRAST.exec(d.a); return m ? `${FAMILY[m[1]]} − ${FAMILY[m[2]]}, ${SET[m[3]]}` : d.a; }}
-          note="Here a negative difference means the first family drops less, so cyan marks the first family degrading less." />
+          note="Negative: the first family drops less, so here cyan marks the first family degrading less." />
       </div>
       <div className="grid-2">
         <DifferenceChart title={`${TASK[task]} ablations of the diffusion policy, on the base set`} rows={abl} labelWidth={220}
           label={(d) => `${ARM[d.a] ?? d.a} − ${ARM[d.b] ?? d.b}`}
-          note={`Primary: EMA weights with the DDIM-10 sampler, T_o = 2. ${Object.entries(R.ablations).map(([n, a]) => { const t = a.bias_disclosure ?? a.note ?? ""; return t.startsWith(n) ? t : `${n}: ${t}`; }).join(". ")}.`} />
+          note="Each row: the primary diffusion policy minus one changed arm." />
+        <div>
+        <details className="more">
+          <summary>What each ablation changes</summary>
+          <p className="fine">{`Primary: EMA weights with the DDIM-10 sampler, T_o = 2. ${Object.entries(R.ablations).map(([n, a]) => { const t = a.bias_disclosure ?? a.note ?? ""; return t.startsWith(n) ? t : `${n}: ${t}`; }).join(". ")}.`}</p>
+        </details>
         <details className="manifests">
           <summary>Evaluation manifests behind these numbers ({evals.length})</summary>
           <p className="fine">Paths in the repository, with the SHA-256 of each evaluation summary.</p>
@@ -107,6 +116,7 @@ function Robustness({ f, task }: { f: F; task: string }) {
             ))}
           </ul>
         </details>
+        </div>
       </div>
     </div>
   );
@@ -128,6 +138,8 @@ function TaskFindings({ f, task }: { f: F; task: string }) {
     .map((k) => [k, T.taxonomy_by_family[k]] as [string, Record<string, number>]).filter(([, t]) => t);
   return (
     <div className="findings-task">
+      <p className="study-q">{TASK[task]}: {TASK_NOTE[task]}. {f.notes.privilege_level1}</p>
+      <ChartKey estimate difference />
       <div className="grid-2 findings-top">
         <EstimateChart title={`${TASK[task]}: held-out success by policy`} rows={fams.map((k) => [k, T.success.families[k]])} counts={counts} />
         <div className="findings-read">
@@ -138,7 +150,7 @@ function TaskFindings({ f, task }: { f: F; task: string }) {
               {(100 * (rest.find((d) => d.hypothesis === "H2" && d.b === "bc_mlp")?.difference ?? 0)).toFixed(1)} points, an interval that excludes 0,
               but it is not separated from the recurrent (BC-RNN) or the chunked (BC-MLP-chunk) baseline.</p>
           )}
-          <p className="fine">{f.notes.not_separated} {f.notes.privilege_level1}</p>
+          <p className="fine">{KI_052}</p>
         </div>
       </div>
       <div className="grid-2">
@@ -166,9 +178,9 @@ export default function Findings() {
         <div className="section-head">
           <h2 id="findings-title">Research findings</h2>
           <p className="lede">
-            Four learned policy families and a random baseline, three training seeds each, and fifty
-            held-out starts per task that no model or choice saw before the single frozen run. Intervals are 95 % hierarchical
-            paired bootstraps that resample seeds, then starts.
+            Four learned policy families and a random baseline, on held-out starts that no model or
+            choice saw before the single frozen run. Intervals are 95 % hierarchical paired bootstraps
+            that resample seeds, then starts.
           </p>
         </div>
         {s.status !== "ready" ? <Status state={s} what="the frozen findings" /> : (

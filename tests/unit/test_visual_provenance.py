@@ -78,3 +78,19 @@ def test_extension_section_lists_study_arm_and_its_own_verification(tmp_path: Pa
     row = next(ln for ln in text.splitlines() if ln.startswith("| `x2-can-"))
     assert "X2, bc_mlp" in row and "85000, `ffffffffffff`" in row and "(eval_adhoc)" in row
     assert "Not run yet (`make web-verify-ext`)" in text
+
+
+def test_reverification_is_appended_after_unchanged_sections(tmp_path: Path) -> None:
+    s10, rev = tmp_path / "s10", tmp_path / "s20"
+    frames = [{"robot_iou": 0.9998, "object_iou": 1.0, "robot_centroid_px": 0.03}]
+    ver = {"frames": frames, "pass": True, "threshold": {"robot_iou_min": 0.95},
+           "method": "silhouettes"}
+    _write(s10, ver)
+    rev.mkdir()
+    (rev / "viewer_verification.json").write_text(json.dumps(ver))
+    text = vp.build(s10, None, rev)
+    assert text.startswith(vp.build(s10))  # Session 20 adds a section; nothing above it changes
+    tail = text[len(vp.build(s10)):]
+    assert "## Viewer re-verification after the visual pass (Session 20, D-136)" in tail
+    assert "1 reference frames, overall **pass**" in tail  # the release clips, re-verified
+    assert "Not run yet (`make web-verify-ext-s20`)" in tail  # no extension result in this tree

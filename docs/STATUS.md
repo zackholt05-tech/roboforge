@@ -1,17 +1,18 @@
 <!-- parsable status header -->
 ```yaml
-CURRENT_SESSION: 17
-SESSION_STATUS: PASS            # Session 17: post-release extension X2, phase X2-c (Can MH): X2 freeze, 12 evaluations once on can/x2_heldout, the preregistered analysis once; X2 done; $0
-NEXT_SESSION: 18                # owner decision pending: publish X1, X2 and X3 as v1.1 (D-105)? exact prompt for the publication session in docs/HANDOFF.md # Session 17 Handoff §6
-BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-053 (Can H2/H3 replicated by X3; X2 Can MH shown beside), KI-056, KI-057; mitigated: KI-062, KI-064 (Session 15); KI-052 tested by X1 (Session 13); accepted: KI-009 (D-100, D-114), KI-060, KI-063 (D-122); partial: KI-061
-LAST_VERIFIED_COMMIT: 3df25ff   # X2-c code a1c3db7 (unchanged since); freeze 3a64dbb; evaluations from clean 3a64dbb; analysis from clean 29ce47a; STOP checks below ran on 3df25ff plus the Session 17 records
+CURRENT_SESSION: 18
+SESSION_STATUS: PASS            # Session 18: v1.1 built and verified locally (addendum PDF, README extensions section and chart, Observatory section with 23 X1/X2 clips re-rendered from recorded states); nothing pushed, tagged, released or deployed; $0
+NEXT_SESSION: 19                # v1.1 publication (owner decision D-131): push main, CI, tag v1.1.0, release with the addendum PDF, Pages redeploy on top of c14e041; exact prompt in docs/HANDOFF.md # Session 18 Handoff §6
+BLOCKERS: none                  # open items: KI-001, KI-008, KI-010, KI-011, KI-021, KI-023, KI-024, KI-028, KI-033, KI-034, KI-035, KI-042; documented: KI-053 (Can H2/H3 replicated by X3; X2 Can MH shown beside), KI-056, KI-057; mitigated: KI-062, KI-064 (Session 15), KI-065 (Session 18); KI-052 tested by X1 (Session 13); accepted: KI-009 (D-100, D-114), KI-060, KI-063 (D-122); partial: KI-061
+LAST_VERIFIED_COMMIT: 83b2f37   # Session 18 STOP checks ran on 83b2f37 (last code change f675490; documents only after); export from clean 7eb5817; nothing pushed
 PROTOCOL_COMMITS: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14: 2859d04, rgb_cuda_amendment: e433f11, section15_level2: b93c50c, x1_preregistration: ab02469, x3_preregistration: fb9f05e, x2_preregistration: 9df6628}
-EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b], x1_code: 09d1a90, x1_preregistration: ab02469, x1_results: c2a9ae6, x3_code: [e0b8a4e, e9289c6], x3_heldout_suite: 81afa3b, x3_preregistration: fb9f05e, x3_suite_end: d602d1b, x3_validation: 86e6c9b, x3_isolation_before: 13c5db2, x3_evaluations: 949a6d7, x3_results: 335c27c, x2_data: [5e4b015, 305f074], x2_suites: 4459c00, x2_pilot_code: [3d42786, fe9df74], x2b_preregistration_and_code: 9df6628, x2b_evidence: fdb1f37, x2c_decisions: ca1897a, x2c_code: a1c3db7, x2c_engineering_check: 45edda2, x2_freeze: 3a64dbb, x2_heldout: 29ce47a, x2_results: 3df25ff}
+EVIDENCE_COMMITS: {level1_freeze: bf0a0fa, level1_heldout_results: 97cc48a, rgb_freeze: d9c6217, rgb_gate_d081: 378ea43, rgb_heldout: bc054bc, rgb_results: 3b23255, pc_feasibility: 85eeb2e, level2_freeze: b93c50c, pc_selections: b1f4da2, level2_gate_d086: 08c3aa8, level2_placement: 4ebebc1, level2_heldout: a031e88, level2_results: 620c541, observatory_selection: 5f398d7, observatory_export: ebfd0c3, observatory_findings_verification: 010867b, observatory_renderer_restored: d2c8add, observatory_findings_robustness: c73a080, paper: 8a08247, release_tooling: 21fc749, fresh_clone_fixes: [d9da1dd, bd3bf6b], x1_code: 09d1a90, x1_preregistration: ab02469, x1_results: c2a9ae6, x3_code: [e0b8a4e, e9289c6], x3_heldout_suite: 81afa3b, x3_preregistration: fb9f05e, x3_suite_end: d602d1b, x3_validation: 86e6c9b, x3_isolation_before: 13c5db2, x3_evaluations: 949a6d7, x3_results: 335c27c, x2_data: [5e4b015, 305f074], x2_suites: 4459c00, x2_pilot_code: [3d42786, fe9df74], x2b_preregistration_and_code: 9df6628, x2b_evidence: fdb1f37, x2c_decisions: ca1897a, x2c_code: a1c3db7, x2c_engineering_check: 45edda2, x2_freeze: 3a64dbb, x2_heldout: 29ce47a, x2_results: 3df25ff, v1_1_decisions: b96b44f, addendum_and_readme: 5e2cf46, obs_ext_code: 2fdf21d, obs_ext_selection: 7eb5817, obs_ext_export: [f26e4e6, a8b5a74], obs_ext_site: fb1f6be, visual_provenance_ext: f675490, ki_065: d00b195}
 PAPER: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400 (D-093)", fresh_clone_rebuild: "byte-identical (Session 12)", label: "local build, not peer reviewed"}
-RELEASE: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097-D-104", repository: "https://github.com/zackholt05-tech/roboforge (public, per D-099; verified state in the publication record)", observatory: "GitHub Pages per D-102 (verified state in the publication record)"}
+ADDENDUM: {pdf: paper/addendum/addendum.pdf, sha256: bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2, pages: 6, toolchain: "Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794787200 (D-133)", sources: "the three pinned extension results.json", check: "make addendum-check (CI research-integrity)", label: "local build, not peer reviewed"}
+RELEASE: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097-D-104", repository: "https://github.com/zackholt05-tech/roboforge (public, per D-099; verified state in the publication record)", observatory: "GitHub Pages per D-102 (verified state in the publication record)", v1_1: "built and verified in Session 18, not published; Session 19 publishes (D-131)"}
 EVALUATION_PLATFORM: linux-aarch64-container-1f685638f28c   # D-017, configs/eval/platform.yaml
-FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only. Session 13 (X1) ran on the Session 7 robustness sets only; no held-out or validation start was stepped. Session 14 (X3) stepped only the Can validation starts and the new can/x3_heldout suite (24 evaluations, once); no frozen held-out suite; isolation PASS. Session 15 (X2-a) stepped only the can/x2_validation starts (20 pilot evaluations); no held-out start of any suite; isolation PASS. Session 16 (X2-b) stepped only the can/x2_validation starts (460 evaluations); no held-out start of any suite; isolation PASS. Session 17 (X2-c) stepped can/x2_heldout once (12 evaluations from the X2 freeze 3a64dbb; never again) and, for the engineering check, 2 evaluations on the 50 can/x2_validation starts (100 episodes); no frozen held-out suite; isolation PASS"
-RESOURCE_SPEND: {usd_billed_total: 10.61, session13_usd_billed: 0, session14_usd_billed: 0, session15_usd_billed: 0, session16_usd_billed: 0, session17_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-17 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
+FINAL_TEST: "Level 1 TESTED_ONCE (never rerun). RGB study TESTED_ONCE under D-081 (never rerun). Level 2 TESTED_ONCE under D-086 (never rerun). Sessions 10-12 read recorded evidence only. Session 13 (X1) ran on the Session 7 robustness sets only; no held-out or validation start was stepped. Session 14 (X3) stepped only the Can validation starts and the new can/x3_heldout suite (24 evaluations, once); no frozen held-out suite; isolation PASS. Session 15 (X2-a) stepped only the can/x2_validation starts (20 pilot evaluations); no held-out start of any suite; isolation PASS. Session 16 (X2-b) stepped only the can/x2_validation starts (460 evaluations); no held-out start of any suite; isolation PASS. Session 17 (X2-c) stepped can/x2_heldout once (12 evaluations from the X2 freeze 3a64dbb; never again) and, for the engineering check, 2 evaluations on the 50 can/x2_validation starts (100 episodes); no frozen held-out suite; isolation PASS. Session 18 read recorded evidence only: 23 X1/X2 records re-rendered from their recorded states on the canonical container (no policy call, no env.step); isolation PASS"
+RESOURCE_SPEND: {usd_billed_total: 10.61, session13_usd_billed: 0, session14_usd_billed: 0, session15_usd_billed: 0, session16_usd_billed: 0, session17_usd_billed: 0, session18_usd_billed: 0, notes: "A-01 $0.148; A-02 $0.0317; A-03 $8.06; A-04 $2.37; all four approvals closed; Sessions 10-18 local only; CI on GitHub-hosted runners is free for public repositories (D-101)"}
 APPROVED_LIMIT: {A-03: "closed, $8.06 of $15", A-04: "closed, $2.37 of $9", open: none, local: "$0"}
 X1: {decision: D-107, preregistration: "docs/extensions/X1_PREREGISTRATION.md @ ab02469 (sha256 7405dc3d...)", evaluations: "45/45 once, reports/session13/x1_clamp/evals/, runs/x1_clamp/", analysis: "reports/session13/x1_clamp/results.json (sha256 ad503686...) @ c2a9ae6", primary: "Lift ood_arm_offset drop(diffusion) - drop(clamped BC-MLP-chunk) -40.0 pp [-54.0, -25.3], separated (-); reading R1", label: "exploratory, after the freeze"}
 X3: {decisions: "D-109-D-115", preregistration: "docs/extensions/X3_PREREGISTRATION.md @ fb9f05e (sha256 b5e54125...)", suite: "can/x3_heldout, 100 starts, content 9c199e19... (81afa3b)", runs: "12 new (4 families x seeds 3-5), validation-selected (reports/session14/suite/x3_validation.json)", evaluations: "24/24 once, reports/session14/x3/evals/, runs/x3/", analysis: "reports/session14/x3/results.json (sha256 4299a149...) @ 335c27c", primary: "H2 diffusion - BC-MLP +22.7 pp and H3 BC-RNN - BC-MLP +23.8 pp separated under bootstrap and seed-level (holds, robust); H2 diffusion - BC-RNN -1.2 and H2-c -1.7 not separated (unchanged)", label: "separate replication"}
@@ -21,13 +22,42 @@ UPDATED: 2026-11-16
 
 # RoboForge Status
 
-## Next: owner decision, publish X1, X2 and X3 as v1.1 (D-105)?
-v1.0.0 stays as published. All three extensions are done: X1 (Session 13), X3 (Session 14) and
-X2 (Sessions 15–17). Nothing from Sessions 13–17 was pushed: local `main` is 35 commits ahead of
-`origin/main` before the Session 17 STOP commit. Whether the extension results are published,
-for example as v1.1 with an addendum, is the owner's decision. The exact prompt for a
-publication session (Session 18) is in `docs/HANDOFF.md` (# Session 17 Handoff §6). If the
-owner declines, no session is planned.
+## Next: Session 19, publish v1.1 (D-131)
+The owner chose to publish X1, X2 and X3 as v1.1: push `main`, an annotated tag `v1.1.0`, a
+GitHub release with the addendum PDF, the README section, and the Observatory updated first
+(D-131). Session 18 built and verified all of it locally and stopped with nothing pushed,
+tagged, released or deployed. Session 19 publishes it in the D-131 order; its exact prompt is in
+`docs/HANDOFF.md` (# Session 18 Handoff §6). v1.0.0 (tag, release, `paper/main.pdf`
+`c648e753…`) stays as published.
+
+## Session 18: v1.1 built and verified locally (PASS; nothing published)
+| Step (Session 18 prompt and owner instructions) | Status | Evidence |
+|---|---|---|
+| Prerequisites, by executable checks; fresh-clone CI commands | DONE: all PASS | E18-01 |
+| Owner decisions, first | DONE: "publish"; scope "(b) + README"; Observatory "Update it too", then "update the Observatory before anything goes on GitHub"; "X2 + X1 clips"; "build now, publish in S19" (D-131) | DECISIONS D-131 |
+| Makefile defaults and targets | DONE: D-132 (`PREFIX ?= s18`, evidence session 18, `OBS_EXT_OUT`, addendum and Observatory targets) | D-132 |
+| Addendum PDF, generated from the three pinned results; `paper/main.pdf` unchanged | DONE: `paper/addendum/addendum.pdf`, 6 pages, SHA-256 `bedfb277…`, built twice byte-identical; `make addendum-check` in CI (D-133) | E18-02 |
+| README section and chart, generated; `release-check` covers them | DONE: `extensions` block, `docs/media/readme_extensions.svg` | E18-02 |
+| Observatory: selection, export, findings, section, verification | DONE: 23 clips by the D-134 rules (`7eb5817`); export from clean `7eb5817`, 0.0 m, isolation PASS (`f26e4e6`, `a8b5a74`); section "After v1.0.0: three follow-up studies" (`fb1f6be`); viewer check 12/12 pass | E18-03 to E18-05 |
+| Provenance and known issues | DONE: `docs/VISUAL_PROVENANCE.md` v1.1 section (`f675490`); KI-065 (`d00b195`) | E18-06 |
+| STOP | see below | E18-07 |
+
+**What v1.1 adds (no new result; every number generated from the three pinned results).**
+- The addendum: X1 "exploratory, after the freeze" (validation regime, KI-052), X3 "separate
+  replication" (KI-053), X2 "X2 (Can MH)" (beside Level 1 Can PH, never pooled,
+  within-operator only, 500- vs 400-step scales), each with its tables and caveats.
+- The README: a generated `extensions` block and chart; the KI-052 limitation line now says X1
+  tested the BC side.
+- The Observatory, section "After v1.0.0: three follow-up studies":
+  - X1: three arms (diffusion, BC-MLP-chunk unclamped and clamped) on rule-selected Lift
+    arm-offset starts;
+  - X2 (Can MH): diffusion against each BC family on rule-selected held-out starts;
+  - X3: its contrasts beside Level 1;
+  - all recorded episodes, re-rendered from their recorded states and never stepped. The X2
+    clips show the Can MH label (KI-065).
+- Cost: 350.5 s of container time for the export; $0.
+
+**STOP checks.** On `83b2f37` plus the Session 18 STOP records (documents and logs only; the last code change is `f675490`), host, no container running during the suite: `make lint` clean; full suite alone **720 passed** (9:33; 705 of Session 17 plus 15 Session 18 tests; `logs/session18/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged"); `tests/research_integrity` 81 passed; `make addendum-check` and `make paper-check` pass; `paper/main.pdf` `c648e753…` and its sources identical to `v1.0.0`; `paper/addendum/addendum.pdf` `bedfb277…`; `make release-check` PASS with the new records staged so that its scan covers them (139 disclosed local-path files, D-100 and D-114; no new local path); site: `make web-build` within budgets, `make web-test` 75 passed, `make web-e2e` 8/8, `make web-verify-ext` pass. On Linux aarch64 (the canonical image, read-only mount of the tree), the 15 addendum files and the README block and chart equal a fresh build, as CI will check (`logs/session18/addendum_check_linux.log`). No frozen file, freeze, result or executed outcome changed; nothing was trained, evaluated or stepped; nothing was pushed, tagged, released or deployed.
 
 ## Session 17: post-release extension X2, phase X2-c, Can MH (PASS; X2 done)
 | Step (Session 17 prompt) | Status | Evidence |

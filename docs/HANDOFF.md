@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 17 STOP, X2 done, updated 2026-11-16) -->
+<!-- parsable handoff header (real values; Session 18 STOP, v1.1 built, not published, updated 2026-11-16) -->
 ```yaml
 project: roboforge-3d
-current_session: 17
-session_status: PASS          # Session 17: X2 phase X2-c, Can MH: X2 freeze, 12 evaluations once on can/x2_heldout, analysis once; X2 done; $0
-next_session: 18              # owner decision pending: publish X1, X2 and X3 as v1.1 (D-105)?; exact prompt for that session in # Session 17 Handoff §6
-last_verified_commit: 3df25ff   # X2-c code a1c3db7 (unchanged since); freeze 3a64dbb; evaluations from clean 3a64dbb; analysis from clean 29ce47a; STOP checks ran on 3df25ff plus the Session 17 records (# Session 17 Handoff §4)
+current_session: 18
+session_status: PASS          # Session 18: v1.1 built and verified locally (addendum, README section, Observatory section); nothing pushed, tagged, released or deployed; $0
+next_session: 19              # v1.1 publication (D-131); exact prompt in # Session 18 Handoff §6
+last_verified_commit: 83b2f37   # Session 18 STOP checks ran on 83b2f37 (last code change f675490; documents only after); export from clean 7eb5817; nothing pushed
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -94,8 +94,10 @@ heldout_results:                      # family success %, 3 seeds x 50 held-out 
 modal: {gate_a: done, A-01: "closed, $0.148", A-02: "closed, $0.0317", A-03: "closed, $8.06", A-04: "Level 2, closed, $2.37 (5 launches; KI-047; detached launches since D-085)", open_approvals: none, month_to_date: "$15.89 of $30 (2026-11-09)", egl_vs_osmesa: "PENDING (KI-001, KI-033)"}
 final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081); Level 2 TESTED ONCE (Session 9, D-086 gate, a031e88; analysis 620c541). Session 10 re-rendered recorded episodes only. All three locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1, RGB or Level 2 configuration, ever. Session 13 (X1) stepped only the Session 7 robustness sets. Session 14 (X3) stepped only the Can validation starts and the new can/x3_heldout suite (24 evaluations, once); isolation PASS. Sessions 15-16 (X2-a, X2-b) stepped only can/x2_validation (20 + 460 evaluations); no can/x2_heldout start yet; isolation PASS"
 disk: "about 18 GiB free after the Session 16 suite (KI-008; swap files share the volume); runs/x2 takes 19.59 GiB (X2-b added 17.96); X2-c needs well under 1 GiB (12 evaluations of 100 episodes, estimate); X3 runs, validation directories and runs/x3 take 7.1 GiB; the Observatory export is about 19 MB in git; the Modal runs Volume keeps every checkpoint"
-next_required_owner_approval: "none for X2-c, which is fully preregistered (docs/extensions/X2_PREREGISTRATION.md §7); whether X1, X2 and X3 are published (v1.1) is the owner's decision (D-105). No paid compute is open; any Modal job needs a new approval row"
+next_required_owner_approval: "none: the owner decided to publish v1.1 (D-131: main, tag v1.1.0, release with the addendum PDF, README section, Pages redeploy on top of c14e041), in Session 19. No paid compute is open; any Modal job needs a new approval row"
 observatory: {decisions: "D-087-D-091", site: website/, export: "reports/session10/observatory/ (37 clips from clean b5fc2ee, canonical container; ebfd0c3)", findings: "findings.json, 8 frozen sources (c73a080)", verification: "viewer_verification.json: 18/18 frames pass (robot IoU >= 0.9998, centroid <= 0.04 px)", hosting: "none (owner, D-090); no deployed or staging URL", meshes: "extracted at build time by make web-assets, gitignored (D-090)", provenance: docs/VISUAL_PROVENANCE.md}
+observatory_v1_1: {decisions: "D-131, D-134", export: "reports/session18/observatory/ (23 X1/X2 clips from clean 7eb5817, canonical container; f26e4e6, a8b5a74)", selection: "selection.json @ 7eb5817 (D-134 rules)", findings: "findings_ext.json, the three pinned results", section: "website/src/sections/Extensions.tsx (fb1f6be)", verification: "12/12 frames pass (robot IoU >= 0.9998, centroid <= 0.03 px)", hosting: "not deployed; Session 19 redeploys gh-pages on top of c14e041", known_issue: KI-065}
+addendum: {pdf: paper/addendum/addendum.pdf, sha256: bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2, pages: 6, build: "make addendum (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794787200)", check: "make addendum-check", decision: D-133, label: "local build, not peer reviewed"}
 level2_study: {freeze: "docs/LEVEL2_EXPERIMENT_FREEZE.md @ b93c50c (sha256 ffe5a03e...)", gate: "D-086 @ b1f4da2, amended 08c3aa8", runs: [s9_pc_diffusion_dp3_lift_seed0_8fd35613, s9_pc_diffusion_dp3_lift_seed1_a66a2758, s9_pc_diffusion_dp3_lift_seed2_402a1f24], selections: "30000 / 40000 / 60000 (reports/session9/pc_selection/)", placement: "reports/session9/level2_placement/ @ 4ebebc1", heldout: "reports/session9/pc_heldout/ @ a031e88", results: "reports/session9/level2_results/ @ 620c541 (+ ERRATA.md)", h5: "pc - rgb on ood_cube_shift -41.3 pp [-54.0, -28.0], separated (-)", heldout_success: {pc_diffusion: 100.0, rgb_diffusion: 100.0}, label: DP3-inspired, privilege: sensor-like}
 paper: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, build: "make paper (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400)", generated: "paper/generated/ (35 files, index.json)", audit: docs/AUDIT.md, decisions: "D-092-D-096", label: "local build, not peer reviewed", fresh_clone: "byte-identical rebuild (Session 12)"}
 release: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097-D-104", repository: "https://github.com/zackholt05-tech/roboforge", observatory: "GitHub Pages (D-102)", ci: ".github/workflows (D-101)", state: "see # Session 12 Handoff §5 (publication record, verified)"}
@@ -105,23 +107,197 @@ x3_study: {decisions: "D-109-D-115", label: "separate replication", preregistrat
 x2_study: {decisions: "D-116-D-130", preregistration: "docs/extensions/X2_PREREGISTRATION.md @ 9df6628 (sha256 d9bc5955...)", option: "A, Can MH", phase: "done: X2-a (Session 15), X2-b (Session 16), X2-c (Session 17)", x2b: "reports/session16/x2/suite/ from clean 9df6628: chosen diffusion t2 (48), BC-RNN t4 (36), BC-MLP-chunk t2 (49), BC-MLP t1 (16); test configuration fdb1f37", data: "data/manifests/robomimic_v1.5_mh.json (hash-verified); split data/splits/can_mh.json (operator-stratified, within-operator claims only)", suites: "can/x2_validation 50 starts 47b889cd, can/x2_heldout 100 starts 40b8228c (4459c00)", freeze: "docs/extensions/X2_FREEZE.md @ 3a64dbb (sha256 952d232c..., blob 9929dc7c...); code a1c3db7; engineering check PASS 45edda2", evaluations: "12/12 once from 3a64dbb (reports/session17/x2/heldout/evals/, runs/x2c/), 0 errors, isolation PASS, no rerun; never again", analysis: "reports/session17/x2/ @ 3df25ff (results.json sha256 30c01f55...)", primary: "H2 diffusion - BC-MLP +63.3 pp [+53.0, +73.0] robust (+), same direction; H2 diffusion - BC-RNN +27.3 pp [+16.7, +37.7] robust (+), new separation; H2-c +2.0 pp [-6.3, +11.0] not separated, neither separated; H3 BC-RNN - BC-MLP +36.0 pp [+23.7, +48.0] robust (+), same direction", label: "X2 (Can MH): beside the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator only"}
 ```
 
-# Next: owner decision, publish X1, X2 and X3 as v1.1 (D-105)?
+# Next: Session 19, publish v1.1 (D-131)
 
-All three extensions are done (# Session 17 Handoff below). v1.0.0 stays as published, and
-nothing from Sessions 13 to 17 was pushed. The owner decides whether the extension results are
-published, for example as v1.1 with an addendum (D-105). If the answer is yes, the exact prompt
-for the publication session is in # Session 17 Handoff §6. If the answer is no, no session is
-planned. Every earlier boundary still applies, and the X2-c evidence is now fixed too:
-- never rerun `make x2c-run`, `make x2c-analyze`, `make x2c-check` or `make x2c-freeze`;
-- never step `can/x2_heldout` again;
-- never edit `reports/session17` results or `docs/extensions/X2_FREEZE.md`;
-- never prune or move `runs/x2c` or `runs/x2c_checks`.
+The owner decided to publish X1, X2 and X3 as v1.1 and to update the Observatory before
+anything goes on GitHub (D-131). Session 18 built and verified everything locally and stopped
+with nothing pushed, tagged, released or deployed. Session 19 publishes it in the D-131 order;
+the exact prompt is in # Session 18 Handoff §6. Every earlier boundary still applies, and the
+Session 18 build is now fixed too:
+- never rerun `make obs-ext-select`, `make obs-ext-export`, `make obs-ext-findings` or
+  `make web-verify-ext`;
+- never edit `reports/session18` evidence or `paper/addendum/`.
 
 | Study | File | Session |
 |---|---|---|
 | X1 evaluation-only action-clamp test (KI-052) | `docs/extensions/X1_action_clamp.md` | 13, DONE |
 | X2 a harder or multimodal task: option A, Can MH (D-116) | `docs/extensions/X2_harder_task.md` | 15 X2-a, 16 X2-b, 17 X2-c: DONE |
 | X3 more training seeds, on a fresh held-out suite | `docs/extensions/X3_more_seeds.md` | 14, DONE |
+| v1.1: addendum, README section, Observatory section | `docs/extensions/README.md`, D-131 to D-134 | 18 built; 19 publishes |
+
+# Session 18 Handoff (v1.1, built and verified; nothing published)
+
+Do not trust this file blindly. Every claim names its command and evidence
+(`logs/session18/`, `reports/session18/`, LEDGER E18-01 to E18-07).
+
+## 1. Session completed
+Session 18: v1.1, the post-release extensions X1, X2 and X3 in the repository and the
+Observatory, built and verified locally (D-131 to D-134). Status **PASS**. Nothing was pushed,
+tagged, released or deployed; Session 19 publishes.
+
+## 2. Completed work
+- **Prerequisites** (E18-01), by executable checks on clean `dd36d9a`: the three pinned results,
+  `X2_FREEZE.md` and `paper/main.pdf` hash to their recorded values; lint, `make freeze-check`,
+  the full suite alone (705), `tests/research_integrity` (81) and `make release-check` pass; a
+  fresh `git clone --no-local` ran the D-101 CI commands and passed.
+- **Owner decisions** (D-131, recorded first in `b96b44f`): "publish"; scope "(b) + README";
+  the Observatory updated too, and first ("before putting anything on github"); clips "X2 + X1";
+  "build now, publish in S19". D-132 (Makefile `s18`, targets), D-133 (v1.1 content), D-134
+  (Observatory section), all before any code.
+- **Addendum and README** (E18-02, `5e2cf46`): `src/roboforge/addendum/`,
+  `scripts/addendum_assets.py`, `scripts/readme_extensions.py`, `paper/addendum/`. Every value
+  is an `\ax{}` macro generated from the three pinned results; a lint refuses typed numbers.
+  `paper/addendum/addendum.pdf`: 6 pages, SHA-256 `bedfb277…`, built twice byte-identical
+  (Tectonic 0.17.0, `--only-cached`, `SOURCE_DATE_EPOCH=1794787200`). README: a generated
+  `extensions` block and chart (`docs/media/readme_extensions.svg`); `make release-check`
+  checks both; CI runs `make addendum-check`. `paper/main.pdf` and its sources are unchanged.
+- **Observatory** (E18-03 to E18-05):
+  - selection by the D-134 rules from committed summaries, through their pinned hashes
+    (`7eb5817`): 23 clips, 12 cases, none missing;
+  - export on the canonical container from clean `7eb5817` (`f26e4e6`, videos `a8b5a74`):
+    recomputed poses equal the records (0.0 m), isolation PASS, 350.5 s;
+  - the section "After v1.0.0: three follow-up studies" (`fb1f6be`), its schemas, tests,
+    E2E and budget; `make web-verify-ext` 12/12 frames pass.
+- **Provenance and known issues** (E18-06): `docs/VISUAL_PROVENANCE.md` v1.1 section
+  (`f675490`); KI-065, the X2 records' PH label (`d00b195`).
+- **Records:** STATUS, HANDOFF, DECISIONS (D-134 outcome note), KNOWN_ISSUES (KI-065),
+  EXPERIMENT_LEDGER (E18-03 to E18-07), `docs/extensions/README.md`.
+
+## 3. What v1.1 contains (no new result)
+- Every number is generated from the three pinned results; nothing was trained, evaluated or
+  stepped. The Observatory clips are recorded episodes re-rendered from their recorded states.
+- Each study keeps its label and caveats: X1 "exploratory, after the freeze" (validation regime;
+  KI-052 diffusion side untested); X3 "separate replication" (KI-053); X2 "X2 (Can MH)" (beside
+  the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator only;
+  500- vs 400-step scales).
+- Still to do in Session 19 (D-131, D-133): `CITATION.cff` 1.1.0 and its date in the tagged
+  commit; the README Observatory paragraph after the redeploy; the v1.1 publication record in
+  `docs/FINAL_RELEASE_AUDIT.md`.
+
+## 4. STOP checks
+**STOP checks.** On `83b2f37` plus the Session 18 STOP records (documents and logs only; the last code change is `f675490`), host, no container running during the suite: `make lint` clean; full suite alone **720 passed** (9:33; 705 of Session 17 plus 15 Session 18 tests; `logs/session18/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged"); `tests/research_integrity` 81 passed; `make addendum-check` and `make paper-check` pass; `paper/main.pdf` `c648e753…` and its sources identical to `v1.0.0`; `paper/addendum/addendum.pdf` `bedfb277…`; `make release-check` PASS with the new records staged so that its scan covers them (139 disclosed local-path files, D-100 and D-114; no new local path); site: `make web-build` within budgets, `make web-test` 75 passed, `make web-e2e` 8/8, `make web-verify-ext` pass. On Linux aarch64 (the canonical image, read-only mount of the tree), the 15 addendum files and the README block and chart equal a fresh build, as CI will check (`logs/session18/addendum_check_linux.log`). No frozen file, freeze, result or executed outcome changed; nothing was trained, evaluated or stepped; nothing was pushed, tagged, released or deployed.
+
+## 5. Owner decisions pending
+None for Session 19: D-131 authorizes the publication. The optional diffusion side of KI-052
+stays open (not part of v1.1).
+
+## 6. Exact prompt for Session 19 (v1.1 publication)
+
+```text
+Implement RoboForge 3D SESSION 19 ONLY: publication of v1.1 (the post-release extensions X1, X2
+and X3), built and verified in Session 18, under DECISIONS D-131 to D-134 (and D-099 to D-104,
+D-107, D-111, D-130) and the rules of MASTER_SPEC.md. The owner already decided to publish
+(D-131): scope "(b) + README" plus the Observatory, in Session 19 only. Do not rebuild or change
+the content: publish what Session 18 committed.
+
+Begin by reading all of MASTER_SPEC.md, docs/FINAL_RELEASE_AUDIT.md (the v1.0.0 publication
+record and how it was verified), docs/STATUS.md, docs/HANDOFF.md (# Session 18 Handoff),
+docs/DECISIONS.md (D-099 to D-104, D-131 to D-134 and D-134's outcome note),
+docs/KNOWN_ISSUES.md (KI-052, KI-053, KI-061, KI-065), docs/EXPERIMENT_LEDGER.md (Session 18),
+README.md, CITATION.cff and paper/addendum/addendum.tex, and inspect the actual repository,
+remote and test state. Do not blindly trust handoff claims; confirm every prerequisite with
+executable checks:
+- SHA-256 of the pinned files:
+  - reports/session13/x1_clamp/results.json ad50368645b96fb87489310243535f97694b1e47a2ff993915b039b2199a5ee7;
+  - reports/session14/x3/results.json 4299a14930790bfdb2f91d7a3216c9bd7f6db1fa2171469a29bfed3c5c5b71d1;
+  - reports/session17/x2/results.json 30c01f551333feafba70bfa4c9c6a414eda691f179800022d3871776be2df238;
+  - docs/extensions/X2_FREEZE.md 952d232c40a8871084e08ac9c57e9d4ab3b9717db31413d1750fc1ebb5acf08e;
+  - paper/main.pdf c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f (v1.0.0, unchanged);
+  - paper/addendum/addendum.pdf bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2;
+  - reports/session18/observatory/index.json dea64165565a04370c1e378a8fea6bf7074a9482072211dfbf382bfec718e25c;
+- make freeze-check unchanged; make addendum-check, make paper-check and make release-check
+  pass; make lint, the full suite alone and tests/research_integrity pass;
+- make web-data, make web-assets, make web-build (every budget), make web-test and make web-e2e
+  pass. Do not rerun make web-verify-ext: its committed result
+  (reports/session18/observatory/viewer_verification.json, 12 frames, pass) stands;
+- the tree is clean; origin/main is abbb9c3; git log origin/main..main lists only commits from
+  536fa24 (the D-105 handoff) onward; nothing rewrites history (D-100);
+- gh is logged in as zackholt05-tech with repo scope; origin's gh-pages tip is c14e041; tag
+  v1.0.0 is the annotated tag 82f3219 on 7b394fa and its release is unchanged
+  (FINAL_RELEASE_AUDIT §7).
+Report free disk, swap use and running containers. If any prerequisite fails, stop and ask the
+owner.
+
+1. Record decisions before acting: the Makefile defaults PREFIX ?= s19 and evidence session 19;
+   nothing else changes in code.
+2. Prepare the release commit: CITATION.cff version 1.1.0 and date-released set to the release
+   date (D-131). pyproject.toml and website/package.json keep their versions (D-099). Run
+   make release-check again, then commit as Zackary Holt <zackholt05@gmail.com>, with no AI
+   co-author trailer.
+3. Publish, in this order (D-131), verifying each step before the next and before reporting it:
+   a. push main (a fast-forward of origin/main); check it with git ls-remote. If GitHub rejects
+      the push, stop and ask; never rewrite author emails or history.
+   b. wait for all three CI workflows (python-tests, research-integrity with the new
+      addendum-check step, web-build) to pass on that exact SHA (gh run list --commit). If any
+      fails, stop and ask; do not tag.
+   c. create the annotated tag v1.1.0 on that SHA (tagger Zackary Holt, a message with no
+      trailer), push it, check it with git ls-remote and git cat-file -p v1.1.0.
+   d. create the GitHub release v1.1.0 from the tag: notes written by hand from the generated
+      README extensions block and the addendum's labels and caveats (X1 "exploratory, after the
+      freeze", validation regime, KI-052; X3 "separate replication", KI-053; X2 "X2 (Can MH)",
+      beside the frozen Level 1 Can PH result, never instead of it, never pooled,
+      within-operator only, 500-step vs 400-step scales; simulation only; the addendum is a
+      local build, not peer reviewed); no generated notes, no byline; not a draft or
+      prerelease; asset paper/addendum/addendum.pdf. Download the asset and compare its
+      SHA-256 with bedfb277…. The v1.0.0 release stays unchanged.
+   e. redeploy the Observatory: from the clean tagged commit run make web-data, make
+      web-assets, make web-build and make pages-bundle (it refuses a dirty tree). Deploy the
+      staged bundle as a NEW commit on top of c14e041 on gh-pages (for example in a separate
+      git worktree of gh-pages: replace its files with the bundle, commit as Zackary Holt, push
+      as a fast-forward). Never an orphan commit and never a force push, so the v1.0.0 site
+      stays in history. Wait for the Pages build to report "built", then verify the live site:
+      scripts/pages_bundle.py verify --url https://zackholt05-tech.github.io/roboforge/
+      --manifest <the bundle's deploy.json> (every file, equal SHA-256), and run the site's E2E
+      tests against the live URL as Session 12 did (a temporary copy of e2e/site.spec.ts with
+      the live base URL, including the follow-up studies test), logging to
+      logs/session19/pages_live_e2e.log.
+   f. run make release-check with --network (scripts/release_check.py --network --out
+      reports/session19/release_check_network.json) and record the result.
+4. After publication, in one commit on main:
+   - README.md: update the Observatory paragraph (D-133): the commit the live site was built
+     from, and one number-free sentence that the site now also shows the three follow-up
+     studies (X1 and X2 recorded episodes, X3 results) under their own labels;
+   - append the v1.1 publication record to docs/FINAL_RELEASE_AUDIT.md as a new section (the
+     v1.0.0 sections stay unchanged), one row per verified step as in §7;
+   - STATUS, HANDOFF, DECISIONS (D-131 outcome note), KNOWN_ISSUES and EXPERIMENT_LEDGER.
+   Push it and check CI on that SHA. The tag stays on the release commit.
+
+Binding boundaries:
+- Frozen: Level 1, the RGB study, Level 2, X1, X2 and X3, and all their evidence, and the
+  Session 18 build: the addendum (paper/addendum/), the README extensions block and chart, the
+  Observatory extension export (reports/session18/observatory/) and the site code. Change none
+  of them; if one turns out wrong, stop and ask.
+- No rollout of any kind: no training and no evaluation, held-out or validation.
+- Never rerun any eval, analysis, check or freeze target of Level 1, the RGB study, Level 2,
+  X1, X2 or X3, and never rerun make obs-ext-select, make obs-ext-export, make obs-ext-findings
+  or make web-verify-ext.
+- Never step can/x2_heldout or can/x3_heldout again.
+- Never edit:
+  - reports/session6-10, reports/session13 to reports/session18 results;
+  - the freezes (including docs/extensions/X2_FREEZE.md), the X1, X2 or X3 preregistration,
+    LEVEL1_COMPLETE or LEVEL2_GO_NO_GO's executed outcome;
+  - paper/main.pdf and its sources, and paper/addendum/;
+  - any file that make freeze-check pins.
+- Never prune or move runs/.
+- No paid or remote compute (GitHub-hosted CI for this public repository is free, D-101).
+- Publish only what D-131 authorizes: main, the tag v1.1.0, its release with the addendum PDF,
+  and the Pages redeploy as a new gh-pages commit. Nothing else, and never a force push.
+- No AI co-author trailer or AI byline in commits, the tag, the release text, the gh-pages
+  commit or the repository description (MASTER_SPEC §0.2, D-099).
+- No changes to existing data, eval suites, uv.lock or Python dependencies without a decision.
+- Use EVIDENCE_SESSION=19.
+- Never run the full test suite alongside a container job (KI-043).
+- Label every estimate as an estimate, in hours from measured times.
+
+At the SESSION 19 STOP boundary:
+- run make lint, the full suite alone, make freeze-check, tests/research_integrity,
+  make addendum-check, make paper-check and make release-check;
+- commit verified work as Zackary Holt <zackholt05@gmail.com> with no AI co-author trailers;
+- inspect git log --format=fuller -n 5;
+- report the verified publication state (git ls-remote, CI run IDs, the release and its asset
+  SHA-256, the gh-pages commit and the live-site checks);
+- STOP. Do not proceed automatically.
+```
 
 # Session 17 Handoff (X2-c)
 

@@ -67,6 +67,9 @@ if ignored) · **MEDIUM** · **LOW**. Every entry cites its evidence.
 | KI-060 | LOW | ACCEPTED (Session 12) | The locked diffusers 0.11.1 and transformers 4.41.2 (pinned by robomimic) carry published security advisories |
 | KI-061 | MEDIUM | PARTIAL (Session 12) | Linux: triton segfaults when loaded after Mesa's LLVM (root cause found; test harness fixed); on Linux x86_64 compiled meshes differ from the canonical export by 7.45e-9 m |
 | KI-062 | MEDIUM | MITIGATED (Session 14, D-112) | `run_suite.py` stops at its first configuration choice when a one-trial plan uses a tuning seed other than 0; the dry run does not reach the chooser |
+| KI-063 | LOW | ACCEPTED (Session 15, D-122) | Can MH `demo_81` stores reward 0 at its last step although it succeeds |
+| KI-064 | MEDIUM | MITIGATED (Session 15, D-121) | The frozen CLIs and orchestrators cannot see the X2 data binding |
+| KI-065 | LOW | MITIGATED (Session 18, D-134) | X2 evaluation records carry the frozen policy label "trained on robomimic PH demonstrations"; the X2 checkpoints were trained on Can MH |
 
 ### KI-001 — Linux headless rendering: aarch64 OSMesa verified; x86_64 install and CUDA verified on Modal (Session 5); EGL vs OSMesa on Modal PENDING
 - **Verified (2026-11-05, after the owner-approved Docker Desktop restart):**
@@ -1423,3 +1426,20 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   selection rule `roboforge.eval.selection.select_checkpoint` is a pure function over
   summaries and can be called directly on X2 summaries (they carry `eligible_for_selection`).
   If X2-b reuses the frozen `choose_configuration`, its tuning seed must be 0 (KI-062).
+
+### KI-065 X2 records say "trained on robomimic PH demonstrations" (LOW, MITIGATED; Session 18, D-134)
+- **What:** the frozen evaluator writes every learned policy's label from one template
+  (`src/roboforge/eval/learned.py`, `label=`: "learned {family} policy '{name}' trained on
+  robomimic PH demonstrations (privileged low-dim state); checkpoint …"). X2 evaluated its
+  checkpoints with that frozen code inside the X2 binding (KI-064), so the label in every X2
+  record, manifest and summary names PH, although the X2 checkpoints were trained on the Can MH
+  demonstrations. Only this text is wrong: the checkpoints, the data binding, the outcomes and
+  the X2 results are not affected (the binding refuses a Can PH checkpoint, KI-064).
+- **Found by** the Session 18 Observatory extension export (D-134), which reads the label from
+  the recorded episodes.
+- **Handling:** no frozen file or X2 record is edited. The Observatory export replaces the
+  displayed `policy.label` of each X2 clip with "X2 (Can MH): trained on the robomimic Can MH
+  demonstrations" and keeps the recorded label as `provenance.recorded_policy_label`; the site
+  shows the recorded label only in Provenance, next to this issue's number. A site test
+  (`website/src/lib/schema.test.ts`) fails if an X2 clip's displayed labels name PH. Anything
+  that reads X2 records for display must do the same.

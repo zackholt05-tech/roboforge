@@ -175,7 +175,7 @@ tagged, released or deployed; Session 19 publishes.
   `docs/FINAL_RELEASE_AUDIT.md`.
 
 ## 4. STOP checks
-**STOP checks.** On `83b2f37` plus the Session 18 STOP records (documents and logs only; the last code change is `f675490`), host, no container running during the suite: `make lint` clean; full suite alone **720 passed** (9:33; 705 of Session 17 plus 15 Session 18 tests; `logs/session18/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged"); `tests/research_integrity` 81 passed; `make addendum-check` and `make paper-check` pass; `paper/main.pdf` `c648e753…` and its sources identical to `v1.0.0`; `paper/addendum/addendum.pdf` `bedfb277…`; `make release-check` PASS with the new records staged so that its scan covers them (139 disclosed local-path files, D-100 and D-114; no new local path); site: `make web-build` within budgets, `make web-test` 75 passed, `make web-e2e` 8/8, `make web-verify-ext` pass. On Linux aarch64 (the canonical image, read-only mount of the tree), the 15 addendum files and the README block and chart equal a fresh build, as CI will check (`logs/session18/addendum_check_linux.log`). No frozen file, freeze, result or executed outcome changed; nothing was trained, evaluated or stepped; nothing was pushed, tagged, released or deployed.
+**STOP checks.** On `83b2f37` plus the Session 18 STOP records (documents and logs only; the last code change is `f675490`), host, no container running during the suite: `make lint` clean; full suite alone **720 passed** (9:33; 705 of Session 17 plus 15 Session 18 tests; `logs/session18/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged"); `tests/research_integrity` 81 passed; `make addendum-check` and `make paper-check` pass; `paper/main.pdf` `c648e753…` and its sources identical to `v1.0.0`; `paper/addendum/addendum.pdf` `bedfb277…`; `make release-check` PASS with the new records staged so that its scan covers them (139 disclosed local-path files, D-100 and D-114; no new local path); site: `make web-build` within budgets, `make web-test` 75 passed, `make web-e2e` 8/8, `make web-verify-ext` pass. On Linux aarch64 (the canonical image, read-only mount of the tree), the 15 addendum files and the README block and chart equal a fresh build, as CI will check (`logs/session18/addendum_check_linux.log`). A fresh `git clone --no-local` of `67f4419` ran the commands of all three CI workflows (lint; unit tests 455 passed, 12 skipped for data absent from a clone, none of them new; `tests/research_integrity` 77 passed, 4 skipped; freeze-check; both held-out gate checks (open, as since v1.0.0, which is not a permission to rerun); paper-check; addendum-check; release-check; web-data, web-assets, web-build within budgets, web-test 75 passed): all PASS (`logs/session18/fresh_clone_ci_stop/`). No frozen file, freeze, result or executed outcome changed; nothing was trained, evaluated or stepped; nothing was pushed, tagged, released or deployed.
 
 ## 5. Owner decisions pending
 None for Session 19: D-131 authorizes the publication. The optional diffusion side of KI-052
@@ -250,7 +250,9 @@ owner.
       --manifest <the bundle's deploy.json> (every file, equal SHA-256), and run the site's E2E
       tests against the live URL as Session 12 did (a temporary copy of e2e/site.spec.ts with
       the live base URL, including the follow-up studies test), logging to
-      logs/session19/pages_live_e2e.log.
+      logs/session19/pages_live_e2e.log. The site lives under /roboforge/: a page path that
+      starts with "/" (page.goto("/") and page.goto("/#followups")) resolves to the domain
+      root, so make every path relative to the live base URL, as Session 12's copy did for "/".
    f. run make release-check with --network (scripts/release_check.py --network --out
       reports/session19/release_check_network.json) and record the result.
 4. After publication, in one commit on main:

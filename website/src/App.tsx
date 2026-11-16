@@ -11,6 +11,7 @@ const WhyDiffusion = lazy(() => import("./sections/WhyDiffusion"));
 const HeadToHead = lazy(() => import("./sections/HeadToHead"));
 const InsidePolicy = lazy(() => import("./sections/InsidePolicy"));
 const Findings = lazy(() => import("./sections/Findings"));
+const Extensions = lazy(() => import("./sections/Extensions"));
 const BeyondPixels = lazy(() => import("./sections/BeyondPixels"));
 const Methods = lazy(() => import("./sections/Methods"));
 
@@ -20,6 +21,7 @@ export const NAV = [
   ["compare", "Head to head"],
   ["inside", "Inside the policy"],
   ["findings", "Findings"],
+  ["followups", "After v1.0"],
   ["pixels", "Beyond pixels"],
   ["methods", "Methods"],
 ] as const;
@@ -57,6 +59,7 @@ export function App() {
               <HeadToHead />
               <InsidePolicy />
               <Findings />
+              <Extensions />
               <BeyondPixels />
               <Methods />
             </Suspense>

@@ -68,8 +68,12 @@ export const Clip = z.object({
   schema: z.literal("roboforge.observatory_clip/1"),
   id: z.string(),
   label: z.string(),
-  kind: z.enum(["level1_heldout", "validation_denoising", "level2_placement"]),
+  kind: z.enum(["level1_heldout", "validation_denoising", "level2_placement", "x1_record",
+    "x2_record"]),
   roles: z.array(z.string()),
+  // v1.1 extension clips (D-134): the study and the evaluated arm (e.g. "bc_mlp_chunk+clamp").
+  study: z.enum(["x1", "x2"]).optional(),
+  arm: z.string().optional(),
   task: z.enum(["lift", "can"]),
   family: z.string(),
   seed: z.number().int(),
@@ -94,6 +98,9 @@ export const Clip = z.object({
       .passthrough(),
     frame_convention: z.string(),
     quaternion_convention: z.string(),
+    // X2 only (KI-065): the evaluator's recorded label, kept as provenance; policy.label holds
+    // the corrected display label.
+    recorded_policy_label: z.string().optional(),
   }),
   control_dt_s: z.number(),
   bodies: z.array(z.object({ name: z.string(), category: z.string(), dynamic: z.boolean() })),
@@ -341,6 +348,109 @@ export const Findings = z.object({
   }).passthrough(),
 });
 export type Findings = z.infer<typeof Findings>;
+
+// v1.1 extensions (D-134): the export registry, the rule-based selection and the findings copied
+// from the three pinned results (reports/session18/observatory, scripts/export_observatory_ext.py).
+
+/** An extension clip: a recorded X1 or X2 episode. Its video sits under data/ext/. */
+export const ExtClip = Clip.refine((c) => c.study !== undefined && c.arm !== undefined &&
+  (c.kind === "x1_record" || c.kind === "x2_record"), "not a v1.1 extension clip")
+  .transform((c) => ({ ...c, media: { video: { ...c.media.video, file: `ext/${c.media.video.file}` } } }));
+
+export const ExtRegistryClip = RegistryClip.extend({ study: z.enum(["x1", "x2"]), arm: z.string(),
+  display_label: z.string(), arrays_sha256: z.string().length(64) });
+export type ExtRegistryClip = z.infer<typeof ExtRegistryClip>;
+
+export const ExtRegistry = z.object({
+  schema: z.literal("roboforge.observatory_ext_registry/1"),
+  decision: z.literal("D-134"),
+  index_sha256: z.string().length(64),
+  source_dir: z.string(),
+  clips: z.array(ExtRegistryClip).min(1),
+  files: z.record(z.string(), z.string().length(64)),
+  export_platform: z.object({ platform_id: z.string() }).passthrough(),
+  export_git: z.object({ sha: z.string(), dirty: z.boolean() }).passthrough(),
+});
+export type ExtRegistry = z.infer<typeof ExtRegistry>;
+
+const BoolStrip = z.object({ order: z.array(z.string()), outcomes: z.array(z.boolean()) })
+  .refine((s) => s.order.length === s.outcomes.length, "strip order and outcomes differ in length");
+export const ExtSelection = z.object({
+  schema: z.literal("roboforge.observatory_ext_selection/1"),
+  decision: z.literal("D-134"),
+  rules: z.record(z.string(), z.string()),
+  seed: z.number().int(),
+  cases: z.array(z.object({ role: z.string(), state_id: z.string().nullable(),
+    clips: z.array(z.string()).optional(), reason: z.string().optional() })),
+  verification_clips: z.array(z.string()),
+  strips: z.object({ x1: z.record(z.string(), BoolStrip), x2: z.record(z.string(), BoolStrip) }),
+}).passthrough();
+export type ExtSelection = z.infer<typeof ExtSelection>;
+
+const Reading = z.object({ name: z.string(), estimate: z.number(), ci95: Interval,
+  separation: z.string(), reading: z.string() }).passthrough();
+const FrozenSide = z.object({ difference: z.number(), bootstrap_ci95: Interval,
+  bootstrap_separation: z.string(), seed_level_ci95: Interval, seed_level_separation: z.string(),
+  n_seeds: z.number().int(), n_states: z.number().int(), horizon: z.number().int().optional() })
+  .passthrough();
+export const ExtContrast = z.object({ name: z.string(), hypothesis: z.string(), a: z.string(),
+  b: z.string(), difference: z.number(), bootstrap_ci95: Interval, bootstrap_separation: z.string(),
+  seed_level_ci95: Interval, seed_level_separation: z.string(), verdict: z.string(),
+  sign: z.string().nullable(), relation: z.string(), reading: z.string().optional(),
+  frozen: FrozenSide }).passthrough();
+export type ExtContrast = z.infer<typeof ExtContrast>;
+const Families = z.record(z.string(), FamilyEstimate);
+const Source = z.object({ key: z.string(), path: z.string(), sha256: z.string().length(64),
+  label: z.string() });
+
+export const FindingsExt = z.object({
+  schema: z.literal("roboforge.observatory_ext_findings/1"),
+  decision: z.literal("D-134"),
+  sources: z.array(Source).length(3),
+  x1: z.object({
+    label: z.string(), decision: z.string(), method: z.string(),
+    readings: z.object({
+      primary: Reading.extend({ frozen: Reading.omit({ reading: true }) }),
+      support: Reading,
+      base: z.record(z.string(), Difference.extend({ reading: z.string() })),
+    }),
+    tasks: z.record(z.string(), z.object({
+      sets: z.array(z.string()), n_states: z.number().int(), families: Families,
+      x1_differences: z.array(Difference), x1_contrasts: z.array(Contrast),
+      frozen_contrasts: z.array(Contrast),
+      clamp_activity: z.record(z.string(), z.object({ fraction_actions_changed: z.number(),
+        fraction_actions_clamped: z.number() }).passthrough()),
+    }).passthrough()),
+  }).passthrough(),
+  x3: z.object({
+    label: z.string(), decision: z.string(),
+    suite: z.object({ n_states: z.number().int(), task: z.string() }).passthrough(),
+    seeds: z.array(z.number().int()), families: Families, frozen_families: Families,
+    contrasts: z.array(ExtContrast).length(4),
+    engineering: z.object({ n_errors_total: z.number().int() }).passthrough(),
+  }).passthrough(),
+  x2: z.object({
+    study: z.string(), label: z.string(), decisions: z.array(z.string()),
+    suite: z.object({ n_states: z.number().int(), task: z.string() }).passthrough(),
+    outcome: z.string(), families: Families, frozen_families: Families,
+    contrasts: z.array(ExtContrast).length(4),
+    censored_episode_length: z.object({ level: z.number(), families: Families,
+      differences: z.array(Difference) }).passthrough(),
+    taxonomy: z.record(z.string(), z.record(z.string(), z.number().int())),
+    engineering: z.object({ n_errors_total: z.number().int(), n_attempt2: z.number().int() })
+      .passthrough(),
+  }).passthrough(),
+}).superRefine((f, ctx) => {
+  const names = (cs: ExtContrast[]) => cs.map((c) => c.name).sort().join("|");
+  if (names(f.x3.contrasts) !== names(f.x2.contrasts)) {
+    ctx.addIssue({ code: "custom", message: "X3 and X2 declare different contrasts" });
+  }
+  const h = new Set(f.x2.contrasts.map((c) => c.frozen.horizon));
+  if (h.size !== 1 || h.has(undefined)) {
+    ctx.addIssue({ code: "custom", message: "the frozen Level 1 horizon is missing or differs" });
+  }
+});
+export type FindingsExt = z.infer<typeof FindingsExt>;
 
 export const Verification = z.object({
   schema: z.literal("roboforge.viewer_verification/1"),

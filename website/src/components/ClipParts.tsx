@@ -39,6 +39,11 @@ export function Provenance({ clip }: { clip: Clip }) {
     ["Platform", p.platform],
     ["Recompute check", `|Δpos| ${clip.verification.recomputed_vs_recorded.body_pos_max_abs_m.toExponential(1)} m, geoms ${clip.verification.recomputed_vs_recorded.geom_pos_max_abs_m.toExponential(1)} m`],
   ];
+  if (p.recorded_policy_label) {
+    // KI-065: the frozen evaluator's label template names the PH demonstrations on X2 records.
+    rows.splice(1, 0, ["Training data", clip.policy.label],
+      ["Recorded evaluator label", `${p.recorded_policy_label} (KI-065: the label template is wrong for X2; the checkpoints were trained on Can MH)`]);
+  }
   return (
     <dl className="provenance">
       {rows.map(([k, v, title]) => (

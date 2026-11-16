@@ -40,7 +40,24 @@ export const PARTITION: Record<string, string> = {
   eval_final_test: "held-out test start",
   eval_validation: "validation start",
   eval_robustness: "robustness set start",
+  eval_adhoc: "ad hoc evaluation start",
 };
+
+// v1.1 extension arms (D-134): a family as evaluated in X1 or X2.
+export const ARM: Record<string, string> = {
+  diffusion_unet: "Diffusion U-Net",
+  bc_mlp: "BC-MLP",
+  bc_rnn: "BC-RNN",
+  bc_mlp_chunk: "BC-MLP-chunk",
+  "bc_mlp_chunk+clamp": "BC-MLP-chunk, clamped",
+  "bc_mlp+clamp": "BC-MLP, clamped",
+  "bc_rnn+clamp": "BC-RNN, clamped",
+};
+
+export const SET: Record<string, string> = { robustness_base: "base", ood_cube_shift: "cube shift",
+  ood_arm_offset: "arm offset" };
+
+export const steps1 = (x: number): string => `${x >= 0 ? "+" : "−"}${Math.abs(x).toFixed(1)}`;
 
 export const pct = (x: number, d = 1): string => `${(100 * x).toFixed(d)} %`;
 export const pp = (x: number, d = 1): string => `${x >= 0 ? "+" : "−"}${Math.abs(100 * x).toFixed(d)}`;

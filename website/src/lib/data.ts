@@ -4,7 +4,8 @@
 // no server configuration is needed. Missing or invalid files raise DataError with the path and
 // the fix, which the UI shows instead of a blank viewer.
 import { z } from "zod";
-import { Clip, Clouds, Denoise, Findings, MeshTable, Registry, Verification } from "./schema";
+import { Clip, Clouds, Denoise, ExtClip, ExtRegistry, ExtSelection, Findings, FindingsExt, MeshTable,
+  Registry, Verification } from "./schema";
 
 const BASE = `${import.meta.env.BASE_URL}`;
 
@@ -63,6 +64,19 @@ export const loadClip = (id: string) => load(`data/clips/${id}.json.gz`, Clip);
 export const loadDenoise = (file: string) => load(`data/${file}`, Denoise);
 export const loadClouds = (file: string) => load(`data/${file}`, Clouds);
 export const loadMeshTable = () => load("assets/meshes.json", MeshTable);
+
+// v1.1 extensions (D-134): data/ext, copied by `make web-data` from reports/session18/observatory.
+// Extension clips use the Session 10 robot meshes (the export checks they are the same).
+export const loadExtRegistry = () => load("data/ext/ext_registry.json", ExtRegistry);
+export const loadExtFindings = () => load("data/ext/findings_ext.json", FindingsExt);
+export const loadExtSelection = () => load("data/ext/selection.json", ExtSelection);
+export const loadExtClip = (id: string) => load(`data/ext/clips/${id}.json.gz`, ExtClip);
+
+export async function loadExtVerification() {
+  const raw = await readJson("data/ext/viewer_verification.json", true);
+  if (raw === null) return null;
+  return Verification.parse(raw);
+}
 
 export async function loadVerification() {
   const raw = await readJson("data/viewer_verification.json", true);

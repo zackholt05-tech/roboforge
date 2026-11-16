@@ -48,14 +48,14 @@ export function EstimateChart({ rows, title, unit = "success", counts, label, co
   );
 }
 
-export function DifferenceChart({ rows, title, label, labelWidth = 250, lowerIsBetter = false, note }: {
+export function DifferenceChart({ rows, title, label, labelWidth = 250, lowerIsBetter = false, note, ticksPerSide }: {
   rows: Diff[]; title: string; label?: (d: Diff) => string; labelWidth?: number;
-  lowerIsBetter?: boolean; note?: string }) {
+  lowerIsBetter?: boolean; note?: string; ticksPerSide?: number }) {
   // Colour follows which side the interval favours: cyan for the first-named arm, red for the
   // second. For a difference in drops (lowerIsBetter) a negative value favours the first arm.
   const W = 640, L = labelWidth, R = 128, rowH = 34, H = rows.length * rowH + 34;
   const raw = Math.max(0.1, ...rows.flatMap((d) => [Math.abs(d.ci95[0]), Math.abs(d.ci95[1])]));
-  const perSide = W - L - R < 260 ? 3 : 4; // fewer ticks when the plot is narrow
+  const perSide = ticksPerSide ?? (W - L - R < 260 ? 3 : 4); // fewer ticks when the plot is narrow
   const step = [0.05, 0.1, 0.25, 0.5].find((st) => raw / st <= perSide) ?? 0.5;
   const lim = Math.ceil((raw * 1.04) / step) * step;
   const x = (v: number) => L + ((v + lim) / (2 * lim)) * (W - L - R);
@@ -104,10 +104,11 @@ export const CAT_COLOUR: Record<string, string> = {
   dropped: "#f08cc0",
 };
 
-export function OutcomeStrip({ rows, highlight, label }: { rows: { name: string; outcomes:
-  { state_id: string; category: string }[] }[]; highlight?: string | null; label: string }) {
+export function OutcomeStrip({ rows, highlight, label, caption, labelWidth = 150 }: { rows: { name: string; outcomes:
+  { state_id: string; category: string }[] }[]; highlight?: string | null; label: string;
+  caption?: string; labelWidth?: number }) {
   const n = Math.max(...rows.map((r) => r.outcomes.length));
-  const cell = 11, gap = 2, L = 150, W = L + n * (cell + gap), H = rows.length * (cell + 6) + 4;
+  const cell = 11, gap = 2, L = labelWidth, W = L + n * (cell + gap), H = rows.length * (cell + 6) + 4;
   return (
     <figure className="chart strip">
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${label}: ${rows.map((r) =>
@@ -134,7 +135,7 @@ export function OutcomeStrip({ rows, highlight, label }: { rows: { name: string;
           </g>
         ))}
       </svg>
-      <figcaption>{label}. One square per held-out start, in start order: filled, success; outlined, failure (colour = failure type; hover for the start and type).</figcaption>
+      <figcaption>{label}. {caption ?? "One square per held-out start, in start order: filled, success; outlined, failure (colour = failure type; hover for the start and type)."}</figcaption>
     </figure>
   );
 }

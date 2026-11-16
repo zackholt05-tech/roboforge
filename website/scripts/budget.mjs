@@ -13,6 +13,7 @@ const BUDGETS = [
   { name: "fonts", match: (f) => /\.(woff2?|ttf)$/.test(f), total: 1.6 * MB },
   { name: "robot meshes", match: (f) => f.startsWith("assets/meshes"), total: 4 * MB },
   { name: "one clip", match: (f) => f.startsWith("data/clips/"), each: 1.5 * MB },
+  { name: "one v1.1 extension clip (D-134)", match: (f) => f.startsWith("data/ext/clips/"), each: 1.5 * MB },
   { name: "one denoising trace", match: (f) => f.startsWith("data/denoise/"), each: 4 * MB },
   { name: "one point-cloud file", match: (f) => f.startsWith("data/clouds/"), each: 1.5 * MB },
   { name: "one video", match: (f) => f.endsWith(".mp4"), each: 3 * MB },

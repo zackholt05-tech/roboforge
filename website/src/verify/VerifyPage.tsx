@@ -6,7 +6,7 @@
 // camera for a review montage. `npm run verify` (e2e/verify.spec.ts) saves the result.
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { dataUrl, loadClip, loadMeshTable, loadRegistry } from "../lib/data";
+import { dataUrl, loadClip, loadExtClip, loadExtRegistry, loadMeshTable, loadRegistry } from "../lib/data";
 import type { Clip } from "../lib/schema";
 import { mujocoCameraPose } from "../three/cameras";
 import { loadMeshLibrary, type MeshLibrary } from "../three/meshes";
@@ -19,9 +19,9 @@ interface FrameResult { clip: string; frame: number; camera: string; size: numbe
   pixels_mujoco: { robot: number; object: number }; pixels_viewer: { robot: number; object: number };
   pass: boolean }
 
-async function loadMask(file: string, size: number): Promise<Uint8Array> {
+async function loadMask(file: string, size: number, dir: string): Promise<Uint8Array> {
   const img = new Image();
-  img.src = dataUrl(`verification/${file}`);
+  img.src = dataUrl(`${dir}/${file}`);
   await img.decode();
   const c = document.createElement("canvas");
   c.width = size; c.height = size;
@@ -94,7 +94,10 @@ export function VerifyPage({ params }: { params: URLSearchParams }) {
   const [status, setStatus] = useState("loading");
   useEffect(() => {
     (async () => {
-      const reg = await loadRegistry();
+      // `&ext`: the v1.1 extension clips (D-134), whose files sit under data/ext/.
+      const ext = params.has("ext");
+      const reg = ext ? await loadExtRegistry() : await loadRegistry();
+      const vdir = ext ? "ext/verification" : "verification";
       await loadMeshTable();
       const lib = await loadMeshLibrary();
       const only = params.get("verify");
@@ -102,7 +105,7 @@ export function VerifyPage({ params }: { params: URLSearchParams }) {
       if (!ids.length) throw new Error("no clip with reference frames in the exported data");
       const out: Row[] = [];
       for (const id of ids) {
-        const clip = await loadClip(id);
+        const clip = ext ? await loadExtClip(id) : await loadClip(id);
         for (const rf of clip.reference_frames ?? []) {
           const size = rf.size;
           const canvas = document.createElement("canvas");
@@ -122,7 +125,7 @@ export function VerifyPage({ params }: { params: URLSearchParams }) {
           const styled = canvas.toDataURL("image/png");
           renderer.dispose();
           renderer.forceContextLoss();
-          const theirs = await loadMask(rf.mask, size);
+          const theirs = await loadMask(rf.mask, size, vdir);
           const r = compare(theirs, ours, size, 1);
           const o = rf.pixels.object > 0 ? compare(theirs, ours, size, 2) : null;
           const diff = new ImageData(size, size);
@@ -136,13 +139,14 @@ export function VerifyPage({ params }: { params: URLSearchParams }) {
             pixels_mujoco: { robot: r.na, object: o?.na ?? 0 }, pixels_viewer: { robot: r.nb, object: o?.nb ?? 0 },
             pass: r.iou >= THRESHOLD.robot_iou_min && r.centroid <= THRESHOLD.centroid_px_max &&
               (o === null || o.iou >= THRESHOLD.object_iou_min) };
-          out.push({ res, mujoco: dataUrl(`verification/${rf.rgb}`), styled, diff });
+          out.push({ res, mujoco: dataUrl(`${vdir}/${rf.rgb}`), styled, diff });
           setRows([...out]);
         }
       }
       const doc = { schema: "roboforge.viewer_verification/1", threshold: THRESHOLD,
         method: "three.js silhouette (MeshBasicMaterial, no antialiasing, linear output) through the exported MuJoCo camera pose and fovy, vs the class mask of MuJoCo's segmentation render of the same recorded state (robosuite visual geom groups)",
         mesh_source: "website/public/assets (make web-assets, D-090)", registry_index_sha256: reg.index_sha256,
+        ...(ext ? { scope: "v1.1 extension clips (D-134)", source_dir: reg.source_dir } : {}),
         user_agent: navigator.userAgent, frames: out.map((x) => x.res), pass: out.every((x) => x.res.pass) };
       (window as unknown as { __verification: unknown }).__verification = doc;
       setStatus(doc.pass ? "pass" : "fail");

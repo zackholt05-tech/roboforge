@@ -4,7 +4,7 @@
 // missing WebGL shows an explicit message instead of a blank viewer.
 import { expect, test, type Page } from "@playwright/test";
 
-const SECTIONS = ["why", "lab", "compare", "inside", "findings", "pixels", "methods"];
+const SECTIONS = ["why", "lab", "compare", "inside", "findings", "followups", "pixels", "methods"];
 
 function trackErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -37,6 +37,33 @@ test("every section renders from the exported data, without console errors", asy
   await expect(page.locator("#findings .robustness .manifests summary")).toContainText("(33)");
   await expect(page.locator("#pixels .erratum")).toContainText("42.2");
   await expect(page.locator(".status-error")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test("the v1.1 follow-up studies render with their own labels (D-134)", async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto("/#followups");
+  const s = page.locator("#followups");
+  await s.scrollIntoViewIfNeeded();
+  await expect(s.locator("h2")).toHaveText("After v1.0.0: three follow-up studies");
+  for (const label of ["exploratory, after the freeze", "validation regime, not held-out", "separate replication",
+    "X2 (Can MH)", "within-operator only"]) await expect(s).toContainText(label);
+  // X1: three arms on one start; X2: diffusion against one BC family.
+  await expect(s.locator(".h2h-pair.n3 .h2h-side")).toHaveCount(3, { timeout: 30_000 });
+  await expect(s.locator(".h2h-pair.n2 .h2h-side")).toHaveCount(2, { timeout: 30_000 });
+  await expect(s.locator(".h2h-pair.n3")).toContainText("BC-MLP-chunk, clamped");
+  await expect(s.locator(".h2h-pair.n2 .provenance")).toHaveCount(2);
+  for (const p of await s.locator(".h2h-pair.n2 .provenance").all()) {
+    await expect(p).toContainText("KI-065");
+    await expect(p).toContainText("X2 (Can MH): trained on the robomimic Can MH demonstrations");
+  }
+  await s.getByRole("button", { name: "BC-RNN" }).click();
+  await s.getByRole("button", { name: "Only BC-RNN succeeds" }).click();
+  await expect(s.locator(".h2h-pair.n2 .h2h-name").nth(1)).toHaveText("BC-RNN");
+  await expect(s).toContainText("H2-c on Can.");
+  await expect(s.locator("table.ext-contrasts")).toHaveCount(2);
+  await expect(s.locator(".status-error")).toHaveCount(0);
+  await expect(page.locator('nav a[href="#followups"]')).toHaveText("After v1.0");
   expect(errors).toEqual([]);
 });
 

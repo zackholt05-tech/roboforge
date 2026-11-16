@@ -3107,3 +3107,44 @@ Session 6–15 evidence or reuses the `s15` prefix by omission. New targets: `x2
 - **Estimates** (labelled; from the X2-a measured times): 30.5 training-hours summed;
   evaluations about 64 container-hours (biased low); about 23 h of wall time; disk 18–23 GiB;
   $0.
+
+**Outcome note (D-127, Session 16 STOP).** `make x2b-suite` ran once from clean `9df6628`,
+01:44 UTC 2026-11-15 to 01:50 UTC 2026-11-16 (24.1 h). All 20 new runs completed and all 460
+evaluations ended with exit 0. Every one of the 480 summaries (20 pilot, 460 X2-b) is eligible,
+verified and on the canonical platform (`logs/session16/x2/suite/verification.txt`). The frozen
+§6.3 rule chose diffusion trial 2, BC-RNN trial 4, BC-MLP-chunk trial 2 and BC-MLP trial 1.
+Two choices were ties broken by the lower mean first-success step: diffusion trials 1 and 2
+both 48/50 (197 vs 206), and BC-MLP-chunk trials 1 and 2 both 49/50 (156 vs 172). The X2 test
+configuration is `reports/session16/x2/suite/x2_test_configuration.json`; the 12 checkpoint
+hashes were re-hashed from the files. Measured cost against the labelled estimates:
+
+| Item | Measured | Estimate |
+|---|---|---|
+| Training, summed | 33.86 training-hours | 30.5 |
+| Evaluations | 68.98 container-hours (mean 540 s) | about 64 |
+| Wall time | 24.1 h | about 23 |
+| Disk added to `runs/x2` | 17.96 GiB | 18–23 GiB |
+| Spend | $0 | $0 |
+
+The latency benchmark took 8.7 min (`reports/session16/x2/suite/latency/`). No X2 held-out
+start was stepped.
+
+### D-128 Disk reclaim beyond D-125: two scratch runs and download caches (OWNER, 2026-11-14, Session 16)
+Free disk at the dry run (24.5 GiB) was tight against the conservative X2-b need (D-125
+item 4), so the owner approved two further reclaims.
+- **Scratch runs.** Owner approval at 21:17 EST: delete non-frozen development scratch runs
+  after a citation check. The check ran `git grep` for each `runs/` entry name over the
+  tracked files, excluding isolation name listings. Only two entries had no other citation:
+  `runs/s8smoke_rgb_bc_chunk_resnet18_lift_seed0_1a7d0da4` (465,964 KiB) and
+  `runs/s8smoke_rgb_diffusion_resnet18_lift_seed0_0ce63766` (746,004 KiB). They are
+  engineering smokes, never selected or reported (LEDGER E8-09), and were deleted at 02:19 UTC
+  2026-11-15. Their manifest SHA-256 values are in `logs/session16/x2/suite/scratch_deleted.txt`.
+  `runs/rgb_eval/s8smoke_*` was kept.
+- **Download caches** (owner's answer "Download caches (~5.3 GB)"). Cleared outside the repo:
+  the pip cache, Poetry's cache and artifacts (virtualenvs kept), the npm download cache
+  (`~/.npm/_npx` kept) and Homebrew downloads.
+- **Not approved, untouched:** untagged Docker images and `uv cache prune --force`.
+
+No frozen run, evidence file or data file was touched. The post-suite isolation check found
+the top-level `runs/` listing equal to the baseline minus exactly these two entries, by hash
+(`logs/session16/x2/suite/isolation_{before,after}.txt`).

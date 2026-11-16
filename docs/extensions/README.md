@@ -40,8 +40,19 @@ numbers only). The owner chose option A, Can MH (D-116):
 - headroom pilot (D-124; `reports/session15/x2/pilot/tables.md`): best of five checkpoints on
   the 50 validation starts, diffusion 48, BC-MLP-chunk 48, BC-RNN 34, BC-MLP 6. Reading:
   **headroom**, by one family; the top two are at the 50-start ceiling.
-X2-b (preregistered search, training and validation-only selection) needs the owner's
-decisions first (`docs/HANDOFF.md`, # Session 15 Handoff §5 and §6).
+
+**Status (2026-11-16).** X2 phase X2-b ran in Session 16 (PASS; development numbers on the 50
+validation starts only), under `docs/extensions/X2_PREREGISTRATION.md` (D-125 to D-128). Level
+1's four trials per family were searched with the frozen budget. The four pilot runs counted as
+seed-0 trials. 20 new runs were trained and 460 new evaluations run, with none failed.
+- **Chosen by the frozen §6.3 rule:** diffusion trial 2 (48), BC-RNN trial 4 (36),
+  BC-MLP-chunk trial 2 (49), BC-MLP trial 1 (16).
+- **X2 test configuration** (frozen §7 per run, seeds 0–2):
+  `reports/session16/x2/suite/x2_test_configuration.json`; tables in
+  `reports/session16/x2/suite/tables.md`.
+- **Next:** X2-c commits `docs/extensions/X2_FREEZE.md`, then runs the 12 checkpoints once on
+  `can/x2_heldout` and the preregistered analysis once. The exact prompt is in
+  `docs/HANDOFF.md` (# Session 16 Handoff §6).
 
 ## Rules shared by every extension
 

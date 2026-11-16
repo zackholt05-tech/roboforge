@@ -215,6 +215,19 @@ Fails with "CMake must be installed". Restricted to Linux via a uv override (D-0
   cache (36 GB; `uv cache prune` removes only unused entries) and the Docker build cache
   (2.4 GB reclaimable); frozen runs are never pruned or moved. A reclaim is a precondition of
   X2-b training (HANDOFF # Session 15 Handoff §5).
+- **Session 16 (X2-b, measured).** Reclaimed before the suite: Docker build cache 2.38 GB
+  (D-125); two non-frozen `s8smoke` scratch runs (1.16 GiB) and download caches outside the repo
+  (about 5.3 GB), both owner-approved (D-128). `runs/x2` grew from 1.63 to 19.59 GiB
+  (21,030,357,553 bytes; X2-b added 17.96 GiB: 20 runs, 460 evaluation records at 27.7 MiB on
+  average, 10–37 MiB by family), inside the 18–23 GiB estimate. Free disk was 11.0 GiB at its
+  lowest (14:58 UTC 2026-11-15), above the 4 GiB floor; no hard stop. The replicate disk gate
+  (D-125) held twice, at 09:21 UTC (need 16.9 GiB plus the floor, 18.97 free) and at 14:33 UTC
+  (need 11.2 plus the floor, 14.31 free). It cleared both times with no intervention or
+  config change, because its 0.038 GiB per evaluation is above the measured size and each
+  finished evaluation lowered the need by more than it used. Free disk rose from about 14 to
+  30.6 GiB around 22:15 UTC without any suite action (cause not identified). Swap files share
+  the volume: swap grew from 12.3 to 13.3 GB late in the suite. Not approved and untouched:
+  untagged Docker images, `uv cache prune --force`.
 
 ### KI-009 — Evidence files contain absolute local paths
 Some files contain `/Users/zackaryholt/...` paths: `reports/feasibility/*.json`
@@ -771,6 +784,21 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
     separated" (E8-15).
 
 ### KI-035 — Host contention during the Session 6 suite inflated wall times (results unaffected)
+- **Session 16 (X2-b suite; D-125 limits).** At most 4 trainings and 5 jobs, one launch per
+  fresh 60-s sample, launches held above 3,000 pages/s; no other project's container ran.
+  Sampled every 60 s (`logs/session16/x2/suite/host.jsonl`, 298 samples): the guard held
+  launches 10 times. The swap rate still peaked at **29,285 pages/s at 23:09 UTC 2026-11-15**
+  (load 41, 3 evaluation containers, no training), and the load average at 51.5 at 04:13 UTC
+  (1 container beside 4 trainings). Because the guard only holds launches, running jobs were
+  never paused. No training or evaluation failed. The cost was wall time:
+  - diffusion trained at about 5.0 steps/s (4.9–5.5 h per run, against the pilot's 4.62 h);
+  - evaluations averaged 540 s against the pilot's 503 s. With 4 containers and no training,
+    a diffusion evaluation took 560–685 s, slower than in the pilot.
+
+  Selections are unaffected: training is deterministic on CPU with 1 thread, and every
+  evaluation verified. Lesson: on this 16 GB host, 4 evaluation containers keep swap high
+  even with no training running. A cloud platform removes the contention (owner's standing
+  request, 2026-11-15).
 - **Session 15 (X2-a pilot; D-124).** Four X2 trainings, at most 2 evaluation containers while
   diffusion trained (4 after), and another project's containers on the 16 GB host. Sampled
   every 5 minutes (`logs/session15/x2/pilot/host.jsonl`, 56 samples): the swap rate peaked at

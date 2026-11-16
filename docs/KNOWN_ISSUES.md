@@ -1376,6 +1376,8 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   crash the same way. Workaround: `import torch._dynamo` before mujoco. `src/` was not changed
   at release (simulator code; the frozen evaluation code stays as tested). The x86_64 mesh
   difference stays: Linux x86_64 use of this lock is unverified (KI-001).
+- **Session 19 (v1.1.0):** CI on the tagged commit `907c901` (`ubuntu-24.04-arm`) passed 3/3
+  with the harness fix (python-tests 43832425639); unchanged status, x86_64 still unverified.
 
 ### KI-062 A one-trial suite plan with a non-zero tuning seed stops at its first configuration choice (MEDIUM, MITIGATED; Session 14)
 - **Found by** the X3 training suite (`make x3-train`, plan `configs/experiments/x3_can.yaml`,
@@ -1443,3 +1445,7 @@ Never compare RoboForge numbers to the 2021 paper as if they were the same bench
   shows the recorded label only in Provenance, next to this issue's number. A site test
   (`website/src/lib/schema.test.ts`) fails if an X2 clip's displayed labels name PH. Anything
   that reads X2 records for display must do the same.
+- **Session 19 (v1.1 published):** the live site (`gh-pages` `d3f47dd`, built from `907c901`)
+  shows the Can MH label, with the recorded label and this issue's number in Provenance; checked
+  by the site's E2E run against the live URL (`logs/session19/pages_live_e2e.log`). The v1.1.0
+  release notes name this issue.

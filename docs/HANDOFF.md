@@ -1,10 +1,10 @@
-<!-- parsable handoff header (real values; Session 18 STOP, v1.1 built, not published, updated 2026-11-16) -->
+<!-- parsable handoff header (real values; Session 19 STOP, v1.1.0 published and verified, updated 2026-11-16) -->
 ```yaml
 project: roboforge-3d
-current_session: 18
-session_status: PASS          # Session 18: v1.1 built and verified locally (addendum, README section, Observatory section); nothing pushed, tagged, released or deployed; $0
-next_session: 19              # v1.1 publication (D-131); exact prompt in # Session 18 Handoff §6
-last_verified_commit: 83b2f37   # Session 18 STOP checks ran on 83b2f37 (last code change f675490; documents only after); export from clean 7eb5817; nothing pushed
+current_session: 19
+session_status: PASS          # Session 19: v1.1.0 published and verified (main, CI 3/3, tag, release with the addendum PDF, Pages redeploy on top of c14e041, live checks); $0
+next_session: none planned    # any further study needs a new owner decision (# Session 19 Handoff §5-§6)
+last_verified_commit: 907c901   # v1.1.0 (tag object d805cb5), CI 3/3, the Pages build source; Session 19 STOP checks ran on 907c901 plus the Session 19 records (documents and logs only)
 protocol_commits: {v1: 8b08b95, diffusion_amendment: 3aed462, main_budget_amendment: ec9626b, lift_search_space: 6dce01b, can_search_space: 96aa972, section14_preregistration: 2859d04}
 freeze_commit: bf0a0fa          # docs/FINAL_TEST_FREEZE.md, sha256 6a3c6874c4bc1857efe46ccb05c0a1fa68247671fc9a96f5f54ce079aa9153e9, git blob bfdb4b77d478bdb1908b34b96e1dad70eb88147c
 heldout_results_commit: 97cc48a # reports/session7/results/results.json sha256 b8b097c38765c588711615917e3cfd5be6847e63083ddebe92f0f1488672408c; RUN ONCE, never rerun
@@ -94,36 +94,91 @@ heldout_results:                      # family success %, 3 seeds x 50 held-out 
 modal: {gate_a: done, A-01: "closed, $0.148", A-02: "closed, $0.0317", A-03: "closed, $8.06", A-04: "Level 2, closed, $2.37 (5 launches; KI-047; detached launches since D-085)", open_approvals: none, month_to_date: "$15.89 of $30 (2026-11-09)", egl_vs_osmesa: "PENDING (KI-001, KI-033)"}
 final_test: "Level 1 TESTED ONCE (Session 7); RGB study TESTED ONCE (Session 8, D-081); Level 2 TESTED ONCE (Session 9, D-086 gate, a031e88; analysis 620c541). Session 10 re-rendered recorded episodes only. All three locks are open because their preconditions are committed; that is not permission: no further held-out rollout of any Level 1, RGB or Level 2 configuration, ever. Session 13 (X1) stepped only the Session 7 robustness sets. Session 14 (X3) stepped only the Can validation starts and the new can/x3_heldout suite (24 evaluations, once); isolation PASS. Sessions 15-16 (X2-a, X2-b) stepped only can/x2_validation (20 + 460 evaluations); no can/x2_heldout start yet; isolation PASS"
 disk: "about 18 GiB free after the Session 16 suite (KI-008; swap files share the volume); runs/x2 takes 19.59 GiB (X2-b added 17.96); X2-c needs well under 1 GiB (12 evaluations of 100 episodes, estimate); X3 runs, validation directories and runs/x3 take 7.1 GiB; the Observatory export is about 19 MB in git; the Modal runs Volume keeps every checkpoint"
-next_required_owner_approval: "none: the owner decided to publish v1.1 (D-131: main, tag v1.1.0, release with the addendum PDF, README section, Pages redeploy on top of c14e041), in Session 19. No paid compute is open; any Modal job needs a new approval row"
+next_required_owner_approval: "none pending. v1.1.0 is published (D-131, done in Session 19). Any new study, push beyond the records, or Modal job needs a new owner decision (and an approval row for paid compute)"
 observatory: {decisions: "D-087-D-091", site: website/, export: "reports/session10/observatory/ (37 clips from clean b5fc2ee, canonical container; ebfd0c3)", findings: "findings.json, 8 frozen sources (c73a080)", verification: "viewer_verification.json: 18/18 frames pass (robot IoU >= 0.9998, centroid <= 0.04 px)", hosting: "none (owner, D-090); no deployed or staging URL", meshes: "extracted at build time by make web-assets, gitignored (D-090)", provenance: docs/VISUAL_PROVENANCE.md}
-observatory_v1_1: {decisions: "D-131, D-134", export: "reports/session18/observatory/ (23 X1/X2 clips from clean 7eb5817, canonical container; f26e4e6, a8b5a74)", selection: "selection.json @ 7eb5817 (D-134 rules)", findings: "findings_ext.json, the three pinned results", section: "website/src/sections/Extensions.tsx (fb1f6be)", verification: "12/12 frames pass (robot IoU >= 0.9998, centroid <= 0.03 px)", hosting: "not deployed; Session 19 redeploys gh-pages on top of c14e041", known_issue: KI-065}
+observatory_v1_1: {decisions: "D-131, D-134", export: "reports/session18/observatory/ (23 X1/X2 clips from clean 7eb5817, canonical container; f26e4e6, a8b5a74)", selection: "selection.json @ 7eb5817 (D-134 rules)", findings: "findings_ext.json, the three pinned results", section: "website/src/sections/Extensions.tsx (fb1f6be)", verification: "12/12 frames pass (robot IoU >= 0.9998, centroid <= 0.03 px)", hosting: "deployed in Session 19: gh-pages d3f47dd (parent c14e041), built from 907c901; 263/263 hashes live; live E2E 8/8", known_issue: KI-065}
 addendum: {pdf: paper/addendum/addendum.pdf, sha256: bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2, pages: 6, build: "make addendum (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794787200)", check: "make addendum-check", decision: D-133, label: "local build, not peer reviewed"}
 level2_study: {freeze: "docs/LEVEL2_EXPERIMENT_FREEZE.md @ b93c50c (sha256 ffe5a03e...)", gate: "D-086 @ b1f4da2, amended 08c3aa8", runs: [s9_pc_diffusion_dp3_lift_seed0_8fd35613, s9_pc_diffusion_dp3_lift_seed1_a66a2758, s9_pc_diffusion_dp3_lift_seed2_402a1f24], selections: "30000 / 40000 / 60000 (reports/session9/pc_selection/)", placement: "reports/session9/level2_placement/ @ 4ebebc1", heldout: "reports/session9/pc_heldout/ @ a031e88", results: "reports/session9/level2_results/ @ 620c541 (+ ERRATA.md)", h5: "pc - rgb on ood_cube_shift -41.3 pp [-54.0, -28.0], separated (-)", heldout_success: {pc_diffusion: 100.0, rgb_diffusion: 100.0}, label: DP3-inspired, privilege: sensor-like}
 paper: {pdf: paper/main.pdf, sha256: c648e7532e7112cd8bcb3b4e0f118342d6eb97dffd94d3bd1e5448c81b50939f, pages: 23, build: "make paper (Tectonic 0.17.0, --only-cached, SOURCE_DATE_EPOCH=1794182400)", generated: "paper/generated/ (35 files, index.json)", audit: docs/AUDIT.md, decisions: "D-092-D-096", label: "local build, not peer reviewed", fresh_clone: "byte-identical rebuild (Session 12)"}
-release: {version: v1.0.0, audit: docs/FINAL_RELEASE_AUDIT.md, decisions: "D-097-D-104", repository: "https://github.com/zackholt05-tech/roboforge", observatory: "GitHub Pages (D-102)", ci: ".github/workflows (D-101)", state: "see # Session 12 Handoff §5 (publication record, verified)"}
+release: {version: v1.1.0, previous: v1.0.0, audit: "docs/FINAL_RELEASE_AUDIT.md (§7 v1.0.0, §10 v1.1.0)", decisions: "D-097-D-104, D-131-D-135", repository: "https://github.com/zackholt05-tech/roboforge", tag: "v1.1.0 d805cb5 -> 907c901", release_asset: "addendum.pdf sha256 bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2", observatory: "GitHub Pages, gh-pages d3f47dd (D-102)", ci: ".github/workflows (D-101)", state: "see # Session 19 Handoff §4 (publication record, verified)"}
 rgb_study: {freeze: "docs/RGB_EXPERIMENT_FREEZE.md @ d9c6217", gate: "D-081 @ 378ea43", selections: reports/session8/rgb_selection/, heldout: "reports/session8/rgb_heldout/ @ bc054bc", results: "reports/session8/rgb_results/ @ 3b23255", success: {rgb_diffusion: 100.0, rgb_bc_chunk: 99.3}, diffusion_minus_bc: "+0.7 pp [+0.0, +4.0], not separated", videos: reports/session8/rgb_videos/}
 x1_study: {decision: D-107, label: "exploratory, after the freeze", code: 09d1a90, preregistration: "docs/extensions/X1_PREREGISTRATION.md @ ab02469", evaluations: "45 once from ab02469 (reports/session13/x1_clamp/evals/, runs/x1_clamp/)", analysis: "reports/session13/x1_clamp/ @ c2a9ae6", primary: "Lift ood_arm_offset drop(diffusion) - drop(clamped BC-MLP-chunk) -40.0 pp [-54.0, -25.3], separated (-) (frozen -40.0 [-54.0, -26.0]); reading R1", clamped_minus_unclamped: "0 of 15 separated; largest |diff| 0.7 pp", engineering_checks: "logs/session13/x1_checks/ (all PASS)"}
 x3_study: {decisions: "D-109-D-115", label: "separate replication", preregistration: "docs/extensions/X3_PREREGISTRATION.md @ fb9f05e", heldout_suite: "can/x3_heldout, 100 starts, content 9c199e19 (81afa3b)", training: "12 runs s14_* (4 families x seeds 3-5), 0 failed", validation: "240 evaluations, 12 selections (reports/session14/suite/x3_validation.json @ 86e6c9b; KI-062, D-112)", evaluations: "24 once from 13c5db2 (reports/session14/x3/evals/, runs/x3/), isolation PASS", analysis: "reports/session14/x3/ @ 335c27c", primary: "H2 diffusion - BC-MLP +22.7 pp, H3 BC-RNN - BC-MLP +23.8 pp: separated under bootstrap and seed-level (holds, robust); H2 diffusion - BC-RNN -1.2, H2-c -1.7: not separated (unchanged)"}
 x2_study: {decisions: "D-116-D-130", preregistration: "docs/extensions/X2_PREREGISTRATION.md @ 9df6628 (sha256 d9bc5955...)", option: "A, Can MH", phase: "done: X2-a (Session 15), X2-b (Session 16), X2-c (Session 17)", x2b: "reports/session16/x2/suite/ from clean 9df6628: chosen diffusion t2 (48), BC-RNN t4 (36), BC-MLP-chunk t2 (49), BC-MLP t1 (16); test configuration fdb1f37", data: "data/manifests/robomimic_v1.5_mh.json (hash-verified); split data/splits/can_mh.json (operator-stratified, within-operator claims only)", suites: "can/x2_validation 50 starts 47b889cd, can/x2_heldout 100 starts 40b8228c (4459c00)", freeze: "docs/extensions/X2_FREEZE.md @ 3a64dbb (sha256 952d232c..., blob 9929dc7c...); code a1c3db7; engineering check PASS 45edda2", evaluations: "12/12 once from 3a64dbb (reports/session17/x2/heldout/evals/, runs/x2c/), 0 errors, isolation PASS, no rerun; never again", analysis: "reports/session17/x2/ @ 3df25ff (results.json sha256 30c01f55...)", primary: "H2 diffusion - BC-MLP +63.3 pp [+53.0, +73.0] robust (+), same direction; H2 diffusion - BC-RNN +27.3 pp [+16.7, +37.7] robust (+), new separation; H2-c +2.0 pp [-6.3, +11.0] not separated, neither separated; H3 BC-RNN - BC-MLP +36.0 pp [+23.7, +48.0] robust (+), same direction", label: "X2 (Can MH): beside the frozen Level 1 Can PH result, never instead of it, never pooled; within-operator only"}
 ```
 
-# Next: Session 19, publish v1.1 (D-131)
+# Next: none planned (v1.1.0 published)
 
-The owner decided to publish X1, X2 and X3 as v1.1 and to update the Observatory before
-anything goes on GitHub (D-131). Session 18 built and verified everything locally and stopped
-with nothing pushed, tagged, released or deployed. Session 19 publishes it in the D-131 order;
-the exact prompt is in # Session 18 Handoff §6. Every earlier boundary still applies, and the
-Session 18 build is now fixed too:
+v1.1.0 is published and verified (Session 19, D-131). No session is planned. Every earlier
+boundary still applies, and the published v1.1 content is now fixed as well:
 - never rerun `make obs-ext-select`, `make obs-ext-export`, `make obs-ext-findings` or
   `make web-verify-ext`;
-- never edit `reports/session18` evidence or `paper/addendum/`.
+- never edit `reports/session18` or `reports/session19` evidence, or `paper/addendum/`;
+- never move the tags `v1.0.0` or `v1.1.0`, edit their releases, or force-push `main` or
+  `gh-pages`.
 
 | Study | File | Session |
 |---|---|---|
 | X1 evaluation-only action-clamp test (KI-052) | `docs/extensions/X1_action_clamp.md` | 13, DONE |
 | X2 a harder or multimodal task: option A, Can MH (D-116) | `docs/extensions/X2_harder_task.md` | 15 X2-a, 16 X2-b, 17 X2-c: DONE |
 | X3 more training seeds, on a fresh held-out suite | `docs/extensions/X3_more_seeds.md` | 14, DONE |
-| v1.1: addendum, README section, Observatory section | `docs/extensions/README.md`, D-131 to D-134 | 18 built; 19 publishes |
+| v1.1: addendum, README section, Observatory section | `docs/extensions/README.md`, D-131 to D-135 | 18 built; 19 published (v1.1.0) |
+
+# Session 19 Handoff (v1.1.0 published and verified)
+
+Do not trust this file blindly. Every claim names its command and evidence
+(`logs/session19/`, `reports/session19/`, LEDGER E19-01 to E19-06,
+`docs/FINAL_RELEASE_AUDIT.md` §10).
+
+## 1. Session completed
+Session 19: publication of v1.1 (X1, X2, X3), built and verified in Session 18, in the D-131
+order. Status **PASS**. Nothing in the Session 18 build was rebuilt or changed; no rollout, no
+training, no evaluation, no paid compute ($0).
+
+## 2. Completed work
+- **Prerequisites** (E19-01), by executable checks on clean `36e75e3`: all pinned hashes equal;
+  lint, freeze-check, addendum-check, paper-check, release-check, `tests/research_integrity`
+  (81), the full suite alone (720), and the site build, vitest (75) and E2E (8/8) pass; remote
+  state as recorded (`main` `abbb9c3`, `gh-pages` `c14e041`, `v1.0.0` `82f3219` → `7b394fa`);
+  the v1.0.0 release saved in full.
+- **Decision** D-135 (Makefile `s19`), `ab6c49b`, before any other change.
+- **Release commit** `907c901`: `CITATION.cff` 1.1.0, released 2026-11-16 (D-131).
+- **Publication**, each step verified before the next (E19-02 to E19-05): push `main`; CI 3/3
+  on `907c901`; tag `v1.1.0`; release with `addendum.pdf`; Pages redeploy on top of
+  `c14e041`; live hash check and live E2E; network link check.
+- **Records:** README Observatory paragraph (D-133), `docs/FINAL_RELEASE_AUDIT.md` §10, D-131
+  outcome note, KNOWN_ISSUES (KI-061, KI-065 notes), ledger, STATUS, this handoff,
+  `docs/extensions/README.md`.
+
+## 3. Results
+None new. v1.1 republishes, unchanged, the Session 18 build of the three pinned results (X1
+`ad503686…`, X3 `4299a149…`, X2 `30c01f55…`). The v1.0.0 report and its numbers are unchanged.
+
+## 4. Publication state (verified) and STOP checks
+| Item | Verified state |
+|---|---|
+| `main` | `907c901` (release commit, tagged), then the Session 19 records commit, pushed as fast-forwards (`git ls-remote`) |
+| CI on `907c901` | python-tests 43832425639, research-integrity 43832425616 (addendum-check step ran), web-build 43832429173: all `success` |
+| Tag | `v1.1.0`, annotated object `d805cb5` on `907c901`, tagger Zackary Holt, no trailer; `v1.0.0` unchanged (`82f3219` → `7b394fa`) |
+| Release | https://github.com/zackholt05-tech/roboforge/releases/tag/v1.1.0, published 2026-11-16 08:39 UTC, not a draft or prerelease, Latest; asset `addendum.pdf` 121,963 bytes, downloaded SHA-256 `bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2`; v1.0.0 release identical before and after |
+| `gh-pages` | `d3f47dd` (parent `c14e041`), Zackary Holt, no trailer; built from clean `907c901` (`deploy.json` `b4b641e2…`, 263 files) |
+| Pages | `built` (08:40:44 UTC); https://zackholt05-tech.github.io/roboforge/ |
+| Live checks | `pages_bundle.py verify` 263/263 (`.nojekyll` not served); live `deploy.json` equal; live E2E 8/8 (`logs/session19/pages_live_e2e.log`) |
+| Links | 21/21 external URLs < 400 (`reports/session19/release_check_network.json`) |
+
+**STOP checks.** On `907c901` plus the Session 19 records (documents, logs and reports only; the last code change is `f675490`, the Makefile defaults `ab6c49b`), host, no container running during the suite: `make lint` clean; full suite alone **720 passed** (9:35; `logs/session19/stop_full_suite.log`); `make freeze-check` unchanged ("freeze committed; frozen code unchanged"); `tests/research_integrity` 81 passed; `make addendum-check` (15 files) and `make paper-check` (35 files) equal a fresh build, both lints clean; `paper/main.pdf` `c648e753…` and its sources identical to `v1.0.0`; `paper/addendum/addendum.pdf` `bedfb277…`; `paper/addendum/`, `src/`, `website/src/`, `scripts/` and `tests/` identical to the tagged `907c901`; `make release-check` PASS with the records staged (139 disclosed local-path files, D-100 and D-114; no new local path) (`logs/session19/stop_checks.log`). No frozen file, freeze, result or executed outcome changed; nothing was trained, evaluated or stepped; only D-131's scope was published.
+
+## 5. Owner decisions pending
+None for v1.1. Open by choice, each needing its own decision before any work: the diffusion side
+of KI-052 (a `clip_sample=False` arm of the 6 frozen diffusion checkpoints on the Session 7
+robustness sets; 15 evaluations, about 1.6 container-hours, an estimate from the measured
+Session 7 times); Linux x86_64 verification (KI-001, KI-061).
+
+## 6. Next session
+None planned: the project and its v1.1 follow-up are published. If the owner decides on a new
+study, start a fresh session with the canonical prompt of MASTER_SPEC §12.2, naming the decision
+(a new D-number recorded before any code), its preregistration and its budget; the published
+v1.0.0 and v1.1.0 content, tags and releases stay as they are.
 
 # Session 18 Handoff (v1.1, built and verified; nothing published)
 

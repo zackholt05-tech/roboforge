@@ -193,3 +193,35 @@ Each row was verified before it was written (owner authorization D-099, D-101, D
   unverified).
 - **Not done, by decision:** DiT, GMM-BC and the Square task (D-096); Python static type
   checking (not configured); a cold-cache macOS install (CI performs a cold Linux install).
+
+## 10. v1.1.0 publication (Session 19)
+
+**Release:** RoboForge v1.1.0, the post-release follow-up studies X1, X2 and X3 (owner decision
+D-131; content D-133, D-134; built and verified in Session 18, E18-01 to E18-07). **Author:**
+Zackary Holt. Sections 1 to 9 above are the v1.0.0 record and stay unchanged; v1.0.0 (tag,
+release, `paper/main.pdf` `c648e753…`) stays as published. No training, no evaluation, no
+rollout and no paid compute; nothing in the Session 18 build was rebuilt or changed.
+
+Each row was verified before it was written, in the D-131 order. Logs: `logs/session19/`;
+reports: `reports/session19/`.
+
+| Step | Verified state | Evidence |
+|---|---|---|
+| Prerequisites | Pinned hashes equal (X1, X3, X2 `results.json`, `X2_FREEZE.md`, `paper/main.pdf`, `paper/addendum/addendum.pdf`, the Session 18 Observatory `index.json`); lint, freeze-check (unchanged), addendum-check, paper-check, release-check, `tests/research_integrity` (81) and the full suite alone (720 passed) pass; site build within budgets, vitest 75, E2E 8/8; `origin/main` `abbb9c3`, `gh-pages` `c14e041`, `v1.0.0` `82f3219` on `7b394fa`, release v1.0.0 saved in full | E19-01, `logs/session19/prereq_*.log` |
+| Release commit | `907c901` (`CITATION.cff` version 1.1.0, date-released 2026-11-16), after `ab6c49b` (D-135, Makefile defaults); author and committer Zackary Holt <zackholt05@gmail.com>, no trailer; `make release-check` PASS on it | `git show -s 907c901` |
+| `main` | pushed as a fast-forward, `abbb9c3..907c901` (51 commits, oldest `536fa24`); `git ls-remote` `refs/heads/main` `907c901`; no commit message carries a co-author trailer or AI byline | `git ls-remote` |
+| CI, Linux aarch64, `907c901` | python-tests pass (43832425639: lint; 454 passed, 13 skipped: 9 without the processed Lift data, 3 without `runs/` records, 1 needs a non-CPU device); research-integrity pass (43832425616: 77 passed, 4 skipped; freeze-check, both gates, paper-check, the new addendum-check step (15 files, lint), release-check); web-build pass (43832429173: meshes 0.0 m, every budget, vitest 75); each run's `headSha` is `907c901` | `logs/session19/ci_907c901.json` |
+| Tag `v1.1.0` | annotated tag object `d805cb5` on `907c901`, tagger Zackary Holt <zackholt05@gmail.com>, message without trailer; pushed; `git ls-remote` `refs/tags/v1.1.0` `d805cb5`, `^{}` `907c901`; `refs/tags/v1.0.0` still `82f3219` on `7b394fa` | `git cat-file -p v1.1.0` |
+| GitHub release | `https://github.com/zackholt05-tech/roboforge/releases/tag/v1.1.0`, created with `--verify-tag`, published 2026-11-16 08:39 UTC, not a draft or prerelease, marked Latest; notes written by hand (no generated notes, no AI byline; the body equals `logs/session19/release_notes_v1.1.0.md`); asset `addendum.pdf` (121,963 bytes), GitHub digest and the SHA-256 of the downloaded copy both `bedfb27753722604e6f31b6fc171c646975ba6b7b635bdd9884dd6bc16917fe2`, equal to the committed `paper/addendum/addendum.pdf` | `logs/session19/v1_1_0_release.json`, `gh release download` |
+| Release v1.0.0 | unchanged: `gh release view v1.0.0 --json` (body, assets, dates, author) identical before and after; only the Latest label moved to v1.1.0 | `logs/session19/v1_0_0_release_{before,after}.json` |
+| Observatory build | from the clean tagged commit `907c901`: `make web-data` (161 + 74 files, hash-checked), `make web-assets` (61 meshes, host vs container 0.0 m), `make web-build` (every budget; all data 29.31 of 80 MB, first view 3.95 of 6.50 MB), `make pages-bundle`: 263 files, 35.7 MB, `deploy.json` source `907c901`, dirty false, SHA-256 `b4b641e2…` | `logs/session19/pages_build.log`, `reports/session19/pages/deploy.json` |
+| `gh-pages` | new commit `d3f47dd` on top of `c14e041` (parent checked before the push; author and committer Zackary Holt, no trailer), pushed as a fast-forward `c14e041..d3f47dd`; never an orphan commit or a force push, so the v1.0.0 site stays in history. Only hashed JS chunks, `index.html` and `deploy.json` changed; `data/ext/` added; every v1.0 data file unchanged | `git ls-remote` |
+| Pages | build `built` for `d3f47dd` (2026-11-16 08:40:14 to 08:40:44 UTC), source branch `gh-pages`, `https://zackholt05-tech.github.io/roboforge/` | `logs/session19/pages_build_latest.json` |
+| Live site check | `scripts/pages_bundle.py verify`: all 263 files listed in `deploy.json` match (262 fetched with equal SHA-256; `.nojekyll` is not served), first attempt; the live `deploy.json` equals the staged one (`b4b641e2…`). The site's E2E against the live URL (a scratch copy of `e2e/site.spec.ts` whose only change is relative `page.goto` paths under `/roboforge/`, including the follow-up studies test): 8/8 | `logs/session19/pages_verify.log`, `logs/session19/pages_live_e2e.log` |
+| External links | `scripts/release_check.py --network`: 21/21 answered with HTTP < 400; offline checks PASS | `reports/session19/release_check_network.json` |
+| README | the Observatory paragraph names the build commit `907c901` (tag `v1.1.0`) and says, without numbers, that the site also shows the three follow-up studies under their own labels (D-133); committed after the live checks passed | `README.md` |
+
+**Not changed by Session 19:** every frozen file and result, the Session 18 build (addendum,
+README extensions block and chart, Observatory extension export and site code),
+`pyproject.toml` (0.0.1) and `website/package.json` (0.10.0) (D-099), and the repository
+description.

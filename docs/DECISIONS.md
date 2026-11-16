@@ -3408,6 +3408,22 @@ Answers:
   frozen findings on the site.
 - No AI co-author trailer or AI byline anywhere (MASTER_SPEC §0.2, D-099).
 
+**Outcome note (Session 19, 2026-11-16).** Applied in the D-131 order, each step verified
+before the next (`docs/FINAL_RELEASE_AUDIT.md` §10, E19-02 to E19-05):
+1. `main` pushed as a fast-forward `abbb9c3..907c901`; the release commit `907c901` sets
+   `CITATION.cff` to 1.1.0, released 2026-11-16.
+2. CI 3/3 pass on `907c901` (python-tests 43832425639, research-integrity 43832425616 with the
+   addendum-check step, web-build 43832429173).
+3. Annotated tag `v1.1.0` (object `d805cb5`) on `907c901`, tagger Zackary Holt, no trailer.
+4. Release v1.1.0 with `addendum.pdf`; the downloaded asset's SHA-256 equals `bedfb277…`. The
+   v1.0.0 release is unchanged.
+5. Pages redeployed as `gh-pages` commit `d3f47dd` on top of `c14e041` (no orphan, no force
+   push), built from the clean tagged commit; `built`; all 263 `deploy.json` files match live;
+   live E2E 8/8.
+6. `docs/FINAL_RELEASE_AUDIT.md` §10 appended; the README Observatory paragraph updated after the
+   live checks.
+Nothing outside D-131's scope was published; no AI trailer or byline anywhere.
+
 ### D-132 Makefile defaults bumped to Session 18; v1.1 targets (FIXED, before any code change)
 - `PREFIX ?= s18` and `EVIDENCE_SESSION` default 18 (the D-092/D-097/D-106/D-110/D-117/D-126/
   D-129 pattern). Evidence goes to `reports/session18/` and `logs/session18/` with

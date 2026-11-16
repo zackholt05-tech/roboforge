@@ -26,8 +26,10 @@ build, not peer reviewed). The v1.0.0 report and its numbers are unchanged.
 **[Open the RoboForge Observatory](https://zackholt05-tech.github.io/roboforge/)**: an
 interactive 3D site that replays recorded evaluation episodes, shows the diffusion sampler's
 real denoising steps (replayed from recorded validation episodes) and presents the frozen
-findings (GitHub Pages; built from commit `b4bd070`, every
-served file checked against its `deploy.json` hash list, DECISIONS D-102).
+findings (GitHub Pages; built from commit `907c901`, tag `v1.1.0`, every
+served file checked against its `deploy.json` hash list, DECISIONS D-102). The site now also
+shows the three follow-up studies (X1 and X2 recorded episodes, X3 results) under their own
+labels.
 
 ## Key findings
 

@@ -3,7 +3,8 @@
 The ledger lists every visual output of the site with its source run, checkpoint, seed, start,
 simulator build and the transformations applied. It is generated, never edited by hand:
 
-    make visual-provenance      # host: reads reports/session<N>/observatory/
+    make visual-provenance      # host: reads reports/session<N>/observatory/ and, for the
+                                # v1.1 extension clips (D-134), reports/session18/observatory/
 """
 
 from __future__ import annotations
@@ -39,11 +40,9 @@ def _clip(out: Path, cid: str) -> dict[str, Any]:
         return json.load(fh)
 
 
-def build(out: Path) -> str:
-    """The ledger's Markdown text."""
+def build(out: Path, ext: Path | None = None) -> str:
+    """The ledger's Markdown text; ``ext`` adds the v1.1 extension export (D-134)."""
     index = json.loads((out / "index.json").read_text())
-    ver_p = out / "viewer_verification.json"
-    ver = json.loads(ver_p.read_text()) if ver_p.exists() else None
     lines = [
         "# Visual provenance ledger",
         "",
@@ -86,32 +85,77 @@ def build(out: Path) -> str:
             f"| `{e['id']}` | {', '.join(e['roles'])} | {c['policy']['name']}, {e['seed']} | "
             f"{cks} | `{e['state_id']}` ({e['partition']}) | `{e['eval_run_id']}` | "
             f"MuJoCo {pk.get('mujoco')}, robosuite {pk.get('robosuite')} | {', '.join(outs)} |")
-    lines += ["", "## Viewer verification", ""]
-    if ver is None:
-        lines.append("Not run yet (`make web-verify`).")
-    else:
-        fr = ver["frames"]
-        lines += [
-            f"`{repo_relative(ver_p)}`: {len(fr)} reference frames, overall "
-            f"**{'pass' if ver['pass'] else 'FAIL'}** (thresholds {ver['threshold']}).",
-            f"Robot IoU {min(f['robot_iou'] for f in fr):.4f}–"
-            f"{max(f['robot_iou'] for f in fr):.4f}; object IoU "
-            f"{min(f['object_iou'] for f in fr if f['object_iou'] is not None):.4f}–"
-            f"{max(f['object_iou'] for f in fr if f['object_iou'] is not None):.4f}; "
-            f"robot centroid offset at most {max(f['robot_centroid_px'] for f in fr):.2f} px.",
-            f"Method: {ver['method']}.",
-        ]
+    lines += ["", "## Viewer verification", "", *_verification(out, "make web-verify")]
+    if ext is not None:
+        lines += _extension(ext)
     return "\n".join(lines) + "\n"
+
+
+def _verification(out: Path, target: str) -> list[str]:
+    ver_p = out / "viewer_verification.json"
+    if not ver_p.exists():
+        return [f"Not run yet (`{target}`)."]
+    ver = json.loads(ver_p.read_text())
+    fr = ver["frames"]
+    return [
+        f"`{repo_relative(ver_p)}`: {len(fr)} reference frames, overall "
+        f"**{'pass' if ver['pass'] else 'FAIL'}** (thresholds {ver['threshold']}).",
+        f"Robot IoU {min(f['robot_iou'] for f in fr):.4f}–"
+        f"{max(f['robot_iou'] for f in fr):.4f}; object IoU "
+        f"{min(f['object_iou'] for f in fr if f['object_iou'] is not None):.4f}–"
+        f"{max(f['object_iou'] for f in fr if f['object_iou'] is not None):.4f}; "
+        f"robot centroid offset at most {max(f['robot_centroid_px'] for f in fr):.2f} px.",
+        f"Method: {ver['method']}.",
+    ]
+
+
+def _extension(ext: Path) -> list[str]:
+    """The v1.1 extension clips (D-134): their own export, rows and viewer verification."""
+    index = json.loads((ext / "index.json").read_text())
+    lines = [
+        "", "## v1.1 extension clips (D-134)", "",
+        f"- Export: `{repo_relative(ext)}/index.json` "
+        f"(SHA-256 `{sha256_file(ext / 'index.json')}`), {len(index['clips'])} clips, "
+        f"{len(index['files'])} files; selection by the D-134 rules "
+        f"(`{repo_relative(ext)}/selection.json`, SHA-256 `{index['selection_sha256']}`).",
+        f"- Exported on `{index['platform']['platform_id']}` from commit "
+        f"`{index['git']['sha'][:10]}` (clean: {not index['git']['dirty']}), "
+        f"{index['wall_s'] / 3600:.2f} h.",
+        "- X1 and X2 records re-rendered from their recorded states with the **clip**, **media** "
+        "and **reference_frames** transformations above; nothing was run again. X2 clips carry "
+        "the display label \"X2 (Can MH): trained on the robomimic Can MH demonstrations\"; the "
+        "evaluator's recorded label is kept as `provenance.recorded_policy_label` (KI-065).",
+        "",
+        "| Clip | Study, arm | Roles | Policy, seed | Checkpoint (step, SHA-256) | Start | "
+        "Evaluation run | Simulator | Outputs |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for e in index["clips"]:
+        c = _clip(ext, e["id"])
+        pk = c["provenance"]["simulator"]["packages"]
+        ck = e["checkpoint"]
+        lines.append(
+            f"| `{e['id']}` | {e['study'].upper()}, {e['arm']} | {', '.join(e['roles'])} | "
+            f"{c['policy']['name']}, {e['seed']} | {ck['step']}, `{ck['sha256'][:12]}` | "
+            f"`{e['state_id']}` ({e['partition']}) | `{e['eval_run_id']}` | "
+            f"MuJoCo {pk.get('mujoco')}, robosuite {pk.get('robosuite')} | "
+            f"{', '.join(['clip', 'media', *e['has']])} |")
+    return [*lines, "", "### Viewer verification (extension clips)", "",
+            *_verification(ext, "make web-verify-ext")]
 
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint."""
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--out-dir", type=Path, required=True)
+    p.add_argument("--ext-dir", type=Path, default=None,
+                   help="the v1.1 extension export (D-134), added as its own section")
     p.add_argument("--doc", type=Path, default=REPO_ROOT / "docs" / "VISUAL_PROVENANCE.md")
     a = p.parse_args(argv)
     out = a.out_dir if a.out_dir.is_absolute() else REPO_ROOT / a.out_dir
-    a.doc.write_text(build(out))
+    ext = None if a.ext_dir is None else (a.ext_dir if a.ext_dir.is_absolute()
+                                          else REPO_ROOT / a.ext_dir)
+    a.doc.write_text(build(out, ext))
     print(f"wrote {repo_relative(a.doc)}")
     return 0
 

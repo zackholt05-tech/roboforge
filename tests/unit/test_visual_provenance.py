@@ -55,3 +55,26 @@ def test_verification_summary_reports_the_range_and_verdict(tmp_path: Path) -> N
     text = vp.build(tmp_path)
     assert "2 reference frames, overall **pass**" in text
     assert "Robot IoU 0.9998–1.0000" in text and "at most 0.03 px" in text
+
+
+def test_extension_section_lists_study_arm_and_its_own_verification(tmp_path: Path) -> None:
+    s10, ext = tmp_path / "s10", tmp_path / "ext"
+    _write(s10, None)
+    (ext / "clips").mkdir(parents=True)
+    with gzip.open(ext / "clips" / "x2-can-bc_mlp-s0-y.json.gz", "wt") as fh:
+        json.dump({"policy": {"name": "bc_mlp_cos"}, "provenance": {"simulator": {
+            "packages": {"mujoco": "3.2.7", "robosuite": "1.5.1"}}}}, fh)
+    (ext / "index.json").write_text(json.dumps({
+        "platform": {"platform_id": "linux-aarch64-container-1f685638f28c"},
+        "git": {"sha": "d" * 40, "dirty": False}, "wall_s": 360.0, "selection_sha256": "e" * 64,
+        "clips": [{"id": "x2-can-bc_mlp-s0-y", "study": "x2", "arm": "bc_mlp",
+                   "roles": ["x2:bc_mlp:c_both_succeed"], "seed": 0, "state_id": "y",
+                   "partition": "eval_adhoc", "eval_run_id": "run_x2",
+                   "checkpoint": {"sha256": "f" * 64, "step": 85000}, "has": []}],
+        "files": {"clips/x2-can-bc_mlp-s0-y.json.gz": "c" * 64}}))
+    text = vp.build(s10, ext)
+    assert vp.build(s10) in text  # the Session 10 ledger is unchanged, the section is appended
+    assert "## v1.1 extension clips (D-134)" in text and "KI-065" in text
+    row = next(ln for ln in text.splitlines() if ln.startswith("| `x2-can-"))
+    assert "X2, bc_mlp" in row and "85000, `ffffffffffff`" in row and "(eval_adhoc)" in row
+    assert "Not run yet (`make web-verify-ext`)" in text

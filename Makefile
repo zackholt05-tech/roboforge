@@ -500,7 +500,7 @@ web-dev:  ## Vite dev server (local only)
 	cd website && $(NPM) run dev
 
 visual-provenance:  ## Host: docs/VISUAL_PROVENANCE.md from the committed export (generated)
-	$(RUN_S) python scripts/visual_provenance.py --out-dir $(OBS_OUT)
+	$(RUN_S) python scripts/visual_provenance.py --out-dir $(OBS_OUT) --ext-dir $(OBS_EXT_OUT)
 
 # --- Session 18: the Observatory's v1.1 extension section (DECISIONS D-134) ---
 # A new evidence tree; OBS_OUT (Session 10) is never written. Clips are re-derived from recorded

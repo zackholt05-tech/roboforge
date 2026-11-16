@@ -29,6 +29,7 @@ IN_SIM := infra/containers/run_sim_cpu.sh
 	x3-states check-x3-states x3-plan x3-train x3-validate x3-check x3-run x3-analyze \
 	x2-download x2-inspect x2-data check-x2-data x2-contract x2-states check-x2-states x2-pilot x2-pilot-report \
 	x2b-plan x2b-suite x2b-report x2b-benchmark \
+	x2c-check x2c-freeze x2c-plan x2c-run x2c-analyze \
 	observatory-select observatory-export observatory-findings web-data web-assets web-install \
 	web-build web-test web-e2e web-verify web-dev visual-provenance \
 	paper-assets paper-check paper-bibcheck paper \
@@ -396,6 +397,26 @@ x2b-report:  ## X2-b: rewrite the report from its files (read-only)
 
 x2b-benchmark:  ## X2-b: latency of the selected X2 checkpoints (container; no rollout)
 	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) infra/containers/run_sim_cpu.sh python scripts/x2b_benchmark.py
+
+# ---------------------------------------------------------------- Session 17: X2-c (D-129, D-130)
+# X2 phase X2-c: the X2 freeze, the 12 checkpoints on the X2 held-out suite once, the analysis
+# once. Targets come with their code (D-129). x2c-freeze needs X2C_DECISIONS_COMMIT (the
+# D-129/D-130 commit).
+X2C_DECISIONS_COMMIT ?=
+x2c-check:  ## X2-c: engineering reproduction of two X2-b validation evaluations (not a result; D-130)
+	$(RUN_S) python scripts/x2c_check.py
+
+x2c-freeze:  ## X2-c: write docs/extensions/X2_FREEZE.md from committed files, once (commit it alone)
+	$(RUN_S) python scripts/write_x2_freeze.py --decisions-commit $(X2C_DECISIONS_COMMIT)
+
+x2c-plan:  ## X2-c: the gate as a dry run (launches nothing)
+	$(RUN_S) python scripts/x2c_run.py --dry-run
+
+x2c-run:  ## X2-c: the 12 evaluations on the X2 held-out suite, once (<= 4 containers, clean tree)
+	ROBOFORGE_EVIDENCE_SESSION=$(EVIDENCE_SESSION) $(CAFFEINATE) $(RUN) python scripts/x2c_run.py
+
+x2c-analyze:  ## X2-c: the one preregistered analysis, beside the frozen Level 1 Can PH result
+	$(RUN_S) python scripts/analyze_x2c.py
 
 # ---------------------------------------------------------------- Session 5: Modal + costs
 # The Modal SDK lives outside the project venv (D-045): MODAL_PY is a Python that has it.
